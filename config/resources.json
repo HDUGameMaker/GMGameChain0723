@@ -1,0 +1,56 @@
+[
+  {
+    "id": "wood",
+    "name": "原木",
+    "icon": "assets/buildings/icon-wood_1784486194.png",
+    "initial": 200,
+    "max": 5000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "plank",
+    "name": "木板",
+    "icon": "resource_plank.png",
+    "initial": 0,
+    "max": 1000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "stone",
+    "name": "石头",
+    "icon": "assets/buildings/icon-stone_1784486357.png",
+    "initial": 100,
+    "max": 5000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "iron_ore",
+    "name": "铁矿",
+    "icon": "assets/buildings/icon-metal_1784486384.png",
+    "initial": 0,
+    "max": 1000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "coal",
+    "name": "煤炭",
+    "icon": "resource_coal.png",
+    "initial": 0,
+    "max": 1000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "iron_ingot",
+    "name": "铁锭",
+    "icon": "resource_iron_ingot.png",
+    "initial": 0,
+    "max": 5000,
+    "rare": false,
+    "showInHUD": true
+  }
+]

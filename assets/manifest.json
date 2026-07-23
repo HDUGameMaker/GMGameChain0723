@@ -1,0 +1,21 @@
+{
+  "generated": "2026-07-23T11:40:50.134Z",
+  "basePath": "assets/",
+  "totalFiles": 5,
+  "categories": {
+    "buildings": [
+      "buildings/building_plank_house_1784771253.png",
+      "buildings/building_work_shed_1784771193.png",
+      "buildings/icon-metal_1784486384.png",
+      "buildings/icon-stone_1784486357.png",
+      "buildings/icon-wood_1784486194.png"
+    ]
+  },
+  "files": [
+    "buildings/building_plank_house_1784771253.png",
+    "buildings/building_work_shed_1784771193.png",
+    "buildings/icon-metal_1784486384.png",
+    "buildings/icon-stone_1784486357.png",
+    "buildings/icon-wood_1784486194.png"
+  ]
+}

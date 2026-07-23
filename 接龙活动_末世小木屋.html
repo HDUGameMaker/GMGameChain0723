@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HDUGameMaker 游戏开发接龙 —— 末世小木屋</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #0d0a07;
+    --bg-cabin: #1a1209;
+    --wood-dark: #2c1e0f;
+    --wood-mid: #4a3520;
+    --wood-light: #6b4c2a;
+    --fire-glow: #e8751a;
+    --fire-bright: #fba742;
+    --ember: #d4451a;
+    --text-primary: #e8dcc8;
+    --text-secondary: #b8a890;
+    --text-muted: #7a6e5e;
+    --accent-danger: #c0392b;
+    --accent-safe: #4a7c3f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: 'Noto Sans SC', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.7;
+  }
+
+  /* ── Wood grain texture overlay ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.06;
+    background:
+      repeating-linear-gradient(2deg, transparent, transparent 3px, rgba(139,90,43,0.3) 3px, rgba(139,90,43,0.3) 4px),
+      repeating-linear-gradient(92deg, transparent, transparent 7px, rgba(100,60,20,0.2) 7px, rgba(100,60,20,0.2) 8px);
+  }
+
+  /* ── Floating ember particles ── */
+  .particles {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: var(--fire-glow);
+    border-radius: 50%;
+    animation: float-up linear infinite;
+    opacity: 0;
+    box-shadow: 0 0 6px var(--fire-glow), 0 0 12px var(--ember);
+  }
+  @keyframes float-up {
+    0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+    10%  { opacity: 0.9; }
+    80%  { opacity: 0.3; }
+    100% { transform: translateY(-100vh) translateX(60px) scale(0.2); opacity: 0; }
+  }
+
+  /* ── Main container ── */
+  .main {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* ── Header / Hero ── */
+  .hero {
+    text-align: center;
+    padding: 80px 20px 60px;
+    position: relative;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--fire-glow), transparent);
+  }
+  .hero .org {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.35em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  .hero .org::before,
+  .hero .org::after {
+    content: '';
+    display: inline-block;
+    width: 40px;
+    height: 1px;
+    background: var(--text-muted);
+  }
+  .hero .badge {
+    display: inline-block;
+    padding: 6px 20px;
+    border: 1px solid var(--fire-glow);
+    color: var(--fire-bright);
+    font-size: 13px;
+    letter-spacing: 0.25em;
+    margin-bottom: 32px;
+    position: relative;
+  }
+  .hero .badge::before {
+    content: '◆';
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 6px;
+    color: var(--fire-glow);
+  }
+  .hero .badge::after {
+    content: '◆';
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 6px;
+    color: var(--fire-glow);
+  }
+  .hero h1 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: clamp(42px, 7vw, 72px);
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    line-height: 1.25;
+    margin-bottom: 16px;
+    background: linear-gradient(180deg, #f5e6d0 0%, #c4956a 50%, #8b5a3c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 2px 8px rgba(200,120,40,0.3));
+  }
+  .hero .subtitle {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 18px;
+    color: var(--text-secondary);
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+  }
+  .hero .meta {
+    font-size: 14px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* ── Section titles ── */
+  .section-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    margin: 60px 0 36px;
+    letter-spacing: 0.1em;
+    color: var(--text-primary);
+    position: relative;
+  }
+  .section-title::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 3px;
+    margin: 12px auto 0;
+    background: var(--fire-glow);
+    border-radius: 2px;
+  }
+
+  /* ── Intro block ── */
+  .intro-card {
+    background: linear-gradient(135deg, rgba(26,18,9,0.95), rgba(44,30,15,0.9));
+    border: 1px solid rgba(180,130,80,0.2);
+    border-radius: 8px;
+    padding: 36px 40px;
+    margin: 0 auto;
+    text-align: center;
+    max-width: 680px;
+    position: relative;
+    overflow: hidden;
+  }
+  .intro-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(232,117,26,0.5), transparent);
+  }
+  .intro-card .icon-cabin {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+  }
+  .intro-card p {
+    color: var(--text-secondary);
+    font-size: 16px;
+    letter-spacing: 0.05em;
+    line-height: 2;
+  }
+  .intro-card .highlight {
+    color: var(--fire-bright);
+    font-weight: 600;
+  }
+
+  /* ── Relay chain ── */
+  .relay-chain {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    position: relative;
+  }
+
+  /* The connecting line */
+  .relay-chain::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 30px;
+    bottom: 30px;
+    width: 2px;
+    background: linear-gradient(180deg,
+      transparent 0%,
+      rgba(232,117,26,0.15) 5%,
+      rgba(232,117,26,0.4) 30%,
+      rgba(232,117,26,0.6) 50%,
+      rgba(232,117,26,0.4) 70%,
+      rgba(232,117,26,0.15) 95%,
+      transparent 100%);
+    z-index: 0;
+  }
+
+  .participant {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 600px;
+    padding: 14px 0;
+    transition: transform 0.3s ease;
+  }
+  .participant:hover {
+    transform: scale(1.03);
+  }
+  /* Alternating layout */
+  .participant:nth-child(odd) {
+    flex-direction: row;
+    padding-right: 50%;
+    text-align: right;
+  }
+  .participant:nth-child(even) {
+    flex-direction: row-reverse;
+    padding-left: 50%;
+    text-align: left;
+  }
+
+  /* Order badge on the center line */
+  .order-badge {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--bg-cabin);
+    border: 2px solid rgba(232,117,26,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--fire-bright);
+    z-index: 2;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 16px rgba(232,117,26,0.15);
+  }
+  .participant:hover .order-badge {
+    border-color: var(--fire-glow);
+    box-shadow: 0 0 28px rgba(232,117,26,0.4);
+    background: #2c1808;
+  }
+
+  /* Participant card */
+  .participant-card {
+    background: linear-gradient(135deg, rgba(26,18,9,0.9), rgba(35,22,12,0.85));
+    border: 1px solid rgba(180,130,80,0.15);
+    border-radius: 6px;
+    padding: 16px 24px;
+    transition: all 0.3s ease;
+    position: relative;
+    min-width: 180px;
+  }
+  .participant:nth-child(odd) .participant-card {
+    margin-right: 32px;
+    border-right: 2px solid rgba(232,117,26,0.25);
+  }
+  .participant:nth-child(even) .participant-card {
+    margin-left: 32px;
+    border-left: 2px solid rgba(232,117,26,0.25);
+  }
+  .participant:hover .participant-card {
+    border-color: rgba(232,117,26,0.4);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    background: linear-gradient(135deg, rgba(35,22,12,0.95), rgba(44,30,15,0.9));
+  }
+  .participant-card .name {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .participant-card .role-tag {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--fire-bright);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .participant-card .declaration {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-style: italic;
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(180,130,80,0.1);
+  }
+
+  /* ── First & Last special styling ── */
+  .participant:first-child .participant-card {
+    border-color: rgba(251,167,66,0.4);
+    box-shadow: 0 0 24px rgba(251,167,66,0.08);
+  }
+  .participant:first-child .order-badge {
+    border-color: var(--fire-bright);
+    box-shadow: 0 0 24px rgba(251,167,66,0.35);
+    background: #2c1808;
+  }
+  .participant:first-child .name::before {
+    content: '🎬 ';
+    font-size: 16px;
+  }
+  .participant:last-child .participant-card {
+    border-color: rgba(74,124,63,0.4);
+    box-shadow: 0 0 24px rgba(74,124,63,0.08);
+  }
+  .participant:last-child .order-badge {
+    border-color: var(--accent-safe);
+    box-shadow: 0 0 24px rgba(74,124,63,0.35);
+  }
+  .participant:last-child .name::after {
+    content: ' 🏁';
+    font-size: 16px;
+  }
+
+  /* Arrow connectors */
+  .connector {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 600px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .connector::before {
+    content: '▼';
+    font-size: 10px;
+    color: rgba(232,117,26,0.35);
+    animation: pulse-arrow 2s ease-in-out infinite;
+  }
+  @keyframes pulse-arrow {
+    0%, 100% { opacity: 0.25; transform: translateY(0); }
+    50%      { opacity: 0.7;  transform: translateY(3px); }
+  }
+
+  /* ── Stats bar ── */
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin: 48px 0;
+    flex-wrap: wrap;
+  }
+  .stat-item {
+    text-align: center;
+    padding: 20px 32px;
+    background: rgba(26,18,9,0.7);
+    border: 1px solid rgba(180,130,80,0.15);
+    border-radius: 6px;
+    min-width: 120px;
+  }
+  .stat-item .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--fire-bright);
+    display: block;
+  }
+  .stat-item .label {
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    margin-top: 4px;
+  }
+
+  /* ── Rules section ── */
+  .rules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .rule-card {
+    background: linear-gradient(135deg, rgba(26,18,9,0.8), rgba(30,20,10,0.7));
+    border: 1px solid rgba(180,130,80,0.12);
+    border-radius: 6px;
+    padding: 24px;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+  .rule-card:hover {
+    border-color: rgba(232,117,26,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  .rule-card .rule-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    display: block;
+  }
+  .rule-card h4 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+  }
+  .rule-card p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+  .rule-card a {
+    color: var(--fire-bright);
+    text-decoration: none;
+  }
+  .rule-card a:hover {
+    text-decoration: underline;
+  }
+
+  /* ── Prize board ── */
+  .prize-intro {
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto 32px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    line-height: 1.8;
+  }
+  .prize-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .prize-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, rgba(26,18,9,0.8), rgba(35,22,12,0.7));
+    border: 1px solid rgba(180,130,80,0.15);
+    border-radius: 6px;
+    padding: 12px 16px;
+    transition: all 0.3s ease;
+  }
+  .prize-row:hover {
+    border-color: rgba(232,117,26,0.3);
+  }
+  .prize-row .prize-name {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    min-width: 72px;
+  }
+  .prize-row input {
+    flex: 1;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(180,130,80,0.2);
+    border-radius: 4px;
+    padding: 8px 12px;
+    color: var(--text-primary);
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.3s ease;
+    min-width: 0;
+  }
+  .prize-row input:focus {
+    border-color: var(--fire-glow);
+    box-shadow: 0 0 10px rgba(232,117,26,0.15);
+  }
+  .prize-row input::placeholder {
+    color: rgba(180,130,80,0.35);
+  }
+  .prize-row.filled {
+    border-color: rgba(74,124,63,0.3);
+  }
+  .prize-row.filled::after {
+    content: '✓';
+    color: var(--accent-safe);
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* Prize buttons */
+  .prize-actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+  .prize-btn {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 16px;
+    letter-spacing: 0.12em;
+    padding: 14px 40px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .prize-btn.primary {
+    background: linear-gradient(135deg, #c0392b, #e8751a);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 4px 20px rgba(200,60,30,0.3);
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .prize-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 28px rgba(232,117,26,0.5);
+  }
+  .prize-btn.primary:active {
+    transform: translateY(0);
+  }
+  .prize-btn.ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid rgba(180,130,80,0.25);
+  }
+  .prize-btn.ghost:hover {
+    border-color: var(--fire-glow);
+    color: var(--fire-bright);
+  }
+  .prize-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* Prize results */
+  .prize-results {
+    max-width: 900px;
+    margin: 32px auto 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+  }
+  .result-card {
+    background: linear-gradient(135deg, rgba(30,20,10,0.9), rgba(40,28,14,0.85));
+    border: 1px solid rgba(232,117,26,0.25);
+    border-radius: 6px;
+    padding: 18px 20px;
+    text-align: center;
+    animation: result-pop 0.5s ease-out both;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(251,167,66,0.5), transparent);
+  }
+  .result-card .winner-name {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--fire-bright);
+    margin-bottom: 6px;
+  }
+  .result-card .winner-game {
+    font-size: 14px;
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+  }
+  .result-card .winner-from {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  @keyframes result-pop {
+    0%   { opacity: 0; transform: translateY(16px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    margin-top: 80px;
+    padding: 32px 0;
+    border-top: 1px solid rgba(180,130,80,0.12);
+    position: relative;
+  }
+  .footer::before {
+    content: '🪓';
+    display: block;
+    font-size: 24px;
+    margin-bottom: 16px;
+    animation: swing 4s ease-in-out infinite;
+  }
+  @keyframes swing {
+    0%, 100% { transform: rotate(-5deg); }
+    50%      { transform: rotate(5deg); }
+  }
+  .footer p {
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    line-height: 2;
+  }
+  .footer .org-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--fire-bright);
+    letter-spacing: 0.2em;
+  }
+
+  /* ── Mobile responsive ── */
+  @media (max-width: 640px) {
+    .hero { padding: 50px 16px 40px; }
+    .hero h1 { font-size: 32px; }
+    .participant:nth-child(odd),
+    .participant:nth-child(even) {
+      flex-direction: column;
+      padding: 0 !important;
+      text-align: center !important;
+    }
+    .participant-card {
+      margin: 0 0 0 56px !important;
+      border-left: 2px solid rgba(232,117,26,0.25) !important;
+      border-right: none !important;
+    }
+    .order-badge {
+      left: 28px;
+    }
+    .relay-chain::before {
+      left: 28px;
+    }
+    .stats-row { gap: 16px; }
+    .stat-item { padding: 16px 20px; min-width: 100px; }
+    .stat-item .num { font-size: 28px; }
+    .intro-card { padding: 24px 20px; }
+  }
+
+  /* ── Flicker animation for header (subtle) ── */
+  @keyframes fire-flicker {
+    0%, 100% { opacity: 1; }
+    3%  { opacity: 0.92; }
+    6%  { opacity: 1; }
+    42% { opacity: 0.96; }
+    44% { opacity: 1; }
+    78% { opacity: 0.94; }
+    80% { opacity: 1; }
+  }
+  .hero h1 {
+    animation: fire-flicker 6s ease-in-out infinite;
+  }
+</style>
+</head>
+<body>
+
+<!-- Floating embers -->
+<div class="particles" id="particles"></div>
+
+<main class="main">
+
+  <!-- ═══════ HERO ═══════ -->
+  <header class="hero">
+    <div class="org">HDUGameMaker</div>
+    <div class="badge">游戏开发接龙</div>
+    <h1>末世小木屋</h1>
+    <p class="subtitle">Post-Apocalyptic Cabin</p>
+    <p class="meta">—— 当世界崩塌，只剩一间木屋，你会讲述怎样的故事？</p>
+  </header>
+
+  <!-- ═══════ INTRO ═══════ -->
+  <div class="intro-card">
+    <span class="icon-cabin">🛖</span>
+    <p>
+      在文明的废墟之上，<span class="highlight">一间小木屋</span>静静地矗立。<br>
+      每位参与者接手上一位的产出，在 <span class="highlight">24 小时</span>内继续往里塞任何想塞的东西——<br>
+      玩法、美术、机制、剧情、配乐……不限。<br>
+      从<span class="highlight">第一块木板</span>到<span class="highlight">最后的成品</span>，<br>
+      12 位创作者接力，共同打造这个末世故事。
+    </p>
+  </div>
+
+  <!-- ═══════ STATS ═══════ -->
+  <div class="stats-row">
+    <div class="stat-item">
+      <span class="num">12</span>
+      <span class="label">参与人数</span>
+    </div>
+    <div class="stat-item">
+      <span class="num">24h</span>
+      <span class="label">每棒限时</span>
+    </div>
+    <div class="stat-item">
+      <span class="num">7.23</span>
+      <span class="label">启动日期</span>
+    </div>
+  </div>
+
+  <!-- ═══════ RELAY CHAIN ═══════ -->
+  <h2 class="section-title">接 龙 顺 序</h2>
+
+  <div class="relay-chain">
+
+    <div class="participant">
+      <div class="order-badge">01</div>
+      <div class="participant-card">
+        <div class="name">miruo</div>
+        <div class="role-tag">🔥 末日点火人</div>
+        <div class="declaration">"都来成为游戏超人"</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="participant">
+      <div class="order-badge">02</div>
+      <div class="participant-card">
+        <div class="name">追</div>
+        <div class="role-tag">🔍 废墟拾荒者</div>
+        <div class="declaration">"ai来点开工宣言（）"</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="participant">
+      <div class="order-badge">03</div>
+      <div class="participant-card">
+        <div class="name">琯</div>
+        <div class="role-tag">🪚 木梁雕刻师</div>
+        <div class="declaration">"来点开工宣言"</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="participant">
+      <div class="order-badge">04</div>
+      <div class="participant-card">
+        <div class="name">萤川白</div>
+        <div class="role-tag">📡 信号守望者</div>
+        <div class="declaration">"看起来眼熟？这样的情景正在整个GameMaker社发生…You could be next."</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="participant">
+      <div class="order-badge">05</div>
+      <div class="participant-card">
+        <div class="name">叫我H20</div>
+        <div class="role-tag">💧 生命之泉</div>
+        <div class="declaration">"必须得尝尝咸淡了(⊙o⊙)！"</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="participant">
+      <div class="order-badge">06</div>
+      <div class="participant-card">
+        <div class="name">谜之水母</div>
+        <div class="role-tag">🧬 变异观察员</div>
+        <div class="declaration">"纯摸鱼选手看热闹咯"</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="participant">
+      <div class="order-badge">07</div>
+      <div class="participant-card">
+        <div class="name">二炔</div>
+        <div class="role-tag">⚗️ 化学狂人</div>
+        <div class="declaration">"——"</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="participant">
+      <div class="order-badge">08</div>
+      <div class="participant-card">
+        <div class="name">未央</div>
+        <div class="role-tag">🏮 永夜守灯人</div>
+        <div class="declaration">"让我康康怎么个事（"</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="participant">
+      <div class="order-badge">09</div>
+      <div class="participant-card">
+        <div class="name">fx</div>
+        <div class="role-tag">✨ 特效魔术师</div>
+        <div class="declaration">"——"</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="participant">
+      <div class="order-badge">10</div>
+      <div class="participant-card">
+        <div class="name">卡比兽</div>
+        <div class="role-tag">📦 物资囤积兽</div>
+        <div class="declaration">"补一个文档"</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="participant">
+      <div class="order-badge">11</div>
+      <div class="participant-card">
+        <div class="name">染汐</div>
+        <div class="role-tag">🎨 黄昏绘师</div>
+        <div class="declaration">"我给你最直白最直接最不绕弯子的回答：我不会做！"</div>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <div class="participant">
+      <div class="order-badge">12</div>
+      <div class="participant-card">
+        <div class="name">绿豆荚</div>
+        <div class="role-tag">🌱 末世播种者</div>
+        <div class="declaration">"你不干有的是帕鲁干QAQ"</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════ RULES ═══════ -->
+  <h2 class="section-title">活 动 规 则</h2>
+
+  <div class="rules-grid">
+    <div class="rule-card">
+      <span class="rule-icon">⏱️</span>
+      <h4>每棒限时 24 小时</h4>
+      <p>从你接手项目的那一刻起算，24 小时内完成你的创作并交接给下一位。</p>
+    </div>
+    <div class="rule-card">
+      <span class="rule-icon">🧱</span>
+      <h4>在原有基础上继续</h4>
+      <p>可以屏蔽前任的内容，但不能"完全推倒重做"——必须在已有成果上叠加。</p>
+    </div>
+    <div class="rule-card">
+      <span class="rule-icon">🎨</span>
+      <h4>想塞什么塞什么</h4>
+      <p>玩法、美术、机制、剧情、配乐、UI、彩蛋……来者不拒，百无禁忌。</p>
+    </div>
+    <div class="rule-card">
+      <span class="rule-icon">📦</span>
+      <h4>必须交接</h4>
+      <p>24h 到点必须移交项目，附交接说明（你做了什么 / 下个人可以往哪加）。</p>
+    </div>
+    <div class="rule-card">
+      <span class="rule-icon">🧭</span>
+      <h4>主题框架下自由发挥</h4>
+      <p>主题由发起人给定（7.23 晚 8:00 直播公布），在主题框架内随意发挥。</p>
+    </div>
+    <div class="rule-card">
+      <span class="rule-icon">🎮</span>
+      <h4>共同游玩复盘</h4>
+      <p>活动最后全体开发者上会游玩最终成品并复盘，之后发给社友们体验。</p>
+    </div>
+  </div>
+
+  <!-- ═══════ DELIVERY REQUIREMENTS ═══════ -->
+  <h2 class="section-title">交 付 物 要 求</h2>
+
+  <div class="rules-grid">
+    <div class="rule-card">
+      <span class="rule-icon">✅</span>
+      <h4>可运行版本</h4>
+      <p>哪怕是半成品也行，只要能打开看到效果即可。建议用 HTML 输出，一个浏览器就能跑。</p>
+    </div>
+    <div class="rule-card">
+      <span class="rule-icon">📝</span>
+      <h4>交接说明（Markdown）</h4>
+      <p>列出本次提交做了哪些改动，让下一位快速了解项目当前状态。</p>
+    </div>
+    <div class="rule-card">
+      <span class="rule-icon">💡</span>
+      <h4>下棒建议（可选）</h4>
+      <p>给下一个人提供创作方向，比如"这里可以加 BOSS 战"或"音效还缺"。自由选择是否给出。</p>
+    </div>
+  </div>
+
+  <!-- ═══════ PREPARATION ═══════ -->
+  <h2 class="section-title">参 与 准 备</h2>
+
+  <div class="rules-grid">
+    <div class="rule-card">
+      <span class="rule-icon">🌐</span>
+      <h4>浏览器</h4>
+      <p>一个可以打开 HTML 文件的浏览器即可。</p>
+    </div>
+    <div class="rule-card">
+      <span class="rule-icon">💻</span>
+      <h4>IDE 编辑器</h4>
+      <p>VS Code、记事本……任何你顺手的编辑器都行。</p>
+    </div>
+    <div class="rule-card">
+      <span class="rule-icon">🤖</span>
+      <h4>Vibecoding 工具</h4>
+      <p>任意 Agent（Codex、Claude Code 等）+ 任意模型（DeepSeek、GPT、Claude 等）。不会？B站 15 分钟速成，或联系 miruo。</p>
+    </div>
+  </div>
+
+  <!-- ═══════ NOTES ═══════ -->
+  <h2 class="section-title">注 意 事 项</h2>
+
+  <div class="intro-card" style="text-align:left; max-width:700px;">
+    <p style="line-height:2.2; font-size:15px;">
+      🔹 项目建议放在 <span class="highlight">Git 仓库</span>里，每次交接前 commit 一次<br>
+      🔹 大改动记得<span class="highlight">开分支</span>，避免破坏主流程<br>
+      🔹 别忘了<span class="highlight">吃早餐</span> 🍳<br>
+      🔹 出错了就<span class="highlight">重置回去重新来</span>，反正没人评分<br>
+      🔹 <span class="highlight">娱乐为主</span>，别给自己太大压力<br>
+      🔹 参考示例仓库：<a href="https://github.com/HDUGameMaker/ChainGameExample" style="color:#e8751a;">github.com/HDUGameMaker/ChainGameExample</a><br>
+      🔹 提交时有疑问？联系哆啦A若（miruo）
+    </p>
+  </div>
+
+  <!-- ═══════ PRIZES ═══════ -->
+  <h2 class="section-title">活 动 奖 品</h2>
+
+  <div class="prize-intro">
+    <p>每位参与者选择一款游戏（CDK ≤ 50 元）填入奖池，填完后点击按钮随机分配，每人抽中一款。也可替换为等值现金。</p>
+  </div>
+
+  <div class="prize-board" id="prizeBoard">
+    <!-- JS will populate, or use static HTML -->
+  </div>
+
+  <div class="prize-actions">
+    <button class="prize-btn primary" id="btnShuffle" onclick="doShuffle()">🎲 随 机 分 配</button>
+    <button class="prize-btn ghost" id="btnReset" onclick="doReset()" style="display:none;">🔄 重新来过</button>
+  </div>
+
+  <div class="prize-results" id="prizeResults" style="display:none;"></div>
+
+  <!-- ═══════ FOOTER ═══════ -->
+  <footer class="footer">
+    <p>
+      <span class="org-name">HDUGameMaker</span><br>
+      游戏开发接龙 · 末世小木屋<br>
+      2026年7月 · 活动负责人：miruo
+    </p>
+    <p style="margin-top:12px; font-size:12px; color: rgba(180,130,80,0.4);">
+      「在废墟中搭建，在余烬中创作。每一个木屋，都始于第一根梁。」
+    </p>
+  </footer>
+
+</main>
+
+<script>
+// ── Prize pool participants (matching relay order) ──
+const PARTICIPANTS = [
+  'miruo', '追', '琯', '萤川白', '叫我H20',
+  '谜之水母', '二炔', '未央', 'fx', '卡比兽',
+  '染汐', '绿豆荚'
+];
+
+// ── Build prize board ──
+(function buildPrizeBoard() {
+  const board = document.getElementById('prizeBoard');
+  PARTICIPANTS.forEach((name, i) => {
+    const row = document.createElement('div');
+    row.className = 'prize-row';
+    row.innerHTML = `
+      <span class="prize-name">${String(i+1).padStart(2,'0')}. ${name}</span>
+      <input type="text" placeholder="填入你想提供的游戏…" data-index="${i}" oninput="onInputChange(this)" />
+    `;
+    board.appendChild(row);
+  });
+})();
+
+function onInputChange(el) {
+  const row = el.parentElement;
+  if (el.value.trim()) {
+    row.classList.add('filled');
+  } else {
+    row.classList.remove('filled');
+  }
+}
+
+// ── Fisher-Yates shuffle ──
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ── Do the random draw ──
+function doShuffle() {
+  const inputs = document.querySelectorAll('.prize-row input');
+  const games = [];
+  let allFilled = true;
+
+  inputs.forEach(inp => {
+    const val = inp.value.trim();
+    if (!val) allFilled = false;
+    games.push(val || '(未填写)');
+  });
+
+  if (!allFilled) {
+    const missing = PARTICIPANTS.filter((_,i) => !games[i] || games[i] === '(未填写)');
+    alert('还有 ' + missing.length + ' 位同学没填游戏！\n\n' + missing.join('、') + '\n\n等大家都填完再来抽吧~');
+    return;
+  }
+
+  // Shuffle games and assign to participants
+  const shuffled = shuffle(games);
+  const results = PARTICIPANTS.map((name, i) => ({
+    name,
+    game: shuffled[i],
+    from: PARTICIPANTS[games.indexOf(shuffled[i])]
+  }));
+
+  // Display results
+  const container = document.getElementById('prizeResults');
+  container.style.display = 'grid';
+  container.innerHTML = results.map((r, i) => `
+    <div class="result-card" style="animation-delay:${i * 0.08}s;">
+      <div class="winner-name">🎮 ${r.name}</div>
+      <div class="winner-game">获得了「${r.game}」</div>
+      <div class="winner-from">贡献者：${r.from}</div>
+    </div>
+  `).join('');
+
+  // Scroll to results
+  container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  // Toggle buttons
+  document.getElementById('btnShuffle').style.display = 'none';
+  document.getElementById('btnReset').style.display = 'inline-block';
+}
+
+// ── Reset ──
+function doReset() {
+  document.getElementById('prizeResults').style.display = 'none';
+  document.getElementById('prizeResults').innerHTML = '';
+  document.getElementById('btnShuffle').style.display = 'inline-block';
+  document.getElementById('btnReset').style.display = 'none';
+}
+
+// ── Generate floating ember particles ──
+(function() {
+  const container = document.getElementById('particles');
+  const count = 25;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.classList.add('particle');
+    p.style.left = Math.random() * 100 + '%';
+    p.style.bottom = -(Math.random() * 40) + 'px';
+    p.style.width = (2 + Math.random() * 3) + 'px';
+    p.style.height = p.style.width;
+    p.style.animationDuration = (6 + Math.random() * 14) + 's';
+    p.style.animationDelay = (Math.random() * 12) + 's';
+    if (Math.random() > 0.7) {
+      p.style.background = '#d4451a';
+      p.style.boxShadow = '0 0 4px #d4451a, 0 0 8px #c0392b';
+    }
+    container.appendChild(p);
+  }
+})();
+</script>
+
+</body>
+</html>

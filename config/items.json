@@ -1,0 +1,66 @@
+[
+  {
+    "id": "transporter",
+    "name": "运载车",
+    "icon": "item_transporter.png",
+    "description": "结实的运载推车，可以装下更多采集到的资源。",
+    "unique": true,
+    "consumable": false,
+    "capacityCost": 3,
+    "expeditionEffects": [
+      {
+        "type": "resource_capacity_bonus",
+        "value": 50
+      }
+    ]
+  },
+  {
+    "id": "iron_tool_set",
+    "name": "铁质工具组",
+    "icon": "item_iron_tool_set.png",
+    "description": "精良的铁质镐和斧，大幅提升森林和矿洞内的采集效率。",
+    "unique": true,
+    "consumable": false,
+    "capacityCost": 2,
+    "expeditionEffects": [
+      {
+        "type": "yield_multiplier",
+        "value": 2.0,
+        "regions": ["forest", "mine_interior"]
+      }
+    ]
+  },
+  {
+    "id": "miner_headlamp",
+    "name": "矿工头灯",
+    "icon": "item_miner_headlamp.png",
+    "description": "可靠的矿工照明工具，没有它可进不了漆黑的矿洞深处。",
+    "unique": true,
+    "consumable": false,
+    "capacityCost": 1,
+    "expeditionEffects": []
+  },
+  {
+    "id": "marking_torch",
+    "name": "标记火把",
+    "icon": "item_marking_torch.png",
+    "description": "插在地上的标记火把，能让矿场外围的采集路线更高效。探险结束后消耗。",
+    "unique": false,
+    "consumable": true,
+    "capacityCost": 1,
+    "expeditionEffects": [
+      {
+        "type": "yield_flat_bonus",
+        "resourceId": "coal",
+        "value": 15,
+        "regions": ["mine_periphery"]
+      },
+      {
+        "type": "yield_flat_bonus",
+        "resourceId": "iron_ore",
+        "value": 10,
+        "regions": ["mine_periphery"]
+      }
+    ]
+  }
+]

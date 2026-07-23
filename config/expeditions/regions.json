@@ -1,0 +1,90 @@
+[
+  {
+    "id": "forest",
+    "name": "森林",
+    "description": "茂密的原始森林，出产大量原木和少量石头。",
+    "image": "region_forest.png",
+    "unlockConditions": [],
+    "baseYields": {
+      "morning": {
+        "wood": 150,
+        "stone": 15
+      },
+      "afternoon": {
+        "wood": 120,
+        "stone": 12
+      },
+      "evening": {
+        "wood": 80,
+        "stone": 10
+      },
+      "night": {
+        "wood": 40,
+        "stone": 5
+      }
+    }
+  },
+  {
+    "id": "mine_periphery",
+    "name": "矿洞外围",
+    "description": "矿洞入口周围的崎岖地带，盛产石头，偶见煤炭和铁矿露头。",
+    "image": "region_mine_periphery.png",
+    "unlockConditions": [],
+    "baseYields": {
+      "morning": {
+        "stone": 120,
+        "coal": 30,
+        "iron_ore": 8
+      },
+      "afternoon": {
+        "stone": 100,
+        "coal": 25,
+        "iron_ore": 6
+      },
+      "evening": {
+        "stone": 70,
+        "coal": 20,
+        "iron_ore": 5
+      },
+      "night": {
+        "stone": 40,
+        "coal": 15,
+        "iron_ore": 3
+      }
+    }
+  },
+  {
+    "id": "mine_interior",
+    "name": "矿洞深处",
+    "description": "黑暗的矿洞深处，蕴藏着丰富的煤炭和铁矿脉。需要照明工具或基地的支撑结构才能安全进入。",
+    "image": "region_mine_interior.png",
+    "unlockConditions": [
+      {
+        "type": "item",
+        "itemId": "miner_headlamp"
+      },
+      {
+        "type": "building",
+        "buildingId": "mine_support"
+      }
+    ],
+    "baseYields": {
+      "morning": {
+        "coal": 100,
+        "iron_ore": 80
+      },
+      "afternoon": {
+        "coal": 90,
+        "iron_ore": 70
+      },
+      "evening": {
+        "coal": 70,
+        "iron_ore": 60
+      },
+      "night": {
+        "coal": 50,
+        "iron_ore": 50
+      }
+    }
+  }
+]

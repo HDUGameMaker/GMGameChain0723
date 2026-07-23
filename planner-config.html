@@ -1,0 +1,1497 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>策划配置编辑器 — GMGameChain</title>
+<style>
+:root {
+  --bg: #fafaf9; --fg: #1c1b1a; --muted: #6b6964; --border: #e6e4e0;
+  --accent: #4a7c59; --accent-hover: #3d694b; --surface: #ffffff;
+  --good: #2f7d4a; --bad: #b53a2a; --warn: #c97d1a;
+  --sidebar-w: 200px; --topbar-h: 52px;
+}
+* { box-sizing: border-box; margin: 0; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 -apple-system, "Microsoft YaHei", system-ui, sans-serif; display: grid; grid-template-columns: var(--sidebar-w) 1fr; grid-template-rows: var(--topbar-h) 1fr 28px; min-height: 100vh; }
+/* ── Sidebar ── */
+.sidebar { grid-row: 1 / -1; background: #1e2a22; color: #c8d6cb; padding: 16px 0; display: flex; flex-direction: column; overflow-y: auto; }
+.sidebar .brand { font-weight: 700; font-size: 15px; padding: 0 16px 18px; color: #e8f0e9; letter-spacing: -0.01em; }
+.sidebar .brand span { opacity: 0.55; font-weight: 400; font-size: 11px; display: block; margin-top: 2px; }
+.sidebar nav { display: flex; flex-direction: column; gap: 1px; padding: 0 8px; }
+.sidebar nav a { padding: 8px 12px; border-radius: 6px; color: #c8d6cb; text-decoration: none; font-size: 13px; cursor: pointer; transition: background 0.15s; }
+.sidebar nav a:hover { background: rgba(255,255,255,0.06); }
+.sidebar nav a.active { background: var(--accent); color: white; font-weight: 600; }
+.sidebar .nav-label { font-size: 10px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.08em; padding: 20px 12px 8px; }
+.sidebar .footer { margin-top: auto; padding: 16px; font-size: 11px; opacity: 0.45; }
+/* ── Topbar ── */
+.topbar { grid-column: 2; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.topbar h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
+.topbar .status { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border-radius: 999px; }
+.topbar .status.saved { color: var(--good); background: rgba(47,125,74,0.08); }
+.topbar .status.pending { color: var(--warn); background: rgba(201,125,26,0.08); }
+.topbar .status.error { color: var(--bad); background: rgba(181,58,42,0.08); }
+.topbar .status .dot { width: 7px; height: 7px; border-radius: 50%; }
+.topbar .status.saved .dot { background: var(--good); }
+.topbar .status.pending .dot { background: var(--warn); animation: pulse 0.8s infinite; }
+.topbar .status.error .dot { background: var(--bad); }
+@keyframes pulse { 50% { opacity: 0.3; } }
+.topbar .actions { display: flex; align-items: center; gap: 8px; }
+/* ── Buttons ── */
+button, .btn { font: inherit; cursor: pointer; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; transition: all 0.15s; }
+.btn-primary { background: var(--accent); color: white; border: 1px solid var(--accent); }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary { background: transparent; color: var(--fg); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--bg); }
+.btn-danger { background: transparent; color: var(--bad); border: 1px solid rgba(181,58,42,0.25); }
+.btn-danger:hover { background: rgba(181,58,42,0.06); }
+.btn-sm { padding: 3px 8px; font-size: 11px; border-radius: 4px; }
+.btn-icon { width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-size: 14px; }
+.btn-icon:hover { background: var(--bg); }
+input, select, textarea { font: inherit; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--fg); font-size: 13px; outline: none; transition: border-color 0.15s; }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(74,124,89,0.1); }
+input.error, select.error, textarea.error { border-color: var(--bad); box-shadow: 0 0 0 3px rgba(181,58,42,0.08); }
+textarea { resize: vertical; min-height: 48px; }
+label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; margin-bottom: 3px; }
+/* ── Main ── */
+main { grid-column: 2; display: flex; flex-direction: column; overflow: hidden; }
+.toolbar { display: flex; align-items: center; gap: 6px; padding: 10px 24px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+.toolbar .sep { width: 1px; height: 20px; background: var(--border); margin: 0 6px; }
+.toolbar input[type=search] { width: 200px; padding: 5px 10px; font-size: 12px; }
+.editor-wrap { display: flex; flex: 1; overflow: hidden; }
+.list-panel { width: 280px; flex-shrink: 0; border-right: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
+.list-panel .list-header { padding: 10px 14px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.list-panel .list-body { flex: 1; overflow-y: auto; }
+.list-panel .list-item { padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; display: flex; justify-content: space-between; align-items: center; }
+.list-panel .list-item:hover { background: var(--bg); }
+.list-panel .list-item.active { background: rgba(74,124,89,0.08); border-left: 3px solid var(--accent); padding-left: 11px; }
+.list-panel .list-item .name { font-size: 13px; font-weight: 500; }
+.list-panel .list-item .id { font-size: 11px; color: var(--muted); }
+.event-badge { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 999px; margin-left: 6px; font-weight: 500; vertical-align: middle; }
+.event-badge.base { background: rgba(74,124,89,0.12); color: #2f7d4a; }
+.event-badge.expedition { background: rgba(201,125,26,0.12); color: #b87a14; }
+.filter-btn { font-size: 11px; padding: 3px 10px; }
+.filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+.detail-panel { flex: 1; overflow-y: auto; padding: 24px; }
+.detail-panel .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--muted); text-align: center; }
+.detail-panel .empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+.detail-panel .empty-state p { font-size: 14px; }
+.detail-panel .section-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 24px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.detail-panel .section-title:first-child { margin-top: 0; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; margin-bottom: 10px; }
+.form-row.span-1 { grid-template-columns: 1fr; }
+.form-row.span-3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-group { display: flex; flex-direction: column; }
+.form-group.full { grid-column: 1 / -1; }
+.form-group input[type=checkbox] { width: auto; align-self: flex-start; margin-top: 4px; }
+/* ── Sub-list editor ── */
+.sub-list { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.sub-list .sub-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.sub-list .sub-row:last-child { border-bottom: none; }
+.sub-list .sub-row input, .sub-list .sub-row select { flex: 1; min-width: 0; }
+.sub-list .sub-row .amount { width: 80px; flex: none; }
+.sub-list .add-row { padding: 8px 10px; background: var(--bg); border-top: 1px solid var(--border); text-align: center; }
+/* ── Event graph ── */
+.event-graph { border: 1px solid var(--border); border-radius: 8px; padding: 20px; background: var(--surface); margin-bottom: 16px; overflow-x: auto; }
+.event-graph svg { display: block; }
+.event-node { cursor: pointer; }
+.event-node rect { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; rx: 6; }
+.event-node text { font-size: 11px; fill: var(--fg); text-anchor: middle; dominant-baseline: central; }
+.event-node.active rect { stroke: var(--accent); stroke-width: 2.5; fill: rgba(74,124,89,0.06); }
+.event-link { stroke: var(--border); stroke-width: 1.5; fill: none; marker-end: url(#arrowhead); }
+/* ── Bottom bar ── */
+.bottombar { grid-column: 2; background: var(--surface); border-top: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--muted); }
+.bottombar .errors { color: var(--bad); }
+/* ── Toast ── */
+.toast { position: fixed; bottom: 48px; right: 24px; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; z-index: 999; animation: slideIn 0.2s ease; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+.toast.success { background: #e8f5e9; color: var(--good); border: 1px solid rgba(47,125,74,0.2); }
+.toast.error { background: #fdecea; color: var(--bad); border: 1px solid rgba(181,58,42,0.2); }
+@keyframes slideIn { from { transform: translateY(12px); opacity: 0; } }
+/* ── Dir banner ── */
+.dir-banner { background: #fff8e1; border-bottom: 1px solid #f0c040; padding: 6px 24px; font-size: 12px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s; }
+.dir-banner .msg { color: #8a6d14; }
+.dir-banner button { background: #f0c040; color: #5c4100; border: none; font-weight: 600; padding: 3px 12px; font-size: 11px; border-radius: 4px; cursor: pointer; }
+.dir-banner button:hover { background: #e0b030; }
+.dir-banner.connected { background: #e8f5e9; border-bottom-color: #81c784; padding: 4px 24px; font-size: 11px; max-height: 28px; }
+.dir-banner.connected .msg { color: #2f7d4a; }
+.dir-banner.hidden { max-height: 0; padding-top: 0; padding-bottom: 0; border-bottom-width: 0; opacity: 0; overflow: hidden; }
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="brand">⚙️ 策划配置中心<span>GMGameChain Editor</span></div>
+  <nav>
+    <div class="nav-label">游戏配置</div>
+    <a data-tab="buildings" class="active">🏠 建筑配置</a>
+    <a data-tab="resources">⛏️ 资源配置</a>
+    <a data-tab="items">🎒 物品配置</a>
+    <a data-tab="events">📜 事件配置</a>
+    <a data-tab="expeditions">🗺️ 探险配置</a>
+    <a data-tab="map">🏔️ 地图配置</a>
+  </nav>
+  <div class="footer">GMGameChain © 2026</div>
+</aside>
+
+<!-- Topbar -->
+<header class="topbar">
+  <h1 id="tabTitle">建筑配置 — buildings.json</h1>
+  <div class="actions">
+    <span id="saveStatus" class="status saved"><span class="dot"></span>已保存</span>
+    <button id="btnSelectDir" class="btn-secondary" title="选择 config 文件夹以获得写入权限">📁 选择目录</button>
+    <button id="btnSave" class="btn-primary" title="立即保存所有修改" style="display:none">💾 保存</button>
+    <button id="btnToggleAuto" class="btn-secondary" title="切换自动/手动保存">🔄 自动保存</button>
+  </div>
+</header>
+
+<!-- Main -->
+<main>
+  <div id="dirBanner" class="dir-banner">
+    <span class="msg">⚠️ 尚未连接 config 目录 — 点击右侧按钮选择项目的 config/ 文件夹，即可自动保存修改</span>
+    <button onclick="selectDir()">📁 选择 config 目录</button>
+  </div>
+  <div class="toolbar">
+    <button id="btnAdd" class="btn-primary">+ 新增</button>
+    <button id="btnDup" class="btn-secondary">⧉ 复制</button>
+    <button id="btnDel" class="btn-danger">🗑 删除</button>
+    <span class="sep"></span>
+    <input type="search" id="searchInput" placeholder="搜索名称或ID..." />
+    <span class="sep"></span>
+    <span id="eventFilterGroup" style="display:none;align-items:center;gap:4px">
+      <button class="btn-secondary btn-sm filter-btn active" data-filter="all">全部</button>
+      <button class="btn-secondary btn-sm filter-btn" data-filter="base">🏠 基地</button>
+      <button class="btn-secondary btn-sm filter-btn" data-filter="expedition">🗺️ 探险</button>
+      <span class="sep"></span>
+    </span>
+    <span id="itemCount" style="font-size:12px;color:var(--muted)"></span>
+  </div>
+  <div class="editor-wrap">
+    <div class="list-panel">
+      <div class="list-header" id="listHeader">建筑列表</div>
+      <div class="list-body" id="listBody"></div>
+    </div>
+    <div class="detail-panel" id="detailPanel">
+      <div class="empty-state">
+        <div class="icon">📋</div>
+        <p>从左侧列表选择一个项目进行编辑</p>
+        <p style="font-size:12px;margin-top:4px;opacity:0.6">或点击「+ 新增」创建新条目</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Bottombar -->
+<div class="bottombar">
+  <span id="bottomLeft">共 0 项</span>
+  <span id="bottomErrors" class="errors"></span>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   File System Access API — 读写 config 目录
+   ═══════════════════════════════════════════ */
+let dirHandle = null;
+const DB_NAME = 'gmgame-config-editor';
+const DB_STORE = 'dir-handles';
+
+// -- IndexedDB persistence for directory handle --
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => { req.result.createObjectStore(DB_STORE); };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function storeDirHandle() {
+  if (!dirHandle) return;
+  try {
+    const db = await openDB();
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put(dirHandle, 'configDir');
+    await new Promise(r => { tx.oncomplete = r; tx.onerror = r; });
+    db.close();
+  } catch(e) { console.warn('Failed to store dir handle:', e); }
+}
+
+async function restoreDirHandle() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(DB_STORE, 'readonly');
+    const handle = await new Promise(r => {
+      const req = tx.objectStore(DB_STORE).get('configDir');
+      req.onsuccess = () => r(req.result);
+      req.onerror = () => r(null);
+    });
+    db.close();
+    if (!handle) return false;
+    // Verify permission
+    const opts = { mode: 'readwrite' };
+    if ((await handle.queryPermission(opts)) === 'granted') {
+      dirHandle = handle;
+      return true;
+    }
+    if ((await handle.requestPermission(opts)) === 'granted') {
+      dirHandle = handle;
+      return true;
+    }
+    return false;
+  } catch(e) { console.warn('Failed to restore dir handle:', e); return false; }
+}
+const CONFIG_FILES = {
+  buildings:   { path: 'buildings.json',              dir: '' },
+  resources:   { path: 'resources.json',              dir: '' },
+  items:       { path: 'items.json',                  dir: '' },
+  events_base: { path: 'events_base.json',            dir: 'events' },
+  events_exp:  { path: 'events_expedition.json',      dir: 'events' },
+  regions:     { path: 'regions.json',                dir: 'expeditions' },
+  exp_global:  { path: 'expedition_global.json',      dir: 'expeditions' },
+  base_map:    { path: 'base_map.json',               dir: 'maps' },
+};
+
+async function selectDir() {
+  try {
+    dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    await storeDirHandle();
+    updateDirUI();
+    showToast('目录已连接，可以自动保存', 'success');
+    await loadAllData();
+  } catch(e) {
+    if (e.name !== 'AbortError') showToast('目录选择失败: ' + e.message, 'error');
+  }
+}
+
+function updateDirUI() {
+  const connected = !!dirHandle;
+  document.getElementById('btnSelectDir').textContent = connected ? '📁 已连接' : '📁 选择目录';
+  const btn = document.getElementById('btnSelectDir');
+  if (connected) { btn.classList.add('btn-primary'); }
+  else { btn.classList.remove('btn-primary'); }
+  const banner = document.getElementById('dirBanner');
+  if (connected) {
+    banner.className = 'dir-banner connected';
+    banner.innerHTML = '<span class="msg">✅ 已连接 — 自动保存中</span>';
+    setTimeout(() => { banner.classList.add('hidden'); }, 3000);
+  } else {
+    banner.className = 'dir-banner';
+    banner.innerHTML = '<span class="msg">⚠️ 尚未连接 config 目录 — 点击右侧按钮选择项目的 config/ 文件夹，即可自动保存修改</span><button onclick="selectDir()">📁 选择 config 目录</button>';
+  }
+}
+
+async function readFile(fileKey) {
+  const cfg = CONFIG_FILES[fileKey];
+  // Try File System Access API first
+  if (dirHandle) {
+    try {
+      let d = dirHandle;
+      if (cfg.dir) {
+        const subdirs = cfg.dir.split('/');
+        for (const sd of subdirs) d = await d.getDirectoryHandle(sd);
+      }
+      const fh = await d.getFileHandle(cfg.path);
+      const file = await fh.getFile();
+      return await file.text();
+    } catch(e) { /* fall through to fetch */ }
+  }
+  // Fallback: fetch from server
+  const url = cfg.dir ? `config/${cfg.dir}/${cfg.path}` : `config/${cfg.path}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} loading ${url}`);
+  return await resp.text();
+}
+
+async function writeFile(fileKey, content) {
+  if (!dirHandle) throw new Error('未连接目录');
+  const cfg = CONFIG_FILES[fileKey];
+  let d = dirHandle;
+  if (cfg.dir) {
+    const subdirs = cfg.dir.split('/');
+    for (const sd of subdirs) d = await d.getDirectoryHandle(sd);
+  }
+  const fh = await d.getFileHandle(cfg.path, { create: false });
+  const writable = await fh.createWritable();
+  await writable.write(content);
+  await writable.close();
+}
+
+/* ═══════════════════════════════════════════
+   State
+   ═══════════════════════════════════════════ */
+const state = {
+  tab: 'buildings',
+  autoSave: true,
+  data: {},           // { buildings: [...], resources: [...], ... }
+  selectedIdx: -1,
+  dirtyFiles: new Set(),
+  saveTimer: null,
+  undoStack: [],
+  redoStack: [],
+  eventTypeFilter: 'all',  // 'all' | 'base' | 'expedition'
+};
+
+/* ═══════════════════════════════════════════
+   Data loading
+   ═══════════════════════════════════════════ */
+async function loadAllData() {
+  try {
+    const [buildings, resources, items, eventsBase, eventsExp, regions, expGlobal, baseMap] =
+      await Promise.all([
+        readFile('buildings'), readFile('resources'), readFile('items'),
+        readFile('events_base'), readFile('events_exp'),
+        readFile('regions'), readFile('exp_global'), readFile('base_map'),
+      ]);
+    state.data.buildings = JSON.parse(buildings);
+    state.data.resources = JSON.parse(resources);
+    state.data.items = JSON.parse(items);
+    const eb = JSON.parse(eventsBase);
+    const ee = JSON.parse(eventsExp);
+    state.data.events = [...eb, ...ee];
+    state.data.events_base_file = eb;
+    state.data.events_exp_file = ee;
+    state.eventFileSource = new Map();
+    eb.forEach(e => state.eventFileSource.set(e.id, 'base'));
+    ee.forEach(e => state.eventFileSource.set(e.id, 'expedition'));
+    state.data.regions = JSON.parse(regions);
+    state.data.exp_global = JSON.parse(expGlobal);
+    state.data.base_map = JSON.parse(baseMap);
+    refreshList();
+  } catch(e) {
+    showToast('数据加载失败: ' + e.message, 'error');
+    console.error(e);
+  }
+}
+
+// Initial load: restore handle from IndexedDB, then load data
+(async function init() {
+  const restored = await restoreDirHandle();
+  if (restored) updateDirUI();
+  await loadAllData();
+})();
+
+/* ═══════════════════════════════════════════
+   Current tab data access
+   ═══════════════════════════════════════════ */
+function currentData() {
+  switch(state.tab) {
+    case 'buildings': return state.data.buildings;
+    case 'resources': return state.data.resources;
+    case 'items':     return state.data.items;
+    case 'events':    return state.data.events;
+    case 'expeditions': return state.data.regions;
+    case 'map':       return [state.data.base_map]; // 单例包装为数组
+    default: return [];
+  }
+}
+
+function currentFileKeys() {
+  switch(state.tab) {
+    case 'buildings': return ['buildings'];
+    case 'resources': return ['resources'];
+    case 'items':     return ['items'];
+    case 'events':    return ['events_base', 'events_exp'];
+    case 'expeditions': return ['regions', 'exp_global'];
+    case 'map':       return ['base_map'];
+    default: return [];
+  }
+}
+
+function itemDisplayName(item) {
+  return item.name || item.id || (item.gridWidth ? `地图 (${item.gridWidth}×${item.gridHeight})` : '(未命名)');
+}
+
+// -- Dropdown helpers for reference fields --
+function resSelect(name, val, nullable) {
+  let opts = (state.data.resources||[]).map(r => `<option value="${r.id}" ${val===r.id?'selected':''}>${r.name}</option>`).join('');
+  if (nullable) opts = '<option value="">(无)</option>' + opts;
+  return `<select id="f_${name}" data-field="${name}">${opts}</select>`;
+}
+function bldSelect(name, val, nullable) {
+  let opts = (state.data.buildings||[]).map(b => `<option value="${b.id}" ${val===b.id?'selected':''}>${b.name}</option>`).join('');
+  if (nullable) opts = '<option value="">(无)</option>' + opts;
+  return `<select id="f_${name}" data-field="${name}">${opts}</select>`;
+}
+function itemSelect(name, val, nullable) {
+  let opts = (state.data.items||[]).map(it => `<option value="${it.id}" ${val===it.id?'selected':''}>${it.name}</option>`).join('');
+  if (nullable) opts = '<option value="">(无)</option>' + opts;
+  return `<select id="f_${name}" data-field="${name}">${opts}</select>`;
+}
+function resSelectSub(idx, val) {
+  const opts = (state.data.resources||[]).map(r => `<option value="${r.id}" ${val===r.id?'selected':''}>${r.name}</option>`).join('');
+  return `<select data-subidx="${idx}" data-key="resourceId"><option value="">--</option>${opts}</select>`;
+}
+function itemSelectSub(idx, val) {
+  const opts = (state.data.items||[]).map(it => `<option value="${it.id}" ${val===it.id?'selected':''}>${it.name}</option>`).join('');
+  return `<select data-subidx="${idx}" data-key="itemId"><option value="">--</option>${opts}</select>`;
+}
+
+/* ═══════════════════════════════════════════
+   Save
+   ═══════════════════════════════════════════ */
+function markDirty() {
+  state.dirtyFiles.add(state.tab);
+  if (state.autoSave) scheduleSave();
+  updateSaveStatus();
+}
+
+function scheduleSave() {
+  if (state.saveTimer) clearTimeout(state.saveTimer);
+  document.getElementById('saveStatus').className = 'status pending';
+  document.getElementById('saveStatus').innerHTML = '<span class="dot"></span>保存中...';
+  state.saveTimer = setTimeout(() => doSave(), 1000);
+}
+
+async function doSave() {
+  try {
+    const keys = currentFileKeys();
+    // For events, split back to base vs expedition files
+    if (state.tab === 'events') {
+      const allEvents = state.data.events;
+      const baseEvents = allEvents.filter(e => state.eventFileSource.get(e.id) === 'base');
+      const expEvents = allEvents.filter(e => state.eventFileSource.get(e.id) !== 'base');
+      await writeFile('events_base', JSON.stringify(baseEvents, null, 2));
+      await writeFile('events_exp', JSON.stringify(expEvents, null, 2));
+    } else if (state.tab === 'expeditions') {
+      await writeFile('regions', JSON.stringify(state.data.regions, null, 2));
+      await writeFile('exp_global', JSON.stringify(state.data.exp_global, null, 2));
+    } else if (state.tab === 'map') {
+      await writeFile('base_map', JSON.stringify(state.data.base_map, null, 2));
+    } else {
+      const key = keys[0];
+      await writeFile(key, JSON.stringify(currentData(), null, 2));
+    }
+    state.dirtyFiles.delete(state.tab);
+    updateSaveStatus();
+  } catch(e) {
+    document.getElementById('saveStatus').className = 'status error';
+    document.getElementById('saveStatus').innerHTML = '<span class="dot"></span>保存失败';
+    showToast('保存失败: ' + e.message, 'error');
+  }
+}
+
+function updateSaveStatus() {
+  const el = document.getElementById('saveStatus');
+  if (state.dirtyFiles.size === 0) {
+    el.className = 'status saved';
+    el.innerHTML = '<span class="dot"></span>已保存';
+  }
+}
+
+/* ═══════════════════════════════════════════
+   List & Selection
+   ═══════════════════════════════════════════ */
+function refreshList() {
+  const data = currentData();
+  const body = document.getElementById('listBody');
+  const search = (document.getElementById('searchInput').value || '').toLowerCase();
+
+  let filtered = data;
+  if (search && data) {
+    filtered = data.filter(item =>
+      (item.name || '').toLowerCase().includes(search) ||
+      (item.id || '').toLowerCase().includes(search)
+    );
+  }
+  // Event type filter
+  if (state.tab === 'events' && state.eventTypeFilter !== 'all' && state.eventFileSource && data) {
+    filtered = filtered.filter(item =>
+      state.eventFileSource.get(item.id) === state.eventTypeFilter
+    );
+  }
+
+  if (!data || data.length === 0) {
+    body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">暂无数据</div>';
+    document.getElementById('bottomLeft').textContent = '共 0 项';
+    document.getElementById('itemCount').textContent = '';
+    return;
+  }
+
+  body.innerHTML = filtered.map((item, i) => {
+    const origIdx = data.indexOf(item);
+    const active = origIdx === state.selectedIdx ? ' active' : '';
+    let badge = '';
+    if (state.tab === 'events' && state.eventFileSource) {
+      const src = state.eventFileSource.get(item.id);
+      if (src === 'base') badge = '<span class="event-badge base">🏠 基地</span>';
+      else if (src === 'expedition') badge = '<span class="event-badge expedition">🗺️ 探险</span>';
+    }
+    return `<div class="list-item${active}" data-idx="${origIdx}">
+      <div><div class="name">${itemDisplayName(item)}${badge}</div><div class="id">${item.id || ''}</div></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('bottomLeft').textContent = `共 ${data.length} 项` + (search ? `（筛选后 ${filtered.length} 项）` : '');
+  document.getElementById('itemCount').textContent = `${data.length} 项`;
+
+  // Click handlers
+  body.querySelectorAll('.list-item').forEach(el => {
+    el.addEventListener('click', () => selectItem(parseInt(el.dataset.idx)));
+  });
+}
+
+function selectItem(idx) {
+  state.selectedIdx = idx;
+  refreshList();
+  renderDetail();
+}
+
+/* ═══════════════════════════════════════════
+   Detail rendering — per tab
+   ═══════════════════════════════════════════ */
+function renderDetail() {
+  const panel = document.getElementById('detailPanel');
+  if (state.selectedIdx < 0) {
+    panel.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>从左侧列表选择一个项目进行编辑</p><p style="font-size:12px;margin-top:4px;opacity:0.6">或点击「+ 新增」创建新条目</p></div>`;
+    return;
+  }
+
+  const data = currentData();
+  if (!data || state.selectedIdx >= data.length) { panel.innerHTML = ''; return; }
+  const item = data[state.selectedIdx];
+
+  let html = '';
+  switch(state.tab) {
+    case 'buildings': html = renderBuildingForm(item); break;
+    case 'resources': html = renderResourceForm(item); break;
+    case 'items':     html = renderItemForm(item); break;
+    case 'events':    html = renderEventForm(item); break;
+    case 'expeditions': html = renderRegionForm(item); break;
+    case 'map':       html = renderMapForm(); break;
+  }
+  panel.innerHTML = html;
+  bindFormEvents();
+}
+
+function field(name, label, value, opts = {}) {
+  const { type = 'text', placeholder = '', rows, options, optionLabels, full } = opts;
+  const cls = full ? 'form-group full' : 'form-group';
+  let input;
+  if (type === 'textarea') {
+    input = `<textarea id="f_${name}" data-field="${name}" rows="${rows || 2}" placeholder="${placeholder}">${escapeHTML(String(value ?? ''))}</textarea>`;
+  } else if (type === 'checkbox') {
+    input = `<input type="checkbox" id="f_${name}" data-field="${name}" ${value ? 'checked' : ''} />`;
+  } else if (type === 'select' && options) {
+    const labels = optionLabels || {};
+    input = `<select id="f_${name}" data-field="${name}">${options.map(o => `<option value="${o}" ${String(value)===o?'selected':''}>${labels[o] || o}</option>`).join('')}</select>`;
+  } else if (type === 'number') {
+    input = `<input type="number" id="f_${name}" data-field="${name}" value="${value ?? 0}" placeholder="${placeholder}" />`;
+  } else {
+    input = `<input type="text" id="f_${name}" data-field="${name}" value="${escapeHTML(String(value ?? ''))}" placeholder="${placeholder}" />`;
+  }
+  return `<div class="${cls}"><label for="f_${name}">${label}</label>${input}</div>`;
+}
+
+function subListEditor(name, label, entries, entryTemplate, opts = {}) {
+  const { columns = '1fr 1fr', headers } = opts;
+  let html = `<div class="section-title">${label}</div>
+    <div class="sub-list" id="sl_${name}">`;
+  (entries || []).forEach((entry, i) => {
+    html += `<div class="sub-row" data-subidx="${i}">${entryTemplate(entry, i)}<button class="btn-icon btn-sm sub-del" title="删除">×</button></div>`;
+  });
+  html += `<div class="add-row"><button class="btn-secondary btn-sm sub-add" data-sub="${name}">+ 添加</button></div>`;
+  html += `</div>`;
+  return html;
+}
+
+function escapeHTML(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderBuildingForm(b) {
+  let html = '<div class="form-row span-3">';
+  html += field('id', 'ID', b.id, { placeholder: 'work_shed' });
+  html += field('name', '名称', b.name, { placeholder: '工棚' });
+  html += field('icon', '图标', b.icon, { placeholder: 'icon_xxx.png' });
+  html += '</div>';
+
+  html += '<div class="form-row">';
+  html += field('mapIcon', '地图精灵', b.mapIcon, { placeholder: 'assets/buildings/map_xxx.png', full: true });
+  html += field('imageDetail', '详情图', b.imageDetail, { placeholder: 'assets/buildings/detail_xxx.png', full: true });
+  html += '</div>';
+
+  html += '<div class="form-group full"><label for="f_description">描述</label>';
+  html += `<textarea id="f_description" data-field="description" rows="2">${escapeHTML(b.description || '')}</textarea></div>`;
+
+  html += '<div class="form-row span-3">';
+  html += field('footprintWidth', '占地宽', b.footprint?.width ?? 1, { type: 'number' });
+  html += field('footprintHeight', '占地高', b.footprint?.height ?? 1, { type: 'number' });
+  html += field('buildTime', '建造时间(轮)', b.buildTime ?? 1, { type: 'number' });
+  html += '</div>';
+
+  html += '<div class="form-row span-3">';
+  html += field('housingCapacity', '人口容量', b.housingCapacity, { type: 'number', placeholder: '无' });
+  html += field('foodCapacity', '食物容量', b.foodCapacity, { type: 'number', placeholder: '无' });
+  html += field('maxWorkers', '最大工人', b.maxWorkers ?? 0, { type: 'number' });
+  html += '</div>';
+
+  html += '<div class="form-row span-3">';
+  html += field('maxCount', '最大数量', b.maxCount, { type: 'number', placeholder: 'null=无限' });
+  html += field('storageMultiplier', '存储倍率', b.storageMultiplier, { type: 'number', placeholder: '无' });
+  html += '</div>';
+
+  html += '<div class="form-row span-3">';
+  html += field('upgradesFrom', '升级来源', b.upgradesFrom, { type: 'select', options: ['', ...state.data.buildings.map(bld => bld.id)], optionLabels: {'': '(无)', ...Object.fromEntries(state.data.buildings.map(bld => [bld.id, bld.name+' ('+bld.id+')']))} });
+  html += field('upgradesTo', '升级目标', b.upgradesTo, { type: 'select', options: ['', ...state.data.buildings.map(bld => bld.id)], optionLabels: {'': '(无)', ...Object.fromEntries(state.data.buildings.map(bld => [bld.id, bld.name+' ('+bld.id+')']))} });
+  html += field('allowedGrounds', '允许地形', (b.allowedGrounds || []).join(','), { placeholder: 'G,F' });
+  html += '</div>';
+
+  html += '<div class="form-row">';
+  html += field('initialBuilding', '初始建筑', b.initialBuilding, { type: 'checkbox' });
+  html += field('demolishable', '可拆除', b.demolishable !== false, { type: 'checkbox' });
+  html += '</div>';
+
+  // buildCost
+  html += subListEditor('buildCost', '建造成本', b.buildCost || [], (c, i) =>
+    `${resSelectSub(i, c.resourceId)}
+     <input class="amount" data-subidx="${i}" data-key="amount" type="number" value="${c.amount||0}" placeholder="数量" />`
+  );
+
+  // upgradeCost
+  if (b.upgradeCost) {
+    html += subListEditor('upgradeCost', '升级成本', b.upgradeCost, (c, i) =>
+      `${resSelectSub(i, c.resourceId)}
+       <input class="amount" data-subidx="${i}" data-key="amount" type="number" value="${c.amount||0}" placeholder="数量" />`
+    );
+  }
+
+  // Production
+  if (b.production) {
+    html += '<div class="section-title">生产配置</div>';
+    html += `<div class="form-row">${field('prod_perWorker', '按工人', b.production.perWorker, { type: 'checkbox' })}</div>`;
+    html += subListEditor('prodInput', '生产输入', b.production.input || [], (c, i) =>
+      `${resSelectSub(i, c.resourceId)}
+       <input class="amount" data-subidx="${i}" data-key="amount" type="number" value="${c.amount||0}" placeholder="数量" />`
+    );
+    html += subListEditor('prodOutput', '生产输出', b.production.output || [], (c, i) =>
+      `${resSelectSub(i, c.resourceId)}
+       <input class="amount" data-subidx="${i}" data-key="amount" type="number" value="${c.amount||0}" placeholder="数量" />`
+    );
+  }
+
+  // Synthesis recipes
+  if (b.synthesisRecipes && b.synthesisRecipes.length > 0) {
+    html += '<div class="section-title">合成配方</div>';
+    b.synthesisRecipes.forEach((r, ri) => {
+      html += `<div style="border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px"><strong>${r.name || r.id}</strong>`;
+      html += `<div class="form-row span-3">${field('recipe_'+ri+'_id', '配方ID', r.id)}${field('recipe_'+ri+'_workTicks', '工时', r.workTicks, {type:'number'})}
+        <div class="form-group"><label>产出物品</label>${itemSelectSub(ri, r.output?.itemId || '')}</div></div>`;
+      html += subListEditor('recipe_'+ri+'_cost', '资源消耗', r.resourceCost || [], (c, i) =>
+        `${resSelectSub(i, c.resourceId)}
+         <input class="amount" data-subidx="${i}" data-key="amount" type="number" value="${c.amount||0}" placeholder="数量" />`
+      );
+      html += '</div>';
+    });
+  }
+
+  // labelLayout
+  html += '<div class="section-title">标签布局</div>';
+  html += '<div class="form-row span-3">';
+  html += field('ll_nameOffsetY', '名称偏移Y', b.labelLayout?.nameOffsetY ?? 0, { type: 'number' });
+  html += field('ll_progressBarOffsetY', '进度条偏移Y', b.labelLayout?.progressBarOffsetY ?? 0, { type: 'number' });
+  html += field('ll_workersOffsetY', '工人偏移Y', b.labelLayout?.workersOffsetY ?? 0, { type: 'number' });
+  html += '</div>';
+
+  return html;
+}
+
+function renderResourceForm(r) {
+  let html = '<div class="form-row">';
+  html += field('id', 'ID', r.id);
+  html += field('name', '名称', r.name);
+  html += '</div>';
+  html += '<div class="form-row span-3">';
+  html += field('initial', '初始值', r.initial, { type: 'number' });
+  html += field('max', '上限', r.max, { type: 'number' });
+  html += field('icon', '图标', r.icon, { placeholder: 'resource_xxx.png' });
+  html += '</div>';
+  html += '<div class="form-row">';
+  html += field('showInHUD', 'HUD显示', r.showInHUD, { type: 'checkbox' });
+  html += field('rare', '稀有', r.rare, { type: 'checkbox' });
+  html += '</div>';
+  return html;
+}
+
+function renderItemForm(item) {
+  let html = '<div class="form-row span-3">';
+  html += field('id', 'ID', item.id);
+  html += field('name', '名称', item.name);
+  html += field('icon', '图标', item.icon, { placeholder: 'item_xxx.png' });
+  html += '</div>';
+  html += '<div class="form-group full"><label for="f_description">描述</label>';
+  html += `<textarea id="f_description" data-field="description" rows="2">${escapeHTML(item.description || '')}</textarea></div>`;
+  html += '<div class="form-row span-3">';
+  html += field('capacityCost', '容量消耗', item.capacityCost ?? 0, { type: 'number' });
+  html += field('unique', '唯一', item.unique, { type: 'checkbox' });
+  html += field('consumable', '消耗品', item.consumable, { type: 'checkbox' });
+  html += '</div>';
+
+  // expeditionEffects
+  html += '<div class="section-title">探险效果</div>';
+  html += `<div class="sub-list" id="sl_expEffects">`;
+  (item.expeditionEffects || []).forEach((ef, i) => {
+    html += `<div class="sub-row" data-subidx="${i}">
+      <select data-subidx="${i}" data-key="type">
+        <option value="resource_capacity_bonus" ${ef.type==='resource_capacity_bonus'?'selected':''}>资源容量加成</option>
+        <option value="yield_multiplier" ${ef.type==='yield_multiplier'?'selected':''}>产出倍率</option>
+        <option value="yield_flat_bonus" ${ef.type==='yield_flat_bonus'?'selected':''}>产出固定加成</option>
+      </select>
+      <input class="amount" data-subidx="${i}" data-key="value" type="number" value="${ef.value||0}" placeholder="值" step="0.1" />
+      ${resSelectSub(i, ef.resourceId||'')}
+      <input class="amount" data-subidx="${i}" data-key="regions" value="${(ef.regions||[]).join(',')}" placeholder="区域(逗号分隔)" />
+      <button class="btn-icon btn-sm sub-del" title="删除">×</button>
+    </div>`;
+  });
+  html += `<div class="add-row"><button class="btn-secondary btn-sm sub-add" data-sub="expEffects">+ 添加效果</button></div></div>`;
+  return html;
+}
+
+function renderEventForm(ev) {
+  let html = '<div class="form-row span-3">';
+  html += field('id', 'ID', ev.id);
+  html += field('name', '名称', ev.name);
+  html += field('image', '图片', ev.image, { placeholder: 'event_xxx.png' });
+  html += '</div>';
+  html += '<div class="form-group full"><label for="f_description">描述</label>';
+  html += `<textarea id="f_description" data-field="description" rows="3">${escapeHTML(ev.description || '')}</textarea></div>`;
+
+  html += '<div class="form-row span-3">';
+  html += field('priority', '优先级', ev.priority ?? 0, { type: 'number' });
+  html += field('probability', '概率', ev.probability ?? 1, { type: 'number', placeholder: '0-1' });
+  html += field('cooldownTicks', '冷却(轮)', ev.cooldownTicks ?? 0, { type: 'number' });
+  html += '</div>';
+  html += '<div class="form-row span-3">';
+  html += field('mutexGroup', '互斥组', ev.mutexGroup, { placeholder: 'null=无' });
+  html += field('maxTriggers', '最大触发次数', ev.maxTriggers, { type: 'number', placeholder: 'null=无限' });
+  html += '</div>';
+
+  // Trigger conditions
+  html += '<div class="section-title">触发条件</div>';
+  const tc = ev.triggerConditions || {};
+  html += `<div class="form-group full"><label>时段（逗号分隔: morning,afternoon,evening,night）</label>
+    <input type="text" id="f_tcPeriods" data-field="tcPeriods" value="${(tc.timePeriods||[]).join(',')}" /></div>`;
+  html += '<div class="form-row">';
+  html += field('tcItems', '需要物品(逗号分隔)', (tc.requiredItems||[]).join(','), { full: true });
+  html += field('tcBuildings', '需要建筑(逗号分隔)', (tc.requiredBuildings||[]).join(','), { full: true });
+  html += '</div>';
+  // 探险事件专属触发条件
+  html += '<div class="section-title" style="color:#b87a14">🗺️ 探险事件专属条件</div>';
+  html += '<div class="form-row">';
+  html += field('tcRegions', '区域限制(逗号分隔区域ID)', (tc.regions||[]).join(','), { full: true, placeholder: '留空=仅基地事件' });
+  html += field('tcCarriedItems', '需携带物品(逗号分隔)', (tc.requiredCarriedItems||[]).join(','), { full: true, placeholder: '探险背包中必须携带的物品' });
+  html += '</div>';
+
+  // Invalidation conditions
+  html += '<div class="section-title">失效条件</div>';
+  const ic = ev.invalidationConditions || {};
+  html += '<div class="form-row">';
+  html += field('icItems', '需要物品(逗号分隔)', (ic.requiredItems||[]).join(','), { full: true });
+  html += field('icBuildings', '需要建筑(逗号分隔)', (ic.requiredBuildings||[]).join(','), { full: true });
+  html += '</div>';
+
+  // Effects
+  html += '<div class="section-title">事件效果</div>';
+  html += subListEditor('effects', '效果列表', ev.effects || [], (ef, i) => {
+    let typeOpts = ['add_resource','consume_resource','obtain_item','consume_item','unlock_building','trigger_event','schedule_event']
+      .map(t => `<option value="${t}" ${ef.type===t?'selected':''}>${t}</option>`).join('');
+    return `<select data-subidx="${i}" data-key="type" style="flex:1">${typeOpts}</select>
+      ${resSelectSub(i, ef.resourceId||'')}
+      <input class="amount" data-subidx="${i}" data-key="amount" type="number" value="${ef.amount||0}" placeholder="数量" />
+      <input class="amount" data-subidx="${i}" data-key="eventId" value="${escapeHTML(ef.eventId||'')}" placeholder="事件ID" />
+      <input class="amount" data-subidx="${i}" data-key="itemId" value="${escapeHTML(ef.itemId||'')}" placeholder="物品ID" />`;
+  });
+
+  // Options
+  html += '<div class="section-title">选项</div>';
+  (ev.options || []).forEach((opt, oi) => {
+    html += `<div style="border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px">
+      <div class="form-group full"><label>选项 ${oi+1} 文本</label>
+      <input type="text" id="f_opt_${oi}_text" data-opt="${oi}" data-key="text" value="${escapeHTML(opt.text)}" /></div>`;
+    html += subListEditor(`opt_${oi}_effects`, '效果', opt.effects || [], (ef, i) => {
+      let typeOpts = ['add_resource','consume_resource','obtain_item','consume_item','unlock_building','trigger_event','schedule_event']
+        .map(t => `<option value="${t}" ${ef.type===t?'selected':''}>${t}</option>`).join('');
+      return `<select data-subidx="${i}" data-key="type" style="flex:1">${typeOpts}</select>
+        ${resSelectSub(i, ef.resourceId||'')}
+        <input class="amount" data-subidx="${i}" data-key="amount" type="number" value="${ef.amount||0}" placeholder="数量" />
+        <input class="amount" data-subidx="${i}" data-key="eventId" value="${escapeHTML(ef.eventId||'')}" placeholder="事件ID" />`;
+    });
+    html += '</div>';
+  });
+
+  return html;
+}
+
+function renderRegionForm(r) {
+  let html = '<div class="form-row span-3">';
+  html += field('id', 'ID', r.id);
+  html += field('name', '名称', r.name);
+  html += field('image', '图片', r.image, { placeholder: 'region_xxx.png' });
+  html += '</div>';
+  html += '<div class="form-group full"><label for="f_description">描述</label>';
+  html += `<textarea id="f_description" data-field="description" rows="2">${escapeHTML(r.description || '')}</textarea></div>`;
+
+  // Unlock conditions
+  html += '<div class="section-title">解锁条件</div>';
+  html += subListEditor('unlockConditions', '条件列表 (type: item/building)', r.unlockConditions || [], (c, i) =>
+    `<select data-subidx="${i}" data-key="type"><option value="item" ${c.type==='item'?'selected':''}>item</option><option value="building" ${c.type==='building'?'selected':''}>building</option></select>
+     <input class="amount" data-subidx="${i}" data-key="itemId" value="${escapeHTML(c.itemId||'')}" placeholder="物品/建筑ID" />`
+  );
+
+  // Base yields
+  html += '<div class="section-title">基础产出（每时段）</div>';
+  const periods = ['morning','afternoon','evening','night'];
+  html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
+  html += '<thead><tr><th>时段</th><th>原木</th><th>石头</th><th>煤炭</th><th>铁矿</th></tr></thead><tbody>';
+  periods.forEach(p => {
+    const y = r.baseYields?.[p] || {};
+    html += `<tr>
+      <td style="padding:4px 8px;font-weight:500">${p}</td>
+      <td><input type="number" id="f_yield_${p}_wood" data-yield="${p}" data-res="wood" value="${y.wood??''}" placeholder="0" style="width:80px" /></td>
+      <td><input type="number" id="f_yield_${p}_stone" data-yield="${p}" data-res="stone" value="${y.stone??''}" placeholder="0" style="width:80px" /></td>
+      <td><input type="number" id="f_yield_${p}_coal" data-yield="${p}" data-res="coal" value="${y.coal??''}" placeholder="0" style="width:80px" /></td>
+      <td><input type="number" id="f_yield_${p}_iron_ore" data-yield="${p}" data-res="iron_ore" value="${y.iron_ore??''}" placeholder="0" style="width:80px" /></td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+
+  return html;
+}
+
+function renderMapForm() {
+  const m = state.data.base_map;
+  let html = '<div class="section-title">地图参数</div>';
+  html += '<div class="form-row span-3">';
+  html += field('map_gridWidth', '宽(列)', m.gridWidth, { type: 'number' });
+  html += field('map_gridHeight', '高(行)', m.gridHeight, { type: 'number' });
+  html += field('map_tileSize', '格子大小', m.tileSize, { type: 'number' });
+  html += '</div>';
+
+  html += '<div class="section-title">地形类型</div>';
+  Object.entries(m.groundTypes || {}).forEach(([key, gt]) => {
+    html += `<div class="form-row span-3" style="margin-bottom:8px;padding:8px;border:1px solid var(--border);border-radius:6px">
+      <div class="form-group"><label>代码</label><input type="text" value="${key}" readonly style="font-weight:600;background:var(--bg)" /></div>
+      <div class="form-group"><label>名称</label><input type="text" id="f_gt_${key}_name" data-gt="${key}" data-key="name" value="${escapeHTML(gt.name)}" /></div>
+      <div class="form-group"><label>颜色</label><input type="color" id="f_gt_${key}_color" data-gt="${key}" data-key="colorHint" value="${gt.colorHint}" style="width:60px;height:32px;padding:2px" /></div>
+      <div class="form-group"><label>可建造</label><select id="f_gt_${key}_buildable" data-gt="${key}" data-key="buildable">
+        <option value="true" ${gt.buildable===true?'selected':''}>是</option>
+        <option value="false" ${gt.buildable===false?'selected':''}>否</option>
+        <option value="restricted" ${gt.buildable==='restricted'?'selected':''}>限制</option>
+      </select></div>
+      <div class="form-group"><button class="btn-danger btn-sm" onclick="deleteGroundType('${key}')" title="删除此地形类型" style="margin-top:18px">🗑 删除</button></div>
+    </div>`;
+  });
+  html += `<button class="btn-secondary btn-sm" onclick="addGroundType()" style="margin-top:6px">+ 添加地形类型</button>`;
+
+  // Mini map preview + grid editor
+  html += '<div class="section-title">地图预览 & 网格编辑</div>';
+  const cellSize = 12, gap = 1;
+  html += '<div style="display:flex;gap:16px;align-items:flex-start">';
+  html += `<div id="miniMap" style="flex-shrink:0;display:flex;flex-wrap:wrap;width:${m.gridWidth*(cellSize+gap)+2}px;border:1px solid var(--border);border-radius:4px;overflow:hidden"></div>`;
+  html += '<div style="flex:1;min-width:200px">';
+  html += '<textarea id="gridEditor" spellcheck="false" style="width:100%;height:' + (m.gridHeight * 17 + 16) + 'px;font:12px/1.35 monospace;white-space:pre;overflow-x:auto;resize:vertical" placeholder="每行一个字符串..."></textarea>';
+  html += '<div id="gridValidation" style="font-size:11px;margin-top:4px;min-height:18px"></div>';
+  html += '<button class="btn-primary btn-sm" onclick="applyGridEdit()" style="margin-top:6px">应用修改</button>';
+  html += '</div></div>';
+
+  // Expedition entrance
+  html += '<div class="section-title">探险入口</div>';
+  const ee = m.expeditionEntrance || {};
+  html += '<div class="form-row span-3">';
+  html += field('ee_gridX', 'X', ee.gridX, { type: 'number' });
+  html += field('ee_gridY', 'Y', ee.gridY, { type: 'number' });
+  html += field('ee_width', '宽', ee.width, { type: 'number' });
+  html += field('ee_height', '高', ee.height, { type: 'number' });
+  html += '</div>';
+
+  // Initial buildings
+  html += '<div class="section-title">初始建筑</div>';
+  html += subListEditor('initBuildings', '建筑列表', m.initialBuildings || [], (b, i) =>
+    `<input data-subidx="${i}" data-key="buildingId" value="${escapeHTML(b.buildingId||'')}" placeholder="建筑ID" />
+     <input class="amount" data-subidx="${i}" data-key="gridX" type="number" value="${b.gridX??0}" placeholder="X" />
+     <input class="amount" data-subidx="${i}" data-key="gridY" type="number" value="${b.gridY??0}" placeholder="Y" />`
+  );
+
+  // Schedule mini map render
+  setTimeout(renderMiniMap, 100);
+
+  return html;
+}
+
+function renderMiniMap() {
+  const m = state.data.base_map;
+  const container = document.getElementById('miniMap');
+  if (!container) return;
+  const cellSize = 12, gap = 1;
+  container.innerHTML = (m.grid || []).map(row =>
+    [...row].map(ch => {
+      const gt = m.groundTypes?.[ch];
+      const color = gt?.colorHint || '#888';
+      const tileTitle = `${ch}: ${gt?.name || ''}`;
+      return `<span style="width:${cellSize}px;height:${cellSize}px;margin:0 ${gap}px ${gap}px 0;background:${color};border-radius:1px;display:block" title="${tileTitle}"></span>`;
+    }).join('')
+  ).join('');
+
+  // Populate the grid text editor
+  const editor = document.getElementById('gridEditor');
+  if (editor) editor.value = (m.grid || []).join('\n');
+
+  // Clear validation message
+  const vmsg = document.getElementById('gridValidation');
+  if (vmsg) vmsg.innerHTML = '';
+}
+
+function applyGridEdit() {
+  const m = state.data.base_map;
+  const editor = document.getElementById('gridEditor');
+  const vmsg = document.getElementById('gridValidation');
+  if (!editor) return;
+
+  const raw = editor.value;
+  const lines = raw.split(/[\r\n]+/).filter(line => line.trim() !== '');
+  const validChars = new Set(Object.keys(m.groundTypes || {}));
+  const validCharsStr = [...validChars].join('');
+
+  // Validate
+  const errors = [];
+  if (lines.length !== m.gridHeight) {
+    errors.push(`行数: ${lines.length} (期望 ${m.gridHeight})`);
+  }
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].length !== m.gridWidth) {
+      errors.push(`第 ${i+1} 行长度: ${lines[i].length} (期望 ${m.gridWidth})`);
+    }
+    for (let j = 0; j < lines[i].length; j++) {
+      if (!validChars.has(lines[i][j])) {
+        errors.push(`第 ${i+1} 行第 ${j+1} 列非法字符 '${lines[i][j]}' (合法: ${validCharsStr})`);
+        break;
+      }
+    }
+  }
+
+  if (errors.length > 0) {
+    vmsg.innerHTML = errors.slice(0, 5).map(e => '<span style="color:var(--bad)">❌ ' + e + '</span>').join('<br>');
+    if (errors.length > 5) vmsg.innerHTML += '<br><span style="color:var(--muted)">...及其他 ' + (errors.length - 5) + ' 个错误</span>';
+    return;
+  }
+
+  // Apply
+  m.grid = lines;
+  markDirty();
+  renderMiniMap();
+  vmsg.innerHTML = '<span style="color:var(--good)">✅ 网格数据已更新 (' + m.gridHeight + '×' + m.gridWidth + ')</span>';
+}
+
+/* ═══════════════════════════════════════════
+   Form event binding
+   ═══════════════════════════════════════════ */
+function addGroundType() {
+  // Prompt for a single-letter terrain key
+  const key = prompt('请输入新地形类型的代码（单个大写字母，如 S、L）:');
+  if (!key) return;
+  const trimmed = key.trim().toUpperCase();
+  if (trimmed.length !== 1 || !/^[A-Z]$/.test(trimmed)) {
+    showToast('地形代码必须是单个大写字母（A-Z）', 'error');
+    return;
+  }
+  if (state.data.base_map.groundTypes[trimmed]) {
+    showToast('地形代码 "' + trimmed + '" 已存在', 'error');
+    return;
+  }
+  state.data.base_map.groundTypes[trimmed] = {
+    name: '新地形',
+    buildable: true,
+    colorHint: '#888888'
+  };
+  markDirty();
+  renderDetail();
+  showToast('已添加地形类型: ' + trimmed, 'success');
+}
+
+function deleteGroundType(key) {
+  if (!confirm('确定要删除地形类型 "' + key + '" 吗？\n注意：地图网格中使用该代码的格子将失去颜色引用。')) return;
+  delete state.data.base_map.groundTypes[key];
+  markDirty();
+  renderDetail();
+  showToast('已删除地形类型: ' + key, 'success');
+}
+
+function bindFormEvents() {
+  const panel = document.getElementById('detailPanel');
+
+  // Regular field changes
+  panel.querySelectorAll('input[data-field], textarea[data-field], select[data-field]').forEach(el => {
+    el.addEventListener('change', () => applyFieldChange(el));
+    if (el.type !== 'checkbox') el.addEventListener('blur', () => applyFieldChange(el));
+  });
+
+  // Sub-list add buttons
+  panel.querySelectorAll('.sub-add').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const subName = btn.dataset.sub;
+      addSubEntry(subName);
+    });
+  });
+
+  // Sub-list delete buttons
+  panel.querySelectorAll('.sub-del').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const row = btn.closest('.sub-row');
+      const subIdx = parseInt(row.dataset.subidx);
+      const subName = row.closest('.sub-list').id.replace('sl_', '');
+      removeSubEntry(subName, subIdx);
+    });
+  });
+
+  // Sub-list inline changes
+  panel.querySelectorAll('.sub-row input, .sub-row select').forEach(el => {
+    el.addEventListener('change', () => applySubChange(el));
+    if (el.tagName === 'INPUT' && el.type !== 'checkbox') el.addEventListener('blur', () => applySubChange(el));
+  });
+
+  // Yield fields
+  panel.querySelectorAll('[data-yield]').forEach(el => {
+    el.addEventListener('change', () => applyYieldChange(el));
+  });
+
+  // Ground type fields
+  panel.querySelectorAll('[data-gt]').forEach(el => {
+    el.addEventListener('change', () => applyGroundTypeChange(el));
+  });
+
+  // Option text fields
+  panel.querySelectorAll('[data-opt]').forEach(el => {
+    el.addEventListener('change', () => applyOptionChange(el));
+  });
+}
+
+function getItem() {
+  const data = currentData();
+  if (!data || state.selectedIdx < 0 || state.selectedIdx >= data.length) return null;
+  return data[state.selectedIdx];
+}
+
+function applyFieldChange(el) {
+  const item = getItem();
+  if (!item) return;
+  const fieldName = el.dataset.field;
+  let value = el.type === 'checkbox' ? el.checked : el.value;
+
+  // Parse numbers
+  if (el.type === 'number') value = value === '' ? null : parseFloat(value);
+
+  // Handle nested fields
+  if (fieldName === 'footprintWidth') {
+    if (!item.footprint) item.footprint = { width: 1, height: 1 };
+    item.footprint.width = parseInt(value) || 1;
+  } else if (fieldName === 'footprintHeight') {
+    if (!item.footprint) item.footprint = { width: 1, height: 1 };
+    item.footprint.height = parseInt(value) || 1;
+  } else if (fieldName === 'allowedGrounds') {
+    item.allowedGrounds = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+  } else if (fieldName === 'tcPeriods') {
+    if (!item.triggerConditions) item.triggerConditions = {};
+    item.triggerConditions.timePeriods = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+  } else if (fieldName === 'tcItems') {
+    if (!item.triggerConditions) item.triggerConditions = {};
+    item.triggerConditions.requiredItems = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+  } else if (fieldName === 'tcBuildings') {
+    if (!item.triggerConditions) item.triggerConditions = {};
+    item.triggerConditions.requiredBuildings = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+  } else if (fieldName === 'tcRegions') {
+    if (!item.triggerConditions) item.triggerConditions = {};
+    item.triggerConditions.regions = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+  } else if (fieldName === 'tcCarriedItems') {
+    if (!item.triggerConditions) item.triggerConditions = {};
+    item.triggerConditions.requiredCarriedItems = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+  } else if (fieldName === 'icItems') {
+    if (!item.invalidationConditions) item.invalidationConditions = {};
+    item.invalidationConditions.requiredItems = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+  } else if (fieldName === 'icBuildings') {
+    if (!item.invalidationConditions) item.invalidationConditions = {};
+    item.invalidationConditions.requiredBuildings = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+  } else if (fieldName === 'll_nameOffsetY') {
+    if (!item.labelLayout) item.labelLayout = {};
+    item.labelLayout.nameOffsetY = parseInt(value) || 0;
+  } else if (fieldName === 'll_progressBarOffsetY') {
+    if (!item.labelLayout) item.labelLayout = {};
+    item.labelLayout.progressBarOffsetY = parseInt(value) || 0;
+  } else if (fieldName === 'll_workersOffsetY') {
+    if (!item.labelLayout) item.labelLayout = {};
+    item.labelLayout.workersOffsetY = parseInt(value) || 0;
+  } else if (fieldName === 'prod_perWorker') {
+    if (item.production) item.production.perWorker = !!value;
+  } else if (fieldName === 'map_gridWidth') {
+    state.data.base_map.gridWidth = parseInt(value) || 1;
+  } else if (fieldName === 'map_gridHeight') {
+    state.data.base_map.gridHeight = parseInt(value) || 1;
+  } else if (fieldName === 'map_tileSize') {
+    state.data.base_map.tileSize = parseInt(value) || 32;
+  } else if (fieldName === 'ee_gridX') {
+    if (!state.data.base_map.expeditionEntrance) state.data.base_map.expeditionEntrance = {};
+    state.data.base_map.expeditionEntrance.gridX = parseInt(value) || 0;
+  } else if (fieldName === 'ee_gridY') {
+    if (!state.data.base_map.expeditionEntrance) state.data.base_map.expeditionEntrance = {};
+    state.data.base_map.expeditionEntrance.gridY = parseInt(value) || 0;
+  } else if (fieldName === 'ee_width') {
+    if (!state.data.base_map.expeditionEntrance) state.data.base_map.expeditionEntrance = {};
+    state.data.base_map.expeditionEntrance.width = parseInt(value) || 1;
+  } else if (fieldName === 'ee_height') {
+    if (!state.data.base_map.expeditionEntrance) state.data.base_map.expeditionEntrance = {};
+    state.data.base_map.expeditionEntrance.height = parseInt(value) || 1;
+  } else {
+    item[fieldName] = value;
+  }
+
+  markDirty();
+}
+
+function addSubEntry(subName) {
+  const item = getItem();
+  if (!item) return;
+  const newEntry = { resourceId: '', amount: 0 };
+
+  // Resolve subName to the correct array on item
+  let targetArray;
+  switch(subName) {
+    case 'buildCost': targetArray = item.buildCost; if (!targetArray) { item.buildCost = []; targetArray = item.buildCost; } break;
+    case 'upgradeCost': targetArray = item.upgradeCost; if (!targetArray) { item.upgradeCost = []; targetArray = item.upgradeCost; } break;
+    case 'prodInput': if (item.production) { targetArray = item.production.input; if (!targetArray) { item.production.input = []; targetArray = item.production.input; } } break;
+    case 'prodOutput': if (item.production) { targetArray = item.production.output; if (!targetArray) { item.production.output = []; targetArray = item.production.output; } } break;
+    case 'expEffects': targetArray = item.expeditionEffects; if (!targetArray) { item.expeditionEffects = []; targetArray = item.expeditionEffects; } break;
+    case 'effects': targetArray = item.effects; if (!targetArray) { item.effects = []; targetArray = item.effects; } break;
+    case 'initBuildings': targetArray = state.data.base_map.initialBuildings; break;
+    case 'unlockConditions': targetArray = item.unlockConditions; if (!targetArray) { item.unlockConditions = []; targetArray = item.unlockConditions; } break;
+    default:
+      // Check for recipe cost or option effects
+      if (subName.startsWith('recipe_') && subName.endsWith('_cost')) {
+        const ri = parseInt(subName.split('_')[1]);
+        if (item.synthesisRecipes && item.synthesisRecipes[ri]) {
+          targetArray = item.synthesisRecipes[ri].resourceCost;
+        }
+      } else if (subName.startsWith('opt_') && subName.endsWith('_effects')) {
+        const oi = parseInt(subName.split('_')[1]);
+        if (item.options && item.options[oi]) {
+          targetArray = item.options[oi].effects;
+        }
+      }
+  }
+
+  if (targetArray) {
+    targetArray.push({ ...newEntry });
+    markDirty();
+    renderDetail();
+  }
+}
+
+function removeSubEntry(subName, idx) {
+  const item = getItem();
+  if (!item) return;
+  let targetArray;
+  switch(subName) {
+    case 'buildCost': targetArray = item.buildCost; break;
+    case 'upgradeCost': targetArray = item.upgradeCost; break;
+    case 'prodInput': targetArray = item.production?.input; break;
+    case 'prodOutput': targetArray = item.production?.output; break;
+    case 'expEffects': targetArray = item.expeditionEffects; break;
+    case 'effects': targetArray = item.effects; break;
+    case 'initBuildings': targetArray = state.data.base_map.initialBuildings; break;
+    case 'unlockConditions': targetArray = item.unlockConditions; break;
+    default:
+      if (subName.startsWith('recipe_') && subName.endsWith('_cost')) {
+        const ri = parseInt(subName.split('_')[1]);
+        targetArray = item.synthesisRecipes?.[ri]?.resourceCost;
+      } else if (subName.startsWith('opt_') && subName.endsWith('_effects')) {
+        const oi = parseInt(subName.split('_')[1]);
+        targetArray = item.options?.[oi]?.effects;
+      }
+  }
+  if (targetArray && idx >= 0 && idx < targetArray.length) {
+    targetArray.splice(idx, 1);
+    markDirty();
+    renderDetail();
+  }
+}
+
+function applySubChange(el) {
+  const row = el.closest('.sub-row');
+  if (!row) return;
+  const subIdx = parseInt(row.dataset.subidx);
+  const key = el.dataset.key;
+  const subName = row.closest('.sub-list').id.replace('sl_', '');
+
+  let value = el.value;
+  if (el.type === 'number') value = value === '' ? 0 : parseFloat(value);
+
+  const item = getItem();
+  if (!item) return;
+
+  let targetArray;
+  switch(subName) {
+    case 'buildCost': targetArray = item.buildCost; break;
+    case 'upgradeCost': targetArray = item.upgradeCost; break;
+    case 'prodInput': targetArray = item.production?.input; break;
+    case 'prodOutput': targetArray = item.production?.output; break;
+    case 'expEffects': targetArray = item.expeditionEffects; break;
+    case 'effects': targetArray = item.effects; break;
+    case 'initBuildings': targetArray = state.data.base_map.initialBuildings; break;
+    case 'unlockConditions': targetArray = item.unlockConditions; break;
+    default:
+      if (subName.startsWith('recipe_') && subName.endsWith('_cost')) {
+        const ri = parseInt(subName.split('_')[1]);
+        targetArray = item.synthesisRecipes?.[ri]?.resourceCost;
+      } else if (subName.startsWith('opt_') && subName.endsWith('_effects')) {
+        const oi = parseInt(subName.split('_')[1]);
+        targetArray = item.options?.[oi]?.effects;
+      }
+  }
+
+  if (targetArray && subIdx >= 0 && subIdx < targetArray.length) {
+    if (key === 'regions' && typeof value === 'string') {
+      targetArray[subIdx][key] = value.split(',').map(s => s.trim()).filter(Boolean);
+    } else if (key === 'buildable') {
+      if (value === 'true') targetArray[subIdx][key] = true;
+      else if (value === 'false') targetArray[subIdx][key] = false;
+      else targetArray[subIdx][key] = value;
+    } else {
+      targetArray[subIdx][key] = value;
+    }
+    markDirty();
+  }
+}
+
+function applyYieldChange(el) {
+  const period = el.dataset.yield;
+  const res = el.dataset.res;
+  let value = el.value === '' ? undefined : parseInt(el.value);
+  const item = getItem();
+  if (!item) return;
+  if (!item.baseYields) item.baseYields = {};
+  if (!item.baseYields[period]) item.baseYields[period] = {};
+  if (value === undefined) {
+    delete item.baseYields[period][res];
+  } else {
+    item.baseYields[period][res] = value;
+  }
+  markDirty();
+}
+
+function applyGroundTypeChange(el) {
+  const gtKey = el.dataset.gt;
+  const key = el.dataset.key;
+  let value = el.value;
+  if (key === 'buildable') {
+    if (value === 'true') value = true;
+    else if (value === 'false') value = false;
+  }
+  state.data.base_map.groundTypes[gtKey][key] = value;
+  markDirty();
+  // Refresh mini map
+  if (key === 'colorHint') renderMiniMap();
+}
+
+function applyOptionChange(el) {
+  const oi = parseInt(el.dataset.opt);
+  const key = el.dataset.key;
+  const item = getItem();
+  if (!item || !item.options || !item.options[oi]) return;
+  item.options[oi][key] = el.value;
+  markDirty();
+}
+
+/* ═══════════════════════════════════════════
+   Toolbar actions
+   ═══════════════════════════════════════════ */
+function addItem() {
+  const data = currentData();
+  if (!data) return;
+  const newItem = getDefaultItem();
+
+  // For events, ask which file to save to
+  if (state.tab === 'events') {
+    const choice = prompt('请选择事件类型:\n\n  输入 1 → 🏠 基地事件 (存入 events_base.json)\n  输入 2 → 🗺️ 探险事件 (存入 events_expedition.json)\n\n默认: 基地事件', '1');
+    const isBase = choice !== '2';
+    newItem.id = isBase ? 'new_base_event' : 'new_expedition_event';
+    newItem.name = isBase ? '新基地事件' : '新探险事件';
+    data.push(newItem);
+    if (!state.eventFileSource) state.eventFileSource = new Map();
+    state.eventFileSource.set(newItem.id, isBase ? 'base' : 'expedition');
+  } else {
+    data.push(newItem);
+  }
+
+  state.selectedIdx = data.length - 1;
+  markDirty();
+  refreshList();
+  renderDetail();
+}
+
+function duplicateItem() {
+  if (state.selectedIdx < 0) return;
+  const data = currentData();
+  if (!data) return;
+  const item = data[state.selectedIdx];
+  const clone = JSON.parse(JSON.stringify(item));
+  clone.id = clone.id + '_copy';
+  clone.name = (clone.name || '') + ' (副本)';
+  data.push(clone);
+  // Inherit event file source
+  if (state.tab === 'events' && state.eventFileSource) {
+    const src = state.eventFileSource.get(item.id);
+    if (src) state.eventFileSource.set(clone.id, src);
+  }
+  state.selectedIdx = data.length - 1;
+  markDirty();
+  refreshList();
+  renderDetail();
+}
+
+function deleteItem() {
+  if (state.selectedIdx < 0) return;
+  const data = currentData();
+  if (!data) return;
+  const item = data[state.selectedIdx];
+  if (!confirm(`确定要删除「${itemDisplayName(item)}」吗？此操作不可撤销。`)) return;
+  // Clean up event file source tracking
+  if (state.tab === 'events' && state.eventFileSource) {
+    state.eventFileSource.delete(item.id);
+  }
+  data.splice(state.selectedIdx, 1);
+  if (state.selectedIdx >= data.length) state.selectedIdx = data.length - 1;
+  markDirty();
+  refreshList();
+  renderDetail();
+}
+
+function getDefaultItem() {
+  switch(state.tab) {
+    case 'buildings':
+      return { id: 'new_building', name: '新建筑', description: '', icon: '', mapIcon: '', imageDetail: '', footprint: { width: 1, height: 1 }, maxCount: null, initialBuilding: false, housingCapacity: 0, maxWorkers: 0, buildCost: [], buildTime: 1, upgradesTo: null, production: null, synthesisRecipes: [], labelLayout: { nameOffsetY: 0, progressBarOffsetY: 0, workersOffsetY: 0 } };
+    case 'resources':
+      return { id: 'new_resource', name: '新资源', icon: '', initial: 0, max: 1000, rare: false, showInHUD: true };
+    case 'items':
+      return { id: 'new_item', name: '新物品', icon: '', description: '', unique: false, consumable: false, capacityCost: 1, expeditionEffects: [] };
+    case 'events':
+      return { id: 'new_event', name: '新事件', description: '', image: '', priority: 0, mutexGroup: null, cooldownTicks: 0, maxTriggers: 1, triggerConditions: { timePeriods: [], requiredItems: [], requiredBuildings: [] }, invalidationConditions: { timePeriods: [], requiredItems: [], requiredBuildings: [] }, probability: 1, effects: [], options: [] };
+    case 'expeditions':
+      return { id: 'new_region', name: '新区域', description: '', image: '', unlockConditions: [], baseYields: {} };
+    default: return {};
+  }
+}
+
+/* ═══════════════════════════════════════════
+   Tab switching
+   ═══════════════════════════════════════════ */
+const tabTitles = {
+  buildings: '建筑配置', resources: '资源配置', items: '物品配置',
+  events: '事件配置', expeditions: '探险配置', map: '地图配置',
+};
+const tabFiles = {
+  buildings: 'buildings.json', resources: 'resources.json', items: 'items.json',
+  events: 'events_base.json + events_expedition.json', expeditions: 'regions.json + expedition_global.json', map: 'base_map.json',
+};
+
+function switchTab(tab) {
+  state.tab = tab;
+  state.selectedIdx = -1;
+  state.eventTypeFilter = 'all';
+  document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
+  document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
+  document.getElementById('tabTitle').textContent = `${tabTitles[tab]} — ${tabFiles[tab]}`;
+  document.getElementById('listHeader').textContent = tabTitles[tab] + '列表';
+  document.getElementById('searchInput').value = '';
+
+  // Show/hide event type filter
+  const filterGroup = document.getElementById('eventFilterGroup');
+  filterGroup.style.display = (tab === 'events') ? 'flex' : 'none';
+  if (tab === 'events') {
+    document.querySelectorAll('#eventFilterGroup .filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('#eventFilterGroup [data-filter="all"]')?.classList.add('active');
+  }
+
+  // 地图是单例 → 隐藏左侧列表和增删按钮，detail 占满宽度
+  const isSingleton = (tab === 'map');
+  ['btnAdd','btnDup','btnDel','searchInput','itemCount','listHeader'].forEach(id => {
+    document.getElementById(id).style.display = isSingleton ? 'none' : '';
+  });
+  document.querySelector('.list-panel').style.display = isSingleton ? 'none' : '';
+  document.getElementById('detailPanel').style.flex = isSingleton ? '1' : '';
+
+  refreshList();
+
+  if (isSingleton) {
+    // 自动选中唯一项
+    state.selectedIdx = 0;
+    refreshList();
+    renderDetail();
+  } else {
+    document.getElementById('detailPanel').innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>从左侧列表选择一个项目进行编辑</p><p style="font-size:12px;margin-top:4px;opacity:0.6">或点击「+ 新增」创建新条目</p></div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   Toast
+   ═══════════════════════════════════════════ */
+function showToast(msg, type) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
+}
+
+/* ═══════════════════════════════════════════
+   Event listeners
+   ═══════════════════════════════════════════ */
+document.querySelectorAll('.sidebar nav a').forEach(a => {
+  a.addEventListener('click', () => switchTab(a.dataset.tab));
+});
+
+document.getElementById('btnSelectDir').addEventListener('click', selectDir);
+document.getElementById('btnToggleAuto').addEventListener('click', function() {
+  state.autoSave = !state.autoSave;
+  this.textContent = state.autoSave ? '🔄 自动保存' : '💾 手动保存';
+  document.getElementById('btnSave').style.display = state.autoSave ? 'none' : '';
+  if (!state.autoSave && state.saveTimer) { clearTimeout(state.saveTimer); state.saveTimer = null; }
+});
+
+document.getElementById('btnSave').addEventListener('click', () => doSave());
+
+document.getElementById('btnAdd').addEventListener('click', addItem);
+document.getElementById('btnDup').addEventListener('click', duplicateItem);
+document.getElementById('btnDel').addEventListener('click', deleteItem);
+document.getElementById('searchInput').addEventListener('input', () => { state.selectedIdx = -1; refreshList(); document.getElementById('detailPanel').innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>搜索过滤中...</p></div>`; });
+
+// Event type filter buttons (delegated on the filter group)
+document.getElementById('eventFilterGroup').addEventListener('click', (e) => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  const filter = btn.dataset.filter;
+  state.eventTypeFilter = filter;
+  document.querySelectorAll('#eventFilterGroup .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.selectedIdx = -1;
+  refreshList();
+  document.getElementById('detailPanel').innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>类型筛选: ${filter === 'base' ? '🏠 基地事件' : filter === 'expedition' ? '🗺️ 探险事件' : '全部事件'}</p></div>`;
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    if (!state.autoSave) doSave();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    e.preventDefault();
+    // TODO: undo
+  }
+});
+</script>
+</body>
+</html>

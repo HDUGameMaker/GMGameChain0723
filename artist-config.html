@@ -1,0 +1,1368 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>美术配置编辑器 — GMGameChain</title>
+<style>
+:root {
+  --bg: #fafaf9; --fg: #1c1b1a; --muted: #6b6964; --border: #e6e4e0;
+  --accent: #7b5ea7; --accent-hover: #6a4f94; --surface: #ffffff;
+  --good: #2f7d4a; --bad: #b53a2a; --warn: #c97d1a;
+  --sidebar-w: 200px; --topbar-h: 52px;
+}
+* { box-sizing: border-box; margin: 0; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 -apple-system, "Microsoft YaHei", system-ui, sans-serif; display: grid; grid-template-columns: var(--sidebar-w) 1fr; grid-template-rows: var(--topbar-h) 1fr 28px; min-height: 100vh; }
+/* ── Sidebar ── */
+.sidebar { grid-row: 1 / -1; background: #231f2b; color: #d0ccd8; padding: 16px 0; display: flex; flex-direction: column; overflow-y: auto; }
+.sidebar .brand { font-weight: 700; font-size: 15px; padding: 0 16px 18px; color: #e8e3f0; letter-spacing: -0.01em; }
+.sidebar .brand span { opacity: 0.5; font-weight: 400; font-size: 11px; display: block; margin-top: 2px; }
+.sidebar nav { display: flex; flex-direction: column; gap: 1px; padding: 0 8px; }
+.sidebar nav a { padding: 8px 12px; border-radius: 6px; color: #d0ccd8; text-decoration: none; font-size: 13px; cursor: pointer; transition: background 0.15s; }
+.sidebar nav a:hover { background: rgba(255,255,255,0.06); }
+.sidebar nav a.active { background: var(--accent); color: white; font-weight: 600; }
+.sidebar .nav-label { font-size: 10px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.08em; padding: 20px 12px 8px; }
+.sidebar .footer { margin-top: auto; padding: 16px; font-size: 11px; opacity: 0.4; }
+/* ── Topbar ── */
+.topbar { grid-column: 2; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.topbar h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.topbar .status { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border-radius: 999px; }
+.topbar .status.saved { color: var(--good); background: rgba(47,125,74,0.08); }
+.topbar .status.pending { color: var(--warn); background: rgba(201,125,26,0.08); }
+.topbar .status.error { color: var(--bad); background: rgba(181,58,42,0.08); }
+.topbar .status .dot { width: 7px; height: 7px; border-radius: 50%; }
+.topbar .status.saved .dot { background: var(--good); }
+.topbar .status.pending .dot { background: var(--warn); animation: pulse 0.8s infinite; }
+.topbar .status.error .dot { background: var(--bad); }
+@keyframes pulse { 50% { opacity: 0.3; } }
+/* ── Buttons ── */
+button, .btn { font: inherit; cursor: pointer; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; transition: all 0.15s; }
+.btn-primary { background: var(--accent); color: white; border: 1px solid var(--accent); }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary { background: transparent; color: var(--fg); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--bg); }
+input, select, textarea { font: inherit; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--fg); font-size: 13px; outline: none; transition: border-color 0.15s; }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(123,94,167,0.1); }
+label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; margin-bottom: 3px; }
+input[type=range] { padding: 0; border: none; accent-color: var(--accent); }
+/* ── Main ── */
+main { grid-column: 2; display: flex; flex-direction: column; overflow: hidden; }
+main > #mainContent { flex: 1; overflow-y: auto; padding: 24px; }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+.panel h3 { margin: 0 0 16px; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+.panel h3 .sub { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 6px; }
+/* ── Color palette grid ── */
+.color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.color-card { display: flex; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); transition: box-shadow 0.15s; }
+.color-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+.color-card .swatch { width: 56px; height: 56px; border-radius: 10px; border: 2px solid var(--border); flex-shrink: 0; cursor: pointer; position: relative; }
+.color-card .swatch input[type=color] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.color-card .info { flex: 1; min-width: 0; }
+.color-card .info .code { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.color-card .info .name { font-size: 13px; color: var(--muted); }
+.color-card .info .hex { font-size: 12px; font-family: ui-monospace, monospace; color: var(--muted); margin-top: 2px; }
+.color-card select { width: 100%; margin-top: 4px; }
+/* ── Mini map ── */
+.minimap-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 8px; padding: 16px; background: #f5f5f3; }
+.minimap-wrap h4 { margin: 0 0 10px; font-size: 13px; color: var(--muted); }
+/* ── Label layout ── */
+.layout-editor { display: grid; grid-template-columns: 300px 1fr; gap: 24px; }
+@media (max-width: 800px) { .layout-editor { grid-template-columns: 1fr; } }
+.layout-editor .controls { display: flex; flex-direction: column; gap: 18px; }
+.layout-editor .control-group label { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--fg); font-weight: 500; margin-bottom: 4px; }
+.layout-editor .control-group label .val { font-weight: 600; font-size: 14px; color: var(--accent); min-width: 30px; text-align: right; }
+.layout-editor .control-group input[type=range] { width: 100%; }
+.layout-editor .control-group input[type=number] { width: 70px; text-align: center; }
+.preview-area { display: flex; align-items: center; justify-content: center; background: #f5f5f3; border: 1px solid var(--border); border-radius: 8px; min-height: 400px; position: relative; overflow: hidden; }
+.preview-area canvas { display: block; }
+/* ── Asset table ── */
+.asset-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.asset-table th, .asset-table td { text-align: left; padding: 8px 10px; border-top: 1px solid var(--border); }
+.asset-table th { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; position: sticky; top: 0; background: var(--surface); }
+.asset-table .missing { color: var(--bad); font-weight: 500; }
+.asset-table .missing::before { content: '⚠️ '; }
+.asset-table .exists { color: var(--good); }
+.asset-table .exists::before { content: '✓ '; }
+.asset-table .checking { color: var(--muted); }
+.asset-table .empty { color: var(--muted); font-style: italic; }
+.asset-table input { width: 100%; min-width: 140px; padding: 4px 8px; font-size: 12px; }
+.missing-count { font-size: 12px; margin-bottom: 10px; padding: 6px 12px; border-radius: 6px; display: inline-block; }
+.missing-count.has-missing { background: rgba(181,58,42,0.08); color: var(--bad); }
+.missing-count.all-good { background: rgba(47,125,74,0.08); color: var(--good); }
+/* ── Bottombar ── */
+.bottombar { grid-column: 2; background: var(--surface); border-top: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--muted); }
+/* ── Toast ── */
+.toast { position: fixed; bottom: 48px; right: 24px; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; z-index: 999; animation: slideIn 0.2s ease; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+.toast.success { background: #e8f5e9; color: var(--good); border: 1px solid rgba(47,125,74,0.2); }
+.toast.error { background: #fdecea; color: var(--bad); border: 1px solid rgba(181,58,42,0.2); }
+@keyframes slideIn { from { transform: translateY(12px); opacity: 0; } }
+/* ── Dir banner ── */
+.dir-banner { background: #fff8e1; border-bottom: 1px solid #f0c040; padding: 6px 24px; font-size: 12px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s; }
+.dir-banner .msg { color: #8a6d14; }
+.dir-banner button { background: #f0c040; color: #5c4100; border: none; font-weight: 600; padding: 3px 12px; font-size: 11px; border-radius: 4px; cursor: pointer; }
+.dir-banner button:hover { background: #e0b030; }
+.dir-banner.connected { background: #e8f5e9; border-bottom-color: #81c784; padding: 4px 24px; font-size: 11px; max-height: 28px; }
+.dir-banner.connected .msg { color: #2f7d4a; }
+.dir-banner.hidden { max-height: 0; padding-top: 0; padding-bottom: 0; border-bottom-width: 0; opacity: 0; overflow: hidden; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="brand">🎨 美术配置中心<span>GMGameChain Artist</span></div>
+  <nav>
+    <div class="nav-label">视觉配置</div>
+    <a data-tab="labels" class="active">🏷️ 标签布局</a>
+    <a data-tab="assets">🖼️ 素材引用</a>
+  </nav>
+  <div class="footer">GMGameChain © 2026</div>
+</aside>
+
+<!-- Topbar -->
+<header class="topbar">
+  <h1 id="tabTitle">地图色板 — 地形颜色编辑</h1>
+  <div class="actions" style="display:flex;align-items:center;gap:8px">
+    <span id="saveStatus" class="status saved"><span class="dot"></span>已保存</span>
+    <button id="btnSelectDir" class="btn-secondary">📁 选择目录</button>
+    <button id="btnSave" class="btn-primary" title="立即保存" style="display:none">💾 保存</button>
+    <button id="btnToggleAuto" class="btn-secondary">🔄 自动保存</button>
+  </div>
+</header>
+
+<!-- Main -->
+<main>
+  <div id="dirBanner" class="dir-banner">
+    <span class="msg">⚠️ 尚未连接 config 目录 — 点击右侧按钮选择项目的 config/ 文件夹，即可自动保存修改</span>
+    <button onclick="selectDir()">📁 选择 config 目录</button>
+  </div>
+  <div id="mainContent"></div>
+</main>
+
+<!-- Bottombar -->
+<div class="bottombar">
+  <span id="bottomLeft">就绪</span>
+  <span id="bottomRight"></span>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   File System Access API
+   ═══════════════════════════════════════════ */
+let dirHandle = null;
+const DB_NAME = 'gmgame-config-editor';
+const DB_STORE = 'dir-handles';
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => { req.result.createObjectStore(DB_STORE); };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function storeDirHandle() {
+  if (!dirHandle) return;
+  try {
+    const db = await openDB();
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put(dirHandle, 'configDir');
+    await new Promise(r => { tx.oncomplete = r; tx.onerror = r; });
+    db.close();
+  } catch(e) { console.warn('Failed to store dir handle:', e); }
+}
+
+async function restoreDirHandle() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(DB_STORE, 'readonly');
+    const handle = await new Promise(r => {
+      const req = tx.objectStore(DB_STORE).get('configDir');
+      req.onsuccess = () => r(req.result);
+      req.onerror = () => r(null);
+    });
+    db.close();
+    if (!handle) return false;
+    const opts = { mode: 'readwrite' };
+    if ((await handle.queryPermission(opts)) === 'granted') {
+      dirHandle = handle;
+      return true;
+    }
+    if ((await handle.requestPermission(opts)) === 'granted') {
+      dirHandle = handle;
+      return true;
+    }
+    return false;
+  } catch(e) { console.warn('Failed to restore dir handle:', e); return false; }
+}
+
+const CONFIG_FILES = {
+  buildings:   { path: 'buildings.json',           dir: '' },
+  resources:   { path: 'resources.json',           dir: '' },
+  items:       { path: 'items.json',               dir: '' },
+  base_map:    { path: 'base_map.json',            dir: 'maps' },
+};
+
+async function selectDir() {
+  try {
+    dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    await storeDirHandle();
+    updateDirUI();
+    showToast('目录已连接，可以自动保存', 'success');
+    await loadAllData();
+  } catch(e) {
+    if (e.name !== 'AbortError') showToast('目录选择失败: ' + e.message, 'error');
+  }
+}
+
+function updateDirUI() {
+  const connected = !!dirHandle;
+  document.getElementById('btnSelectDir').textContent = connected ? '📁 已连接' : '📁 选择目录';
+  const btn = document.getElementById('btnSelectDir');
+  if (connected) { btn.classList.add('btn-primary'); }
+  else { btn.classList.remove('btn-primary'); }
+  const banner = document.getElementById('dirBanner');
+  if (connected) {
+    banner.className = 'dir-banner connected';
+    banner.innerHTML = '<span class="msg">✅ 已连接 — 自动保存中</span>';
+    setTimeout(() => { banner.classList.add('hidden'); }, 3000);
+  } else {
+    banner.className = 'dir-banner';
+    banner.innerHTML = '<span class="msg">⚠️ 尚未连接 config 目录 — 点击右侧按钮选择项目的 config/ 文件夹，即可自动保存修改</span><button onclick="selectDir()">📁 选择 config 目录</button>';
+  }
+}
+
+async function readFile(fileKey) {
+  const cfg = CONFIG_FILES[fileKey];
+  if (dirHandle) {
+    try {
+      let d = dirHandle;
+      if (cfg.dir) {
+        for (const sd of cfg.dir.split('/')) d = await d.getDirectoryHandle(sd);
+      }
+      const fh = await d.getFileHandle(cfg.path);
+      const file = await fh.getFile();
+      return await file.text();
+    } catch(e) { /* fall through */ }
+  }
+  const url = cfg.dir ? `config/${cfg.dir}/${cfg.path}` : `config/${cfg.path}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} loading ${url}`);
+  return await resp.text();
+}
+
+async function writeFile(fileKey, content) {
+  if (!dirHandle) throw new Error('未连接目录');
+  const cfg = CONFIG_FILES[fileKey];
+  let d = dirHandle;
+  if (cfg.dir) {
+    for (const sd of cfg.dir.split('/')) d = await d.getDirectoryHandle(sd);
+  }
+  const fh = await d.getFileHandle(cfg.path, { create: false });
+  const writable = await fh.createWritable();
+  await writable.write(content);
+  await writable.close();
+}
+
+/* ═══════════════════════════════════════════
+   State
+   ═══════════════════════════════════════════ */
+const state = {
+  tab: 'labels',
+  autoSave: true,
+  data: { buildings: [], resources: [], items: [] },
+  dirtyFiles: new Set(),
+  saveTimer: null,
+  labelBuildingIdx: 0,  // selected building index for label layout tab
+  assetCheckResults: {}, // { path: true/false }
+  manifest: null,         // assets/manifest.json 的解析结果
+};
+
+async function loadAllData() {
+  try {
+    const [buildings, resources, items] = await Promise.all([
+      readFile('buildings'), readFile('resources'), readFile('items'),
+    ]);
+    state.data.buildings = JSON.parse(buildings);
+    state.data.resources = JSON.parse(resources);
+    state.data.items = JSON.parse(items);
+    await loadManifest();
+    renderTab();
+  } catch(e) {
+    showToast('数据加载失败: ' + e.message, 'error');
+    console.error(e);
+  }
+}
+
+async function loadManifest() {
+  try {
+    // 优先读取预生成的清单（快速，单请求）
+    const resp = await fetch('assets/manifest.json');
+    if (resp.ok) {
+      state.manifest = await resp.json();
+      document.getElementById('bottomRight').textContent =
+        `素材清单: ${state.manifest.totalFiles} 个文件`;
+      return;
+    }
+  } catch(e) { /* 回退到 HTTP 扫描 */ }
+
+  // 回退：通过 HTTP 目录列表实时扫描
+  await scanAssetsViaHTTP();
+}
+
+/**
+ * 通过 HTTP 目录列表实时扫描 assets/ 目录
+ * http-server 默认开启目录浏览，返回的 HTML 中包含 <a> 链接
+ */
+async function scanAssetsViaHTTP() {
+  const ASSET_DIRS = ['buildings', 'resources', 'items', 'ui', 'expeditions'];
+  const IMG_EXTS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.bmp'];
+  const allFiles = [];
+  const categories = {};
+
+  for (const dir of ASSET_DIRS) {
+    try {
+      const resp = await fetch(`assets/${dir}/`);
+      if (!resp.ok) continue;
+      const html = await resp.text();
+      // 解析 http-server 目录列表 HTML：<a href="./filename.png">filename</a>
+      const linkRe = /<a\s+href="\.\/([^"]+)"/gi;
+      let match;
+      const dirFiles = [];
+      while ((match = linkRe.exec(html)) !== null) {
+        const name = match[1];
+        // 跳过父目录链接
+        if (name === '../') continue;
+        const ext = '.' + name.split('.').pop().toLowerCase();
+        if (IMG_EXTS.includes(ext)) {
+          const relPath = `${dir}/${name}`;
+          dirFiles.push(relPath);
+          allFiles.push(relPath);
+        }
+      }
+      if (dirFiles.length > 0) {
+        categories[dir] = dirFiles;
+      }
+    } catch(e) {
+      // 目录不存在或无法访问，跳过
+    }
+  }
+
+  if (allFiles.length > 0) {
+    state.manifest = {
+      generated: new Date().toISOString(),
+      basePath: 'assets/',
+      totalFiles: allFiles.length,
+      categories,
+      files: allFiles,
+      _scanned: true  // 标记为实时扫描
+    };
+    document.getElementById('bottomRight').textContent =
+      `素材清单: ${allFiles.length} 个文件 (实时扫描)`;
+  } else {
+    state.manifest = null;
+    document.getElementById('bottomRight').textContent =
+      '素材清单未找到（运行 node scripts/generate-asset-manifest.js 生成）';
+  }
+}
+
+// Initial load: restore handle from IndexedDB, then load data
+(async function init() {
+  const restored = await restoreDirHandle();
+  if (restored) updateDirUI();
+  await loadAllData();
+})();
+
+/* ═══════════════════════════════════════════
+   Save
+   ═══════════════════════════════════════════ */
+function markDirty(fileKey) {
+  state.dirtyFiles.add(fileKey);
+  if (state.autoSave) scheduleSave(fileKey);
+  updateSaveStatus();
+}
+
+function scheduleSave(fileKey) {
+  if (state.saveTimer) clearTimeout(state.saveTimer);
+  document.getElementById('saveStatus').className = 'status pending';
+  document.getElementById('saveStatus').innerHTML = '<span class="dot"></span>保存中...';
+  state.saveTimer = setTimeout(() => doSaveAll(), 1000);
+}
+
+async function doSaveAll() {
+  try {
+    for (const fk of state.dirtyFiles) {
+      await writeFile(fk, JSON.stringify(state.data[fk], null, 2));
+    }
+    state.dirtyFiles.clear();
+    updateSaveStatus();
+  } catch(e) {
+    document.getElementById('saveStatus').className = 'status error';
+    document.getElementById('saveStatus').innerHTML = '<span class="dot"></span>保存失败';
+    showToast('保存失败: ' + e.message, 'error');
+  }
+}
+
+function updateSaveStatus() {
+  const el = document.getElementById('saveStatus');
+  if (state.dirtyFiles.size === 0) {
+    el.className = 'status saved';
+    el.innerHTML = '<span class="dot"></span>已保存';
+  }
+}
+
+/* ═══════════════════════════════════════════
+   Tab switching
+   ═══════════════════════════════════════════ */
+const tabTitles = {
+  labels: '标签布局 — 建筑文字位置调整',
+  assets: '素材引用 — 图片路径管理',
+};
+
+function switchTab(tab) {
+  state.tab = tab;
+  document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
+  document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
+  document.getElementById('tabTitle').textContent = tabTitles[tab];
+  renderTab();
+}
+
+document.querySelectorAll('.sidebar nav a').forEach(a => {
+  a.addEventListener('click', () => switchTab(a.dataset.tab));
+});
+
+/* ═══════════════════════════════════════════
+   Render
+   ═══════════════════════════════════════════ */
+function renderTab() {
+  switch(state.tab) {
+    case 'labels': renderLabelsTab(); break;
+    case 'assets': renderAssetsTab(); break;
+  }
+}
+
+/* ──────── Tab 1: 标签布局 ──────── */
+function ensureLayoutDefaults(bld) {
+  if (!bld.labelLayout) bld.labelLayout = { nameOffsetY: 0, progressBarOffsetY: 0, workersOffsetY: 0 };
+  if (!bld.mapIconLayout) bld.mapIconLayout = { scaleX: 1.0, scaleY: 1.0, offsetX: 0, offsetY: 0 };
+  if (!bld.detailLayout) bld.detailLayout = { scale: 1.0, offsetX: 0, offsetY: 0 };
+}
+
+function renderLabelsTab() {
+  const buildings = state.data.buildings;
+  if (!buildings || buildings.length === 0) {
+    document.getElementById('mainContent').innerHTML = '<div class="panel"><p>建筑数据加载中...</p></div>';
+    return;
+  }
+
+  const b = buildings[state.labelBuildingIdx] || buildings[0];
+  ensureLayoutDefaults(b);
+  const ll = b.labelLayout;
+  const ml = b.mapIconLayout;
+  const dl = b.detailLayout;
+  const footW = (b.footprint?.width || 1);
+  const footH = (b.footprint?.height || 1);
+
+  let html = '<div class="panel"><h3>建筑视觉布局<span class="sub">标签 / 地图图标 / 详情界面 — 拖动滑块实时预览</span></h3>';
+  html += '<div class="layout-editor">';
+
+  // Controls
+  html += '<div class="controls">';
+  html += `<div class="form-group"><label>选择建筑</label>
+    <select id="labelBuildingSelect">${buildings.map((bld, i) => `<option value="${i}" ${i===state.labelBuildingIdx?'selected':''}>${bld.name} (${bld.id}) ${bld.footprint?.width||1}x${bld.footprint?.height||1}</option>`).join('')}</select></div>`;
+  html += `<div style="font-size:11px;color:var(--muted);margin-bottom:6px">占地: ${footW}×${footH} 格 | 地图精灵: ${b.mapIcon || '(未设置)'}</div>`;
+
+  const layoutData = { labelLayout: ll, mapIconLayout: ml, detailLayout: dl };
+  const sections = [
+    {
+      title: '📝 标签布局',
+      fields: [
+        { key: 'nameOffsetY', label: '名称偏移Y', min: -40, max: 40, step: 1, layoutKey: 'labelLayout', val: ll.nameOffsetY },
+        { key: 'progressBarOffsetY', label: '进度条偏移Y', min: -30, max: 50, step: 1, layoutKey: 'labelLayout', val: ll.progressBarOffsetY },
+        { key: 'workersOffsetY', label: '工人偏移Y', min: -30, max: 30, step: 1, layoutKey: 'labelLayout', val: ll.workersOffsetY },
+      ]
+    },
+    {
+      title: '🗺️ 地图图标',
+      fields: [
+        { key: 'scaleX', label: '缩放X', min: 0.2, max: 2.0, step: 0.05, layoutKey: 'mapIconLayout', val: ml.scaleX },
+        { key: 'scaleY', label: '缩放Y', min: 0.2, max: 2.0, step: 0.05, layoutKey: 'mapIconLayout', val: ml.scaleY },
+        { key: 'offsetX', label: '位移X(px)', min: -40, max: 40, step: 1, layoutKey: 'mapIconLayout', val: ml.offsetX },
+        { key: 'offsetY', label: '位移Y(px)', min: -40, max: 40, step: 1, layoutKey: 'mapIconLayout', val: ml.offsetY },
+      ]
+    },
+    {
+      title: '🖼️ 详情界面',
+      fields: [
+        { key: 'scale', label: '缩放', min: 0.5, max: 2.0, step: 0.05, layoutKey: 'detailLayout', val: dl.scale },
+        { key: 'offsetX', label: '位移X(px)', min: -60, max: 60, step: 1, layoutKey: 'detailLayout', val: dl.offsetX },
+        { key: 'offsetY', label: '位移Y(px)', min: -60, max: 60, step: 1, layoutKey: 'detailLayout', val: dl.offsetY },
+      ]
+    },
+  ];
+
+  sections.forEach(sec => {
+    html += `<details open style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600;font-size:13px;padding:4px 0">${sec.title}</summary>`;
+    sec.fields.forEach(s => {
+      html += `<div class="control-group">
+        <label><span>${s.label}</span><span class="val" id="val_${s.layoutKey}_${s.key}">${s.val}</span></label>
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.val}" data-lk="${s.layoutKey}" data-ll="${s.key}" id="range_${s.layoutKey}_${s.key}" style="flex:1" />
+          <input type="number" value="${s.val}" data-lk="${s.layoutKey}" data-ll="${s.key}" id="num_${s.layoutKey}_${s.key}" style="width:64px" step="${s.step}" />
+        </div>
+      </div>`;
+    });
+    html += '</details>';
+  });
+
+  html += '</div>';
+
+  // Preview canvas
+  html += `<div class="preview-area" style="flex-direction:column;gap:16px"><canvas id="labelCanvas" width="500" height="520"></canvas></div>`;
+  html += '</div></div>';
+
+  document.getElementById('mainContent').innerHTML = html;
+
+  // Bind building selector
+  document.getElementById('labelBuildingSelect').addEventListener('change', function() {
+    state.labelBuildingIdx = parseInt(this.value);
+    renderLabelsTab();
+    updateLabelPreview();
+  });
+
+  // Bind all sliders
+  sections.forEach(sec => {
+    sec.fields.forEach(s => {
+      const rangeEl = document.getElementById('range_' + s.layoutKey + '_' + s.key);
+      const numEl = document.getElementById('num_' + s.layoutKey + '_' + s.key);
+      if (!rangeEl || !numEl) return;
+
+      function onChange(val) {
+        document.getElementById('val_' + s.layoutKey + '_' + s.key).textContent = val;
+        rangeEl.value = val;
+        numEl.value = val;
+        const bld = state.data.buildings[state.labelBuildingIdx];
+        ensureLayoutDefaults(bld);
+        bld[s.layoutKey][s.key] = parseFloat(val);
+        updateLabelPreview();
+        markDirty('buildings');
+      }
+
+      rangeEl.addEventListener('input', () => onChange(rangeEl.value));
+      numEl.addEventListener('input', () => onChange(numEl.value));
+    });
+  });
+
+  setTimeout(updateLabelPreview, 50);
+}
+
+function updateLabelPreview() {
+  const canvas = document.getElementById('labelCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  ctx.clearRect(0, 0, W, H);
+
+  const b = state.data.buildings[state.labelBuildingIdx];
+  if (!b) return;
+  ensureLayoutDefaults(b);
+  const ll = b.labelLayout;
+  const ml = b.mapIconLayout;
+  const dl = b.detailLayout;
+
+  const footW = b.footprint?.width || 1;
+  const footH = b.footprint?.height || 1;
+
+  // ── Layout: two side-by-side zones ──
+  const dividerX = 210;
+  const mapCX = 105;
+
+  // Vertical divider
+  ctx.strokeStyle = '#d5d0c8';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(dividerX, 20); ctx.lineTo(dividerX, H - 20); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Zone labels
+  ctx.fillStyle = '#6b6964';
+  ctx.font = '11px -apple-system, "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🗺️ 地图视图', mapCX, 30);
+  ctx.fillText('🖼️ 详情弹窗预览', dividerX + (W - dividerX) / 2, 30);
+
+  // ════════════════════════════════════════
+  // Zone 1: Map View — fixed tile size so size differences are visible
+  // ════════════════════════════════════════
+  const tilePx = Math.min(36, 130 / Math.max(footW, footH));
+  const mscW = footW * tilePx, mscH = footH * tilePx;
+  const mox = mapCX - mscW / 2, moy = 100 - mscH / 2;
+
+  // Ground tile
+  ctx.fillStyle = '#c8d6a0';
+  ctx.strokeStyle = '#9aab7c';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(mox, moy, mscW, mscH, 3);
+  ctx.fill();
+  ctx.stroke();
+
+  // Grid lines for multi-tile
+  if (footW > 1 || footH > 1) {
+    ctx.strokeStyle = 'rgba(154,171,124,0.4)';
+    ctx.lineWidth = 0.5;
+    for (let tx = 1; tx < footW; tx++) {
+      const gx = mox + tx * tilePx;
+      ctx.beginPath(); ctx.moveTo(gx, moy); ctx.lineTo(gx, moy + mscH); ctx.stroke();
+    }
+    for (let ty = 1; ty < footH; ty++) {
+      const gy = moy + ty * tilePx;
+      ctx.beginPath(); ctx.moveTo(mox, gy); ctx.lineTo(mox + mscW, gy); ctx.stroke();
+    }
+  }
+
+  // Size badge
+  ctx.fillStyle = '#6b6964';
+  ctx.font = '9px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(footW + '×' + footH + ' (' + (footW * 64) + '×' + (footH * 64) + 'px)', mapCX, moy + mscH + 14);
+
+  // Map icon with scale/offset
+  const miOX = ml.offsetX * (tilePx / 64);
+  const miOY = ml.offsetY * (tilePx / 64);
+  const miW = mscW * ml.scaleX, miH = mscH * ml.scaleY;
+  const miX = mox + (mscW - miW) / 2 + miOX;
+  const miY = moy + (mscH - miH) / 2 + miOY;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(miX, miY, miW, miH, 2);
+  ctx.clip();
+  const cs = 6;
+  for (let gy = miY; gy < miY + miH; gy += cs) {
+    for (let gx = miX; gx < miX + miW; gx += cs) {
+      const even = (Math.floor(gx / cs) + Math.floor(gy / cs)) % 2 === 0;
+      ctx.fillStyle = even ? '#e8e4dc' : '#ffffff';
+      ctx.fillRect(gx, gy, cs, cs);
+    }
+  }
+  ctx.fillStyle = 'rgba(123,94,167,0.45)';
+  ctx.fillRect(miX, miY, miW, miH);
+  ctx.restore();
+  ctx.strokeStyle = '#7b5ea7';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(miX, miY, miW, miH, 2);
+  ctx.stroke();
+
+  // Map icon info
+  ctx.fillStyle = '#9a80c0';
+  ctx.font = '8px monospace';
+  ctx.fillText('s:' + ml.scaleX.toFixed(1) + '×' + ml.scaleY.toFixed(1), mapCX, moy + mscH + 26);
+
+  // Labels on map
+  const ls = tilePx / 64; // label scale factor
+  const nOff = (ll.nameOffsetY ?? 0) * ls;
+  const pOff = (ll.progressBarOffsetY ?? 0) * ls;
+  const wOff = (ll.workersOffsetY ?? 0) * ls;
+  const mcx = mox + mscW / 2, mcy = moy + mscH / 2;
+
+  // Name
+  const nameFontSize = Math.max(9, Math.round(12 * ls));
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold ' + nameFontSize + 'px -apple-system, "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+  ctx.lineWidth = Math.max(2, 3 * ls);
+  ctx.strokeText(b.name || '(名称)', mcx, mcy - 10 * ls + nOff);
+  ctx.fillText(b.name || '(名称)', mcx, mcy - 10 * ls + nOff);
+
+  // Progress bar
+  if (footW === 1 && footH === 1) {
+    const pbY = mcy + 2 + pOff;
+    const pbW = mscW * 0.65, pbH = Math.max(2, 3 * ls);
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(mcx - pbW / 2, pbY - pbH / 2, pbW, pbH);
+    ctx.fillStyle = '#4a7c59';
+    ctx.fillRect(mcx - pbW / 2, pbY - pbH / 2, pbW * 0.6, pbH);
+  }
+
+  // Workers
+  const wY = moy + mscH - 6 * ls + wOff;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = Math.round(10 * ls) + 'px -apple-system, sans-serif';
+  ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+  ctx.lineWidth = Math.max(1.5, 2 * ls);
+  ctx.strokeText('👷 1', mcx, wY);
+  ctx.fillText('👷 1', mcx, wY);
+
+  // ════════════════════════════════════════
+  // Zone 2: Detail Popup — game-accurate style
+  // ════════════════════════════════════════
+  const dpX = dividerX + (W - dividerX) / 2;
+  const dpW = 260, dpTop = 52;
+  const dpLeft = dpX - dpW / 2;
+
+  // Glassmorphism popup background
+  const popupGrad = ctx.createLinearGradient(0, dpTop, 0, H - 16);
+  popupGrad.addColorStop(0, 'rgba(22,22,38,0.97)');
+  popupGrad.addColorStop(1, 'rgba(18,18,32,0.97)');
+  ctx.fillStyle = popupGrad;
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(dpLeft, dpTop, dpW, H - dpTop - 16, 12);
+  ctx.fill();
+  ctx.stroke();
+
+  // ── Detail image (top area, like the game) ──
+  let curY = dpTop + 12;
+  const imgMaxW = dpW - 40, imgMaxH = 90;
+  const diOX_dp = dl.offsetX;
+  const diOY_dp = dl.offsetY;
+  const diW_dp = imgMaxW * dl.scale, diH_dp = imgMaxH * dl.scale;
+  const imgCX = dpX;
+  const imgCY = curY + imgMaxH / 2;
+  const diX_dp = imgCX - diW_dp / 2 + diOX_dp;
+  const diY_dp = imgCY - diH_dp / 2 + diOY_dp;
+
+  // Image area background
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  ctx.beginPath();
+  ctx.roundRect(dpLeft + 20, curY, dpW - 40, imgMaxH, 8);
+  ctx.fill();
+
+  // Checkerboard placeholder
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(Math.max(dpLeft + 20, diX_dp), Math.max(curY, diY_dp), Math.min(dpW - 40, diW_dp), Math.min(imgMaxH, diH_dp), 4);
+  ctx.clip();
+  const cs2 = 5;
+  for (let gy = diY_dp; gy < diY_dp + diH_dp; gy += cs2) {
+    for (let gx = diX_dp; gx < diX_dp + diW_dp; gx += cs2) {
+      if (gx < dpLeft + 20 || gx > dpLeft + dpW - 20) continue;
+      if (gy < curY || gy > curY + imgMaxH) continue;
+      const even = (Math.floor(gx / cs2) + Math.floor(gy / cs2)) % 2 === 0;
+      ctx.fillStyle = even ? '#3a3a4a' : '#333340';
+      ctx.fillRect(gx, gy, cs2, cs2);
+    }
+  }
+  ctx.fillStyle = 'rgba(160,140,200,0.35)';
+  ctx.fillRect(diX_dp, diY_dp, diW_dp, diH_dp);
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(160,140,200,0.5)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(diX_dp, diY_dp, diW_dp, diH_dp);
+
+  // "Image loaded" indicator if path set
+  if (b.imageDetail) {
+    ctx.fillStyle = '#4ecb71';
+    ctx.font = '9px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    const fname = b.imageDetail.split('/').pop();
+    ctx.fillText('📷 ' + (fname.length > 22 ? fname.substring(0, 20) + '…' : fname), imgCX, curY + imgMaxH + 10);
+  }
+
+  curY += imgMaxH + 22;
+
+  // ── Building name + description ──
+  ctx.fillStyle = '#ececf0';
+  ctx.font = 'bold 14px -apple-system, "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(b.name || '建筑名称', imgCX, curY);
+  curY += 16;
+
+  if (b.description) {
+    ctx.fillStyle = '#a0a0ba';
+    ctx.font = '10px -apple-system, "Microsoft YaHei", sans-serif';
+    const desc = b.description.length > 28 ? b.description.substring(0, 26) + '…' : b.description;
+    ctx.fillText(desc, imgCX, curY);
+    curY += 14;
+  }
+
+  // Status
+  ctx.fillStyle = '#4ecb71';
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.fillText('● 运行中', imgCX, curY);
+  curY += 18;
+
+  // ── Divider ──
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(dpLeft + 20, curY); ctx.lineTo(dpLeft + dpW - 20, curY); ctx.stroke();
+  curY += 12;
+
+  // ── Section: Workers ──
+  ctx.fillStyle = '#a0a0ba';
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('👷 工人分配', dpLeft + 24, curY + 7);
+  curY += 20;
+
+  // Worker controls
+  const wrkCX = imgCX;
+  const btnSize = 18;
+  ctx.fillStyle = 'rgba(255,100,100,0.15)';
+  ctx.strokeStyle = 'rgba(255,100,100,0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect(wrkCX - 60, curY, btnSize, btnSize, 4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#ff6b6b';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('−', wrkCX - 60 + btnSize/2, curY + btnSize/2 + 4);
+
+  ctx.fillStyle = '#ececf0';
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.fillText('1 / ' + (b.maxWorkers || 0), wrkCX, curY + btnSize/2 + 4);
+
+  ctx.fillStyle = 'rgba(100,255,100,0.15)';
+  ctx.strokeStyle = 'rgba(100,255,100,0.3)';
+  ctx.beginPath(); ctx.roundRect(wrkCX + 42, curY, btnSize, btnSize, 4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#4ecb71';
+  ctx.fillText('+', wrkCX + 42 + btnSize/2, curY + btnSize/2 + 4);
+  curY += 26;
+
+  // Available workers
+  ctx.fillStyle = '#666';
+  ctx.font = '9px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('可用工人: 3', imgCX, curY);
+  curY += 18;
+
+  // ── Section: Production ──
+  if (b.production && (b.production.output || []).length > 0) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(dpLeft + 20, curY); ctx.lineTo(dpLeft + dpW - 20, curY); ctx.stroke();
+    curY += 12;
+
+    ctx.fillStyle = '#a0a0ba';
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('⚙️ 生产', dpLeft + 24, curY + 7);
+    curY += 18;
+
+    const inputs = (b.production.input || []).map(i => i.resourceId + '×' + i.amount).join(' + ') || '无';
+    const outputs = (b.production.output || []).map(o => o.resourceId + '×' + o.amount).join(' + ');
+
+    ctx.fillStyle = '#a0a0ba';
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('消耗', dpLeft + 24, curY + 6);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#ececf0';
+    ctx.fillText(inputs, dpLeft + dpW - 24, curY + 6);
+    curY += 16;
+
+    ctx.fillStyle = '#a0a0ba';
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('产出', dpLeft + 24, curY + 6);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#4ecb71';
+    ctx.fillText(outputs, dpLeft + dpW - 24, curY + 6);
+    curY += 14;
+
+    ctx.fillStyle = '#6a6a82';
+    ctx.font = '8px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(b.production.perWorker ? '每工人独立生产' : '固定产出', dpLeft + dpW - 24, curY + 6);
+    curY += 16;
+  }
+
+  // ── Detail layout info ──
+  ctx.fillStyle = '#6b6964';
+  ctx.font = '8px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('scale:' + dl.scale.toFixed(2) + '  off:(' + dl.offsetX + ',' + dl.offsetY + ')', imgCX, H - 20);
+}
+
+/* ──────── Tab 3: 素材引用 ──────── */
+
+/**
+ * 规范化路径用于比较：去掉 assets/ 前缀，统一用 /
+ */
+function normalizePath(p) {
+  let s = p.replace(/\\/g, '/');
+  if (s.startsWith('assets/')) s = s.substring(7);
+  return s;
+}
+
+async function renderAssetsTab() {
+  // 先渲染加载骨架
+  document.getElementById('mainContent').innerHTML =
+    '<div class="panel"><h3>素材概览</h3><p style="color:#888;text-align:center;padding:40px;">⏳ 正在检测素材文件...</p></div>';
+
+  // 1. 收集配置中所有引用的图片路径
+  const configRefs = []; // { path, normalized, source, id, name, field }
+  const refNormalizedSet = new Set();
+
+  const addRef = (path, source, id, name, field) => {
+    const norm = path ? normalizePath(path) : '';
+    configRefs.push({ path: path || '', normalized: norm, source, id, name, field });
+    if (path) refNormalizedSet.add(norm);
+  };
+
+  // 建筑：始终展示三个图片字段（icon, mapIcon, imageDetail），即使值为空也可以编辑
+  const BUILDING_IMG_FIELDS = ['icon', 'mapIcon', 'imageDetail'];
+  state.data.buildings.forEach(b => {
+    for (const field of BUILDING_IMG_FIELDS) {
+      addRef(b[field] || '', '建筑', b.id, b.name, field);
+    }
+  });
+  state.data.resources.forEach(r => {
+    if (r.icon) addRef(r.icon, '资源', r.id, r.name, 'icon');
+  });
+  state.data.items.forEach(item => {
+    if (item.icon) addRef(item.icon, '物品', item.id, item.name, 'icon');
+  });
+
+  // 2. 构建清单中所有可用图片的集合
+  const manifestFiles = state.manifest ? state.manifest.files || [] : [];
+  const manifestSet = new Set(manifestFiles.map(normalizePath));
+  const manifestByCategory = state.manifest ? state.manifest.categories || {} : {};
+
+  // 3. 按（规范化路径 + 来源 + 字段）去重，空路径的每个字段都是独立行
+  const seenKey = new Set();
+  const uniqueRefs = [];
+  configRefs.forEach(a => {
+    const key = a.path ? `path:${a.normalized}` : `empty:${a.source}:${a.id}:${a.field}`;
+    if (!seenKey.has(key)) {
+      seenKey.add(key);
+      uniqueRefs.push(a);
+    }
+  });
+
+  // 4. 等待所有文件存在性检测完成
+  await checkAssetsExistAsync(uniqueRefs);
+
+  // 5. 统计：空路径或确认为 false = 缺失
+  const missingRefs = uniqueRefs.filter(a => !a.path || state.assetCheckResults[a.path] === false);
+  const existingRefs = uniqueRefs.filter(a => a.path && state.assetCheckResults[a.path] === true);
+  // 清单中有但配置未引用的文件（"未引用资产"）
+  const unreferencedFiles = manifestFiles.filter(f => !refNormalizedSet.has(normalizePath(f)));
+
+  // 6. 渲染
+  let html = '';
+
+  // ── 概览卡片 ──
+  const scanSource = state.manifest ? (state.manifest._scanned ? 'HTTP 实时扫描' : 'assets/manifest.json') : '未加载';
+  html += '<div class="panel"><h3>素材概览<span class="sub">自动扫描 + 配置引用交叉对比</span><button id="btnRescanAssets" class="btn-secondary" style="margin-left:12px;font-size:11px;" title="重新扫描 assets/ 目录">🔄 重新扫描</button></h3>';
+  html += '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px;">';
+
+  const overviewCards = [
+    { label: '清单文件总数', value: manifestFiles.length, color: '#7b5ea7', sub: scanSource },
+    { label: '已引用且存在', value: existingRefs.length, color: '#2f7d4a', sub: '✓ 正常' },
+    { label: '已引用但缺失', value: missingRefs.length, color: '#b53a2a', sub: '需补充文件' },
+    { label: '未引用资产', value: unreferencedFiles.length, color: '#c97d1a', sub: '磁盘上有但未配置' },
+  ];
+
+  overviewCards.forEach(c => {
+    html += `<div style="flex:1;min-width:140px;padding:16px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);text-align:center;">
+      <div style="font-size:28px;font-weight:700;color:${c.color};">${c.value}</div>
+      <div style="font-size:12px;color:#a0a0ba;margin-top:4px;">${c.label}</div>
+      <div style="font-size:10px;color:#6b6964;">${c.sub}</div>
+    </div>`;
+  });
+
+  html += '</div>';
+
+  // 清单未加载提示
+  if (!state.manifest) {
+    html += '<div style="margin-top:12px;padding:12px 16px;border-radius:8px;background:rgba(201,125,26,0.1);border:1px solid rgba(201,125,26,0.2);font-size:13px;color:#c97d1a;">';
+    html += '⚠️ 未能加载素材清单。请运行 <code style="background:rgba(0,0,0,0.2);padding:2px 6px;border-radius:4px;">node scripts/generate-asset-manifest.js</code> 生成清单文件，然后刷新本页面。';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // ── 筛选标签 ──
+  html += '<div class="panel"><h3>素材列表</h3>';
+  html += '<div style="display:flex;gap:8px;margin-bottom:16px;" id="assetFilterTabs">';
+  const filters = [
+    { key: 'all', label: `全部引用 (${uniqueRefs.length})` },
+    { key: 'missing', label: `⚠️ 缺失 (${missingRefs.length})`, cls: missingRefs.length > 0 ? '' : 'dim' },
+    { key: 'unreferenced', label: `📁 未引用 (${unreferencedFiles.length})`, cls: unreferencedFiles.length > 0 ? '' : 'dim' },
+  ];
+  filters.forEach(f => {
+    html += `<button class="btn-secondary asset-filter-btn" data-filter="${f.key}" style="font-size:12px;">${f.label}</button>`;
+  });
+  html += '</div>';
+
+  // ── 表格容器 ──
+  html += '<div id="assetTableContainer" style="overflow-x:auto"></div>';
+  html += '</div>';
+
+  document.getElementById('mainContent').innerHTML = html;
+
+  // 存储数据供筛选器使用
+  window.__assetData = { uniqueRefs, missingRefs, unreferencedFiles, manifestByCategory };
+
+  // 默认显示「全部引用」
+  renderAssetTable('all');
+
+  // 筛选按钮事件
+  document.querySelectorAll('.asset-filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.asset-filter-btn').forEach(b => {
+        b.classList.remove('btn-primary'); b.classList.add('btn-secondary');
+      });
+      this.classList.remove('btn-secondary'); this.classList.add('btn-primary');
+      renderAssetTable(this.dataset.filter);
+    });
+  });
+  // 默认高亮第一个按钮
+  const firstBtn = document.querySelector('.asset-filter-btn');
+  if (firstBtn) { firstBtn.classList.remove('btn-secondary'); firstBtn.classList.add('btn-primary'); }
+
+  // 重新扫描按钮
+  const rescanBtn = document.getElementById('btnRescanAssets');
+  if (rescanBtn) {
+    rescanBtn.addEventListener('click', async function() {
+      this.textContent = '⏳ 扫描中...';
+      this.disabled = true;
+      state.manifest = null;
+      state.assetCheckResults = {};
+      await scanAssetsViaHTTP();
+      this.textContent = '🔄 重新扫描';
+      this.disabled = false;
+      renderAssetsTab();
+      showToast(state.manifest ? `扫描完成: ${state.manifest.totalFiles} 个文件` : '扫描失败', state.manifest ? 'success' : 'error');
+    });
+  }
+}
+
+/**
+ * 根据筛选条件渲染素材表格
+ */
+function renderAssetTable(filter) {
+  const data = window.__assetData;
+  if (!data) return;
+  const container = document.getElementById('assetTableContainer');
+  if (!container) return;
+
+  let rows = [];
+
+  if (filter === 'all') {
+    rows = data.uniqueRefs.map(a => ({ type: 'ref', ...a }));
+  } else if (filter === 'missing') {
+    rows = data.missingRefs.map(a => ({ type: 'ref', ...a }));
+  } else if (filter === 'unreferenced') {
+    rows = data.unreferencedFiles.map(f => ({
+      type: 'unref',
+      path: f,
+      normalized: normalizePath(f),
+      source: '—',
+      id: '—',
+      name: f,
+      field: '—'
+    }));
+  }
+
+  if (rows.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:32px;color:#888;">✨ 没有匹配的素材</div>';
+    return;
+  }
+
+  // 构建下拉选项（从 manifest 按分类分组，带 assets/ 前缀）
+  const buildAssetSelectOptions = (currentPath) => {
+    let opts = '';
+    if (currentPath) {
+      // 当前值（即使不在清单中也保留）
+      opts += `<option value="${escapeHTML(currentPath)}" selected>${escapeHTML(currentPath)}</option>`;
+      opts += `<option value="">-- 清空 --</option>`;
+    } else {
+      // 字段未配置
+      opts += `<option value="" selected>-- 未配置 --</option>`;
+    }
+    // 清单中的文件，按分类分组
+    const manifestFiles = state.manifest ? state.manifest.files || [] : [];
+    const categories = state.manifest ? state.manifest.categories || {} : {};
+    if (manifestFiles.length > 0) {
+      // 有分类信息时按组渲染
+      const catNames = Object.keys(categories);
+      if (catNames.length > 0) {
+        for (const [cat, files] of Object.entries(categories)) {
+          opts += `<optgroup label="📁 assets/${cat}/">`;
+          for (const f of files) {
+            const fullPath = `assets/${f}`;
+            const selected = currentPath === fullPath ? ' selected' : '';
+            if (currentPath !== fullPath) { // 避免重复（已在上面添加）
+              opts += `<option value="${escapeHTML(fullPath)}"${selected}>${escapeHTML(f)}</option>`;
+            }
+          }
+          opts += `</optgroup>`;
+        }
+      } else {
+        // 无分类信息时扁平列出
+        opts += `<optgroup label="📁 assets/">`;
+        for (const f of manifestFiles) {
+          const fullPath = `assets/${f}`;
+          const selected = currentPath === fullPath ? ' selected' : '';
+          if (currentPath !== fullPath) {
+            opts += `<option value="${escapeHTML(fullPath)}"${selected}>${escapeHTML(f)}</option>`;
+          }
+        }
+        opts += `</optgroup>`;
+      }
+    }
+    // 自定义输入入口
+    opts += `<optgroup label="✏️ 其他">`;
+    opts += `<option value="__custom__">✏️ 手动输入...</option>`;
+    opts += `</optgroup>`;
+    return opts;
+  };
+
+  let html = '<table class="asset-table"><thead><tr>';
+  html += '<th>状态</th><th>图片路径</th><th>来源</th><th>ID</th><th>名称</th><th>字段</th><th style="width:60px">操作</th>';
+  html += '</tr></thead><tbody>';
+
+  rows.forEach(a => {
+    if (a.type === 'unref') {
+      // 未引用资产：存在且可用
+      const categories = data.manifestByCategory;
+      let catLabel = '';
+      for (const [cat, files] of Object.entries(categories)) {
+        if (files.some(f => normalizePath(f) === a.normalized)) { catLabel = cat; break; }
+      }
+      html += `<tr style="background:rgba(201,125,26,0.04);">
+        <td class="exists">可用</td>
+        <td><code style="font-size:12px;color:#c97d1a;">assets/${escapeHTML(a.path)}</code></td>
+        <td style="color:#888;">📁 ${escapeHTML(catLabel || '—')}</td>
+        <td>—</td>
+        <td>${escapeHTML(a.name)}</td>
+        <td style="color:#888;">未引用</td>
+        <td><button class="btn-secondary btn-sm quick-add-btn" data-path="${escapeHTML(a.path)}" title="快速添加到建筑">➕</button></td>
+      </tr>`;
+    } else {
+      const isEmpty = !a.path;
+      const checked = isEmpty ? null : state.assetCheckResults[a.path];
+      const statusClass = isEmpty ? 'missing' : (checked === false ? 'missing' : (checked === true ? 'exists' : 'checking'));
+      const statusText = isEmpty ? '缺失' : (checked === false ? '缺失' : (checked === true ? '存在' : '检测中...'));
+      html += `<tr${isEmpty ? ' style="background:rgba(255,255,255,0.02);"' : ''}>
+        <td class="${statusClass}">${statusText}</td>
+        <td><select data-asset-path="${escapeHTML(a.path)}" data-source="${a.source}" data-id="${a.id}" data-field="${a.field}" class="asset-path-select" style="width:100%;min-width:200px;">${buildAssetSelectOptions(a.path)}</select></td>
+        <td>${a.source}</td>
+        <td>${a.id}</td>
+        <td>${a.name}</td>
+        <td style="font-size:11px;color:#888;">${a.field}</td>
+        <td><button class="btn-secondary btn-sm recheck-btn" data-path="${escapeHTML(a.path)}">🔄</button></td>
+      </tr>`;
+    }
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+
+  // 绑定下拉选框：选择素材后更新配置引用
+  container.querySelectorAll('.asset-path-select').forEach(el => {
+    el.addEventListener('change', function() {
+      const oldPath = this.dataset.assetPath;
+      let newPath = this.value;
+
+      // 选择了"手动输入"，弹出输入框
+      if (newPath === '__custom__') {
+        newPath = prompt('请输入图片路径（相对于项目根目录）:', oldPath || 'assets/buildings/');
+        if (!newPath || newPath === oldPath) {
+          // 用户取消或未修改，恢复原选项
+          this.value = oldPath;
+          return;
+        }
+      }
+
+      if (oldPath === newPath) return;
+      const source = this.dataset.source;
+      const id = this.dataset.id;
+      const field = this.dataset.field;
+      updateAssetPath(source, id, field, oldPath, newPath);
+      this.dataset.assetPath = newPath;
+      // 刷新行内的 select options 以更新选中状态
+      checkSingleAsset(newPath, () => { renderAssetsTab(); });
+    });
+  });
+
+  // 重新检测
+  container.querySelectorAll('.recheck-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const path = this.dataset.path;
+      checkSingleAsset(path, () => { renderAssetsTab(); });
+    });
+  });
+
+  // 快速添加未引用素材到建筑
+  container.querySelectorAll('.quick-add-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const assetPath = this.dataset.path;
+      showQuickAddDialog(assetPath);
+    });
+  });
+}
+
+/**
+ * 快速添加对话框：将未引用素材添加到指定建筑的 mapIcon 或 icon 字段
+ */
+function showQuickAddDialog(assetPath) {
+  const buildings = state.data.buildings;
+  if (!buildings || buildings.length === 0) return;
+
+  // 创建简单的选择对话框
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;';
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+  const dialog = document.createElement('div');
+  dialog.style.cssText = 'background:#1e1e2e;border:1px solid #333;border-radius:12px;padding:24px;min-width:360px;max-width:480px;box-shadow:0 16px 48px rgba(0,0,0,0.4);';
+
+  const fullPath = assetPath.startsWith('assets/') ? assetPath : `assets/${assetPath}`;
+
+  dialog.innerHTML = `
+    <h4 style="margin:0 0 6px;color:#ececf0;">添加素材到建筑</h4>
+    <p style="margin:0 0 16px;font-size:12px;color:#888;">素材: <code style="color:#c97d1a;">${escapeHTML(fullPath)}</code></p>
+    <div style="margin-bottom:12px;">
+      <label>目标建筑</label>
+      <select id="qaddBuilding" style="width:100%;">${buildings.map(b => `<option value="${b.id}">${b.name} (${b.id})</option>`).join('')}</select>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label>目标字段</label>
+      <select id="qaddField" style="width:100%;">
+        <option value="mapIcon">mapIcon (地图精灵图)</option>
+        <option value="icon">icon (UI图标)</option>
+        <option value="imageDetail">imageDetail (详情图)</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button id="qaddCancel" class="btn-secondary">取消</button>
+      <button id="qaddConfirm" class="btn-primary">确认添加</button>
+    </div>
+  `;
+
+  overlay.appendChild(dialog);
+  document.body.appendChild(overlay);
+
+  dialog.querySelector('#qaddCancel').addEventListener('click', () => overlay.remove());
+  dialog.querySelector('#qaddConfirm').addEventListener('click', () => {
+    const buildingId = dialog.querySelector('#qaddBuilding').value;
+    const field = dialog.querySelector('#qaddField').value;
+    const bld = buildings.find(b => b.id === buildingId);
+    if (bld) {
+      bld[field] = fullPath;
+      markDirty('buildings');
+      showToast(`已添加: ${bld.name}.${field} = ${fullPath}`, 'success');
+      overlay.remove();
+      renderAssetsTab();
+    }
+  });
+}
+
+function updateAssetPath(source, id, field, oldPath, newPath) {
+  // 只更新指定的 (source, id, field)，不再全局匹配所有空字段
+  if (source === '建筑') {
+    const bld = state.data.buildings.find(b => b.id === id);
+    if (bld) {
+      bld[field] = newPath;
+      markDirty('buildings');
+    }
+  } else if (source === '资源') {
+    const res = state.data.resources.find(r => r.id === id);
+    if (res) {
+      res[field] = newPath;
+      markDirty('resources');
+    }
+  } else if (source === '物品') {
+    const item = state.data.items.find(it => it.id === id);
+    if (item) {
+      item[field] = newPath;
+      markDirty('items');
+    }
+  }
+}
+
+/**
+ * 异步检测所有引用的文件是否存在，完成后返回
+ */
+async function checkAssetsExistAsync(assets) {
+  for (const a of assets) {
+    if (!a.path) continue;
+    if (state.assetCheckResults[a.path] !== undefined) continue;
+    await checkSingleAsset(a.path);
+  }
+}
+
+async function checkAssetsExist(assets) {
+  await checkAssetsExistAsync(assets);
+  // 更新当前表格 DOM（如果素材标签页已渲染）
+  if (state.tab === 'assets') {
+    const missingCount = assets.filter(a => !a.path || state.assetCheckResults[a.path] === false).length;
+    const el = document.querySelector('.missing-count');
+    if (el) {
+      el.className = `missing-count ${missingCount > 0 ? 'has-missing' : 'all-good'}`;
+      el.innerHTML = missingCount > 0 ? `⚠️ ${missingCount} 个文件缺失` : '✅ 所有素材文件存在';
+      el.innerHTML += ` — 共 ${assets.length} 个引用`;
+    }
+    document.querySelectorAll('.asset-table td.missing, .asset-table td.exists, .asset-table td.checking, .asset-table td.empty').forEach(td => {
+      const row = td.closest('tr');
+      const select = row?.querySelector('.asset-path-select');
+      if (!select) return;
+      const checked = state.assetCheckResults[select.dataset.assetPath];
+      td.className = checked === false ? 'missing' : (checked === true ? 'exists' : 'checking');
+      td.textContent = checked === false ? '缺失' : (checked === true ? '存在' : '检测中...');
+    });
+  }
+}
+
+async function checkSingleAsset(path, callback) {
+  try {
+    const resp = await fetch(path, { method: 'HEAD' });
+    const exists = resp.ok;
+    state.assetCheckResults[path] = exists;
+    if (callback) callback(exists);
+  } catch(e) {
+    state.assetCheckResults[path] = false;
+    if (callback) callback(false);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   Helpers
+   ═══════════════════════════════════════════ */
+function escapeHTML(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, type) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
+}
+
+/* ═══════════════════════════════════════════
+   Event listeners
+   ═══════════════════════════════════════════ */
+document.getElementById('btnSelectDir').addEventListener('click', selectDir);
+document.getElementById('btnToggleAuto').addEventListener('click', function() {
+  state.autoSave = !state.autoSave;
+  this.textContent = state.autoSave ? '🔄 自动保存' : '💾 手动保存';
+  document.getElementById('btnSave').style.display = state.autoSave ? 'none' : '';
+  if (!state.autoSave && state.saveTimer) { clearTimeout(state.saveTimer); state.saveTimer = null; }
+});
+
+document.getElementById('btnSave').addEventListener('click', () => doSaveAll());
+
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    if (!state.autoSave) doSaveAll();
+  }
+});
+</script>
+</body>
+</html>

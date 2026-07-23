@@ -1,0 +1,158 @@
+[
+  {
+    "id": "story_stranger_arrives",
+    "name": "营地来客",
+    "description": "一位风尘仆仆的旅人出现在营地边缘，看起来疲惫不堪。",
+    "image": "",
+    "priority": 5,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning",
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "热情接待他",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "wood",
+            "amount": 50
+          },
+          {
+            "type": "trigger_event",
+            "eventId": "story_stranger_accepted"
+          }
+        ]
+      },
+      {
+        "text": "警惕地拒绝他",
+        "effects": [
+          {
+            "type": "trigger_event",
+            "eventId": "story_stranger_refused"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "story_stranger_accepted",
+    "name": "旅人离去",
+    "description": "旅人感激地接过木材，在营地歇息片刻后重新上路。「感谢你的慷慨，我会记住这份恩情。两日后我必定归来报答。」",
+    "image": "",
+    "priority": 10,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "期待他的归来",
+        "effects": [
+          {
+            "type": "schedule_event",
+            "eventId": "story_stranger_return",
+            "delayDays": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "story_stranger_refused",
+    "name": "旅人远去",
+    "description": "旅人叹了口气，没有多说一句话，转身消失在荒野之中。也许他只是一个普通的过路人。",
+    "image": "",
+    "priority": 10,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "继续手头的工作",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "story_stranger_return",
+    "name": "旅人回归",
+    "description": "旅人如约归来，马背上驮着沉甸甸的物资。「我说过会回来的。这些是从远处矿场带来的，希望能帮上忙。」",
+    "image": "",
+    "priority": 10,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "收下铁矿（+20）",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "iron_ore",
+            "amount": 20
+          }
+        ]
+      },
+      {
+        "text": "收下煤炭（+30）",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "coal",
+            "amount": 30
+          }
+        ]
+      }
+    ]
+  }
+]

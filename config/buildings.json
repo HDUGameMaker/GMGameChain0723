@@ -1,0 +1,557 @@
+[
+  {
+    "id": "work_shed",
+    "name": "工棚",
+    "description": "简陋的木棚，遮风挡雨的基本住所。",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
+    "maxCount": null,
+    "initialBuilding": true,
+    "housingCapacity": 2,
+    "buildCost": [
+      {
+        "resourceId": "stone",
+        "amount": 10
+      },
+      {
+        "resourceId": "wood",
+        "amount": 20
+      }
+    ],
+    "buildTime": 1,
+    "upgradesTo": "plank_house",
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "mapIconLayout": {
+      "scaleX": 1,
+      "scaleY": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "detailLayout": {
+      "scale": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "icon": "assets/buildings/building_work_shed_1784771193.png",
+    "imageDetail": "assets/buildings/building_work_shed_1784771193.png",
+    "mapIcon": "assets/buildings/building_work_shed_1784771193.png"
+  },
+  {
+    "id": "plank_house",
+    "name": "木板房",
+    "description": "用木板加固的房屋，比工棚舒适得多。",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "housingCapacity": 5,
+    "upgradesFrom": "work_shed",
+    "upgradeCost": [
+      {
+        "resourceId": "plank",
+        "amount": 15
+      },
+      {
+        "resourceId": "wood",
+        "amount": 10
+      }
+    ],
+    "buildTime": 2,
+    "upgradesTo": null,
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "imageDetail": "assets/buildings/building_plank_house_1784771253.png"
+  },
+  {
+    "id": "tile_house",
+    "name": "瓦房",
+    "description": "坚固宽敞的瓦顶房屋，可以容纳更多人居住。",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "housingCapacity": 12,
+    "buildCost": [
+      {
+        "resourceId": "stone",
+        "amount": 50
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 5
+      },
+      {
+        "resourceId": "plank",
+        "amount": 20
+      }
+    ],
+    "buildTime": 4,
+    "upgradesTo": null,
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "hunting_hut",
+    "name": "狩猎小屋",
+    "description": "猎人们出发前集结的小屋，每个小屋可以支撑5人的口粮。",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "foodCapacity": 5,
+    "maxWorkers": 1,
+    "buildCost": [
+      {
+        "resourceId": "wood",
+        "amount": 15
+      }
+    ],
+    "buildTime": 1,
+    "upgradesTo": null,
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "farm",
+    "name": "农田",
+    "description": "大片的耕地，每个工人可支撑7人的口粮，最高35人。仅能建造在草地上。",
+    "footprint": {
+      "width": 3,
+      "height": 3
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "allowedGrounds": [
+      "G"
+    ],
+    "foodCapacity": 7,
+    "maxWorkers": 5,
+    "buildCost": [
+      {
+        "resourceId": "wood",
+        "amount": 50
+      }
+    ],
+    "buildTime": 3,
+    "upgradesTo": null,
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "warehouse",
+    "name": "仓库",
+    "description": "存放所有物资的核心建筑。升级期间原有仓库功能保持运作。不可拆除。",
+    "demolishable": false,
+    "footprint": {
+      "width": 3,
+      "height": 3
+    },
+    "maxCount": 1,
+    "initialBuilding": true,
+    "storageMultiplier": 1,
+    "buildCost": [
+      {
+        "resourceId": "stone",
+        "amount": 60
+      },
+      {
+        "resourceId": "wood",
+        "amount": 100
+      }
+    ],
+    "buildTime": 4,
+    "upgradesTo": "industrial_warehouse",
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "industrial_warehouse",
+    "name": "工业仓储中心",
+    "description": "经过工业级改造的大型仓储设施，储存能力翻倍。",
+    "footprint": {
+      "width": 3,
+      "height": 3
+    },
+    "maxCount": 1,
+    "initialBuilding": false,
+    "storageMultiplier": 2,
+    "upgradesFrom": "warehouse",
+    "upgradeCost": [
+      {
+        "resourceId": "plank",
+        "amount": 150
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 100
+      },
+      {
+        "resourceId": "stone",
+        "amount": 100
+      }
+    ],
+    "buildTime": 6,
+    "upgradesTo": null,
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "lumber_mill",
+    "name": "木材处理厂",
+    "description": "将原木加工成木板的场所，每个工人独立运作。最高2名工人。",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "maxWorkers": 2,
+    "buildCost": [
+      {
+        "resourceId": "stone",
+        "amount": 50
+      },
+      {
+        "resourceId": "wood",
+        "amount": 100
+      }
+    ],
+    "buildTime": 3,
+    "upgradesTo": null,
+    "production": {
+      "perWorker": true,
+      "input": [
+        {
+          "resourceId": "wood",
+          "amount": 4
+        }
+      ],
+      "output": [
+        {
+          "resourceId": "plank",
+          "amount": 2
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "quarry",
+    "name": "采石场",
+    "description": "采集石料的露天矿场，每个工人每轮产出固定数量的石头。仅能建造在裸露石头地形上。",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "allowedGrounds": [
+      "R"
+    ],
+    "maxWorkers": 3,
+    "buildCost": [
+      {
+        "resourceId": "wood",
+        "amount": 50
+      }
+    ],
+    "buildTime": 3,
+    "upgradesTo": null,
+    "production": {
+      "perWorker": true,
+      "output": [
+        {
+          "resourceId": "stone",
+          "amount": 3
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "logging_camp",
+    "name": "伐木集散点",
+    "description": "伐木工人集结出发的前哨站，每个工人每轮产出固定数量的原木。仅能建造在林地边缘。",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "allowedGrounds": [
+      "F"
+    ],
+    "maxWorkers": 1,
+    "buildCost": [
+      {
+        "resourceId": "wood",
+        "amount": 20
+      }
+    ],
+    "buildTime": 1,
+    "upgradesTo": null,
+    "production": {
+      "perWorker": true,
+      "output": [
+        {
+          "resourceId": "wood",
+          "amount": 3
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "furnace",
+    "name": "熔炉",
+    "description": "高温冶炼炉，将铁矿和煤炭熔炼为铁锭。需要2名工人操作，产量与工人数成正比。",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "maxWorkers": 2,
+    "buildCost": [
+      {
+        "resourceId": "stone",
+        "amount": 50
+      },
+      {
+        "resourceId": "coal",
+        "amount": 20
+      }
+    ],
+    "buildTime": 3,
+    "upgradesTo": null,
+    "production": {
+      "perWorker": true,
+      "input": [
+        {
+          "resourceId": "coal",
+          "amount": 1
+        },
+        {
+          "resourceId": "iron_ore",
+          "amount": 8
+        }
+      ],
+      "output": [
+        {
+          "resourceId": "iron_ingot",
+          "amount": 4
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "mine_support",
+    "name": "矿洞支撑结构",
+    "description": "加固矿洞入口的支撑框架，建造后无需携带头灯即可安全进入矿洞深处。",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "maxCount": 1,
+    "initialBuilding": false,
+    "maxWorkers": 0,
+    "buildCost": [
+      {
+        "resourceId": "plank",
+        "amount": 200
+      }
+    ],
+    "buildTime": 5,
+    "upgradesTo": null,
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "basic_workshop",
+    "name": "基础工作站",
+    "description": "配备基础工具的制作台，可以合成简单的探险物品。",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
+    "maxCount": 1,
+    "initialBuilding": false,
+    "buildCost": [
+      {
+        "resourceId": "wood",
+        "amount": 20
+      },
+      {
+        "resourceId": "stone",
+        "amount": 10
+      }
+    ],
+    "buildTime": 2,
+    "upgradesTo": "advanced_workshop",
+    "production": null,
+    "synthesisRecipes": [
+      {
+        "id": "craft_transporter",
+        "name": "制造运载车",
+        "inputs": [],
+        "resourceCost": [
+          {
+            "resourceId": "wood",
+            "amount": 100
+          }
+        ],
+        "output": {
+          "type": "item",
+          "itemId": "transporter",
+          "count": 1
+        },
+        "workTicks": 3
+      },
+      {
+        "id": "craft_marking_torch",
+        "name": "制造标记火把",
+        "inputs": [],
+        "resourceCost": [
+          {
+            "resourceId": "plank",
+            "amount": 10
+          },
+          {
+            "resourceId": "coal",
+            "amount": 2
+          }
+        ],
+        "output": {
+          "type": "item",
+          "itemId": "marking_torch",
+          "count": 1
+        },
+        "workTicks": 1
+      }
+    ],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "advanced_workshop",
+    "name": "进阶工作站",
+    "description": "配备精密工具的高级制作台，可以合成更复杂的探险装备。",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
+    "maxCount": 1,
+    "initialBuilding": false,
+    "upgradesFrom": "basic_workshop",
+    "upgradeCost": [
+      {
+        "resourceId": "plank",
+        "amount": 30
+      }
+    ],
+    "buildTime": 3,
+    "upgradesTo": null,
+    "production": null,
+    "synthesisRecipes": [
+      {
+        "id": "craft_iron_tool_set",
+        "name": "制造铁质工具组",
+        "inputs": [],
+        "resourceCost": [
+          {
+            "resourceId": "plank",
+            "amount": 20
+          },
+          {
+            "resourceId": "iron_ingot",
+            "amount": 50
+          }
+        ],
+        "output": {
+          "type": "item",
+          "itemId": "iron_tool_set",
+          "count": 1
+        },
+        "workTicks": 4
+      }
+    ],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  }
+]

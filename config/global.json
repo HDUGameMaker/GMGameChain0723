@@ -1,0 +1,13 @@
+{
+  "PERIOD_DURATION": 30,
+  "TICK_INTERVAL": 10,
+  "PERIOD_NAMES": ["morning", "afternoon", "evening", "night"],
+  "WORK_PERIODS": ["morning", "afternoon"],
+  "eventTriggerChance": 0.25,
+  "eventMinInterval": 4,
+  "population": {
+    "growthPerDay": { "min": 4, "max": 8 },
+    "foodFloor": 5,
+    "declineDelayDays": 2
+  }
+}

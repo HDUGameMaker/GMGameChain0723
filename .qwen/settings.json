@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bailian *)",
+      "WebFetch(help.aliyun.com)",
+      "Bash(python *)",
+      "Bash(del *)",
+      "Bash(dir *)"
+    ]
+  },
+  "$version": 4
+}

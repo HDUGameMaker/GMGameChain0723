@@ -1,0 +1,75 @@
+{
+  "gridWidth": 24,
+  "gridHeight": 18,
+  "tileSize": 58,
+  "groundTypes": {
+    "R": {
+      "name": "裸露石头",
+      "buildable": "restricted",
+      "colorHint": "#D5D0C8"
+    },
+    "G": {
+      "name": "草地",
+      "buildable": true,
+      "colorHint": "#7BA05B"
+    },
+    "D": {
+      "name": "普通土地",
+      "buildable": true,
+      "colorHint": "#B89B5A"
+    },
+    "F": {
+      "name": "林地边缘",
+      "buildable": true,
+      "colorHint": "#2D5A1E"
+    },
+    "M": {
+      "name": "山脉",
+      "buildable": false,
+      "colorHint": "#1A1A1A"
+    },
+    "W": {
+      "name": "水源",
+      "buildable": false,
+      "colorHint": "#4682B4"
+    }
+  },
+  "grid": [
+    "MMMMMMMFWWWWWWWWFMMMMMMM",
+    "MMMMMMMFWWWWWWWWFMMMMMMM",
+    "MMMMMMMFWWWWWWWWFMMMMMMM",
+    "MMMMMGGGWWWWWWWWGGGMMMMM",
+    "MMMMMGGGGGGGGWWWGGGMMMMM",
+    "MMMGGGGGGGGGFGWWGGGGGMMM",
+    "MMMGGGGGGGGGGGWWGGGGGMMM",
+    "MMMGGGGGGGGGGGWWGGGGGMMM",
+    "MMMGGGGGGGGGFWWGGGGGGMMM",
+    "MMMGGGGGGGGGGWWGGGGGGMMM",
+    "MMMMRRRGGGGGWWWGGGGGGMMM",
+    "MMMMRRRGGGGGWWWGGGGGGMMM",
+    "MMMMRRGGGDDDWWWDDDDGGMMM",
+    "MMMMMGGGGDDWWWGDDDDGMMMM",
+    "MMMMMGGGDDDWWWDDDDGGMMMM",
+    "MMMMMGGGDDDWWWDDDDGGMMMM",
+    "MMMMMMGDDDDWWDDDDDDMMMMM",
+    "MMMMMMGDDDDWWDDDDDDMMMMM"
+  ],
+  "expeditionEntrance": {
+    "gridX": 10,
+    "gridY": 1,
+    "width": 2,
+    "height": 2
+  },
+  "initialBuildings": [
+    {
+      "buildingId": "work_shed",
+      "gridX": 10,
+      "gridY": 6
+    },
+    {
+      "buildingId": "warehouse",
+      "gridX": 7,
+      "gridY": 9
+    }
+  ]
+}
