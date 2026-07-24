@@ -214,14 +214,12 @@ bodyElement.querySelector('#detail-area').innerHTML = '新的内容';
 
 ### Glassmorphism（毛玻璃效果）
 
-弹窗遮罩层和容器使用毛玻璃效果，通过 `backdrop-filter: blur()` 配合半透明深色背景实现：
+弹窗遮罩层使用半透明深色背景（不使用 blur，保证顶部资源栏可读）；容器使用毛玻璃效果，通过 `backdrop-filter: blur()` 配合半透明深色背景实现：
 
 ```css
-/* 遮罩层 — #popup-overlay */
+/* 遮罩层 — #popup-overlay（纯色半透明，无模糊，保证 HUD 资源栏可见） */
 #popup-overlay {
-  background: rgba(12, 12, 30, 0.7);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  background: rgba(0, 0, 0, 0.65);
 }
 
 /* 弹窗容器 — #popup-container */
@@ -233,7 +231,7 @@ bodyElement.querySelector('#detail-area').innerHTML = '新的内容';
 }
 ```
 
-遮罩层模糊度较小（3px），仅做背景柔化；容器模糊度较大（20px），产生更强烈的毛玻璃质感，凸显前景内容。
+遮罩层使用纯色半透明背景，确保顶部资源栏透过遮罩仍可读；容器模糊度较大（20px），产生强烈的毛玻璃质感，凸显前景内容。
 
 ### 字体栈
 

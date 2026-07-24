@@ -37,6 +37,7 @@ export class MapRenderer {
     // 虚影状态
     this.ghostGraphic = null;
     this.ghostValid = false;
+    this._dragGhostGraphic = null;
 
     // 建筑精灵缓存
     this._buildingSprites = [];
@@ -177,7 +178,44 @@ export class MapRenderer {
   _setupInteraction() {
     const canvas = this.app.canvas;
 
+    // 建筑拖动状态
+    this._dragBuildingIndex = null;
+    this._dragBuildingConfig = null;
+
     canvas.addEventListener('pointerdown', (e) => {
+      // 放置模式下使用原有逻辑（地图拖动放置虚影）
+      if (this.buildingSystem.placingState === 'PLACING') {
+        this.isDragging = true;
+        this.hasMoved = false;
+        this.dragStartX = e.clientX;
+        this.dragStartY = e.clientY;
+        this.dragOffsetX = this.offsetX;
+        this.dragOffsetY = this.offsetY;
+        return;
+      }
+
+      const gridPos = this._clientToGrid(e.clientX, e.clientY);
+
+      // 检查是否点击了建筑 → 启动建筑拖动
+      if (gridPos) {
+        const buildingIndex = this._getBuildingAt(gridPos.col, gridPos.row);
+        if (buildingIndex >= 0) {
+          const building = this.buildingSystem.buildings[buildingIndex];
+          if (building && building.status === 'active') {
+            this._dragBuildingIndex = buildingIndex;
+            this._dragBuildingConfig = configRegistry.getBuilding(building.buildingId);
+            this._dragStartGridX = building.gridX;
+            this._dragStartGridY = building.gridY;
+            this.isDragging = false;
+            this.hasMoved = false;
+            this.dragStartX = e.clientX;
+            this.dragStartY = e.clientY;
+            return;
+          }
+        }
+      }
+
+      // 否则启动地图平移
       this.isDragging = true;
       this.hasMoved = false;
       this.dragStartX = e.clientX;
@@ -187,6 +225,15 @@ export class MapRenderer {
     });
 
     canvas.addEventListener('pointermove', (e) => {
+      // 建筑拖动模式
+      if (this._dragBuildingIndex !== null) {
+        const dx = e.clientX - this.dragStartX;
+        const dy = e.clientY - this.dragStartY;
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) this.hasMoved = true;
+        this._updateBuildingDragGhost(e.clientX, e.clientY);
+        return;
+      }
+
       if (this.isDragging) {
         const dx = e.clientX - this.dragStartX;
         const dy = e.clientY - this.dragStartY;
@@ -203,6 +250,29 @@ export class MapRenderer {
     });
 
     canvas.addEventListener('pointerup', (e) => {
+      // 建筑拖动结束
+      if (this._dragBuildingIndex !== null) {
+        const buildingIndex = this._dragBuildingIndex;
+        this._clearBuildingDragGhost();
+        this._dragBuildingIndex = null;
+        this._dragBuildingConfig = null;
+
+        if (this.hasMoved) {
+          // 尝试移动建筑到新位置
+          const gridPos = this._clientToGrid(e.clientX, e.clientY);
+          if (gridPos) {
+            const moved = this.buildingSystem.moveBuilding(buildingIndex, gridPos.col, gridPos.row);
+            if (moved) {
+              this.refreshBuildings();
+            }
+          }
+        } else {
+          // 没有拖动，触发点击事件
+          eventBus.emit('buildingClicked', { buildingIndex });
+        }
+        return;
+      }
+
       if (this.isDragging && !this.hasMoved) {
         this._onClick(e.clientX, e.clientY);
       }
@@ -210,6 +280,12 @@ export class MapRenderer {
     });
 
     canvas.addEventListener('pointerleave', () => {
+      // 清理建筑拖动
+      if (this._dragBuildingIndex !== null) {
+        this._clearBuildingDragGhost();
+        this._dragBuildingIndex = null;
+        this._dragBuildingConfig = null;
+      }
       this.isDragging = false;
     });
 
@@ -325,6 +401,53 @@ export class MapRenderer {
       this.ghostLayer.removeChild(this.ghostGraphic);
       this.ghostGraphic.destroy();
       this.ghostGraphic = null;
+    }
+  }
+
+  // ===== 建筑拖动虚影 =====
+
+  /**
+   * 更新建筑拖动时的目标位置虚影
+   */
+  _updateBuildingDragGhost(clientX, clientY) {
+    const gridPos = this._clientToGrid(clientX, clientY);
+    const config = this._dragBuildingConfig;
+
+    this._clearBuildingDragGhost();
+
+    if (!config || !gridPos) return;
+
+    const w = config.footprint.width;
+    const h = config.footprint.height;
+    const x = gridPos.col * this.tileSize;
+    const y = gridPos.row * this.tileSize;
+
+    // 检查新位置是否合法
+    const check = this.buildingSystem.canMoveTo(this._dragBuildingIndex, gridPos.col, gridPos.row);
+    const valid = check.valid;
+
+    const graphics = new PIXI.Graphics();
+
+    // 填充
+    graphics.rect(x, y, w * this.tileSize, h * this.tileSize);
+    graphics.fill({ color: valid ? 0x44aaff : 0xff4444, alpha: 0.3 });
+
+    // 边框
+    graphics.rect(x, y, w * this.tileSize, h * this.tileSize);
+    graphics.stroke({ color: valid ? 0x4488ff : 0xff4444, alpha: 0.8, width: 2 });
+
+    this.ghostLayer.addChild(graphics);
+    this._dragGhostGraphic = graphics;
+  }
+
+  /**
+   * 清除建筑拖动虚影
+   */
+  _clearBuildingDragGhost() {
+    if (this._dragGhostGraphic) {
+      this.ghostLayer.removeChild(this._dragGhostGraphic);
+      this._dragGhostGraphic.destroy();
+      this._dragGhostGraphic = null;
     }
   }
 
@@ -871,6 +994,7 @@ export class MapRenderer {
     eventBus.on('buildingComplete', () => this.refreshBuildings());
     eventBus.on('buildingUpgraded', () => this.refreshBuildings());
     eventBus.on('buildingDemolished', () => this.refreshBuildings());
+    eventBus.on('buildingMoved', () => this.refreshBuildings());
     eventBus.on('workerChanged', () => this.refreshBuildings());
     eventBus.on('synthesisStarted', () => this.refreshBuildings());
     eventBus.on('synthesisComplete', () => this.refreshBuildings());

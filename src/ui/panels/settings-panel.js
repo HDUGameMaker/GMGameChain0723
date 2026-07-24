@@ -25,6 +25,7 @@ export function renderSettingsPanel(data, body, pm) {
     <div style="font-size:14px;font-weight:600;color:#ececf0;margin-bottom:8px;letter-spacing:0.01em;">📖 快捷操作</div>
     <div style="font-size:12px;color:#a0a0ba;line-height:1.8;">
       <div>🏗️ <b style="color:#ececf0;">建造</b> — 选择建筑后点击地图放置</div>
+      <div>🖱️ <b style="color:#ececf0;">移动建筑</b> — 按住左键拖动已建成的建筑到新位置</div>
       <div>⏩ <b style="color:#ececf0;">加速</b> — 切换 1× / 2× / 4× 速度</div>
       <div>⏸ <b style="color:#ececf0;">暂停</b> — 暂停/恢复时间流逝</div>
       <div>🔍 <b style="color:#ececf0;">探险</b> — 点击地图上的探险入口</div>

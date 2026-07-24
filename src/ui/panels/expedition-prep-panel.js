@@ -68,6 +68,21 @@ export function renderExpeditionPrepPanel(data, body, pm) {
     return { labels, icons };
   }
 
+  // 获取当前焦点栏位对应时段的产出（用于区域卡片上直观展示）
+  function getFocusPeriodKey() {
+    return ALL_PERIOD_KEYS[(getCurrentPeriodIndex() + focusSlot) % 4];
+  }
+
+  function formatYields(region) {
+    const periodKey = getFocusPeriodKey();
+    const yields = region.baseYields[periodKey];
+    if (!yields) return '';
+    return Object.entries(yields).map(([resId, amt]) => {
+      const cfg = configRegistry.getResource(resId);
+      return `${cfg ? cfg.name : resId} ${amt}`;
+    }).join(' · ');
+  }
+
   const container = document.createElement('div');
   container.style.cssText = 'display:flex;flex-direction:column;gap:14px;';
 
@@ -143,9 +158,10 @@ export function renderExpeditionPrepPanel(data, body, pm) {
     const currentSelection = selectedRegions[focusSlot];
     const canSelectHere = focusSlot === 0 || selectedRegions[focusSlot - 1] !== null;
 
+    const focusPeriodLabel = ALL_PERIOD_LABELS[(getCurrentPeriodIndex() + focusSlot) % 4];
     const regionsSection = document.createElement('div');
     if (canSelectHere) {
-      regionsSection.innerHTML = '<div style="font-size:13px;color:#aaa;margin-bottom:8px;">选择区域:</div>';
+      regionsSection.innerHTML = `<div style="font-size:13px;color:#aaa;margin-bottom:8px;">选择区域 (${focusPeriodLabel}时段产出):</div>`;
     } else {
       regionsSection.innerHTML = '<div style="font-size:13px;color:#f88;margin-bottom:8px;">⚠ 请先选择上一阶段的区域</div>';
     }
@@ -189,7 +205,8 @@ export function renderExpeditionPrepPanel(data, body, pm) {
         opacity: ${unlocked && canSelectHere ? '1' : '0.5'}; min-width:80px; text-align:center;
       `;
       card.innerHTML = `
-        <div style="font-size:13px;color:#fff;">${region.name}</div>
+        <div style="font-size:13px;color:#fff;font-weight:600;">${region.name}</div>
+        ${unlocked ? `<div style="font-size:11px;color:#8f8;margin-top:3px;line-height:1.4;">${formatYields(region)}</div>` : ''}
         ${badgeHtml}
         ${!unlocked ? `<div style="font-size:10px;color:#f88;margin-top:2px;">🔒 ${unlockHint}</div>` : ''}
       `;

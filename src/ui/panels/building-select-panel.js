@@ -109,7 +109,7 @@ export function renderBuildingSelectPanel(data, body, pm) {
         ${isNew ? '🆕 ' : ''}${b.name}
         <span style="font-size:11px;color:#888;margin-left:6px;font-weight:400;">${b.footprint.width}×${b.footprint.height}</span>
       </div>
-      <div style="font-size:12px;color:#888;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.description || ''}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:4px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${b.description || ''}</div>
       <div style="font-size:12px;color:${canAfford ? '#4ecb71' : '#ff6b6b'};font-weight:500;">${costText || '免费'}</div>
       ${tags.length > 0 ? `<div style="font-size:11px;color:#a0a0ba;margin-top:3px;display:flex;gap:8px;">${tags.map(t => `<span>${t}</span>`).join('')}</div>` : ''}
     `;

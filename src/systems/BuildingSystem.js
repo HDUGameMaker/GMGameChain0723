@@ -283,12 +283,86 @@ export class BuildingSystem {
     const building = this.buildings[buildingIndex];
     const config = configRegistry.getBuilding(building.buildingId);
 
-    // 初始建筑不可拆除
-    if (config && config.initialBuilding) return false;
+    // demolishable 明确设为 false 的建筑不可拆除（如仓库）
+    if (config && config.demolishable === false) return false;
 
     this.buildings.splice(buildingIndex, 1);
     this._updateStore();
     eventBus.emit('buildingDemolished', { buildingId: building.buildingId });
+    return true;
+  }
+
+  /**
+   * 检查建筑能否移动到新位置（与 canPlaceAt 类似，但排除建筑自身）
+   */
+  canMoveTo(buildingIndex, newGridX, newGridY) {
+    const building = this.buildings[buildingIndex];
+    if (!building || building.status !== 'active') return { valid: false, reason: '建筑不可移动' };
+
+    const config = configRegistry.getBuilding(building.buildingId);
+    if (!config) return { valid: false, reason: '建筑不存在' };
+
+    const w = config.footprint.width;
+    const h = config.footprint.height;
+    const map = this._mapConfig;
+
+    // 边界检查
+    if (!isAreaInBounds(newGridX, newGridY, w, h, map.gridWidth, map.gridHeight)) {
+      return { valid: false, reason: '超出地图边界' };
+    }
+
+    // 地形检查
+    for (let r = newGridY; r < newGridY + h; r++) {
+      for (let c = newGridX; c < newGridX + w; c++) {
+        const char = map.grid[r][c];
+        const groundType = map.groundTypes[char];
+        if (!groundType) {
+          return { valid: false, reason: '无效地形' };
+        }
+        if (groundType.buildable === false) {
+          return { valid: false, reason: `${groundType.name}上不可建造` };
+        }
+        if (groundType.buildable === 'restricted') {
+          if (!config.allowedGrounds || !config.allowedGrounds.includes(char)) {
+            return { valid: false, reason: `该建筑不能建造在${groundType.name}上` };
+          }
+        }
+        if (config.allowedGrounds && config.allowedGrounds.length > 0) {
+          if (!config.allowedGrounds.includes(char)) {
+            const allowedNames = config.allowedGrounds
+              .map(g => map.groundTypes[g]?.name || g).join('、');
+            return { valid: false, reason: `该建筑只能建造在: ${allowedNames}` };
+          }
+        }
+      }
+    }
+
+    // 重叠检查（排除自身）
+    for (let i = 0; i < this.buildings.length; i++) {
+      if (i === buildingIndex) continue;
+      const b = this.buildings[i];
+      const bConfig = configRegistry.getBuilding(b.buildingId);
+      if (isAreaOverlap(newGridX, newGridY, w, h, b.gridX, b.gridY, bConfig.footprint.width, bConfig.footprint.height)) {
+        return { valid: false, reason: '与已有建筑重叠' };
+      }
+    }
+
+    return { valid: true };
+  }
+
+  /**
+   * 移动建筑到新位置
+   */
+  moveBuilding(buildingIndex, newGridX, newGridY) {
+    const check = this.canMoveTo(buildingIndex, newGridX, newGridY);
+    if (!check.valid) return false;
+
+    const building = this.buildings[buildingIndex];
+    building.gridX = newGridX;
+    building.gridY = newGridY;
+
+    this._updateStore();
+    eventBus.emit('buildingMoved', { buildingIndex, building });
     return true;
   }
 
@@ -304,6 +378,12 @@ export class BuildingSystem {
         if (building.buildProgress >= config.buildTime) {
           building.status = 'active';
           building.buildProgress = null;
+          // 自动填充可用工人
+          if (config.maxWorkers && config.maxWorkers > 0 && this._populationSystem) {
+            const available = this._populationSystem.getAvailableWorkers();
+            const toAssign = Math.min(config.maxWorkers, available);
+            building.currentWorkers = toAssign;
+          }
           eventBus.emit('buildingComplete', { building });
           this._updateStorageMultiplier();
           this._checkNewUnlocks(building.buildingId);
