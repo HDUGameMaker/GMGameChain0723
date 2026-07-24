@@ -66,17 +66,77 @@ export function renderBuildingDetailPanel(data, body, pm) {
     : '运行中';
   const statusColor = building.status === 'active' ? '#4ecb71' : '#f0a040';
 
-  // ===== 详情大图（透明容器，直接叠在弹窗深色背景上）=====
+  // ===== 详情大图（支持序列帧动画）=====
   if (config.imageDetail) {
-    const imgWrap = document.createElement('div');
-    imgWrap.style.cssText = 'text-align:center;margin-bottom:10px;';
-    const img = document.createElement('img');
-    img.src = config.imageDetail;
-    img.alt = config.name;
-    img.style.cssText = 'width:100%;max-width:280px;border-radius:8px;display:block;margin:0 auto;';
-    img.onerror = () => { img.style.display = 'none'; };
-    imgWrap.appendChild(img);
-    container.appendChild(imgWrap);
+    const animConfig = config.detailAnimation;
+    if (animConfig && animConfig.frameCount >= 2) {
+      // 序列帧动画模式（DOM background-position 驱动）
+      const {
+        frameCount = 4,
+        fps = 6,
+        frameWidth = 1024,
+        frameHeight = 1024,
+        pingpong = true
+      } = animConfig;
+
+      const imgWrap = document.createElement('div');
+      imgWrap.style.cssText = 'text-align:center;margin-bottom:10px;';
+
+      // 显示尺寸：宽最多280px，高按比例
+      const displayW = 280;
+      const displayH = Math.round(displayW * frameHeight / frameWidth);
+
+      const sprite = document.createElement('div');
+      sprite.style.cssText = [
+        `width:${displayW}px`,
+        `height:${displayH}px`,
+        `background-image:url(${config.imageDetail})`,
+        `background-size:${frameCount * 100}% 100%`,
+        'background-repeat:no-repeat',
+        'image-rendering:auto',
+        'margin:0 auto',
+        'border-radius:8px'
+      ].join(';');
+
+      let currentFrame = 0;
+      let direction = 1;
+
+      const updateFrame = () => {
+        const pct = frameCount > 1
+          ? (currentFrame / (frameCount - 1)) * 100
+          : 0;
+        sprite.style.backgroundPositionX = `${pct}%`;
+      };
+      updateFrame();
+
+      const interval = setInterval(() => {
+        if (pingpong) {
+          if (currentFrame >= frameCount - 1) direction = -1;
+          if (currentFrame <= 0) direction = 1;
+          currentFrame += direction;
+        } else {
+          currentFrame = (currentFrame + 1) % frameCount;
+        }
+        updateFrame();
+      }, 1000 / fps);
+
+      // 挂载清理函数，弹窗关闭时调用
+      imgWrap._animCleanup = () => clearInterval(interval);
+
+      imgWrap.appendChild(sprite);
+      container.appendChild(imgWrap);
+    } else {
+      // 静态图片模式（原有行为）
+      const imgWrap = document.createElement('div');
+      imgWrap.style.cssText = 'text-align:center;margin-bottom:10px;';
+      const img = document.createElement('img');
+      img.src = config.imageDetail;
+      img.alt = config.name;
+      img.style.cssText = 'width:100%;max-width:280px;border-radius:8px;display:block;margin:0 auto;';
+      img.onerror = () => { img.style.display = 'none'; };
+      imgWrap.appendChild(img);
+      container.appendChild(imgWrap);
+    }
   }
 
   const header = section('', '');

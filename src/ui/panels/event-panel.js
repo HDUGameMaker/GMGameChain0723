@@ -56,11 +56,19 @@ export function renderEventPanel(data, body, pm) {
   optionsDiv.style.cssText = 'display:flex;flex-direction:column;';
 
   for (const option of (evt.options || [])) {
+    const canAfford = game.systems.event.canAffordOption(option.effects);
     const btn = document.createElement('button');
     btn.className = 'event-option-btn';
     btn.textContent = option.text;
 
+    if (!canAfford) {
+      btn.style.opacity = '0.4';
+      btn.style.cursor = 'not-allowed';
+      btn.title = '资源不足，无法选择';
+    }
+
     btn.addEventListener('click', () => {
+      if (!canAfford) return;
       // 执行选项效果
       const hasTrigger = game.systems.event.executeOptionEffects(option.effects);
       if (!hasTrigger) {

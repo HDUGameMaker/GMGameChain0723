@@ -120,7 +120,7 @@ export class ItemSystem {
     for (const id of instanceIds) {
       const { instance } = this._findInstance(id);
       instance.inExpedition = true;
-      instance.equipped = false;
+      // 保留 equipped 状态，以便下次打开探险面板时记住玩家选择
     }
     this._notifyChange();
     return true;
@@ -141,9 +141,8 @@ export class ItemSystem {
         items.instances = items.instances.filter(i => i.instanceId !== id);
         if (items.instances.length === 0) delete this._items[itemId];
       } else {
-        // 非消耗品归还
+        // 非消耗品归还，保留 equipped 状态以记住玩家偏好
         instance.inExpedition = false;
-        instance.equipped = false;
       }
     }
     this._notifyChange();

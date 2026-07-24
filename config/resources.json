@@ -52,5 +52,41 @@
     "max": 5000,
     "rare": false,
     "showInHUD": true
+  },
+  {
+    "id": "machine_part",
+    "name": "机械零件",
+    "icon": "resource_machine_part.png",
+    "initial": 0,
+    "max": 500,
+    "rare": true,
+    "showInHUD": true
+  },
+  {
+    "id": "steel",
+    "name": "钢锭",
+    "icon": "resource_steel.png",
+    "initial": 0,
+    "max": 5000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "brick",
+    "name": "砖块",
+    "icon": "resource_brick.png",
+    "initial": 0,
+    "max": 2000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "electronic_part",
+    "name": "电子元器件",
+    "icon": "resource_electronic_part.png",
+    "initial": 0,
+    "max": 300,
+    "rare": true,
+    "showInHUD": true
   }
 ]

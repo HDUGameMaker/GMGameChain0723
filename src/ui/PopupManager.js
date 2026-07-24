@@ -94,6 +94,8 @@ export class PopupManager {
    * 关闭弹窗
    */
   close() {
+    // 清理详情面板的序列帧动画定时器
+    this._cleanupAnimations();
     this._stack = [];
     this._isOpen = false;
     this._currentType = null;
@@ -108,6 +110,19 @@ export class PopupManager {
     // 恢复游戏时间（如果事件队列中还有待处理事件，EventSystem 会同步重新暂停）
     if (this._gameLoop.isPaused()) {
       this._gameLoop.resume();
+    }
+  }
+
+  /**
+   * 清理 body 中所有 _animCleanup 回调（序列帧动画定时器）
+   */
+  _cleanupAnimations() {
+    const elements = this.body.querySelectorAll('*');
+    for (const el of elements) {
+      if (el._animCleanup && typeof el._animCleanup === 'function') {
+        el._animCleanup();
+        el._animCleanup = null;
+      }
     }
   }
 
@@ -144,7 +159,8 @@ export class PopupManager {
     this.backBtn.style.display = this._stack.length > 1 ? 'flex' : 'none';
     this.titleEl.textContent = this._getTitle(current.type, current.data);
 
-    // 清空 body
+    // 清理旧面板的动画定时器，然后清空 body
+    this._cleanupAnimations();
     this.body.innerHTML = '';
     this.footer.innerHTML = '';
     this.footer.style.display = 'none';

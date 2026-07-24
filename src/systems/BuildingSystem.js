@@ -15,6 +15,7 @@ export class BuildingSystem {
     this._resourceSystem = null;
     this._populationSystem = null;
     this._mapConfig = null;
+    this._newlyUnlocked = new Set(); // 本轮新解锁的建筑ID
 
     // 订阅 tick 事件处理建造和生产
     eventBus.on('tick', (data) => this.onTick(data));
@@ -22,6 +23,7 @@ export class BuildingSystem {
 
   setResourceSystem(rs) { this._resourceSystem = rs; }
   setPopulationSystem(ps) { this._populationSystem = ps; }
+  setItemSystem(is) { this._itemSystem = is; }
 
   init() {
     this._mapConfig = configRegistry.get('map');
@@ -242,7 +244,17 @@ export class BuildingSystem {
       return { valid: false, reason: '资源不足' };
     }
 
-    // 检查物品材料（需要 ItemSystem，后续实现）
+    // 检查是否已拥有该物品（unique 物品已有则不可再造）
+    if (recipe.output && recipe.output.type === 'item' && this._itemSystem) {
+      const itemConfig = configRegistry.getItem(recipe.output.itemId);
+      if (itemConfig && itemConfig.unique) {
+        const owned = this._itemSystem.getOwnedInstances();
+        if (owned.some(i => i.itemId === recipe.output.itemId)) {
+          return { valid: false, reason: '已拥有此物品' };
+        }
+      }
+    }
+
     return { valid: true, recipe };
   }
 
@@ -294,6 +306,7 @@ export class BuildingSystem {
           building.buildProgress = null;
           eventBus.emit('buildingComplete', { building });
           this._updateStorageMultiplier();
+          this._checkNewUnlocks(building.buildingId);
         }
       } else if (building.status === 'active' && isWorkPeriod) {
         this._processProduction(building);
@@ -410,6 +423,61 @@ export class BuildingSystem {
 
   hasBuilding(buildingId) {
     return this.buildings.some(b => b.buildingId === buildingId && b.status === 'active');
+  }
+
+  /**
+   * 检查建筑是否已解锁（前置建筑已建造）
+   */
+  isUnlocked(buildingId) {
+    const config = configRegistry.getBuilding(buildingId);
+    if (!config) return false;
+
+    const conditions = config.unlockConditions;
+    if (!conditions || conditions.length === 0) return true;
+
+    return conditions.every(cond => {
+      switch (cond.type) {
+        case 'building':
+          return this.hasBuilding(cond.buildingId);
+        default:
+          return false;
+      }
+    });
+  }
+
+  /**
+   * 获取本轮新解锁的建筑ID列表（UI读取后清除）
+   */
+  getNewlyUnlocked() {
+    return [...this._newlyUnlocked];
+  }
+
+  /**
+   * 清除新解锁标记（UI渲染后调用）
+   */
+  clearNewlyUnlocked() {
+    this._newlyUnlocked.clear();
+  }
+
+  /**
+   * 当建筑建造完成时，检查是否触发了其他建筑的解锁
+   */
+  _checkNewUnlocks(completedBuildingId) {
+    const allBuildings = configRegistry.get('buildings') || [];
+    for (const bConfig of allBuildings) {
+      if (!bConfig.unlockConditions || bConfig.unlockConditions.length === 0) continue;
+
+      // 检查这个新完成的建筑是否是解锁条件之一
+      const isRelevant = bConfig.unlockConditions.some(c =>
+        c.type === 'building' && c.buildingId === completedBuildingId
+      );
+      if (!isRelevant) continue;
+
+      // 检查是否所有条件都已满足（建筑现在完全解锁）
+      if (this.isUnlocked(bConfig.id)) {
+        this._newlyUnlocked.add(bConfig.id);
+      }
+    }
   }
 
   _updateStorageMultiplier() {

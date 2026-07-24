@@ -3,6 +3,7 @@
  * 支持 1-3 个阶段（必须从第一个开始连续选择，不允许空隙）
  */
 import { configRegistry } from '../../core/ConfigRegistry.js';
+import { eventBus } from '../../core/EventBus.js';
 
 export function renderExpeditionPrepPanel(data, body, pm) {
   const game = window.__game;
@@ -16,7 +17,8 @@ export function renderExpeditionPrepPanel(data, body, pm) {
   const MAX_STAGES = expConfig.expeditionPeriods; // 最大阶段数（3）
   let selectedRegions = new Array(MAX_STAGES).fill(null); // [regionId | null, ...]
   let focusSlot = 0; // 当前焦点栏位
-  let equippedInstanceIds = new Set();
+  // 从上次探险记录中恢复装备选择
+  let equippedInstanceIds = new Set(itemSystem.getEquippedInstances().map(i => i.instanceId));
 
   /**
    * 紧凑化区域选择（去掉末尾 null），用于预览产出
@@ -44,6 +46,28 @@ export function renderExpeditionPrepPanel(data, body, pm) {
     return true;
   }
 
+  // 时段映射表
+  const ALL_PERIOD_KEYS = ['morning', 'afternoon', 'evening', 'night'];
+  const ALL_PERIOD_LABELS = ['上午', '下午', '傍晚', '夜晚'];
+  const ALL_PERIOD_ICONS = ['☀️', '🌤️', '🌅', '🌙'];
+
+  function getCurrentPeriodIndex() {
+    const timeSystem = game.systems.time;
+    return timeSystem ? timeSystem.periodIndex : 0;
+  }
+
+  function getPhaseLabels() {
+    const base = getCurrentPeriodIndex();
+    const labels = [];
+    const icons = [];
+    for (let i = 0; i < MAX_STAGES; i++) {
+      const idx = (base + i) % 4;
+      labels.push(ALL_PERIOD_LABELS[idx]);
+      icons.push(ALL_PERIOD_ICONS[idx]);
+    }
+    return { labels, icons };
+  }
+
   const container = document.createElement('div');
   container.style.cssText = 'display:flex;flex-direction:column;gap:14px;';
 
@@ -51,8 +75,7 @@ export function renderExpeditionPrepPanel(data, body, pm) {
     container.innerHTML = '';
 
     // === 时段区域选择 ===
-    const periodNames = ['上午', '下午', '傍晚'];
-    const periodIcons = ['☀️', '🌤️', '🌅'];
+    const { labels: periodNames, icons: periodIcons } = getPhaseLabels();
 
     // 提示文字
     const hintDiv = document.createElement('div');
@@ -132,33 +155,54 @@ export function renderExpeditionPrepPanel(data, body, pm) {
     const availableRegions = expeditionSystem.getAvailableRegions();
     for (const { region, unlocked, unlockHint } of availableRegions) {
       const card = document.createElement('div');
-      const isAlreadySelected = selectedRegions.includes(region.id);
+      // 仅检查当前焦点槽位（允许同一区域出现在不同阶段）
+      const isInCurrentSlot = selectedRegions[focusSlot] === region.id;
+      // 查找该区域已在哪些其他槽位中被选中（用于视觉提示）
+      const selectedSlots = [];
+      for (let s = 0; s < MAX_STAGES; s++) {
+        if (selectedRegions[s] === region.id) selectedSlots.push(s);
+      }
+      const isSelectedElsewhere = selectedSlots.length > 0 && !isInCurrentSlot;
+
+      // 视觉样式：当前槽位、其他槽位、未选择 三种状态
+      let bg, border, badgeHtml = '';
+      if (isInCurrentSlot) {
+        bg = 'rgba(100,255,150,0.2)';
+        border = 'rgba(100,255,150,0.5)';
+        badgeHtml = '<div style="font-size:10px;color:#8f8;margin-top:2px;">当前阶段</div>';
+      } else if (isSelectedElsewhere) {
+        bg = 'rgba(100,200,255,0.12)';
+        border = 'rgba(100,200,255,0.3)';
+        const stageNames = periodNames;
+        const slotLabels = selectedSlots.map(s => stageNames[s]).join(',');
+        badgeHtml = `<div style="font-size:10px;color:#8cf;margin-top:2px;">已选: ${slotLabels}</div>`;
+      } else {
+        bg = unlocked ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.02)';
+        border = unlocked ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)';
+      }
+
       card.style.cssText = `
         padding:10px 14px; border-radius:8px;
         cursor: ${unlocked && canSelectHere ? 'pointer' : 'default'};
-        background: ${isAlreadySelected ? 'rgba(100,255,150,0.15)' : (unlocked ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.02)')};
-        border: 1px solid ${isAlreadySelected ? 'rgba(100,255,150,0.4)' : (unlocked ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)')};
+        background: ${bg};
+        border: 1px solid ${border};
         opacity: ${unlocked && canSelectHere ? '1' : '0.5'}; min-width:80px; text-align:center;
       `;
       card.innerHTML = `
         <div style="font-size:13px;color:#fff;">${region.name}</div>
-        ${isAlreadySelected ? '<div style="font-size:10px;color:#8f8;margin-top:2px;">已选</div>' : ''}
+        ${badgeHtml}
         ${!unlocked ? `<div style="font-size:10px;color:#f88;margin-top:2px;">🔒 ${unlockHint}</div>` : ''}
       `;
       if (unlocked && canSelectHere) {
         card.addEventListener('click', () => {
-          if (isAlreadySelected) {
-            // 点击已选中的区域 → 取消该位置的选择
-            const idx = selectedRegions.indexOf(region.id);
-            if (idx >= 0) {
-              selectedRegions[idx] = null;
-              // 清除后续阶段
-              for (let j = idx + 1; j < MAX_STAGES; j++) {
-                selectedRegions[j] = null;
-              }
-              focusSlot = idx;
+          if (isInCurrentSlot) {
+            // 点击当前槽位已选中的区域 → 取消当前槽位及之后的选择
+            selectedRegions[focusSlot] = null;
+            for (let j = focusSlot + 1; j < MAX_STAGES; j++) {
+              selectedRegions[j] = null;
             }
           } else {
+            // 添加到当前槽位（允许同一区域出现在多个阶段）
             selectedRegions[focusSlot] = region.id;
             // 自动推进到下一个空栏位
             const nextEmpty = selectedRegions.findIndex((r, idx) => idx > focusSlot && r === null);
@@ -238,8 +282,10 @@ export function renderExpeditionPrepPanel(data, body, pm) {
         row.addEventListener('click', () => {
           if (isEquipped) {
             equippedInstanceIds.delete(item.instanceId);
+            itemSystem.unequip(item.instanceId);
           } else {
             equippedInstanceIds.add(item.instanceId);
+            itemSystem.equip(item.instanceId);
           }
           render();
         });
@@ -256,6 +302,9 @@ export function renderExpeditionPrepPanel(data, body, pm) {
     clearBtn.textContent = '清空全部';
     clearBtn.style.cssText = 'flex:1;padding:10px;border:none;border-radius:8px;background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;font-size:13px;';
     clearBtn.addEventListener('click', () => {
+      for (const id of equippedInstanceIds) {
+        itemSystem.unequip(id);
+      }
       selectedRegions = new Array(MAX_STAGES).fill(null);
       equippedInstanceIds.clear();
       focusSlot = 0;
@@ -273,10 +322,7 @@ export function renderExpeditionPrepPanel(data, body, pm) {
     startBtn.style.cssText = `flex:2;padding:10px;border:none;border-radius:8px;background:${canStart ? '#4a9' : '#555'};color:#fff;cursor:${canStart ? 'pointer' : 'default'};font-size:14px;font-weight:bold;`;
     if (canStart) {
       startBtn.addEventListener('click', () => {
-        // 先 equip 所有选中的物品
-        for (const id of equippedInstanceIds) {
-          itemSystem.equip(id);
-        }
+        // 物品已在勾选时即时 equip，无需重复操作
         const success = expeditionSystem.startExpedition(selectedRegions, [...equippedInstanceIds]);
         if (success) {
           pm.close();
@@ -293,4 +339,15 @@ export function renderExpeditionPrepPanel(data, body, pm) {
 
   render();
   body.appendChild(container);
+
+  // 监听时段变化，实时更新阶段名称
+  const onPeriodChange = () => render();
+  eventBus.on('periodChange', onPeriodChange);
+
+  // 面板关闭时移除监听
+  const origClose = pm.close.bind(pm);
+  pm.close = () => {
+    eventBus.off('periodChange', onPeriodChange);
+    origClose();
+  };
 }

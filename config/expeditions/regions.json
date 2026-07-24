@@ -2,26 +2,14 @@
   {
     "id": "forest",
     "name": "森林",
-    "description": "茂密的原始森林，出产大量原木和少量石头。",
+    "description": "茂密的原始森林，出产原木和少量石头。平衡型基础区域。",
     "image": "region_forest.png",
     "unlockConditions": [],
     "baseYields": {
-      "morning": {
-        "wood": 150,
-        "stone": 15
-      },
-      "afternoon": {
-        "wood": 120,
-        "stone": 12
-      },
-      "evening": {
-        "wood": 80,
-        "stone": 10
-      },
-      "night": {
-        "wood": 40,
-        "stone": 5
-      }
+      "morning": { "wood": 20, "stone": 3 },
+      "afternoon": { "wood": 16, "stone": 3 },
+      "evening": { "wood": 12, "stone": 2 },
+      "night": { "wood": 8, "stone": 2 }
     }
   },
   {
@@ -31,60 +19,134 @@
     "image": "region_mine_periphery.png",
     "unlockConditions": [],
     "baseYields": {
-      "morning": {
-        "stone": 120,
-        "coal": 30,
-        "iron_ore": 8
-      },
-      "afternoon": {
-        "stone": 100,
-        "coal": 25,
-        "iron_ore": 6
-      },
-      "evening": {
-        "stone": 70,
-        "coal": 20,
-        "iron_ore": 5
-      },
-      "night": {
-        "stone": 40,
-        "coal": 15,
-        "iron_ore": 3
-      }
+      "morning": { "stone": 12, "coal": 6, "iron_ore": 3 },
+      "afternoon": { "stone": 10, "coal": 5, "iron_ore": 2 },
+      "evening": { "stone": 8, "coal": 4, "iron_ore": 2 },
+      "night": { "stone": 5, "coal": 3, "iron_ore": 1 }
     }
   },
   {
     "id": "mine_interior",
     "name": "矿洞深处",
-    "description": "黑暗的矿洞深处，蕴藏着丰富的煤炭和铁矿脉。需要照明工具或基地的支撑结构才能安全进入。",
+    "description": "黑暗的矿洞深处，蕴藏着煤炭和铁矿脉。需要照明工具或基地的支撑结构才能安全进入。",
     "image": "region_mine_interior.png",
     "unlockConditions": [
-      {
-        "type": "item",
-        "itemId": "miner_headlamp"
-      },
-      {
-        "type": "building",
-        "buildingId": "mine_support"
-      }
+      { "type": "item", "itemId": "miner_headlamp" },
+      { "type": "building", "buildingId": "mine_support" }
     ],
     "baseYields": {
-      "morning": {
-        "coal": 100,
-        "iron_ore": 80
-      },
-      "afternoon": {
-        "coal": 90,
-        "iron_ore": 70
-      },
-      "evening": {
-        "coal": 70,
-        "iron_ore": 60
-      },
-      "night": {
-        "coal": 50,
-        "iron_ore": 50
-      }
+      "morning": { "coal": 13, "iron_ore": 10 },
+      "afternoon": { "coal": 11, "iron_ore": 8 },
+      "evening": { "coal": 8, "iron_ore": 6 },
+      "night": { "coal": 6, "iron_ore": 4 }
+    }
+  },
+  {
+    "id": "mountain_summit",
+    "name": "山巅",
+    "description": "高海拔矿脉地带。山顶废弃的旧时代气象站偶尔能发现遗留的电子元器件。",
+    "image": "region_mountain_summit.png",
+    "unlockConditions": [
+      { "type": "item", "itemId": "climbing_gear" },
+      { "type": "building", "buildingId": "watchtower" }
+    ],
+    "baseYields": {
+      "morning": { "coal": 9, "iron_ore": 8, "electronic_part": 3 },
+      "afternoon": { "coal": 7, "iron_ore": 7, "electronic_part": 2 },
+      "evening": { "coal": 6, "iron_ore": 5, "electronic_part": 2 },
+      "night": { "coal": 4, "iron_ore": 3, "electronic_part": 1 }
+    }
+  },
+  {
+    "id": "scrapyard",
+    "name": "废弃回收场",
+    "description": "旧时代垃圾处理场废墟，大量废弃设备埋藏在废墟之下。需要钢制工具组才能清理出安全通道。",
+    "image": "region_scrapyard.png",
+    "unlockConditions": [
+      { "type": "item", "itemId": "steel_tool_set" }
+    ],
+    "baseYields": {
+      "morning": { "electronic_part": 6, "iron_ore": 6, "coal": 5, "steel": 3 },
+      "afternoon": { "electronic_part": 5, "iron_ore": 5, "coal": 4, "steel": 2 },
+      "evening": { "electronic_part": 4, "iron_ore": 4, "coal": 3, "steel": 2 },
+      "night": { "electronic_part": 3, "iron_ore": 3, "coal": 2, "steel": 1 }
+    }
+  },
+  {
+    "id": "dense_forest",
+    "name": "密林",
+    "description": "人迹罕至的原始密林，巨木参天，纯木材产地。",
+    "image": "region_dense_forest.png",
+    "unlockConditions": [
+      { "type": "building", "buildingId": "lumber_mill" }
+    ],
+    "baseYields": {
+      "morning": { "wood": 28 },
+      "afternoon": { "wood": 23 },
+      "evening": { "wood": 17 },
+      "night": { "wood": 11 }
+    }
+  },
+  {
+    "id": "iron_ridge",
+    "name": "铁矿脊",
+    "description": "矿洞外围延伸出的铁矿富集带，裸露岩壁上随处可见赤红色铁矿石。",
+    "image": "region_iron_ridge.png",
+    "unlockConditions": [
+      { "type": "building", "buildingId": "furnace" }
+    ],
+    "baseYields": {
+      "morning": { "stone": 5, "coal": 4, "iron_ore": 13 },
+      "afternoon": { "stone": 4, "coal": 3, "iron_ore": 11 },
+      "evening": { "stone": 3, "coal": 3, "iron_ore": 8 },
+      "night": { "stone": 2, "coal": 2, "iron_ore": 6 }
+    }
+  },
+  {
+    "id": "coal_seam",
+    "name": "煤层区",
+    "description": "矿洞深处的富煤矿床，厚重的煤层几乎填满整条矿道。炼钢的理想燃料来源。",
+    "image": "region_coal_seam.png",
+    "unlockConditions": [
+      { "type": "item", "itemId": "miner_headlamp" },
+      { "type": "building", "buildingId": "mine_support" },
+      { "type": "building", "buildingId": "steel_furnace" }
+    ],
+    "baseYields": {
+      "morning": { "coal": 22, "iron_ore": 3 },
+      "afternoon": { "coal": 18, "iron_ore": 2 },
+      "evening": { "coal": 13, "iron_ore": 2 },
+      "night": { "coal": 9, "iron_ore": 1 }
+    }
+  },
+  {
+    "id": "summit_ruins",
+    "name": "山顶废墟",
+    "description": "山巅的旧时代气象站废墟，设备残骸散落各处。电子元器件密度远高于普通山巅。",
+    "image": "region_summit_ruins.png",
+    "unlockConditions": [
+      { "type": "building", "buildingId": "machine_shop" }
+    ],
+    "baseYields": {
+      "morning": { "electronic_part": 5 },
+      "afternoon": { "electronic_part": 4 },
+      "evening": { "electronic_part": 3 },
+      "night": { "electronic_part": 2 }
+    }
+  },
+  {
+    "id": "scrapyard_core",
+    "name": "回收场核心区",
+    "description": "废弃回收场最深处，堆积着大量未分类电子废料和合金构件。需要电子扫描器定位高价值目标。",
+    "image": "region_scrapyard_core.png",
+    "unlockConditions": [
+      { "type": "item", "itemId": "electronic_scanner" }
+    ],
+    "baseYields": {
+      "morning": { "electronic_part": 8, "steel": 4 },
+      "afternoon": { "electronic_part": 6, "steel": 3 },
+      "evening": { "electronic_part": 5, "steel": 2 },
+      "night": { "electronic_part": 3, "steel": 2 }
     }
   }
 ]

@@ -39,6 +39,10 @@ class ConfigRegistry {
     });
 
     await Promise.all(loadPromises);
+
+    // 合成配方继承：高级建筑自动继承低级建筑的合成配方
+    this._inheritSynthesisRecipes();
+
     console.log('[ConfigRegistry] All configs loaded:', Object.keys(this._configs));
   }
 
@@ -104,6 +108,52 @@ class ConfigRegistry {
   getRegion(id) {
     const regions = this._configs['regions'] || [];
     return regions.find(r => r.id === id) || null;
+  }
+
+  /**
+   * 合成配方继承：沿 upgradesFrom 链向上收集所有祖先的合成配方，
+   * 合并到升级后的建筑上。子建筑自己的配方优先（按 recipe.id 去重）。
+   * 支持任意深度的升级链（基础→进阶→超级→...）。
+   */
+  _inheritSynthesisRecipes() {
+    const buildings = this._configs['buildings'];
+    if (!Array.isArray(buildings)) return;
+
+    // 建立 id → 建筑配置 的快速查找表
+    const buildingMap = {};
+    for (const b of buildings) {
+      buildingMap[b.id] = b;
+    }
+
+    let mergedCount = 0;
+    for (const building of buildings) {
+      if (!building.upgradesFrom) continue;
+
+      // 已存在的配方 id（子建筑自己的配方优先）
+      const seenIds = new Set((building.synthesisRecipes || []).map(r => r.id));
+      const inherited = [];
+
+      // 沿升级链向上遍历，收集所有祖先配方
+      let current = buildingMap[building.upgradesFrom];
+      while (current) {
+        for (const recipe of (current.synthesisRecipes || [])) {
+          if (!seenIds.has(recipe.id)) {
+            inherited.push(recipe);
+            seenIds.add(recipe.id);
+          }
+        }
+        current = current.upgradesFrom ? buildingMap[current.upgradesFrom] : null;
+      }
+
+      if (inherited.length > 0) {
+        building.synthesisRecipes = [...(building.synthesisRecipes || []), ...inherited];
+        mergedCount += inherited.length;
+      }
+    }
+
+    if (mergedCount > 0) {
+      console.log(`[ConfigRegistry] 合成配方继承完成: ${mergedCount} 个配方已合并`);
+    }
   }
 }
 

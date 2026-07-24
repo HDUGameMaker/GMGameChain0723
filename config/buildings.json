@@ -22,6 +22,7 @@
     ],
     "buildTime": 1,
     "upgradesTo": "plank_house",
+    "unlockConditions": [],
     "production": null,
     "synthesisRecipes": [],
     "labelLayout": {
@@ -56,6 +57,9 @@
     "initialBuilding": false,
     "housingCapacity": 5,
     "upgradesFrom": "work_shed",
+    "unlockConditions": [
+      { "type": "building", "buildingId": "lumber_mill" }
+    ],
     "upgradeCost": [
       {
         "resourceId": "plank",
@@ -75,7 +79,14 @@
       "progressBarOffsetY": 0,
       "workersOffsetY": 0
     },
-    "imageDetail": "assets/buildings/building_plank_house_1784771253.png"
+    "imageDetail": "assets/buildings/anim_plank_house.png",
+    "detailAnimation": {
+      "frameCount": 4,
+      "fps": 6,
+      "frameWidth": 1024,
+      "frameHeight": 1024,
+      "pingpong": true
+    }
   },
   {
     "id": "tile_house",
@@ -87,6 +98,9 @@
     },
     "maxCount": null,
     "initialBuilding": false,
+    "unlockConditions": [
+      { "type": "building", "buildingId": "furnace" }
+    ],
     "housingCapacity": 12,
     "buildCost": [
       {
@@ -122,6 +136,7 @@
     },
     "maxCount": null,
     "initialBuilding": false,
+    "unlockConditions": [],
     "foodCapacity": 5,
     "maxWorkers": 1,
     "buildCost": [
@@ -153,6 +168,9 @@
     "allowedGrounds": [
       "G"
     ],
+    "unlockConditions": [
+      { "type": "building", "buildingId": "hunting_hut" }
+    ],
     "foodCapacity": 7,
     "maxWorkers": 5,
     "buildCost": [
@@ -176,6 +194,7 @@
     "name": "仓库",
     "description": "存放所有物资的核心建筑。升级期间原有仓库功能保持运作。不可拆除。",
     "demolishable": false,
+    "unlockConditions": [],
     "footprint": {
       "width": 3,
       "height": 3
@@ -214,6 +233,9 @@
     "maxCount": 1,
     "initialBuilding": false,
     "storageMultiplier": 2,
+    "unlockConditions": [
+      { "type": "building", "buildingId": "furnace" }
+    ],
     "upgradesFrom": "warehouse",
     "upgradeCost": [
       {
@@ -230,7 +252,7 @@
       }
     ],
     "buildTime": 6,
-    "upgradesTo": null,
+    "upgradesTo": "steel_warehouse",
     "production": null,
     "synthesisRecipes": [],
     "labelLayout": {
@@ -247,8 +269,26 @@
       "width": 2,
       "height": 2
     },
+    "mapIcon": "assets/buildings/anim_lumber_mill.png",
+    "animation": {
+      "spriteSheet": "assets/buildings/anim_lumber_mill.png",
+      "frameCount": 8,
+      "fps": 8,
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "pingpong": true
+    },
+    "mapIconLayout": {
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "offsetX": 0,
+      "offsetY": 0
+    },
     "maxCount": null,
     "initialBuilding": false,
+    "unlockConditions": [
+      { "type": "building", "buildingId": "logging_camp" }
+    ],
     "maxWorkers": 2,
     "buildCost": [
       {
@@ -297,6 +337,7 @@
     "allowedGrounds": [
       "R"
     ],
+    "unlockConditions": [],
     "maxWorkers": 3,
     "buildCost": [
       {
@@ -335,6 +376,7 @@
     "allowedGrounds": [
       "F"
     ],
+    "unlockConditions": [],
     "maxWorkers": 1,
     "buildCost": [
       {
@@ -381,6 +423,9 @@
         "amount": 20
       }
     ],
+    "unlockConditions": [
+      { "type": "building", "buildingId": "quarry" }
+    ],
     "buildTime": 3,
     "upgradesTo": null,
     "production": {
@@ -419,6 +464,9 @@
     },
     "maxCount": 1,
     "initialBuilding": false,
+    "unlockConditions": [
+      { "type": "building", "buildingId": "lumber_mill" }
+    ],
     "maxWorkers": 0,
     "buildCost": [
       {
@@ -446,6 +494,9 @@
     },
     "maxCount": 1,
     "initialBuilding": false,
+    "unlockConditions": [
+      { "type": "building", "buildingId": "lumber_mill" }
+    ],
     "buildCost": [
       {
         "resourceId": "wood",
@@ -516,6 +567,9 @@
     "maxCount": 1,
     "initialBuilding": false,
     "upgradesFrom": "basic_workshop",
+    "unlockConditions": [
+      { "type": "building", "buildingId": "furnace" }
+    ],
     "upgradeCost": [
       {
         "resourceId": "plank",
@@ -523,7 +577,7 @@
       }
     ],
     "buildTime": 3,
-    "upgradesTo": null,
+    "upgradesTo": "precision_workshop",
     "production": null,
     "synthesisRecipes": [
       {
@@ -543,6 +597,445 @@
         "output": {
           "type": "item",
           "itemId": "iron_tool_set",
+          "count": 1
+        },
+        "workTicks": 4
+      }
+    ],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "steel_furnace",
+    "name": "炼钢炉",
+    "description": "高温炼钢炉，将铁锭和煤炭冶炼为坚韧的钢锭。需要2名工人操作。",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "maxWorkers": 2,
+    "unlockConditions": [
+      { "type": "building", "buildingId": "furnace" }
+    ],
+    "buildCost": [
+      {
+        "resourceId": "brick",
+        "amount": 30
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 20
+      },
+      {
+        "resourceId": "stone",
+        "amount": 50
+      }
+    ],
+    "buildTime": 4,
+    "upgradesTo": null,
+    "production": {
+      "perWorker": true,
+      "input": [
+        {
+          "resourceId": "coal",
+          "amount": 2
+        },
+        {
+          "resourceId": "iron_ingot",
+          "amount": 3
+        }
+      ],
+      "output": [
+        {
+          "resourceId": "steel",
+          "amount": 1
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "brick_kiln",
+    "name": "砖窑",
+    "description": "高温窑炉，将石头和煤炭烧制成坚固的砖块。每名工人独立运作。",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "maxWorkers": 1,
+    "unlockConditions": [
+      { "type": "building", "buildingId": "furnace" }
+    ],
+    "buildCost": [
+      {
+        "resourceId": "stone",
+        "amount": 80
+      },
+      {
+        "resourceId": "coal",
+        "amount": 10
+      }
+    ],
+    "buildTime": 3,
+    "upgradesTo": null,
+    "production": {
+      "perWorker": true,
+      "input": [
+        {
+          "resourceId": "stone",
+          "amount": 4
+        },
+        {
+          "resourceId": "coal",
+          "amount": 1
+        }
+      ],
+      "output": [
+        {
+          "resourceId": "brick",
+          "amount": 2
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "machine_shop",
+    "name": "机械车间",
+    "description": "配备精密机床的加工车间，将钢锭加工为机械零件。需要2名工人操作。",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "maxWorkers": 2,
+    "unlockConditions": [
+      { "type": "building", "buildingId": "steel_furnace" }
+    ],
+    "buildCost": [
+      {
+        "resourceId": "steel",
+        "amount": 10
+      },
+      {
+        "resourceId": "brick",
+        "amount": 40
+      },
+      {
+        "resourceId": "plank",
+        "amount": 30
+      }
+    ],
+    "buildTime": 5,
+    "upgradesTo": null,
+    "production": {
+      "perWorker": true,
+      "input": [
+        {
+          "resourceId": "steel",
+          "amount": 2
+        }
+      ],
+      "output": [
+        {
+          "resourceId": "machine_part",
+          "amount": 1
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "brick_house",
+    "name": "砖房",
+    "description": "用砖块和钢材建造的坚固房屋，宽敞舒适，可容纳更多居民。",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "unlockConditions": [
+      { "type": "building", "buildingId": "brick_kiln" }
+    ],
+    "housingCapacity": 20,
+    "buildCost": [
+      {
+        "resourceId": "brick",
+        "amount": 50
+      },
+      {
+        "resourceId": "steel",
+        "amount": 5
+      },
+      {
+        "resourceId": "plank",
+        "amount": 20
+      }
+    ],
+    "buildTime": 5,
+    "upgradesTo": null,
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "steel_warehouse",
+    "name": "钢铁仓储中心",
+    "description": "采用钢架结构的大型仓储设施，储存能力达到新的高度。",
+    "footprint": {
+      "width": 3,
+      "height": 3
+    },
+    "maxCount": 1,
+    "initialBuilding": false,
+    "storageMultiplier": 3,
+    "unlockConditions": [
+      { "type": "building", "buildingId": "machine_shop" }
+    ],
+    "upgradesFrom": "industrial_warehouse",
+    "upgradeCost": [
+      {
+        "resourceId": "steel",
+        "amount": 50
+      },
+      {
+        "resourceId": "brick",
+        "amount": 100
+      },
+      {
+        "resourceId": "machine_part",
+        "amount": 5
+      }
+    ],
+    "buildTime": 8,
+    "upgradesTo": null,
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "watchtower",
+    "name": "瞭望塔",
+    "description": "高耸的瞭望塔，能观察远方山巅的地形和天气，为登山探险提供安全保障。",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
+    "maxCount": 1,
+    "initialBuilding": false,
+    "buildCost": [
+      {
+        "resourceId": "brick",
+        "amount": 30
+      },
+      {
+        "resourceId": "machine_part",
+        "amount": 2
+      },
+      {
+        "resourceId": "plank",
+        "amount": 50
+      }
+    ],
+    "unlockConditions": [
+      { "type": "building", "buildingId": "brick_kiln" }
+    ],
+    "buildTime": 4,
+    "upgradesTo": null,
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
+  },
+  {
+    "id": "precision_workshop",
+    "name": "精密工作室",
+    "description": "配备高精度加工设备的工作室，可以制造钢制工具、攀爬装备等高级探险物品。",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
+    "maxCount": 1,
+    "initialBuilding": false,
+    "upgradesFrom": "advanced_workshop",
+    "unlockConditions": [
+      { "type": "building", "buildingId": "machine_shop" }
+    ],
+    "upgradeCost": [
+      {
+        "resourceId": "steel",
+        "amount": 15
+      },
+      {
+        "resourceId": "machine_part",
+        "amount": 3
+      }
+    ],
+    "buildTime": 4,
+    "upgradesTo": null,
+    "production": null,
+    "synthesisRecipes": [
+      {
+        "id": "craft_steel_tool_set",
+        "name": "制造钢制工具组",
+        "inputs": [],
+        "resourceCost": [
+          {
+            "resourceId": "steel",
+            "amount": 30
+          },
+          {
+            "resourceId": "plank",
+            "amount": 10
+          }
+        ],
+        "output": {
+          "type": "item",
+          "itemId": "steel_tool_set",
+          "count": 1
+        },
+        "workTicks": 4
+      },
+      {
+        "id": "craft_climbing_gear",
+        "name": "制造攀爬装备",
+        "inputs": [],
+        "resourceCost": [
+          {
+            "resourceId": "machine_part",
+            "amount": 3
+          },
+          {
+            "resourceId": "steel",
+            "amount": 10
+          }
+        ],
+        "output": {
+          "type": "item",
+          "itemId": "climbing_gear",
+          "count": 1
+        },
+        "workTicks": 3
+      },
+      {
+        "id": "craft_heavy_cart",
+        "name": "制造重型马车",
+        "inputs": [],
+        "resourceCost": [
+          {
+            "resourceId": "steel",
+            "amount": 20
+          },
+          {
+            "resourceId": "machine_part",
+            "amount": 5
+          },
+          {
+            "resourceId": "plank",
+            "amount": 30
+          }
+        ],
+        "output": {
+          "type": "item",
+          "itemId": "heavy_cart",
+          "count": 1
+        },
+        "workTicks": 5
+      },
+      {
+        "id": "craft_steel_transport_truck",
+        "name": "制造钢制运输车",
+        "inputs": [],
+        "resourceCost": [
+          {
+            "resourceId": "steel",
+            "amount": 50
+          },
+          {
+            "resourceId": "machine_part",
+            "amount": 10
+          },
+          {
+            "resourceId": "electronic_part",
+            "amount": 5
+          }
+        ],
+        "output": {
+          "type": "item",
+          "itemId": "steel_transport_truck",
+          "count": 1
+        },
+        "workTicks": 6
+      },
+      {
+        "id": "craft_steel_pickaxe",
+        "name": "制造钢制镐",
+        "inputs": [],
+        "resourceCost": [
+          {
+            "resourceId": "steel",
+            "amount": 8
+          }
+        ],
+        "output": {
+          "type": "item",
+          "itemId": "steel_pickaxe",
+          "count": 1
+        },
+        "workTicks": 2
+      },
+      {
+        "id": "craft_electronic_scanner",
+        "name": "制造电子扫描器",
+        "inputs": [],
+        "resourceCost": [
+          {
+            "resourceId": "electronic_part",
+            "amount": 8
+          },
+          {
+            "resourceId": "machine_part",
+            "amount": 3
+          }
+        ],
+        "output": {
+          "type": "item",
+          "itemId": "electronic_scanner",
           "count": 1
         },
         "workTicks": 4

@@ -1,9 +1,16 @@
 {
-  "generated": "2026-07-23T11:40:50.134Z",
+  "generated": "2026-07-24T09:33:54.225Z",
   "basePath": "assets/",
-  "totalFiles": 5,
+  "totalFiles": 10,
   "categories": {
+    "buildings/anim_plank_house": [
+      "buildings/anim_plank_house/building_plank_house_0.png",
+      "buildings/anim_plank_house/building_plank_house_1.png",
+      "buildings/anim_plank_house/building_plank_house_2.png",
+      "buildings/anim_plank_house/building_plank_house_3.png"
+    ],
     "buildings": [
+      "buildings/anim_plank_house.png",
       "buildings/building_plank_house_1784771253.png",
       "buildings/building_work_shed_1784771193.png",
       "buildings/icon-metal_1784486384.png",
@@ -12,6 +19,11 @@
     ]
   },
   "files": [
+    "buildings/anim_plank_house/building_plank_house_0.png",
+    "buildings/anim_plank_house/building_plank_house_1.png",
+    "buildings/anim_plank_house/building_plank_house_2.png",
+    "buildings/anim_plank_house/building_plank_house_3.png",
+    "buildings/anim_plank_house.png",
     "buildings/building_plank_house_1784771253.png",
     "buildings/building_work_shed_1784771193.png",
     "buildings/icon-metal_1784486384.png",

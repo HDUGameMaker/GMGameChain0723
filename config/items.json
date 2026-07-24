@@ -6,11 +6,11 @@
     "description": "结实的运载推车，可以装下更多采集到的资源。",
     "unique": true,
     "consumable": false,
-    "capacityCost": 3,
+    "capacityCost": 2,
     "expeditionEffects": [
       {
         "type": "resource_capacity_bonus",
-        "value": 50
+        "value": 350
       }
     ]
   },
@@ -25,8 +25,11 @@
     "expeditionEffects": [
       {
         "type": "yield_multiplier",
-        "value": 2.0,
-        "regions": ["forest", "mine_interior"]
+        "value": 2,
+        "regions": [
+          "forest",
+          "mine_interior"
+        ]
       }
     ]
   },
@@ -53,13 +56,117 @@
         "type": "yield_flat_bonus",
         "resourceId": "coal",
         "value": 15,
-        "regions": ["mine_periphery"]
+        "regions": [
+          "mine_periphery"
+        ]
       },
       {
         "type": "yield_flat_bonus",
         "resourceId": "iron_ore",
         "value": 10,
-        "regions": ["mine_periphery"]
+        "regions": [
+          "mine_periphery"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "steel_tool_set",
+    "name": "钢制工具组",
+    "icon": "item_steel_tool_set.png",
+    "description": "精良的钢制镐和斧，所有区域的采集效率大幅提升。",
+    "unique": true,
+    "consumable": false,
+    "capacityCost": 2,
+    "expeditionEffects": [
+      {
+        "type": "yield_multiplier",
+        "value": 2.5
+      }
+    ]
+  },
+  {
+    "id": "climbing_gear",
+    "name": "攀爬装备",
+    "icon": "item_climbing_gear.png",
+    "description": "钢制岩钉和绳索套装，有了它就能安全攀登至山巅区域。",
+    "unique": true,
+    "consumable": false,
+    "capacityCost": 2,
+    "expeditionEffects": []
+  },
+  {
+    "id": "heavy_cart",
+    "name": "重型马车",
+    "icon": "item_heavy_cart.png",
+    "description": "钢架加固的大型运输马车，能装下远超普通运载车的资源。",
+    "unique": true,
+    "consumable": false,
+    "capacityCost": 4,
+    "expeditionEffects": [
+      {
+        "type": "resource_capacity_bonus",
+        "value": 800
+      }
+    ]
+  },
+  {
+    "id": "steel_transport_truck",
+    "name": "钢制运输车",
+    "icon": "item_steel_transport_truck.png",
+    "description": "装配了电子控制系统的重型运输车，拥有惊人的装载能力。",
+    "unique": true,
+    "consumable": false,
+    "capacityCost": 6,
+    "expeditionEffects": [
+      {
+        "type": "resource_capacity_bonus",
+        "value": 1500
+      }
+    ]
+  },
+  {
+    "id": "steel_pickaxe",
+    "name": "钢制镐",
+    "icon": "item_steel_pickaxe.png",
+    "description": "精钢锻造的矿镐，在矿洞深处能产出更多资源。探险结束后消耗。",
+    "unique": false,
+    "consumable": true,
+    "capacityCost": 1,
+    "expeditionEffects": [
+      {
+        "type": "yield_flat_bonus",
+        "resourceId": "coal",
+        "value": 80,
+        "regions": [
+          "mine_interior"
+        ]
+      },
+      {
+        "type": "yield_flat_bonus",
+        "resourceId": "iron_ore",
+        "value": 80,
+        "regions": [
+          "mine_interior"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "electronic_scanner",
+    "name": "电子扫描器",
+    "icon": "item_electronic_scanner.png",
+    "description": "利用回收的电子元器件组装的环境扫描装置，能精准定位废弃回收场中的高价值目标，产量翻倍。",
+    "unique": true,
+    "consumable": false,
+    "capacityCost": 1,
+    "expeditionEffects": [
+      {
+        "type": "yield_multiplier",
+        "value": 2,
+        "regions": [
+          "scrapyard"
+        ]
       }
     ]
   }

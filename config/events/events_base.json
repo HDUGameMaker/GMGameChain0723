@@ -154,5 +154,198 @@
         ]
       }
     ]
+  },
+  {
+    "id": "story_merchant_arrives",
+    "name": "远方商队",
+    "description": "一支风尘仆仆的商队出现在营地外，领头的老商人声称他们来自遥远的工业城邦。「我们带来了炼钢术的秘密，」他说，「但这可不是免费的午餐。」",
+    "image": "",
+    "priority": 5,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning",
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [
+        "furnace"
+      ]
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "用100铁锭交换炼钢术",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "iron_ingot",
+            "amount": 100
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "steel",
+            "amount": 5
+          },
+          {
+            "type": "trigger_event",
+            "eventId": "story_merchant_leave"
+          }
+        ]
+      },
+      {
+        "text": "婉拒交易",
+        "effects": [
+          {
+            "type": "trigger_event",
+            "eventId": "story_merchant_refused"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "story_merchant_leave",
+    "name": "商队离去",
+    "description": "商队收下铁锭，留下几张泛黄的图纸和几块样品钢锭。「炼钢的关键是更高的温度和更久的冶炼时间，」老商人临行前说，「对了，往山那边走，有个废弃的旧时代回收场——等你有了像样的装备，可以去碰碰运气。」",
+    "image": "",
+    "priority": 10,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "研究炼钢图纸",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "story_merchant_refused",
+    "name": "商队远去",
+    "description": "老商人耸了耸肩，收起图纸。「随你吧。不过炼钢术迟早要学的，不跟我们学，自己摸索可要慢得多。」商队继续赶路，逐渐消失在地平线上。",
+    "image": "",
+    "priority": 10,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "继续手头的工作",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "story_scrapyard_signal",
+    "name": "奇怪的信号",
+    "description": "瞭望塔上的观察员报告了一件怪事：远处山脉方向检测到规律性的电磁脉冲信号，似乎是某种旧时代设备仍在运作。机械车间的技师认为，如果能制造一个扫描器追踪信号源，可能会有重大发现。",
+    "image": "",
+    "priority": 5,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning",
+        "afternoon",
+        "evening"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [
+        "machine_shop"
+      ]
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "消耗5个机械零件制造扫描器",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "machine_part",
+            "amount": 5
+          },
+          {
+            "type": "obtain_item",
+            "itemId": "electronic_scanner"
+          },
+          {
+            "type": "trigger_event",
+            "eventId": "story_scrapyard_reveal"
+          }
+        ]
+      },
+      {
+        "text": "暂缓调查",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "story_scrapyard_reveal",
+    "name": "回收场浮现",
+    "description": "电子扫描器的屏幕上亮起密集的光点——信号源位于山脉背面的一片广阔废墟。技师兴奋地说：「这是个旧时代的废弃回收场！里面埋着成吨的电子设备残骸。清理出安全通道后，我们可以定期前往探索。」废弃回收场区域现已解锁。",
+    "image": "",
+    "priority": 10,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "组织探险队",
+        "effects": []
+      }
+    ]
   }
 ]

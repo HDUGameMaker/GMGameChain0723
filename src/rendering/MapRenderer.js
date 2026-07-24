@@ -7,6 +7,7 @@ import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
 import { progressManager } from '../utils/ProgressManager.js';
 import { gridToScreenTopLeft, screenToGrid } from '../utils/gridUtils.js';
+import { AnimatedSpriteHelper } from './AnimatedSpriteHelper.js';
 
 export class MapRenderer {
   constructor(app, buildingSystem) {
@@ -330,8 +331,13 @@ export class MapRenderer {
   // ===== 建筑渲染 =====
 
   refreshBuildings() {
-    // 清除旧精灵
+    // 清除旧精灵（包括停止序列帧动画）
     for (const sprite of this._buildingSprites) {
+      // 停止 AnimatedSprite（如果有）
+      if (sprite.__animSprite) {
+        sprite.__animSprite.stop();
+        sprite.__animSprite = null;
+      }
       this.buildingLayer.removeChild(sprite);
       sprite.destroy();
     }
@@ -360,10 +366,80 @@ export class MapRenderer {
       const progressBaseY = centerY + 4;
       const workersBaseY = y + h * this.tileSize - 12;
 
-      // 判断渲染模式：有 mapIcon 且纹理加载成功 → 精灵图，否则 → 文字回退
+      // 判断渲染模式：
+      // 1) 有 animation 配置 → 序列帧动画精灵
+      // 2) 有 mapIcon 且纹理加载成功 → 静态精灵图
+      // 3) 否则 → 文字回退
       const texture = config.mapIcon ? this._getTexture(config.mapIcon) : null;
-      if (texture) {
-        // ===== 精灵图模式 =====
+
+      // 检查是否有序列帧动画配置
+      const animConfig = config.animation;
+      const animSprite = (texture && animConfig)
+        ? AnimatedSpriteHelper.createFromConfig(animConfig)
+        : null;
+
+      if (animSprite) {
+        // ===== 序列帧动画模式 =====
+        const iconLayout = config.mapIconLayout || {};
+        const iconScaleX = iconLayout.scaleX != null ? iconLayout.scaleX : 1;
+        const iconScaleY = iconLayout.scaleY != null ? iconLayout.scaleY : 1;
+        const iconOffsetX = iconLayout.offsetX || 0;
+        const iconOffsetY = iconLayout.offsetY || 0;
+
+        animSprite.x = x + iconOffsetX;
+        animSprite.y = y + iconOffsetY;
+
+        // 使用动画配置中的帧尺寸（而非精灵图整体尺寸）来计算缩放
+        const frameW = animConfig.frameWidth || texture.width || 0;
+        const frameH = animConfig.frameHeight || texture.height || 0;
+        if (frameW > 0 && frameH > 0) {
+          animSprite.scale.x = (w * this.tileSize / frameW) * iconScaleX;
+          animSprite.scale.y = (h * this.tileSize / frameH) * iconScaleY;
+        }
+
+        container.addChild(animSprite);
+
+        // 存储引用便于后续清理
+        container.__animSprite = animSprite;
+
+        if (isConstructing) {
+          // 灰色半透明遮罩（覆盖整个建筑精灵图）
+          const overlay = new PIXI.Graphics();
+          overlay.rect(x, y, w * this.tileSize, h * this.tileSize);
+          overlay.fill({ color: 0x888888, alpha: 0.55 });
+          container.addChild(overlay);
+
+          // 建造进度条（遮罩上方）
+          this._addBuildProgressBar(container, building, config, x, w, progressBaseY, layout, centerX);
+        }
+
+        // 建筑名称（精灵图上方，带阴影以提升可读性）
+        const nameFontSize = Math.min(14, this.tileSize * 0.22);
+        const nameMaxWidth = w * this.tileSize - 6;
+        const text = new PIXI.Text({
+          text: config.name,
+          style: {
+            fontSize: nameFontSize,
+            fill: 0xffffff,
+            align: 'center',
+            wordWrap: true,
+            wordWrapWidth: nameMaxWidth,
+            breakWords: true,
+            dropShadow: {
+              color: 0x000000,
+              alpha: 0.75,
+              blur: 3,
+              distance: 1
+            }
+          }
+        });
+        text.anchor.set(0.5);
+        text.x = centerX;
+        text.y = nameBaseY + (layout.nameOffsetY || 0);
+        container.addChild(text);
+
+      } else if (texture) {
+        // ===== 静态精灵图模式 =====
         const sprite = new PIXI.Sprite(texture);
 
         // 读取 mapIconLayout 配置（艺术家配置工具可调节 scaleX/Y 和 offsetX/Y）

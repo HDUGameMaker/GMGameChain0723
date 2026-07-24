@@ -49,6 +49,7 @@ class Game {
     // 连接系统间交叉引用
     this.systems.building.setResourceSystem(this.systems.resource);
     this.systems.building.setPopulationSystem(this.systems.population);
+    this.systems.building.setItemSystem(this.systems.item);
     this.systems.building.init();
     this.systems.population.setBuildingSystem(this.systems.building);
     this.systems.event.setSystems({

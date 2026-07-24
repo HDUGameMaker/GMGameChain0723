@@ -93,6 +93,10 @@ export class EventSystem {
 
     this.registerEffect('consume_resource', (params) => {
       if (this._resourceSystem) {
+        if (!this._resourceSystem.hasEnough(params.resourceId, params.amount)) {
+          console.warn(`[EventSystem] consume_resource failed: not enough ${params.resourceId} (need ${params.amount})`);
+          return;
+        }
         this._resourceSystem.tryConsume(params.resourceId, params.amount);
       }
     });
@@ -514,6 +518,23 @@ export class EventSystem {
   }
 
   // ===== 供外部系统调用 =====
+
+  /**
+   * 检查选项效果中的消费是否可负担（供面板调用）
+   */
+  canAffordOption(effects) {
+    if (!effects || effects.length === 0) return true;
+    if (!this._resourceSystem) return true;
+
+    for (const effect of effects) {
+      if (effect.type === 'consume_resource') {
+        if (!this._resourceSystem.hasEnough(effect.resourceId, effect.amount)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 
   /**
    * 判断当前是否有事件正在处理或排队中
