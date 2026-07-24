@@ -1,4 +1,3 @@
-ï»¿chcp 65001 >nul 2>&1
 @echo off
 setlocal enabledelapsedexpansion
 cd /d "%~dp0"
@@ -40,7 +39,7 @@ if not errorlevel 1 (
 )
 
 REM ==========================================
-REM  Step 2: Node.js NOT found â€” show banner
+REM  Step 2: Node.js NOT found ¡ª show banner
 REM ==========================================
 echo.
 echo ============================================
@@ -130,7 +129,7 @@ echo.
 echo     1. Open: https://nodejs.org/
 echo     2. Download the LTS version
 echo     3. Run the installer (keep all default settings)
-echo     4. Double-click å¯åŠ¨æ¸¸æˆ.bat again
+echo     4. Double-click Æô¶¯ÓÎÏ·.bat again
 echo.
 echo   (Press any key to open the download page...)
 pause >nul
@@ -142,7 +141,7 @@ pause
 exit /b 1
 
 REM ==========================================
-REM  LAUNCH â€” start the game
+REM  LAUNCH ¡ª start the game
 REM ==========================================
 :launch
 echo.
