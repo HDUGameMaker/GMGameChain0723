@@ -88,5 +88,14 @@
     "max": 300,
     "rare": true,
     "showInHUD": true
+  },
+  {
+    "id": "food",
+    "name": "食物",
+    "icon": "",
+    "initial": 15,
+    "max": 2000,
+    "rare": false,
+    "showInHUD": true
   }
 ]

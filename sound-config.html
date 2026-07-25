@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>音效配置编辑器 — GMGameChain</title>
+<style>
+:root {
+  --bg: #1a1a2e; --fg: #e0e0e8; --muted: #808098; --border: #2a2a44;
+  --accent: #f0a040; --accent-hover: #d88c28; --surface: #222238;
+  --good: #4ecb71; --bad: #ff6b6b; --warn: #f0a040;
+  --sidebar-w: 200px; --topbar-h: 52px;
+}
+* { box-sizing: border-box; margin: 0; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 -apple-system, "Microsoft YaHei", system-ui, sans-serif; display: grid; grid-template-columns: var(--sidebar-w) 1fr; grid-template-rows: var(--topbar-h) 1fr 28px; min-height: 100vh; }
+/* ── Sidebar ── */
+.sidebar { grid-row: 1 / -1; background: #141428; color: #c0c8d8; padding: 16px 0; display: flex; flex-direction: column; overflow-y: auto; }
+.sidebar .brand { font-weight: 700; font-size: 15px; padding: 0 16px 18px; color: #f0e8d0; letter-spacing: -0.01em; }
+.sidebar .brand span { opacity: 0.55; font-weight: 400; font-size: 11px; display: block; margin-top: 2px; }
+.sidebar nav { display: flex; flex-direction: column; gap: 1px; padding: 0 8px; }
+.sidebar nav a { padding: 8px 12px; border-radius: 6px; color: #d8d0c0; text-decoration: none; font-size: 13px; cursor: pointer; transition: background 0.15s; }
+.sidebar nav a:hover { background: rgba(255,255,255,0.06); }
+.sidebar nav a.active { background: var(--accent); color: #fff; font-weight: 600; }
+.sidebar .nav-label { font-size: 10px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.08em; padding: 20px 12px 8px; }
+.sidebar .footer { margin-top: auto; padding: 16px; font-size: 11px; opacity: 0.45; }
+/* ── Topbar ── */
+.topbar { grid-column: 2; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.topbar h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
+.topbar .status { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border-radius: 999px; }
+.topbar .status.saved { color: var(--good); background: rgba(47,125,74,0.08); }
+.topbar .status.pending { color: var(--warn); background: rgba(201,125,26,0.08); }
+.topbar .status.error { color: var(--bad); background: rgba(181,58,42,0.08); }
+.topbar .status .dot { width: 7px; height: 7px; border-radius: 50%; }
+.topbar .status.saved .dot { background: var(--good); }
+.topbar .status.pending .dot { background: var(--warn); animation: pulse 0.8s infinite; }
+.topbar .status.error .dot { background: var(--bad); }
+@keyframes pulse { 50% { opacity: 0.3; } }
+.topbar .actions { display: flex; align-items: center; gap: 8px; }
+/* ── Buttons ── */
+button, .btn { font: inherit; cursor: pointer; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; transition: all 0.15s; }
+.btn-primary { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary { background: transparent; color: var(--fg); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--bg); }
+.btn-danger { background: transparent; color: var(--bad); border: 1px solid rgba(255,107,107,0.25); }
+.btn-danger:hover { background: rgba(255,107,107,0.06); }
+.btn-sm { padding: 3px 8px; font-size: 11px; border-radius: 4px; }
+input, select, textarea { font: inherit; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--fg); font-size: 13px; outline: none; transition: border-color 0.15s; }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(240,160,64,0.1); }
+input.error, select.error, textarea.error { border-color: var(--bad); box-shadow: 0 0 0 3px rgba(255,107,107,0.08); }
+label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; margin-bottom: 3px; }
+input[type=range] { padding: 0; border: none; accent-color: var(--accent); }
+/* ── Main ── */
+main { grid-column: 2; display: flex; flex-direction: column; overflow: hidden; }
+.toolbar { display: flex; align-items: center; gap: 6px; padding: 10px 24px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+.toolbar .sep { width: 1px; height: 20px; background: var(--border); margin: 0 6px; }
+.editor-wrap { display: flex; flex: 1; overflow: hidden; }
+.list-panel { width: 260px; min-width: 180px; border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.list-panel-header { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+.list-body { flex: 1; overflow-y: auto; padding: 6px; }
+.list-body::-webkit-scrollbar { width: 4px; }
+.list-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.list-item { padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--fg); transition: background 0.12s; display: flex; align-items: center; gap: 8px; }
+.list-item:hover { background: rgba(255,255,255,0.04); }
+.list-item.active { background: rgba(240,160,64,0.15); color: var(--accent); font-weight: 600; }
+.list-item .iid { font-size: 11px; color: var(--muted); margin-left: auto; font-family: ui-monospace, monospace; }
+#detailPanel { flex: 1; overflow-y: auto; padding: 20px 24px; }
+#detailPanel::-webkit-scrollbar { width: 4px; }
+#detailPanel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.empty-state { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted); font-size: 14px; flex-direction: column; gap: 8px; }
+.form-group { margin-bottom: 14px; }
+.form-group input[type="text"], .form-group input[type="number"], .form-group select { width: 100%; }
+.form-row { display: flex; gap: 10px; }
+.form-row .form-group { flex: 1; }
+.range-with-val { display: flex; align-items: center; gap: 10px; }
+.range-with-val input[type=range] { flex: 1; }
+.range-with-val .val { font-size: 13px; font-weight: 600; min-width: 40px; text-align: right; color: var(--accent); }
+/* ── Bindings table ── */
+.bindings-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bindings-table th, .bindings-table td { text-align: left; padding: 8px 10px; border-top: 1px solid var(--border); }
+.bindings-table th { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.bindings-table td { color: var(--fg); }
+.bindings-table td .event-name { font-family: ui-monospace, monospace; font-size: 12px; }
+.bindings-table select { width: 100%; }
+.bindings-table tr:hover td { background: rgba(255,255,255,0.02); }
+/* ── Toast ── */
+.toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); padding: 10px 24px; border-radius: 999px; color: #fff; font-size: 13px; font-weight: 500; z-index: 999; animation: toastIn 0.3s ease; letter-spacing: 0.01em; }
+.toast.success { background: #3a7a4e; }
+.toast.error { background: #b53a2a; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+/* ── Preview button ── */
+.btn-preview { padding: 4px 10px; font-size: 11px; border-radius: 4px; background: transparent; color: var(--accent); border: 1px solid rgba(240,160,64,0.3); cursor: pointer; transition: all 0.15s; }
+.btn-preview:hover { background: rgba(240,160,64,0.1); }
+.btn-preview.playing { background: rgba(240,160,64,0.2); color: #fff; }
+/* ── Bgm missing ── */
+.missing-badge { font-size: 10px; padding: 2px 6px; border-radius: 999px; background: rgba(255,107,107,0.15); color: var(--bad); margin-left: 6px; }
+</style>
+</head>
+<body>
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="brand">🔊 音效配置编辑器<span>Sound Config Editor</span></div>
+  <div class="nav-label">配置项</div>
+  <nav>
+    <a data-tab="bgm" class="active">🎵 背景音乐</a>
+    <a data-tab="sfx">🔔 音效</a>
+    <a data-tab="bindings">🔗 SFX 事件绑定</a>
+    <a data-tab="bgmbindings">🎵 BGM 事件绑定</a>
+    <a data-tab="settings">⚙️ 全局设置</a>
+  </nav>
+  <div class="footer">GMGameChain 2026</div>
+</aside>
+
+<!-- Topbar -->
+<div class="topbar">
+  <h1 id="tabTitle">背景音乐 — config/sound.json</h1>
+  <div class="actions">
+    <span id="saveStatus" class="status saved"><span class="dot"></span>已保存 ✓</span>
+    <button id="btnSelectDir" class="btn-secondary">📁 选择 config 目录</button>
+    <button id="btnToggleAuto" class="btn-secondary">🔄 自动保存</button>
+    <button id="btnSave" class="btn-secondary" style="display:none">💾 手动保存</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+  <div class="toolbar">
+    <button id="btnAdd" class="btn-primary" title="新增 (N)">＋ 新增</button>
+    <button id="btnDup" class="btn-secondary" title="复制 (Ctrl+D)">📋 复制</button>
+    <button id="btnDel" class="btn-danger" title="删除 (Delete)">🗑 删除</button>
+    <span class="sep"></span>
+    <span id="itemCount" style="font-size:12px;color:var(--muted)">0 项</span>
+  </div>
+  <div class="editor-wrap">
+    <div class="list-panel" id="listPanel">
+      <div class="list-panel-header">
+        <span id="listHeader">背景音乐列表</span>
+      </div>
+      <div class="list-body" id="listBody"></div>
+    </div>
+    <div id="detailPanel"></div>
+  </div>
+</main>
+
+<!-- Bottom bar -->
+<div style="grid-column:2;background:var(--surface);border-top:1px solid var(--border);padding:0 24px;display:flex;align-items:center;font-size:11px;color:var(--muted);gap:16px;">
+  <span id="fileStatus">📂 未连接目录</span>
+  <span id="errorCount" style="color:var(--bad);display:none"></span>
+</div>
+
+<script src="sound-editor/sound-editor-core.js"></script>
+<script src="sound-editor/sound-editor-render.js"></script>
+<script src="sound-editor/sound-editor-actions.js"></script>
+<script src="sound-editor/sound-editor-main.js"></script>
+</body>
+</html>

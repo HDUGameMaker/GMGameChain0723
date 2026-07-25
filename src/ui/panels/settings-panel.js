@@ -54,6 +54,91 @@ export function renderSettingsPanel(data, body, pm) {
   displaySection.appendChild(toggleRow);
   container.appendChild(displaySection);
 
+  // ===== 音频设置 =====
+  const audioSys = window.__game?.systems?.audio;
+  if (audioSys && audioSys._initialized) {
+    const audioSection = document.createElement('div');
+    audioSection.style.cssText = 'padding:14px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.05);';
+
+    const audioTitle = document.createElement('div');
+    audioTitle.style.cssText = 'font-size:14px;font-weight:600;color:#ececf0;margin-bottom:10px;letter-spacing:0.01em;';
+    audioTitle.textContent = '🔊 音频设置';
+
+    const muteBtn = document.createElement('button');
+    const updateMuteBtn = () => {
+      const muted = audioSys.isMuted();
+      muteBtn.textContent = muted ? '🔇 已静音' : '🔊 已开启';
+      muteBtn.style.cssText = [
+        'padding:6px 14px;border-radius:20px;border:1px solid',
+        muted ? 'rgba(255,107,107,0.3)' : 'rgba(78,203,113,0.3)',
+        ';background:', muted ? 'rgba(255,107,107,0.12)' : 'rgba(78,203,113,0.12)',
+        ';color:', muted ? '#ff6b6b' : '#4ecb71',
+        ';font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all 0.2s;margin-bottom:10px;'
+      ].join('');
+    };
+    updateMuteBtn();
+    muteBtn.addEventListener('click', () => {
+      audioSys.toggleMute();
+      updateMuteBtn();
+      // 更新滑块以反映静音状态
+      masterSlider.value = Math.round(audioSys.getMasterVolume() * 100);
+      bgmSlider.value = Math.round(audioSys.getBGMVolume() * 100);
+      sfxSlider.value = Math.round(audioSys.getSFXVolume() * 100);
+    });
+
+    // 音量滑块
+    const sliders = [
+      { label: '主音量', get: () => audioSys.getMasterVolume(), set: (v) => audioSys.setMasterVolume(v) },
+      { label: '背景音乐', get: () => audioSys.getBGMVolume(), set: (v) => audioSys.setBGMVolume(v) },
+      { label: '音效', get: () => audioSys.getSFXVolume(), set: (v) => audioSys.setSFXVolume(v) }
+    ];
+
+    const sliderContainer = document.createElement('div');
+    sliderContainer.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+
+    let masterSlider, bgmSlider, sfxSlider;
+
+    sliders.forEach((s, i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;';
+
+      const label = document.createElement('span');
+      label.style.cssText = 'font-size:12px;color:#a0a0ba;width:62px;flex-shrink:0;';
+      label.textContent = s.label;
+
+      const input = document.createElement('input');
+      input.type = 'range';
+      input.min = 0;
+      input.max = 100;
+      input.value = Math.round(s.get() * 100);
+      input.style.cssText = 'flex:1;accent-color:#4ecb71;';
+
+      const valDisplay = document.createElement('span');
+      valDisplay.style.cssText = 'font-size:12px;color:#ececf0;width:36px;text-align:right;flex-shrink:0;';
+      valDisplay.textContent = input.value + '%';
+
+      input.addEventListener('input', () => {
+        s.set(parseInt(input.value) / 100);
+        valDisplay.textContent = input.value + '%';
+        updateMuteBtn();
+      });
+
+      row.appendChild(label);
+      row.appendChild(input);
+      row.appendChild(valDisplay);
+      sliderContainer.appendChild(row);
+
+      if (i === 0) masterSlider = input;
+      if (i === 1) bgmSlider = input;
+      if (i === 2) sfxSlider = input;
+    });
+
+    audioSection.appendChild(audioTitle);
+    audioSection.appendChild(muteBtn);
+    audioSection.appendChild(sliderContainer);
+    container.appendChild(audioSection);
+  }
+
   // ===== 存档信息 =====
   const saveSection = document.createElement('div');
   saveSection.style.cssText = 'padding:14px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.05);';

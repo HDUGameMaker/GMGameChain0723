@@ -33,6 +33,7 @@ echo [2/2] Opening config editors...
 
 start http://127.0.0.1:8080/planner-config.html
 start http://127.0.0.1:8080/artist-config.html
+start http://127.0.0.1:8080/sound-config.html
 
 echo.
 echo ============================================
@@ -40,6 +41,7 @@ echo   Opened:
 echo.
 echo     planner-config.html  (Game Designer)
 echo     artist-config.html   (Artist)
+echo     sound-config.html    (Sound Designer)
 echo.
 echo   First-time use: click [Xuan Ze Mu Lu]
 echo   and select the config/ folder.

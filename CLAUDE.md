@@ -48,10 +48,11 @@ GameLoop (rAF)  → TimeSystem.update() → tick event → each System settles �
 ## Project Layout
 
 ```
-config/                 ← JSON game data (buildings, resources, items, maps, events, expeditions, torches)
+config/                 ← JSON game data (buildings, resources, items, maps, events, expeditions, torches, sound)
   buildings.json        ← Add new buildings here, no code changes needed
   resources.json        ← Add new resources here, auto-recognized by ResourceSystem
   buildings.json        ← Building & torch type definitions (torches marked with isTorch: true)
+  sound.json            ← BGM/SFX definitions + SFX event bindings + BGM event bindings
   events/               ← Add new events here following existing schema
   expeditions/          ← Expedition regions and global params
   maps/base_map.json    ← Grid layout, initial buildings, expedition entrance, initial torches
@@ -62,7 +63,7 @@ src/
   GameLoop.js           ← rAF-driven loop with multi-layer pause support
   core/                 ← EventBus, ConfigRegistry, Store, SaveManager (all singletons)
   systems/              ← TimeSystem, ResourceSystem, BuildingSystem, PopulationSystem,
-                          ItemSystem, EventSystem, ExpeditionSystem, TorchSystem
+                          ItemSystem, EventSystem, ExpeditionSystem, TorchSystem, AudioSystem
   rendering/            ← MapRenderer (PixiJS drawing of grid, buildings, expedition entrances,
                           torches, fog-of-war via Canvas 2D offscreen texture)
   ui/                   ← HUD.js, PopupManager.js, panels/ (one render function per popup type)
@@ -71,6 +72,8 @@ docs/                   ← Design documents (read before modifying game logic)
 planner-config.html     ← Config editor HTML shell (CSS + layout)
 planner/                ← Config editor JS (8 files: core/render/map-draw/map-edit/forms/actions/analysis/main)
 artist-config.html      ← Art config editor (standalone single-file)
+sound-config.html       ← Sound config editor HTML shell
+sound-editor/           ← Sound config editor JS (4 files: core/render/actions/main)
 ```
 
 ## Key Constraints
@@ -107,12 +110,16 @@ Certain popups **block the game loop** (pause) while open: `event`, `expedition_
 | New building type | `config/buildings.json` only |
 | New resource type | `config/resources.json` only |
 | New torch type | `config/buildings.json` — add `isTorch: true` + torch fields |
+| New sound effect | `config/sound.json` — add SFX entry + event binding |
+| New BGM event binding | `config/sound.json` — add entry in `bgmBindings[]` or use sound-config editor |
+| Change audio volumes | Settings panel (persisted) or `config/sound.json` (defaults) |
 | New event | `config/events/` — follow existing schema |
 | New popup/panel | `src/ui/panels/xxx-panel.js` + register in `PopupManager._registerBuiltinPanels()` |
 | New event effect handler | `EventSystem._registerBuiltinEffects()` via `registerEffect()` |
 | New map element rendering | `MapRenderer` — add draw method + click detection in `_onClick` |
 | Modify resource caps | `ResourceSystem.getMaxResourceCapacity()` — cap = config max × warehouse multiplier |
 | Modify torch behavior | `TorchSystem` — fuel consumption in `onPeriodEnd()`, upgrade in `onTick()`, visibility in `getVisibilityMatrix()` |
+| Modify BGM switching | `AudioSystem._bindGameEvents()` — reads `bgmBindings[]` from `sound.json`, supports `periods` filter |
 | Modify fog rendering | `MapRenderer._updateFogTexture()` — Canvas 2D radialGradient + destination-out |
 | Modify map editor | `planner/planner-config-map-edit.js` (interaction/tools/undo) + `planner/planner-config-map-draw.js` (Canvas rendering) + `planner/planner-config-forms.js` (form binding) — Canvas 2D brush editor: `drawMapCanvas()` layers, `setTile()`, `handleBuildingClick()`, `setMapEditorMode()` |
 
@@ -131,7 +138,7 @@ Each design doc covers one subsystem in depth. Read the relevant doc before modi
 | `save-system-design.md` | **Save system.** Single-slot IndexedDB save, auto-save on `periodEnd` + emergency `beforeunload` localStorage backup, complete save data schema (time/resources/items/buildings/expedition/events), versioned migration path, load vs new-game initialization flow. |
 | `progress-bar-system-design.md` | **Progress bar system.** Single rAF-driven `ProgressManager` singleton that smooth-interpolates discrete tick progress using `timeProgress` (0→1). Two modes: DOM (width-based) and callback (for PIXI Graphics). Covers HUD tick bar, build progress, synthesis progress, expedition progress. |
 | `label-layout-config.md` | **Building label layout.** Per-building `labelLayout` config in `buildings.json` (`nameOffsetY`/`progressBarOffsetY`/`workersOffsetY`) to fine-tune name/progress/worker text positions on the map. Default layout described for 1×1 buildings. |
-| `config-editors-design.md` | **Config editors (planner & artist).** Planner: HTML shell + 8 JS files in `planner/` with File System Access API auto-save, 7 tabs covering buildings/resources/items/events/expeditions/map/analysis. Map tab: Canvas 2D brush editor with terrain painting, interactive building placement (footprint preview), entrance drag-to-edit, zoom/pan with viewport culling. Artist: standalone single-file editor with color palette, label layout preview, asset reference scanning. |
+| `config-editors-design.md` | **Config editors (planner, artist & sound).** Planner: HTML shell + 8 JS files in `planner/` with File System Access API auto-save, 7 tabs covering buildings/resources/items/events/expeditions/map/analysis. Map tab: Canvas 2D brush editor with terrain painting, interactive building placement (footprint preview), entrance drag-to-edit, zoom/pan with viewport culling. Artist: standalone single-file editor with color palette, label layout preview, asset reference scanning. Sound: HTML shell + 4 JS files, 5 tabs (BGM/SFX/SFX bindings/BGM bindings/settings), audio preview, File System Access API auto-save. |
 
 ## Reference: AGENT.md
 

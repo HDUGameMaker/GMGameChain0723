@@ -14,6 +14,7 @@ import { ItemSystem } from './systems/ItemSystem.js';
 import { EventSystem } from './systems/EventSystem.js';
 import { ExpeditionSystem } from './systems/ExpeditionSystem.js';
 import { TorchSystem } from './systems/TorchSystem.js';
+import { AudioSystem } from './systems/AudioSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
@@ -50,6 +51,9 @@ class Game {
     // 火把系统
     this.systems.torch = new TorchSystem();
 
+    // 音效系统
+    this.systems.audio = new AudioSystem();
+
     // 连接系统间交叉引用
     this.systems.building.setResourceSystem(this.systems.resource);
     this.systems.building.setPopulationSystem(this.systems.population);
@@ -59,6 +63,7 @@ class Game {
     this.systems.torch.setResourceSystem(this.systems.resource);
     this.systems.torch.setBuildingSystem(this.systems.building);
     this.systems.torch.init();
+    this.systems.audio.init();
     this.systems.population.setBuildingSystem(this.systems.building);
     this.systems.event.setSystems({
       resource: this.systems.resource,
@@ -217,6 +222,9 @@ class Game {
     if (saveData.torches) {
       this.systems.torch.restoreState(saveData.torches);
     }
+    if (saveData.audio) {
+      this.systems.audio.restoreState(saveData.audio);
+    }
     // 恢复相机位置（后续 MapRenderer 初始化后应用）
     this._savedCamera = saveData.camera || null;
   }
@@ -250,6 +258,7 @@ class Game {
       expedition: this.systems.expedition.getCurrentExpedition(),
       events: this.systems.event.getSaveState(),
       torches: this.systems.torch.getAllStates(),
+      audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null
     };
     await SaveManager.save(state);
@@ -271,6 +280,7 @@ class Game {
       expedition: this.systems.expedition.getCurrentExpedition(),
       events: this.systems.event.getSaveState(),
       torches: this.systems.torch.getAllStates(),
+      audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null
     };
     try {

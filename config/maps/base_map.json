@@ -1,11 +1,11 @@
 {
-  "viewportCols": 37,
-  "viewportRows": 36,
+  "viewportCols": 49,
+  "viewportRows": 34,
   "gridWidth": 100,
   "gridHeight": 100,
   "tileSize": 60,
   "initialCamera": {
-    "gridX": 30,
+    "gridX": 25,
     "gridY": 20,
     "zoom": 1
   },
@@ -152,18 +152,18 @@
   "initialBuildings": [
     {
       "buildingId": "eternal_torch",
-      "gridX": 27,
-      "gridY": 22
+      "gridX": 24,
+      "gridY": 17
     },
     {
       "buildingId": "eternal_torch",
-      "gridX": 31,
-      "gridY": 28
+      "gridX": 27,
+      "gridY": 24
     },
     {
       "buildingId": "plank_house",
-      "gridX": 30,
-      "gridY": 24
+      "gridX": 25,
+      "gridY": 20
     }
   ]
 }

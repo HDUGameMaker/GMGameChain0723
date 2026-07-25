@@ -42,13 +42,17 @@ Layer 4: Data              → src/core/（EventBus, ConfigRegistry, Store, Save
 |--------|---------|------|
 | `tick` | 每 40s 结算一次 | `{tick, period, day, isWorkPeriod}` |
 | `periodChange` | 时段切换 | `{period, prevPeriod, day, icon, label}` |
-| `periodEnd` | 时段结束 | `{period, day}` |
+| `periodEnd` | 时段结束（自动存档触发点） | `{period, day}` |
 | `dayStart` | 新一天开始 | `{day}` |
 | `resourceChanged` | 资源数量变化 | `{id}` |
-| `populationChanged` | 人口变化 | `{current, direction}` |
-| `buildingPlaced` | 建筑放置 | `{building}` |
-| `buildingComplete` | 建造完成 | `{building}` |
+| `populationChanged` | 人口数量变化 | `{current, direction}` |
+| `buildingPlaced` | 建筑放置完成 | `{building}` |
+| `buildingComplete` | 建筑建造完成 | `{building}` |
+| `buildingUpgraded` | 建筑升级完成 | `{building}` |
 | `buildingClicked` | 点击建筑 | `{buildingIndex}` |
+| `buildingMoved` | 建筑被移动 | `{buildingIndex, fromX, fromY, toX, toY}` |
+| `buildingDemolished` | 建筑被拆除 | `{building}` |
+| `workerChanged` | 工人分配变更 | `{buildingIndex, currentWorkers}` |
 | `torchClicked` | 点击火把 | `{torchIndex}` |
 | `torchStateChanged` | 火把状态变化（点燃/熄灭/升级/燃料） | `{}` |
 | `torchLit` | 火把点燃 | `{torchIndex, torch}` |
@@ -56,12 +60,18 @@ Layer 4: Data              → src/core/（EventBus, ConfigRegistry, Store, Save
 | `torchUpgraded` | 火把升级完成 | `{torchIndex, torch}` |
 | `torchUpgradeStarted` | 火把开始升级 | `{torchIndex, torch}` |
 | `torchFuelAdded` | 火把添加燃料 | `{torchIndex, torch}` |
-| `expeditionEntranceClicked` | 点击探险口 | `{}` |
+| `expeditionEntranceClicked` | 点击探险入口 | `{}` |
 | `expeditionStarted` | 探险出发 | `{expedition}` |
 | `expeditionComplete` | 探险归来 | `ExpeditionResult` |
-| `itemsChanged` | 物品变化 | 无 |
+| `itemObtained` | 获得物品 | `{itemId, instanceId}` |
+| `itemLost` | 失去物品 | `{itemId, instanceId}` |
+| `itemsChanged` | 物品列表变化 | 无 |
+| `synthesisStarted` | 合成开始 | `{buildingIndex, recipeId}` |
 | `synthesisComplete` | 合成完成 | `{itemId, count}` |
 | `gamePaused` / `gameResumed` | 游戏暂停/恢复 | 无 |
+| `pageVisibilityChange` | 页面可见性变化（切换标签页） | `{hidden: boolean}` |
+| `popupClosed` | 弹窗关闭 | `{type}` |
+| `audioSettingsChanged` | 音频设置变更 | `{ musicVolume, sfxVolume, muted }` |
 
 ### Store 状态键
 
@@ -80,6 +90,7 @@ Layer 4: Data              → src/core/（EventBus, ConfigRegistry, Store, Save
 | `placingBuildingId` | string | 正在放置的建筑ID |
 | `expeditionState` | object/null | 当前探险状态 |
 | `torchVersion` | number | 火把状态变化时间戳（触发迷雾重绘） |
+| `audioVersion` | number | 音频设置变化时间戳 |
 
 ## 系统 API 速查
 
@@ -134,6 +145,31 @@ restoreState(states) → void                        // 从存档恢复
 - `fuel: Infinity` 在序列化时存为 `-1`（JSON 不可序列化 Infinity）
 - eternal 火把始终保持 lit=true 且不消耗燃料
 - 点击门控：`_isTileRevealed()` 在 `MapRenderer` 中检查，内部调用 `_visibleGrid[row][col]`
+
+### AudioSystem
+```js
+init() → void                                // 加载配置、创建 AudioContext、预解码 SFX
+playBGM(id) → void                           // 播放/切换 BGM（带淡入淡出 crossfade）
+stopBGM() → void                             // 停止 BGM（淡出）
+playSFX(id) → void                           // 播放一次性音效（支持重叠，buffer pool 上限 8）
+setMasterVolume(v: 0-1) → void               // 设置主音量
+setBGMVolume(v: 0-1) → void                  // 设置背景音乐音量
+setSFXVolume(v: 0-1) → void                  // 设置音效音量
+getMasterVolume() → number
+getBGMVolume() → number
+getSFXVolume() → number
+toggleMute() → void                          // 切换静音
+isMuted() → boolean
+getAllStates() → { musicVolume, sfxVolume, muted }
+restoreState(state) → void                   // 从存档恢复
+```
+- BGM 使用 `HTMLAudioElement`（流式播放，支持循环）
+- SFX 使用 `AudioContext` + buffer pool（低延迟、可重叠）
+- 事件→音效绑定基于 `config/sound.json` 的 `eventBindings` 数组（SFX）
+- 事件→BGM 切换基于 `config/sound.json` 的 `bgmBindings` 数组，支持 `periods` 时段过滤
+- 游戏暂停/恢复时自动暂停/恢复音频
+- tab 隐藏时自动静音 BGM
+- 首次用户交互（click/keydown/touchstart）自动解锁 AudioContext 并启动 BGM
 
 ### ItemSystem
 ```js
@@ -224,7 +260,8 @@ WORK_PERIODS = [morning, afternoon]（仅此时段建筑生产）
   "buildings": [{ "buildingId", "gridX", "gridY", "status", "currentWorkers", "buildProgress" }],
   "expedition": null | ExpeditionState,
   "events": { "triggerCounts": {}, "cooldowns": {} },
-  "torches": [{ "torchId", "gridX", "gridY", "lit", "fuel", "upgrading", "upgradeProgress" }]
+  "torches": [{ "torchId", "gridX", "gridY", "lit", "fuel", "upgrading", "upgradeProgress" }],
+  "audio": { "musicVolume": 0.7, "sfxVolume": 0.8, "muted": false }
 }
 ```
 
@@ -240,6 +277,8 @@ WORK_PERIODS = [morning, afternoon]（仅此时段建筑生产）
 8. **修改迷雾视觉效果**：在 `MapRenderer._updateFogTexture()` 中，迷雾使用 Canvas 2D 离屏渲染 —— `fillRect` 全黑 → `destination-out` + `createRadialGradient` 清除火把区域 → `_fogTexture.update()` 上传 GPU。不要用 PixiJS mask/stencil 方案（v8 兼容性差）
 9. **迷雾门控**：所有交互入口需调用 `_isTileRevealed(col, row)` 检查，BuildingSystem 通过 `canBuild()` 检查建造合法性。`_visibleGrid` 在 `_updateFogTexture()` 中同步更新
 10. **火把存档**：`fuel` 字段中 `Infinity`（永恒火把）序列化时存为 `-1`，读档时还原。旧存档无 `torches` 字段则调用 `initFromConfig()` 重新初始化
+11. **音频系统初始化**：AudioSystem 构造时注册暂停/恢复/可见性事件，init() 中加载 sound.json 配置并预解码 SFX buffer。BGM 用 HTMLAudioElement（流式循环），SFX 用 AudioContext + buffer pool（低延迟重叠）。音量默认值 → 存档覆盖 → 用户滑块调整。
+12. **音频文件缺失**：SFX 加载失败时静默降级（不崩溃），BGM 播放被浏览器阻止时 catch 处理。AudioContext 首次需用户手势解锁，已通过 click/keydown/touchstart 自动 resume。
 
 ## 配置编辑器文件结构
 
@@ -258,6 +297,18 @@ WORK_PERIODS = [morning, afternoon]（仅此时段建筑生产）
 | `planner/planner-config-main.js` | DOM 事件监听 + 键盘快捷键 | 修改快捷键/事件 |
 
 **加载顺序严格**：core → render → map-draw → map-edit → forms → actions → analysis → main。所有函数为全局函数，与 `artist-config.html`（独立单文件）共享相同的 File System Access API 模式。
+
+`sound-config.html` 同样拆分为 1 个 HTML 壳 + `sound-editor/` 目录下的 4 个 JS 文件：
+
+| 文件 | 内容 | 何时读取 |
+|------|------|---------|
+| `sound-config.html` | HTML 骨架 + CSS + 4 个 script 标签 | 修改布局/样式 |
+| `sound-editor/sound-editor-core.js` | State、File System Access API、数据加载/保存、音频预览 | 修改数据流/存储 |
+| `sound-editor/sound-editor-render.js` | 4 个 Tab 的表单渲染（BGM/SFX/事件绑定/全局设置） | 增删表单字段 |
+| `sound-editor/sound-editor-actions.js` | CRUD 增删改 + Tab 切换 + 表单事件绑定 | 修改交互逻辑 |
+| `sound-editor/sound-editor-main.js` | DOM 事件监听 + 键盘快捷键 | 修改快捷键/事件 |
+
+**加载顺序严格**：core → render → actions → main。所有函数为全局函数。
 
 ## 设计文档位置
 

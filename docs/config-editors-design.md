@@ -6,6 +6,7 @@
 
 **策划编辑器**：HTML 壳 + 8 个独立 JS 文件（`planner-config-*.js`），按功能模块拆分以减少维护时 token 消耗。
 **美术编辑器**：独立单文件（`artist-config.html`）。
+**音效编辑器**：HTML 壳 + 4 个独立 JS 文件（`sound-editor-*.js`）。
 
 ## 核心设计原则
 
@@ -54,6 +55,12 @@
     planner-config-analysis.js   ← 数值分析面板 + SVG 图表
     planner-config-main.js       ← DOM 事件监听 + 键盘快捷键（最后加载）
   artist-config.html           ← 美术配置编辑器（独立单文件）
+  sound-config.html            ← 音效配置编辑器 HTML 壳（CSS + 布局）
+  sound-editor/
+    sound-editor-core.js        ← 基础设施：State、File System Access API、数据加载/保存、音频预览
+    sound-editor-render.js      ← 5 个 Tab 的表单渲染函数（BGM/SFX/SFX绑定/BGM绑定/全局设置）
+    sound-editor-actions.js     ← CRUD 增删改 + Tab 切换 + 表单事件绑定
+    sound-editor-main.js        ← DOM 事件监听 + 键盘快捷键（最后加载）
 ```
 
 ### 依赖与加载顺序
@@ -181,6 +188,44 @@ planner-config.html
 
 ---
 
+## 三、音效配置编辑器（sound-config.html + 4 JS 文件）
+
+### 目标用户
+音频设计师 / 开发者 — 负责游戏音频资源管理和事件绑定配置。
+
+### Tab 模块
+
+| Tab | 数据源 | 编辑内容 | 关键控件 |
+|-----|--------|---------|---------|
+| **背景音乐** | `config/sound.json` → `bgm[]` | BGM 列表增删改：ID、名称、文件路径、音量、循环开关 | 文本框、range 滑块、checkbox、▶ 预览按钮 + ⏹ 停止 |
+| **音效** | `config/sound.json` → `sfx[]` | SFX 列表增删改：ID、名称、文件路径、音量 | 文本框、range 滑块、▶ 预览按钮 + ⏹ 停止 |
+| **SFX 事件绑定** | `config/sound.json` → `eventBindings[]` | 所有游戏事件（33 个）→ 下拉选择音效（或置空） | `<select>` 下拉框（自动填充所有 SFX ID + "(无)"选项），三列布局：事件名 \| 说明 \| 音效 |
+| **BGM 事件绑定** | `config/sound.json` → `bgmBindings[]` | BGM 切换规则增删改：游戏事件 → BGM + 时段过滤 | 事件下拉（33 个事件+中文说明）、BGM 下拉、时段多选（Ctrl+Click） |
+| **全局设置** | `config/sound.json` 根字段 | 主音量/BGM 音量/SFX 音量（新游戏默认值） | range 滑块（0~100%） |
+
+### 音效编辑器特色交互
+
+- **音频预览**：每个 BGM/SFX 旁有 ▶ 播放按钮，使用临时 `HTMLAudioElement` 试听。切换 tab 或点击 ⏹ 停止
+- **文件缺失检测**：自动 fetch HEAD 检查音频文件路径是否存在，缺失项显示 ⚠ 标记
+- **SFX 事件下拉绑定**：所有已知游戏事件（33 个）预填充，只需从下拉框选择对应音效（或留空 = 不播放）。三列布局：事件名 | 中文说明 | 绑定音效
+- **BGM 事件绑定**：配置"游戏事件触发 → 自动切换 BGM"规则。支持 `periods` 时段过滤器（如 periodChange + morning/afternoon → bgm_main，evening/night → bgm_night）。时段多选按住 Ctrl
+- **全局设置 vs 存档**：`sound.json` 中的音量为新游戏默认值；运行中通过设置面板调整的音量会存入存档并覆盖默认值
+
+### 文件结构
+
+```
+sound-config.html                 ← HTML 壳 + CSS（琥珀色主题）
+sound-editor/
+  sound-editor-core.js              ← 基础设施：State、File System Access API、数据加载/保存、音频预览
+  sound-editor-render.js            ← 5 个 Tab 的表单渲染函数（BGM/SFX/SFX绑定/BGM绑定/全局设置）
+  sound-editor-actions.js           ← CRUD 增删改 + Tab 切换 + 表单事件绑定
+  sound-editor-main.js              ← DOM 事件监听 + 键盘快捷键（Ctrl+S/N/D/Delete）
+```
+
+**加载顺序**：core → render → actions → main。函数为全局函数（`<script src>` 而非 ES modules）。
+
+---
+
 ## 通用功能
 
 ### 工具栏
@@ -253,8 +298,9 @@ planner-config.html
 ## 与现有 Skill 的对应关系
 
 ```
-dashboard 布局  → 左侧 Tab 导航 + 顶栏 + 底栏（两个界面的骨架）
-原型交互       → 标签布局的滑块拖拽 + 实时预览
+dashboard 布局  → 左侧 Tab 导航 + 顶栏 + 底栏（三个界面的骨架：策划/美术/音效）
+原型交互       → 标签布局的滑块拖拽 + 实时预览（美术编辑器）
+               → 音频实时预览（音效编辑器）
 文档页        → （不直接使用，仅作为字段说明参考）
 数据报告      → （不直接使用，纯编辑不需要图表）
 ```
