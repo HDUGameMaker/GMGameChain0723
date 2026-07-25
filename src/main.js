@@ -95,6 +95,14 @@ class Game {
     // 6. 初始化渲染器
     this.mapRenderer = new MapRenderer(this.app, this.systems.building);
 
+    // 6.1 从 localStorage 恢复 3D 透视偏好
+    try {
+      const saved = localStorage.getItem('gmgc_perspective_3d');
+      if (saved === '0') {
+        this.mapRenderer.setPerspective(false);
+      }
+    } catch (e) { /* ignore */ }
+
     // 7. 初始化 HUD
     this.hud = new HUD(this.systems, this.popupManager);
 

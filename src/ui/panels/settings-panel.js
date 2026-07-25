@@ -8,6 +8,52 @@ export function renderSettingsPanel(data, body, pm) {
   const container = document.createElement('div');
   container.style.cssText = 'display:flex;flex-direction:column;gap:12px;';
 
+  // ===== 画面设置 =====
+  const displaySection = document.createElement('div');
+  displaySection.style.cssText = 'padding:14px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.05);';
+
+  const displayTitle = document.createElement('div');
+  displayTitle.style.cssText = 'font-size:14px;font-weight:600;color:#ececf0;margin-bottom:10px;letter-spacing:0.01em;';
+  displayTitle.textContent = '🎨 画面设置';
+
+  const toggleRow = document.createElement('div');
+  toggleRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;';
+
+  const toggleLabel = document.createElement('span');
+  toggleLabel.style.cssText = 'font-size:13px;color:#a0a0ba;';
+  toggleLabel.textContent = '3D 透视效果';
+
+  const toggleBtn = document.createElement('button');
+  const is3D = window.__game && window.__game.mapRenderer
+    ? window.__game.mapRenderer.isPerspectiveEnabled()
+    : document.getElementById('game-canvas').classList.contains('perspective-3d');
+
+  const updateToggle = (enabled) => {
+    toggleBtn.textContent = enabled ? '已开启' : '已关闭';
+    toggleBtn.style.cssText = `
+      padding:6px 16px;border-radius:20px;border:1px solid ${enabled ? 'rgba(78,203,113,0.3)' : 'rgba(255,255,255,0.1)'};
+      background:${enabled ? 'rgba(78,203,113,0.15)' : 'rgba(255,255,255,0.06)'};
+      color:${enabled ? '#4ecb71' : '#888'};font-size:13px;font-weight:500;cursor:pointer;
+      font-family:inherit;transition:all 0.3s;min-width:72px;
+    `;
+  };
+  updateToggle(is3D);
+
+  toggleBtn.addEventListener('click', () => {
+    const game = window.__game;
+    if (game && game.mapRenderer) {
+      const current = game.mapRenderer.isPerspectiveEnabled();
+      game.mapRenderer.setPerspective(!current);
+      updateToggle(!current);
+    }
+  });
+
+  toggleRow.appendChild(toggleLabel);
+  toggleRow.appendChild(toggleBtn);
+  displaySection.appendChild(displayTitle);
+  displaySection.appendChild(toggleRow);
+  container.appendChild(displaySection);
+
   // ===== 存档信息 =====
   const saveSection = document.createElement('div');
   saveSection.style.cssText = 'padding:14px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.05);';

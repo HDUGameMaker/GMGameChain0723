@@ -75,6 +75,15 @@
       width: 100vw;
       height: 100vh;
       touch-action: none;
+      /* 2D / 3D 切换过渡动画 */
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* 3D 透视：模拟俯视角桌游效果 */
+    #game-canvas.perspective-3d {
+      transform: perspective(1200px) rotateX(50deg);
+      transform-origin: 50% 50%;
+      will-change: transform;
     }
 
     #game-canvas canvas {

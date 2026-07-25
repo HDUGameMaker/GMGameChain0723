@@ -58,6 +58,11 @@ export class MapRenderer {
     // 色调过渡动画状态
     this._tintTransition = null;       // { startMatrix, targetMatrix, elapsed, duration, ticker }
 
+    // CSS 3D 透视参数（需与 index.html 中 #game-canvas 的 transform 保持一致）
+    this._perspectivePx = 1200;        // perspective 距离
+    this._perspectiveAngleDeg = 50;    // rotateX 角度
+    this._perspectiveEnabled = false;  // 当前是否开启 3D 透视（默认关闭）
+
     // 注册地图建造进度回调（统一由 ProgressManager 驱动，tick 间平滑）
     this._unregisterMapBars = progressManager.registerCallback(
       () => 0,
@@ -341,9 +346,49 @@ export class MapRenderer {
            row < entrance.gridY + entrance.height;
   }
 
+  /**
+   * 屏幕坐标 → 网格坐标（含 CSS 3D 透视逆映射）
+   *
+   * CSS transform: perspective(P) rotateX(θ) 会让 canvas 产生非线性透视变形。
+   * 此方法将屏幕像素逆映射回 canvas 本地坐标（PIXI 坐标系），再转换为网格坐标。
+   *
+   * 逆映射公式（推导：canvas 中心为原点，rotateX 绕 X 轴，透视距离 P）：
+   *   cy = sy * P / (P * cosθ + sy * sinθ)     ← 先求 Y（只依赖 sy）
+   *   cx = sx * (P - cy * sinθ) / P             ← 再求 X（依赖 cy 修正深度缩放）
+   * 其中 (sx, sy) = 屏幕坐标相对于 canvas CSS 中心的偏移量。
+   */
   _clientToGrid(clientX, clientY) {
-    const worldX = clientX - this.offsetX;
-    const worldY = clientY - this.offsetY;
+    const canvas = this.app.canvas;
+    const canvasCSSW = parseFloat(canvas.style.width) || window.innerWidth;
+    const canvasCSSH = parseFloat(canvas.style.height) || window.innerHeight;
+
+    let worldX, worldY;
+
+    if (this._perspectiveEnabled) {
+      // 3D 透视模式：屏幕坐标先逆映射到 canvas 本地坐标
+      const sx = clientX - canvasCSSW / 2;
+      const sy = clientY - canvasCSSH / 2;
+
+      const angleRad = this._perspectiveAngleDeg * Math.PI / 180;
+      const P = this._perspectivePx;
+      const cosA = Math.cos(angleRad);
+      const sinA = Math.sin(angleRad);
+
+      const denom = P * cosA + sy * sinA;
+      const cy = Math.abs(denom) > 0.001 ? sy * P / denom : sy;
+      const cx = sx * (P - cy * sinA) / P;
+
+      const pixiX = cx + canvasCSSW / 2;
+      const pixiY = cy + canvasCSSH / 2;
+
+      worldX = pixiX - this.offsetX;
+      worldY = pixiY - this.offsetY;
+    } else {
+      // 2D 平面模式：屏幕像素直接映射
+      worldX = clientX - this.offsetX;
+      worldY = clientY - this.offsetY;
+    }
+
     const { col, row } = screenToGrid(worldX, worldY, this.tileSize);
     const { gridWidth, gridHeight } = this.mapConfig;
     if (col < 0 || col >= gridWidth || row < 0 || row >= gridHeight) return null;
@@ -1008,6 +1053,29 @@ export class MapRenderer {
 
     // tick 时刷新建筑（建造进度）
     eventBus.on('tick', () => this.refreshBuildings());
+  }
+
+  /**
+   * 切换 3D 透视模式
+   * @param {boolean} enabled
+   */
+  setPerspective(enabled) {
+    this._perspectiveEnabled = enabled;
+    const canvasDiv = document.getElementById('game-canvas');
+    if (canvasDiv) {
+      if (enabled) {
+        canvasDiv.classList.add('perspective-3d');
+      } else {
+        canvasDiv.classList.remove('perspective-3d');
+      }
+    }
+    // 持久化偏好
+    try { localStorage.setItem('gmgc_perspective_3d', enabled ? '1' : '0'); } catch (e) { /* ignore */ }
+  }
+
+  /** 获取当前透视模式状态 */
+  isPerspectiveEnabled() {
+    return this._perspectiveEnabled;
   }
 
   onResize() {
