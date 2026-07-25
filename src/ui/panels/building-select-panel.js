@@ -18,6 +18,7 @@ export function renderBuildingSelectPanel(data, body, pm) {
   // 过滤可建造的建筑（排除 upgradesFrom、maxCount 已满、未解锁的）
   const buildable = buildings.filter(b => {
     if (b.upgradesFrom) return false; // 升级目标不直接建造
+    if (!b.buildCost || b.buildCost.length === 0) return false; // 无建造成本 = 地图专用
     if (b.maxCount !== null && b.maxCount !== undefined) {
       if (buildingSystem.getBuildingCount(b.id) >= b.maxCount) return false;
     }
@@ -100,6 +101,7 @@ export function renderBuildingSelectPanel(data, body, pm) {
       }).join('  ');
 
     const tags = [];
+    if (b.isTorch) tags.push('🔥 照明');
     if (b.maxWorkers) tags.push(`👷 ${b.maxWorkers}`);
     if (b.housingCapacity) tags.push(`🏠 +${b.housingCapacity}`);
     if (b.foodCapacity) tags.push(`🍞 +${b.foodCapacity}`);

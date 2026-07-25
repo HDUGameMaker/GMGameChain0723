@@ -58,7 +58,10 @@
     "housingCapacity": 5,
     "upgradesFrom": "work_shed",
     "unlockConditions": [
-      { "type": "building", "buildingId": "lumber_mill" }
+      {
+        "type": "building",
+        "buildingId": "lumber_mill"
+      }
     ],
     "upgradeCost": [
       {
@@ -99,7 +102,10 @@
     "maxCount": null,
     "initialBuilding": false,
     "unlockConditions": [
-      { "type": "building", "buildingId": "furnace" }
+      {
+        "type": "building",
+        "buildingId": "furnace"
+      }
     ],
     "housingCapacity": 12,
     "buildCost": [
@@ -169,7 +175,10 @@
       "G"
     ],
     "unlockConditions": [
-      { "type": "building", "buildingId": "hunting_hut" }
+      {
+        "type": "building",
+        "buildingId": "hunting_hut"
+      }
     ],
     "foodCapacity": 7,
     "maxWorkers": 5,
@@ -234,7 +243,10 @@
     "initialBuilding": false,
     "storageMultiplier": 2,
     "unlockConditions": [
-      { "type": "building", "buildingId": "furnace" }
+      {
+        "type": "building",
+        "buildingId": "furnace"
+      }
     ],
     "upgradesFrom": "warehouse",
     "upgradeCost": [
@@ -279,15 +291,18 @@
       "pingpong": true
     },
     "mapIconLayout": {
-      "scaleX": 1.0,
-      "scaleY": 1.0,
+      "scaleX": 1,
+      "scaleY": 1,
       "offsetX": 0,
       "offsetY": 0
     },
     "maxCount": null,
     "initialBuilding": false,
     "unlockConditions": [
-      { "type": "building", "buildingId": "logging_camp" }
+      {
+        "type": "building",
+        "buildingId": "logging_camp"
+      }
     ],
     "maxWorkers": 2,
     "buildCost": [
@@ -424,7 +439,10 @@
       }
     ],
     "unlockConditions": [
-      { "type": "building", "buildingId": "quarry" }
+      {
+        "type": "building",
+        "buildingId": "quarry"
+      }
     ],
     "buildTime": 3,
     "upgradesTo": null,
@@ -465,7 +483,10 @@
     "maxCount": 1,
     "initialBuilding": false,
     "unlockConditions": [
-      { "type": "building", "buildingId": "lumber_mill" }
+      {
+        "type": "building",
+        "buildingId": "lumber_mill"
+      }
     ],
     "maxWorkers": 0,
     "buildCost": [
@@ -495,7 +516,10 @@
     "maxCount": 1,
     "initialBuilding": false,
     "unlockConditions": [
-      { "type": "building", "buildingId": "lumber_mill" }
+      {
+        "type": "building",
+        "buildingId": "lumber_mill"
+      }
     ],
     "buildCost": [
       {
@@ -568,7 +592,10 @@
     "initialBuilding": false,
     "upgradesFrom": "basic_workshop",
     "unlockConditions": [
-      { "type": "building", "buildingId": "furnace" }
+      {
+        "type": "building",
+        "buildingId": "furnace"
+      }
     ],
     "upgradeCost": [
       {
@@ -620,7 +647,10 @@
     "initialBuilding": false,
     "maxWorkers": 2,
     "unlockConditions": [
-      { "type": "building", "buildingId": "furnace" }
+      {
+        "type": "building",
+        "buildingId": "furnace"
+      }
     ],
     "buildCost": [
       {
@@ -676,7 +706,10 @@
     "initialBuilding": false,
     "maxWorkers": 1,
     "unlockConditions": [
-      { "type": "building", "buildingId": "furnace" }
+      {
+        "type": "building",
+        "buildingId": "furnace"
+      }
     ],
     "buildCost": [
       {
@@ -728,7 +761,10 @@
     "initialBuilding": false,
     "maxWorkers": 2,
     "unlockConditions": [
-      { "type": "building", "buildingId": "steel_furnace" }
+      {
+        "type": "building",
+        "buildingId": "steel_furnace"
+      }
     ],
     "buildCost": [
       {
@@ -779,7 +815,10 @@
     "maxCount": null,
     "initialBuilding": false,
     "unlockConditions": [
-      { "type": "building", "buildingId": "brick_kiln" }
+      {
+        "type": "building",
+        "buildingId": "brick_kiln"
+      }
     ],
     "housingCapacity": 20,
     "buildCost": [
@@ -818,7 +857,10 @@
     "initialBuilding": false,
     "storageMultiplier": 3,
     "unlockConditions": [
-      { "type": "building", "buildingId": "machine_shop" }
+      {
+        "type": "building",
+        "buildingId": "machine_shop"
+      }
     ],
     "upgradesFrom": "industrial_warehouse",
     "upgradeCost": [
@@ -870,7 +912,10 @@
       }
     ],
     "unlockConditions": [
-      { "type": "building", "buildingId": "brick_kiln" }
+      {
+        "type": "building",
+        "buildingId": "brick_kiln"
+      }
     ],
     "buildTime": 4,
     "upgradesTo": null,
@@ -894,7 +939,10 @@
     "initialBuilding": false,
     "upgradesFrom": "advanced_workshop",
     "unlockConditions": [
-      { "type": "building", "buildingId": "machine_shop" }
+      {
+        "type": "building",
+        "buildingId": "machine_shop"
+      }
     ],
     "upgradeCost": [
       {
@@ -1046,5 +1094,238 @@
       "progressBarOffsetY": 0,
       "workersOffsetY": 0
     }
+  },
+  {
+    "id": "eternal_torch",
+    "name": "永恒火把",
+    "description": "永不熄灭的远古火焰，无需燃料即可照亮周围区域。",
+    "icon": "🔥",
+    "mapIcon": "",
+    "imageDetail": "",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "housingCapacity": 0,
+    "maxWorkers": 0,
+    "buildCost": [],
+    "buildTime": 0,
+    "upgradesTo": null,
+    "upgradeCost": [],
+    "unlockConditions": [],
+    "production": null,
+    "synthesisRecipes": [],
+    "demolishable": false,
+    "allowedGrounds": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "mapIconLayout": {
+      "scaleX": 1,
+      "scaleY": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "detailLayout": {
+      "scale": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "isTorch": true,
+    "torchType": "eternal",
+    "radius": 5,
+    "coalPerPeriod": 0,
+    "coalBuffer": 0,
+    "colorHint": "#ffaa33",
+    "lightCost": [],
+    "draggable": false
+  },
+  {
+    "id": "normal_torch_l1",
+    "name": "火把",
+    "description": "基础火把，需要煤炭作为燃料维持燃烧，照亮周围 3 格范围。",
+    "icon": "",
+    "mapIcon": "",
+    "imageDetail": "",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "housingCapacity": 0,
+    "maxWorkers": 0,
+    "buildCost": [
+      {
+        "resourceId": "wood",
+        "amount": 5
+      }
+    ],
+    "buildTime": 1,
+    "upgradesTo": "normal_torch_l2",
+    "upgradeCost": [],
+    "unlockConditions": [],
+    "production": null,
+    "synthesisRecipes": [],
+    "demolishable": true,
+    "allowedGrounds": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "mapIconLayout": {
+      "scaleX": 1,
+      "scaleY": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "detailLayout": {
+      "scale": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "isTorch": true,
+    "torchType": "normal",
+    "radius": 4,
+    "coalPerPeriod": 2,
+    "coalBuffer": 10,
+    "colorHint": "#ff8800",
+    "lightCost": [
+      {
+        "resourceId": "coal",
+        "amount": 5
+      }
+    ],
+    "draggable": false,
+    "upgradesFrom": ""
+  },
+  {
+    "id": "normal_torch_l2",
+    "name": "强化火把",
+    "description": "强化过的火把，燃料效率更高。",
+    "icon": "🕯️",
+    "mapIcon": "",
+    "imageDetail": "",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "housingCapacity": 0,
+    "maxWorkers": 0,
+    "buildCost": [],
+    "buildTime": 1,
+    "upgradesFrom": "normal_torch_l1",
+    "upgradesTo": "normal_torch_l3",
+    "upgradeCost": [
+      {
+        "resourceId": "wood",
+        "amount": 10
+      }
+    ],
+    "unlockConditions": [],
+    "production": null,
+    "synthesisRecipes": [],
+    "demolishable": true,
+    "allowedGrounds": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "mapIconLayout": {
+      "scaleX": 1,
+      "scaleY": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "detailLayout": {
+      "scale": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "isTorch": true,
+    "torchType": "normal",
+    "radius": 4,
+    "coalPerPeriod": 1,
+    "coalBuffer": 15,
+    "colorHint": "#ffcc00",
+    "lightCost": [
+      {
+        "resourceId": "coal",
+        "amount": 5
+      }
+    ],
+    "draggable": false
+  },
+  {
+    "id": "normal_torch_l3",
+    "name": "超级火把",
+    "description": "最强火把，照亮范围大且燃料效率极高。",
+    "icon": "🕯️",
+    "mapIcon": "",
+    "imageDetail": "",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "housingCapacity": 0,
+    "maxWorkers": 0,
+    "upgradesFrom": "normal_torch_l2",
+    "buildCost": [],
+    "buildTime": 1,
+    "upgradesTo": null,
+    "upgradeCost": [
+      {
+        "resourceId": "plank",
+        "amount": 10
+      },
+      {
+        "resourceId": "iron_ore",
+        "amount": 5
+      }
+    ],
+    "unlockConditions": [],
+    "production": null,
+    "synthesisRecipes": [],
+    "demolishable": true,
+    "allowedGrounds": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "mapIconLayout": {
+      "scaleX": 1,
+      "scaleY": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "detailLayout": {
+      "scale": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "isTorch": true,
+    "torchType": "normal",
+    "radius": 7,
+    "coalPerPeriod": 1,
+    "coalBuffer": 20,
+    "colorHint": "#ff4444",
+    "lightCost": [
+      {
+        "resourceId": "coal",
+        "amount": 5
+      }
+    ],
+    "draggable": false
   }
 ]

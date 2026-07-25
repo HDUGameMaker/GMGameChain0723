@@ -39,7 +39,7 @@
     "id": "coal",
     "name": "煤炭",
     "icon": "resource_coal.png",
-    "initial": 0,
+    "initial": 100,
     "max": 1000,
     "rare": false,
     "showInHUD": true

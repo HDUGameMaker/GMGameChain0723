@@ -94,11 +94,20 @@ export class BuildingSystem {
       }
     }
 
-    // 重叠检查
+    // 重叠检查（已有建筑）
     for (const b of this.buildings) {
       const bConfig = configRegistry.getBuilding(b.buildingId);
       if (isAreaOverlap(gridX, gridY, w, h, b.gridX, b.gridY, bConfig.footprint.width, bConfig.footprint.height)) {
         return { valid: false, reason: '与已有建筑重叠' };
+      }
+    }
+
+    // 重叠检查（已有火把）
+    if (this._torchSystem) {
+      for (const t of this._torchSystem.torches) {
+        if (isAreaOverlap(gridX, gridY, w, h, t.gridX, t.gridY, 1, 1)) {
+          return { valid: false, reason: '与已有火把重叠' };
+        }
       }
     }
 
@@ -308,6 +317,9 @@ export class BuildingSystem {
     const config = configRegistry.getBuilding(building.buildingId);
     if (!config) return { valid: false, reason: '建筑不存在' };
 
+    // draggable 明确设为 false 的建筑不可拖动
+    if (config.draggable === false) return { valid: false, reason: '该建筑不可拖动' };
+
     const w = config.footprint.width;
     const h = config.footprint.height;
     const map = this._mapConfig;
@@ -355,6 +367,18 @@ export class BuildingSystem {
       const bConfig = configRegistry.getBuilding(b.buildingId);
       if (isAreaOverlap(newGridX, newGridY, w, h, b.gridX, b.gridY, bConfig.footprint.width, bConfig.footprint.height)) {
         return { valid: false, reason: '与已有建筑重叠' };
+      }
+    }
+
+    // 重叠检查（已有火把，排除自身的火把）
+    if (this._torchSystem) {
+      const bldg = this.buildings[buildingIndex];
+      for (const t of this._torchSystem.torches) {
+        // 排除自身（火把建筑移动到新位置时，旧位置的火把还在）
+        if (t.gridX === bldg.gridX && t.gridY === bldg.gridY && t.torchId === bldg.buildingId) continue;
+        if (isAreaOverlap(newGridX, newGridY, w, h, t.gridX, t.gridY, 1, 1)) {
+          return { valid: false, reason: '与已有火把重叠' };
+        }
       }
     }
 

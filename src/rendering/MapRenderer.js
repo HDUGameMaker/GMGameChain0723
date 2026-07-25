@@ -24,8 +24,8 @@ export class MapRenderer {
     this.ghostLayer = new PIXI.Container();
     this.fogContainer = new PIXI.Container();
     this.app.stage.addChild(this.mapContainer);
-    this.mapContainer.addChild(this.torchLayer);
     this.mapContainer.addChild(this.buildingLayer);
+    this.mapContainer.addChild(this.torchLayer);
     this.mapContainer.addChild(this.ghostLayer);
     this.mapContainer.addChild(this.fogContainer);
 
@@ -159,6 +159,15 @@ export class MapRenderer {
       const cfg = this._torchSystem.getTorchConfig(torch.torchId);
       if (!cfg) continue;
 
+      // 火把建筑处于 constructing 状态时，由 building layer 渲染进度条，
+      // torch layer 不重复渲染（升级/建造完成后恢复火焰图标显示）
+      if (this.buildingSystem) {
+        const building = this.buildingSystem.buildings.find(
+          b => b.gridX === torch.gridX && b.gridY === torch.gridY
+        );
+        if (building && building.status === 'constructing') continue;
+      }
+
       const container = new PIXI.Container();
       const cx = (torch.gridX + 0.5) * ts;
       const cy = (torch.gridY + 0.5) * ts;
@@ -180,25 +189,6 @@ export class MapRenderer {
       icon.x = cx;
       icon.y = cy;
       container.addChild(icon);
-
-      // 升级进度条
-      if (torch.upgrading) {
-        const barW = ts * 0.7;
-        const barH = 4;
-        const barX = cx - barW / 2;
-        const barY = cy + ts * 0.35;
-        const pct = Math.min((torch.upgradeProgress || 0) / (cfg.upgradeTime || 1), 1);
-
-        const barBg = new PIXI.Graphics();
-        barBg.rect(barX, barY, barW, barH);
-        barBg.fill({ color: 0x000000, alpha: 0.5 });
-        container.addChild(barBg);
-
-        const barFill = new PIXI.Graphics();
-        barFill.rect(barX, barY, barW * pct, barH);
-        barFill.fill({ color: 0xf0a040, alpha: 0.9 });
-        container.addChild(barFill);
-      }
 
       // 存储索引
       container.__torchIndex = i;
@@ -276,8 +266,10 @@ export class MapRenderer {
     // 恢复默认混合模式
     ctx.globalCompositeOperation = 'source-over';
 
-    // 3. 上传到 PIXI 纹理
-    this._fogTexture.update();
+    // 3. 上传到 PIXI 纹理（v8: 直接更新 source 确保 Canvas 内容刷新到 GPU）
+    if (this._fogTexture.source) {
+      this._fogTexture.source.update();
+    }
 
     // 缓存可见性格子，供 _isTileRevealed 快速查询
     if (this._torchSystem) {
@@ -363,9 +355,10 @@ export class MapRenderer {
         const buildingIndex = this._getBuildingAt(gridPos.col, gridPos.row);
         if (buildingIndex >= 0) {
           const building = this.buildingSystem.buildings[buildingIndex];
-          if (building && building.status === 'active') {
+          const bldgConfig = configRegistry.getBuilding(building.buildingId);
+          if (building && building.status === 'active' && bldgConfig?.draggable !== false) {
             this._dragBuildingIndex = buildingIndex;
-            this._dragBuildingConfig = configRegistry.getBuilding(building.buildingId);
+            this._dragBuildingConfig = bldgConfig;
             this._dragStartGridX = building.gridX;
             this._dragStartGridY = building.gridY;
             this.isDragging = false;
@@ -688,6 +681,8 @@ export class MapRenderer {
     for (const building of this.buildingSystem.buildings) {
       const config = configRegistry.getBuilding(building.buildingId);
       if (!config) continue;
+      // 火把建筑由 _drawTorches() 在 torchLayer 渲染，但建造中的火把仍需在此渲染（显示进度条）
+      if (config.isTorch && building.status !== 'constructing') continue;
 
       const w = config.footprint.width;
       const h = config.footprint.height;

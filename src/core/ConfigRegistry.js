@@ -20,8 +20,7 @@ class ConfigRegistry {
       'regions': 'config/expeditions/regions.json',
       'expeditionGlobal': 'config/expeditions/expedition_global.json',
       'eventsBase': 'config/events/events_base.json',
-      'eventsExpedition': 'config/events/events_expedition.json',
-      'torches': 'config/torches.json'
+      'eventsExpedition': 'config/events/events_expedition.json'
     };
 
     const loadPromises = Object.entries(configFiles).map(async ([key, path]) => {
@@ -112,13 +111,13 @@ class ConfigRegistry {
   }
 
   /**
-   * 根据ID获取火把配置
+   * 根据ID获取火把配置（合并到 buildings.json，通过 isTorch 标记识别）
    * @param {string} id - 火把ID
    * @returns {object|null}
    */
   getTorch(id) {
-    const torches = this._configs['torches'] || [];
-    return torches.find(t => t.id === id) || null;
+    const buildings = this._configs['buildings'] || [];
+    return buildings.find(b => b.isTorch && b.id === id) || null;
   }
 
   /**

@@ -116,7 +116,7 @@ hasBuilding(buildingId) → boolean
 getAll() → [{id, torchId, gridX, gridY, lit, fuel, upgrading, upgradeProgress}]
 getLitTorches() → [{...}]                         // 返回所有已点燃的火把
 getTorchAt(col, row) → number                     // 返回指定格子的火把索引，-1 表示无
-getTorchConfig(torchId) → object | null            // 获取火把类型配置（来自 torches.json）
+getTorchConfig(torchId) → object | null            // 获取火把类型配置（来自 buildings.json，筛选 isTorch 条目）
 getVisibilityMatrix() → boolean[][]                // 返回 [row][col] 可见性矩阵
 canInteract(col, row) → boolean                   // 格子是否可交互/可见
 canBuild(gridX, gridY, w, h) → boolean             // 建筑区域是否全部可见
@@ -130,7 +130,7 @@ onPeriodEnd(data)                                  // PeriodEnd 处理：燃料�
 getAllStates() → [{torchId, gridX, gridY, lit, fuel(-1=Infinity), upgrading, upgradeProgress}]
 restoreState(states) → void                        // 从存档恢复
 ```
-- 火把类型 `torchId` 对应 `config/torches.json` 中的条目
+- 火把类型 `torchId` 对应 `config/buildings.json` 中 `isTorch: true` 的条目
 - `fuel: Infinity` 在序列化时存为 `-1`（JSON 不可序列化 Infinity）
 - eternal 火把始终保持 lit=true 且不消耗燃料
 - 点击门控：`_isTileRevealed()` 在 `MapRenderer` 中检查，内部调用 `_visibleGrid[row][col]`
@@ -236,7 +236,7 @@ WORK_PERIODS = [morning, afternoon]（仅此时段建筑生产）
 4. **添加地图元素**：在 `MapRenderer` 中添加绘制方法，在 `_onClick` 中添加点击检测
 5. **PixiJS v8 Graphics API**：`graphics.rect(x,y,w,h).fill({color, alpha})` 和 `.stroke({color, width, alpha})`，不能链式同时 fill+stroke，需画两次
 6. **PixiJS v8 Text API**：`new PIXI.Text({ text: '...', style: { fontSize, fill } })`
-7. **修改火把参数**：改 `config/torches.json`，`radius`（照亮半径/格）、`coalPerPeriod`（每时段煤炭消耗）、`coalBuffer`（点燃后初始燃料）、`lightCost`（点燃一次性消耗）、`upgradeCost`/`upgradeTime`（升级资源/时间）
+7. **修改火把参数**：改 `config/buildings.json` 中 `isTorch: true` 的条目，`radius`（照亮半径/格）、`coalPerPeriod`（每时段煤炭消耗）、`coalBuffer`（点燃后初始燃料）、`lightCost`（点燃一次性消耗）、`upgradeCost`/`upgradeTime`（升级资源/时间）
 8. **修改迷雾视觉效果**：在 `MapRenderer._updateFogTexture()` 中，迷雾使用 Canvas 2D 离屏渲染 —— `fillRect` 全黑 → `destination-out` + `createRadialGradient` 清除火把区域 → `_fogTexture.update()` 上传 GPU。不要用 PixiJS mask/stencil 方案（v8 兼容性差）
 9. **迷雾门控**：所有交互入口需调用 `_isTileRevealed(col, row)` 检查，BuildingSystem 通过 `canBuild()` 检查建造合法性。`_visibleGrid` 在 `_updateFogTexture()` 中同步更新
 10. **火把存档**：`fuel` 字段中 `Infinity`（永恒火把）序列化时存为 `-1`，读档时还原。旧存档无 `torches` 字段则调用 `initFromConfig()` 重新初始化
@@ -250,4 +250,4 @@ WORK_PERIODS = [morning, afternoon]（仅此时段建筑生产）
 - 探险系统 → `docs/expedition-system-design.md`
 - 弹窗系统 → `docs/popup-system-design.md`
 - 存档系统 → `docs/save-system-design.md`
-- 火把/迷雾系统 → `config/torches.json`（火把参数配置） + `src/systems/TorchSystem.js`（火把逻辑） + `src/rendering/MapRenderer.js`（迷雾渲染，搜索 `_createFogCanvas`/`_updateFogTexture`）
+- 火把/迷雾系统 → `config/buildings.json`（火把参数配置，`isTorch: true` 条目） + `src/systems/TorchSystem.js`（火把逻辑） + `src/rendering/MapRenderer.js`（迷雾渲染，搜索 `_createFogCanvas`/`_updateFogTexture`）

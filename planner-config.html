@@ -134,7 +134,6 @@ main { grid-column: 2; display: flex; flex-direction: column; overflow: hidden; 
     <a data-tab="events">📜 事件配置</a>
     <a data-tab="expeditions">🗺️ 探险配置</a>
     <a data-tab="map">🏔️ 地图配置</a>
-    <a data-tab="torches">🔥 火把配置</a>
     <div class="nav-label">数值工具</div>
     <a data-tab="analysis">📊 数值分析</a>
   </nav>
@@ -256,7 +255,6 @@ const CONFIG_FILES = {
   regions:     { path: 'regions.json',                dir: 'expeditions' },
   exp_global:  { path: 'expedition_global.json',      dir: 'expeditions' },
   base_map:    { path: 'base_map.json',               dir: 'maps' },
-  torches:     { path: 'torches.json',              dir: '' },
 };
 
 async function selectDir() {
@@ -344,12 +342,11 @@ const state = {
    ═══════════════════════════════════════════ */
 async function loadAllData() {
   try {
-    const [buildings, resources, items, eventsBase, eventsExp, regions, expGlobal, baseMap, torches] =
+    const [buildings, resources, items, eventsBase, eventsExp, regions, expGlobal, baseMap] =
       await Promise.all([
         readFile('buildings'), readFile('resources'), readFile('items'),
         readFile('events_base'), readFile('events_exp'),
         readFile('regions'), readFile('exp_global'), readFile('base_map'),
-        readFile('torches'),
       ]);
     state.data.buildings = JSON.parse(buildings);
     state.data.resources = JSON.parse(resources);
@@ -365,7 +362,6 @@ async function loadAllData() {
     state.data.regions = JSON.parse(regions);
     state.data.exp_global = JSON.parse(expGlobal);
     state.data.base_map = JSON.parse(baseMap);
-    state.data.torches = JSON.parse(torches);
     refreshList();
   } catch(e) {
     showToast('数据加载失败: ' + e.message, 'error');
@@ -391,7 +387,6 @@ function currentData() {
     case 'events':    return state.data.events;
     case 'expeditions': return state.data.regions;
     case 'map':       return [state.data.base_map]; // 单例包装为数组
-    case 'torches':   return state.data.torches;
     case 'analysis':  return []; // 只读分析，无编辑数据
     default: return [];
   }
@@ -402,7 +397,6 @@ function currentFileKeys() {
     case 'buildings': return ['buildings'];
     case 'resources': return ['resources'];
     case 'items':     return ['items'];
-    case 'torches':   return ['torches'];
     case 'events':    return ['events_base', 'events_exp'];
     case 'expeditions': return ['regions', 'exp_global'];
     case 'map':       return ['base_map'];
@@ -574,7 +568,6 @@ function renderDetail() {
     case 'events':    html = renderEventForm(item); break;
     case 'expeditions': html = renderRegionForm(item); break;
     case 'map':       html = renderMapForm(); break;
-    case 'torches':   html = renderTorchForm(item); break;
     case 'analysis':  html = renderAnalysisPanel(); break;
   }
   panel.innerHTML = html;
@@ -697,6 +690,7 @@ function renderBuildingForm(b) {
   html += '<div class="form-row">';
   html += field('initialBuilding', '初始建筑', b.initialBuilding, { type: 'checkbox' });
   html += field('demolishable', '可拆除', b.demolishable !== false, { type: 'checkbox' });
+  html += field('draggable', '可拖动', b.draggable !== false, { type: 'checkbox' });
   html += '</div>';
 
   // buildCost
@@ -750,59 +744,39 @@ function renderBuildingForm(b) {
   html += field('ll_workersOffsetY', '工人偏移Y', b.labelLayout?.workersOffsetY ?? 0, { type: 'number' });
   html += '</div>';
 
-  return html;
-}
+  // --- 火把配置 ---
+  html += '<div class="form-row">';
+  html += '<div class="form-group"><label><input type="checkbox" id="f_isTorch" data-field="isTorch" ' + (b.isTorch ? 'checked' : '') + ' /> 是火把（照明建筑）</label></div>';
+  html += '</div>';
 
-function renderTorchForm(t) {
-  let html = '<div class="form-row span-3">';
-  html += field('id', 'ID', t.id, { placeholder: 'eternal_torch' });
-  html += field('name', '名称', t.name, { placeholder: '永恒火把' });
-  html += field('type', '类型', t.type, {
+  // 火把特有字段（默认隐藏，isTorch 勾选后显示）
+  html += '<div id="torchFields" style="display:' + (b.isTorch ? 'block' : 'none') + ';">';
+
+  html += '<div class="section-title">🔥 火把属性</div>';
+  html += '<div class="form-row span-3">';
+  html += field('torchType', '火把类型', b.torchType || 'normal', {
     type: 'select',
     options: ['normal', 'eternal'],
-    optionLabels: { normal: '普通', eternal: '永恒' }
+    optionLabels: { normal: '普通（需燃料）', eternal: '永恒（无需燃料）' }
   });
+  html += field('radius', '照明半径(格)', b.radius ?? 3, { type: 'number' });
+  html += field('coalPerPeriod', '每轮燃料消耗', b.coalPerPeriod ?? 0, { type: 'number' });
   html += '</div>';
 
   html += '<div class="form-row span-3">';
-  html += field('radius', '照明半径(格)', t.radius ?? 3, { type: 'number' });
-  html += field('coalPerPeriod', '每轮燃料消耗', t.coalPerPeriod ?? 0, { type: 'number' });
-  html += field('coalBuffer', '初始燃料', t.coalBuffer ?? 0, { type: 'number' });
-  html += '</div>';
-
-  html += '<div class="form-row">';
+  html += field('coalBuffer', '初始燃料', b.coalBuffer ?? 0, { type: 'number' });
   html += '<div class="form-group"><label for="f_colorHint">火光颜色</label><input type="color" id="f_colorHint" data-field="colorHint" value="'
-    + escapeHTML(t.colorHint || '#ff8800') + '" style="width:60px;height:32px;padding:2px" /></div>';
-  html += field('upgradeTime', '升级时间(轮)', t.upgradeTime ?? 0, { type: 'number' });
+    + escapeHTML(b.colorHint || '#ff8800') + '" style="width:60px;height:32px;padding:2px" /></div>';
+  html += '<div></div>';
   html += '</div>';
 
-  // Upgrade chain selectors
-  html += '<div class="form-row">';
-  var torchOpts = [''];
-  var torchLabels = { '': '(无)' };
-  (state.data.torches || []).forEach(function(tc) {
-    torchOpts.push(tc.id);
-    torchLabels[tc.id] = tc.name + ' (' + tc.id + ')';
-  });
-  html += field('upgradesFrom', '升级来源', t.upgradesFrom || '', {
-    type: 'select', options: torchOpts, optionLabels: torchLabels
-  });
-  html += field('upgradesTo', '升级目标', t.upgradesTo || '', {
-    type: 'select', options: torchOpts, optionLabels: torchLabels
-  });
-  html += '</div>';
-
-  // lightCost sub-list
-  html += subListEditor('lightCost', '点亮成本', t.lightCost || [], function(c, i) {
+  // 点亮成本
+  html += subListEditor('lightCost', '点亮成本', b.lightCost || [], function(c, i) {
     return '' + resSelectSub(i, c.resourceId)
       + '<input class="amount" data-subidx="' + i + '" data-key="amount" type="number" value="' + (c.amount || 0) + '" placeholder="数量" />';
   });
 
-  // upgradeCost sub-list
-  html += subListEditor('upgradeCost', '升级成本', t.upgradeCost || [], function(c, i) {
-    return '' + resSelectSub(i, c.resourceId)
-      + '<input class="amount" data-subidx="' + i + '" data-key="amount" type="number" value="' + (c.amount || 0) + '" placeholder="数量" />';
-  });
+  html += '</div>'; // end torchFields
 
   return html;
 }
@@ -1023,14 +997,6 @@ function renderMapForm() {
      <input class="amount" data-subidx="${i}" data-key="gridY" type="number" value="${b.gridY??0}" placeholder="Y" />`
   );
 
-  // Initial torches
-  html += '<div class="section-title">初始火把</div>';
-  html += subListEditor('initialTorches', '火把列表', m.initialTorches || [], (t, i) =>
-    `<input data-subidx="${i}" data-key="torchId" value="${escapeHTML(t.torchId||'')}" placeholder="火把ID (如 eternal_torch)" />
-     <input class="amount" data-subidx="${i}" data-key="gridX" type="number" value="${t.gridX??0}" placeholder="X" />
-     <input class="amount" data-subidx="${i}" data-key="gridY" type="number" value="${t.gridY??0}" placeholder="Y" />`
-  );
-
   // Schedule mini map render
   setTimeout(renderMiniMap, 100);
 
@@ -1183,6 +1149,15 @@ function bindFormEvents() {
   panel.querySelectorAll('[data-opt]').forEach(el => {
     el.addEventListener('change', () => applyOptionChange(el));
   });
+
+  // Torch checkbox toggles torch fields visibility
+  const isTorchCheckbox = document.getElementById('f_isTorch');
+  const torchFields = document.getElementById('torchFields');
+  if (isTorchCheckbox && torchFields) {
+    isTorchCheckbox.addEventListener('change', function() {
+      torchFields.style.display = this.checked ? 'block' : 'none';
+    });
+  }
 }
 
 function getItem() {
@@ -1314,9 +1289,7 @@ function applyFieldChange(el) {
 function addSubEntry(subName) {
   const item = getItem();
   if (!item) return;
-  const newEntry = (subName === 'initialTorches')
-    ? { torchId: '', gridX: 0, gridY: 0 }
-    : { resourceId: '', amount: 0 };
+  const newEntry = { resourceId: '', amount: 0 };
 
   // Resolve subName to the correct array on item
   let targetArray;
@@ -1329,7 +1302,6 @@ function addSubEntry(subName) {
     case 'expEffects': targetArray = item.expeditionEffects; if (!targetArray) { item.expeditionEffects = []; targetArray = item.expeditionEffects; } break;
     case 'effects': targetArray = item.effects; if (!targetArray) { item.effects = []; targetArray = item.effects; } break;
     case 'initBuildings': targetArray = state.data.base_map.initialBuildings; break;
-    case 'initialTorches': targetArray = state.data.base_map.initialTorches; if (!targetArray) { state.data.base_map.initialTorches = []; targetArray = state.data.base_map.initialTorches; } break;
     case 'unlockConditions': targetArray = item.unlockConditions; if (!targetArray) { item.unlockConditions = []; targetArray = item.unlockConditions; } break;
     default:
       // Check for recipe cost or option effects
@@ -1366,7 +1338,6 @@ function removeSubEntry(subName, idx) {
     case 'expEffects': targetArray = item.expeditionEffects; break;
     case 'effects': targetArray = item.effects; break;
     case 'initBuildings': targetArray = state.data.base_map.initialBuildings; break;
-    case 'initialTorches': targetArray = state.data.base_map.initialTorches; break;
     case 'unlockConditions': targetArray = item.unlockConditions; break;
     default:
       if (subName.startsWith('recipe_') && subName.endsWith('_cost')) {
@@ -1407,7 +1378,6 @@ function applySubChange(el) {
     case 'expEffects': targetArray = item.expeditionEffects; break;
     case 'effects': targetArray = item.effects; break;
     case 'initBuildings': targetArray = state.data.base_map.initialBuildings; break;
-    case 'initialTorches': targetArray = state.data.base_map.initialTorches; break;
     case 'unlockConditions': targetArray = item.unlockConditions; break;
     default:
       if (subName.startsWith('recipe_') && subName.endsWith('_cost')) {
@@ -1548,11 +1518,6 @@ function getDefaultItem() {
       return { id: 'new_event', name: '新事件', description: '', image: '', priority: 0, mutexGroup: null, cooldownTicks: 0, maxTriggers: 1, triggerConditions: { timePeriods: [], requiredItems: [], requiredBuildings: [] }, invalidationConditions: { timePeriods: [], requiredItems: [], requiredBuildings: [] }, probability: 1, effects: [], options: [] };
     case 'expeditions':
       return { id: 'new_region', name: '新区域', description: '', image: '', unlockConditions: [], baseYields: {} };
-    case 'torches':
-      return { id: 'new_torch', name: '新火把', type: 'normal',
-        radius: 3, coalPerPeriod: 2, coalBuffer: 10,
-        colorHint: '#ff8800', lightCost: [],
-        upgradesTo: null, upgradeCost: [], upgradeTime: 0 };
     default: return {};
   }
 }
@@ -1563,13 +1528,11 @@ function getDefaultItem() {
 const tabTitles = {
   buildings: '建筑配置', resources: '资源配置', items: '物品配置',
   events: '事件配置', expeditions: '探险配置', map: '地图配置',
-  torches: '火把配置',
   analysis: '数值分析',
 };
 const tabFiles = {
   buildings: 'buildings.json', resources: 'resources.json', items: 'items.json',
   events: 'events_base.json + events_expedition.json', expeditions: 'regions.json + expedition_global.json', map: 'base_map.json',
-  torches: 'torches.json',
   analysis: '自动分析（只读）',
 };
 

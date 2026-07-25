@@ -57,6 +57,7 @@ class Game {
     this.systems.building.setTorchSystem(this.systems.torch);
     this.systems.building.init();
     this.systems.torch.setResourceSystem(this.systems.resource);
+    this.systems.torch.setBuildingSystem(this.systems.building);
     this.systems.torch.init();
     this.systems.population.setBuildingSystem(this.systems.building);
     this.systems.event.setSystems({
@@ -92,6 +93,24 @@ class Game {
     // 注册火把点击事件
     eventBus.on('torchClicked', ({ torchIndex }) => {
       this.popupManager.open('torch_detail', { torchIndex });
+    });
+
+    // 建筑与火把系统桥接：拆除 → 同步火把运行时条目
+    eventBus.on('buildingDemolished', ({ buildingId }) => {
+      if (buildingId) {
+        const cfg = configRegistry.getBuilding(buildingId);
+        if (cfg && cfg.isTorch) {
+          this.systems.torch.syncFromBuildings();
+        }
+      }
+    });
+
+    // 建筑与火把系统桥接：移动 → 更新火把位置
+    eventBus.on('buildingMoved', ({ buildingIndex, building }) => {
+      const cfg = configRegistry.getBuilding(building.buildingId);
+      if (cfg && cfg.isTorch) {
+        this.systems.torch.onBuildingMoved(buildingIndex, building.gridX, building.gridY);
+      }
     });
 
     // 5. 尝试加载存档

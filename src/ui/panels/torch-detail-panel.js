@@ -4,7 +4,7 @@
  */
 import { configRegistry } from '../../core/ConfigRegistry.js';
 import { eventBus } from '../../core/EventBus.js';
-import { progressManager } from '../../utils/ProgressManager.js';
+
 
 /* 通用区块容器 */
 function section(label, icon) {
@@ -68,7 +68,7 @@ export function renderTorchDetailPanel(data, body, pm) {
     return;
   }
 
-  const isEternal = config.type === 'eternal';
+  const isEternal = config.torchType === 'eternal';
 
   const container = document.createElement('div');
   container.style.cssText = 'display:flex;flex-direction:column;';
@@ -96,7 +96,15 @@ export function renderTorchDetailPanel(data, body, pm) {
   typeBadge.textContent = isEternal ? '永恒之火' : (torch.lit ? '已点燃' : '未点燃');
   headerSec.appendChild(typeBadge);
 
-  if (torch.upgrading) {
+  // 通过 BuildingSystem 查找对应建筑（用于判断建造/升级状态）
+  const buildingSystem = game.systems.building;
+  const buildingIndex = buildingSystem.buildings.findIndex(
+    b => b.gridX === torch.gridX && b.gridY === torch.gridY
+  );
+  const building = buildingIndex >= 0 ? buildingSystem.buildings[buildingIndex] : null;
+  const isConstructing = building && building.status === 'constructing';
+
+  if (torch.upgrading || isConstructing) {
     const upgradingBadge = document.createElement('span');
     upgradingBadge.style.cssText = `
       display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:500;margin-top:4px;margin-left:6px;
@@ -116,9 +124,10 @@ export function renderTorchDetailPanel(data, body, pm) {
     infoSec.appendChild(infoRow('燃料消耗', `${config.coalPerPeriod} 煤炭 / 周期`));
     infoSec.appendChild(infoRow('剩余燃料', `${torch.fuel < Infinity ? Math.floor(torch.fuel) : '∞'}`, torch.fuel > 0 ? '#4ecb71' : '#ff6b6b'));
   }
-  if (torch.upgrading) {
-    const progress = torch.upgradeProgress || 0;
-    const total = config.upgradeTime || 1;
+  if (isConstructing && building) {
+    const targetCfg = configRegistry.getBuilding(building.buildingId);
+    const progress = building.buildProgress || 0;
+    const total = targetCfg?.buildTime || config.buildTime || 1;
     infoSec.appendChild(infoRow('升级进度', `${progress}/${total}`, '#f0a040'));
 
     // 升级进度条
@@ -179,18 +188,17 @@ export function renderTorchDetailPanel(data, body, pm) {
     );
     actionSec.appendChild(fuelBtn);
 
-    // 升级按钮
-    if (config.upgradesTo) {
-      const targetCfg = torchSystem.getTorchConfig(config.upgradesTo);
-      const upgradeCost = config.upgradeCost || [];
-      const costText = upgradeCost.map(c => `${c.amount} ${c.resourceId}`).join(' + ');
-      const canUpgrade = resourceSystem.canAfford(upgradeCost);
+    // 升级按钮（统一走 BuildingSystem.upgradeBuilding）
+    if (config.upgradesTo && buildingIndex >= 0) {
+      const targetCfg = configRegistry.getBuilding(config.upgradesTo);
+      const check = buildingSystem.canUpgrade(buildingIndex);
+      const costText = (check.cost || []).map(c => `${c.amount} ${c.resourceId}`).join(' + ');
 
       const upgradeBtn = actionButton(
-        canUpgrade ? `⬆ 升级至 ${targetCfg?.name || config.upgradesTo} (${costText})` : `⬆ 升级 (资源不足)`,
-        canUpgrade ? '#7b5ea7' : '#555',
+        check.valid ? `⬆ 升级至 ${targetCfg?.name || config.upgradesTo} (${costText})` : `⬆ 升级 (${check.reason})`,
+        check.valid ? '#7b5ea7' : '#555',
         () => {
-          const result = torchSystem.upgradeTorch(torchIndex);
+          const result = buildingSystem.upgradeBuilding(buildingIndex);
           if (result) {
             pm.refresh({ torchIndex });
           } else {
@@ -198,23 +206,22 @@ export function renderTorchDetailPanel(data, body, pm) {
           }
         }
       );
-      if (!canUpgrade) upgradeBtn.style.opacity = '0.5';
+      if (!check.valid) upgradeBtn.style.opacity = '0.5';
       actionSec.appendChild(upgradeBtn);
     }
   }
 
   // --- 永恒火把：仅显示升级 ---
-  if (isEternal && !torch.upgrading && config.upgradesTo) {
-    const targetCfg = torchSystem.getTorchConfig(config.upgradesTo);
-    const upgradeCost = config.upgradeCost || [];
-    const costText = upgradeCost.map(c => `${c.amount} ${c.resourceId}`).join(' + ');
-    const canUpgrade = resourceSystem.canAfford(upgradeCost);
+  if (isEternal && !torch.upgrading && config.upgradesTo && buildingIndex >= 0) {
+    const targetCfg = configRegistry.getBuilding(config.upgradesTo);
+    const check = buildingSystem.canUpgrade(buildingIndex);
+    const costText = (check.cost || []).map(c => `${c.amount} ${c.resourceId}`).join(' + ');
 
     const upgradeBtn = actionButton(
-      canUpgrade ? `⬆ 升级至 ${targetCfg?.name || config.upgradesTo} (${costText})` : `⬆ 升级 (资源不足)`,
-      canUpgrade ? '#7b5ea7' : '#555',
+      check.valid ? `⬆ 升级至 ${targetCfg?.name || config.upgradesTo} (${costText})` : `⬆ 升级 (${check.reason})`,
+      check.valid ? '#7b5ea7' : '#555',
       () => {
-        const result = torchSystem.upgradeTorch(torchIndex);
+        const result = buildingSystem.upgradeBuilding(buildingIndex);
         if (result) {
           pm.refresh({ torchIndex });
         } else {
@@ -222,7 +229,7 @@ export function renderTorchDetailPanel(data, body, pm) {
         }
       }
     );
-    if (!canUpgrade) upgradeBtn.style.opacity = '0.5';
+    if (!check.valid) upgradeBtn.style.opacity = '0.5';
     actionSec.appendChild(upgradeBtn);
   }
 
@@ -235,6 +242,31 @@ export function renderTorchDetailPanel(data, body, pm) {
   }
 
   container.appendChild(actionSec);
+
+  // ===== 拆除（仅可拆除的火把）=====
+  if (config.demolishable !== false) {
+    const demolishSec = section('拆除', '🗑️');
+    const buildingSystem = game.systems.building;
+    const demolishBtn = actionButton(
+      '拆除火把',
+      'rgba(255, 107, 107, 0.15)',
+      () => {
+        // 在点击时重新查找 buildingIndex，避免渲染期间索引变动
+        const idx = buildingSystem.buildings.findIndex(
+          b => b.gridX === torch.gridX && b.gridY === torch.gridY && b.buildingId === torch.torchId
+        );
+        if (idx >= 0) {
+          if (confirm('确定拆除此火把？此操作不可撤销。')) {
+            buildingSystem.demolishBuilding(idx);
+            pm.close();
+          }
+        }
+      }
+    );
+    demolishBtn.style.color = '#ff6b6b';
+    demolishSec.appendChild(demolishBtn);
+    container.appendChild(demolishSec);
+  }
 
   body.appendChild(container);
 }

@@ -51,7 +51,7 @@ GameLoop (rAF)  → TimeSystem.update() → tick event → each System settles �
 config/                 ← JSON game data (buildings, resources, items, maps, events, expeditions, torches)
   buildings.json        ← Add new buildings here, no code changes needed
   resources.json        ← Add new resources here, auto-recognized by ResourceSystem
-  torches.json          ← Torch type definitions (radius, coal cost, upgrade path)
+  buildings.json        ← Building & torch type definitions (torches marked with isTorch: true)
   events/               ← Add new events here following existing schema
   expeditions/          ← Expedition regions and global params
   maps/base_map.json    ← Grid layout, initial buildings, expedition entrance, initial torches
@@ -102,7 +102,7 @@ Certain popups **block the game loop** (pause) while open: `event`, `expedition_
 |------|-------|
 | New building type | `config/buildings.json` only |
 | New resource type | `config/resources.json` only |
-| New torch type | `config/torches.json` only |
+| New torch type | `config/buildings.json` — add `isTorch: true` + torch fields |
 | New event | `config/events/` — follow existing schema |
 | New popup/panel | `src/ui/panels/xxx-panel.js` + register in `PopupManager._registerBuiltinPanels()` |
 | New event effect handler | `EventSystem._registerBuiltinEffects()` via `registerEffect()` |
