@@ -68,7 +68,7 @@ function drawMapCanvas() {
 
   drawTerrainTiles(ctx, m, cellSize);
   drawGridLines(ctx, m, MAP_CELL_SIZE);
-  drawEntrance(ctx, m, MAP_CELL_SIZE);
+  drawEntrances(ctx, m, MAP_CELL_SIZE);
   drawBuildings(ctx, m, MAP_CELL_SIZE);
   drawHoverPreview(ctx, m, MAP_CELL_SIZE);
 
@@ -138,39 +138,51 @@ function drawGridLines(ctx, m, baseCell) {
   ctx.stroke();
 }
 
-function drawEntrance(ctx, m, baseCell) {
-  const ee = m.expeditionEntrance;
-  if (!ee || ee.gridX == null) return;
-  const x = ee.gridX * baseCell;
-  const y = ee.gridY * baseCell;
-  const w = (ee.width || 1) * baseCell;
-  const h = (ee.height || 1) * baseCell;
-
-  // Fill
-  ctx.fillStyle = 'rgba(240,160,64,0.12)';
-  ctx.fillRect(x, y, w, h);
-
-  // Dashed border
-  ctx.strokeStyle = '#f0a040';
-  ctx.lineWidth = 2 / state.canvasScale;
-  ctx.setLineDash([6 / state.canvasScale, 3 / state.canvasScale]);
-  ctx.strokeRect(x, y, w, h);
-  ctx.setLineDash([]);
-
-  // Label
-  ctx.fillStyle = '#f0a040';
-  ctx.font = `${Math.max(9, 11 / state.canvasScale)}px -apple-system, "Microsoft YaHei", sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.fillText('🚪 探险入口', x + w / 2, y - 4 / state.canvasScale);
-
-  // Corner handles in entrance mode
-  if (state.mapEditorMode === 'entrance') {
-    const hs = 8 / state.canvasScale;
-    ctx.fillStyle = '#f0a040';
-    [[x, y], [x + w - hs, y], [x, y + h - hs], [x + w - hs, y + h - hs]].forEach(([hx, hy]) => {
-      ctx.fillRect(hx, hy, hs, hs);
-    });
+function drawEntrances(ctx, m, baseCell) {
+  // 兼容旧格式
+  let entrances = m.expeditionEntrances;
+  if (!entrances && m.expeditionEntrance) {
+    const old = m.expeditionEntrance;
+    entrances = [{ id: 'default_entrance', name: '探险出发口', gridX: old.gridX, gridY: old.gridY, regionIds: [] }];
   }
+  if (!entrances || entrances.length === 0) return;
+
+  const isEntranceMode = state.mapEditorMode === 'entrance';
+  const cellSize = baseCell;
+
+  entrances.forEach((ee, idx) => {
+    if (ee.gridX == null) return;
+    const x = ee.gridX * cellSize;
+    const y = ee.gridY * cellSize;
+    const w = cellSize;  // 固定 1×1
+    const h = cellSize;
+
+    // Fill
+    ctx.fillStyle = 'rgba(240,160,64,0.12)';
+    ctx.fillRect(x, y, w, h);
+
+    // Dashed border
+    ctx.strokeStyle = '#f0a040';
+    ctx.lineWidth = 2 / state.canvasScale;
+    ctx.setLineDash([6 / state.canvasScale, 3 / state.canvasScale]);
+    ctx.strokeRect(x, y, w, h);
+    ctx.setLineDash([]);
+
+    // Label
+    ctx.fillStyle = '#f0a040';
+    ctx.font = `${Math.max(9, 11 / state.canvasScale)}px -apple-system, "Microsoft YaHei", sans-serif`;
+    ctx.textAlign = 'center';
+    const label = ee.name || ee.id || '入口';
+    ctx.fillText('🚪 ' + label, x + w / 2, y - 4 / state.canvasScale);
+
+    // Selection highlight in entrance mode
+    if (isEntranceMode && typeof state.mapEditorSelectedEntrance !== 'undefined' && idx === state.mapEditorSelectedEntrance) {
+      ctx.strokeStyle = '#ff6600';
+      ctx.lineWidth = 3 / state.canvasScale;
+      ctx.setLineDash([]);
+      ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+    }
+  });
 }
 
 function drawBuildings(ctx, m, baseCell) {

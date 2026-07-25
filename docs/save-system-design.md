@@ -63,7 +63,8 @@ await SaveManager.reset();
   },
   "population": {
     "current": 8,
-    "declineCountdown": 0
+    "declineCountdown": 0,
+    "expeditionWorkers": 0
   },
   "resources": {
     "wood":       { "current": 150, "max": 5000 },
@@ -118,7 +119,7 @@ await SaveManager.reset();
 | `version` | SaveManager | 存档格式版本号，用于后续兼容迁移 |
 | `timestamp` | SaveManager | 存档时间戳 |
 | `time` | TimeSystem | 当前 tick、时段、天数 |
-| `population` | PopulationSystem | `current` = 当前人口数；`declineCountdown` = 人口减少倒计时天数（0 = 未进入倒计时） |
+| `population` | PopulationSystem | `current` = 当前人口数；`declineCountdown` = 人口减少倒计时天数（0 = 未进入倒计时）；`expeditionWorkers` = 探险占用的工人数（从可用工人池扣减，探险结束后归还） |
 | `resources` | ResourceSystem | 所有资源的 current 和 max（只存动态值，静态属性从配置读） |
 | `items` | ItemSystem | 使用实例模型：每个物品 key 下存储 `instances` 数组，每个实例带 `instanceId` / `equipped` / `inExpedition` |
 | `buildings` | BuildingSystem | 已放置建筑列表。`buildingId` 始终为最终形态，`status` 为 `constructing` 时 `buildProgress` 记录已过 tick 数 |
@@ -247,7 +248,7 @@ async function loadWithMigration() {
 |------|------|
 | TimeSystem | `getState()` → `{ currentTick, currentPeriod, day }` |
 | | `restoreState(state)` — 从存档恢复 |
-| PopulationSystem | `getState()` → `{ current, declineCountdown }` |
+| PopulationSystem | `getState()` → `{ current, declineCountdown, expeditionWorkers }` |
 | | `restoreState(state)` — 从存档恢复 |
 | ResourceSystem | `getAll()` — 已有，返回所有资源的 current/max |
 | | `restoreState(resources)` — 覆盖当前值 |

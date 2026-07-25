@@ -11,7 +11,9 @@ export function renderExpeditionPrepPanel(data, body, pm) {
 
   const expeditionSystem = game.systems.expedition;
   const itemSystem = game.systems.item;
+  const populationSystem = game.systems.population;
   const expConfig = expeditionSystem.getExpeditionConfig();
+  const entrance = data.entrance; // 入口数据（含 id, name, regionIds）
 
   // 状态
   const MAX_STAGES = expConfig.expeditionPeriods; // 最大阶段数（3）
@@ -96,9 +98,13 @@ export function renderExpeditionPrepPanel(data, body, pm) {
     const hintDiv = document.createElement('div');
     hintDiv.style.cssText = 'font-size:12px;color:#888;text-align:center;margin-bottom:2px;';
     const compacted = compactRegions(selectedRegions);
-    hintDiv.textContent = compacted.length === 0
-      ? '请至少选择第一个阶段的探索区域'
-      : `已选择 ${compacted.length}/${MAX_STAGES} 个阶段`;
+    let hintText = entrance ? `探索入口: ${entrance.name}` : '';
+    if (compacted.length === 0) {
+      hintText += hintText ? ' | 请至少选择第一个阶段的探索区域' : '请至少选择第一个阶段的探索区域';
+    } else {
+      hintText += hintText ? ` | 已选择 ${compacted.length}/${MAX_STAGES} 个阶段` : `已选择 ${compacted.length}/${MAX_STAGES} 个阶段`;
+    }
+    hintDiv.textContent = hintText;
     container.appendChild(hintDiv);
 
     const slotSection = document.createElement('div');
@@ -168,7 +174,7 @@ export function renderExpeditionPrepPanel(data, body, pm) {
     const regionGrid = document.createElement('div');
     regionGrid.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
 
-    const availableRegions = expeditionSystem.getAvailableRegions();
+    const availableRegions = expeditionSystem.getAvailableRegions(entrance?.regionIds);
     for (const { region, unlocked, unlockHint } of availableRegions) {
       const card = document.createElement('div');
       // 仅检查当前焦点槽位（允许同一区域出现在不同阶段）
@@ -207,6 +213,7 @@ export function renderExpeditionPrepPanel(data, body, pm) {
       card.innerHTML = `
         <div style="font-size:13px;color:#fff;font-weight:600;">${region.name}</div>
         ${unlocked ? `<div style="font-size:11px;color:#8f8;margin-top:3px;line-height:1.4;">${formatYields(region)}</div>` : ''}
+        ${unlocked && region.workerCost ? `<div style="font-size:10px;color:#f8a040;margin-top:2px;">👥 ${region.workerCost}人</div>` : ''}
         ${badgeHtml}
         ${!unlocked ? `<div style="font-size:10px;color:#f88;margin-top:2px;">🔒 ${unlockHint}</div>` : ''}
       `;
@@ -252,6 +259,17 @@ export function renderExpeditionPrepPanel(data, body, pm) {
       previewDiv.style.cssText = 'font-size:12px;color:#8f8;padding:8px;background:rgba(255,255,255,0.05);border-radius:8px;';
       previewDiv.textContent = `预计产出(${filledRegions.length}/${MAX_STAGES}阶段): ${yieldText}`;
       container.appendChild(previewDiv);
+
+      // 工人消耗汇总
+      const totalWorkers = expeditionSystem.getTotalWorkerCost(filledRegions);
+      const availableWorkers = populationSystem ? populationSystem.getAvailableWorkers() : 0;
+      const workerDiv = document.createElement('div');
+      const workersOK = totalWorkers <= availableWorkers;
+      workerDiv.style.cssText = `font-size:12px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.05);color:${workersOK ? '#aaa' : '#f66'};`;
+      workerDiv.textContent = workersOK
+        ? `👥 所需工人: ${totalWorkers}人 (可用: ${availableWorkers}人)`
+        : `⚠ 所需工人: ${totalWorkers}人 (可用: ${availableWorkers}人) — 工人不足！`;
+      container.appendChild(workerDiv);
     }
 
     // === 物品选择 ===
@@ -329,11 +347,24 @@ export function renderExpeditionPrepPanel(data, body, pm) {
     });
 
     const startBtn = document.createElement('button');
-    const canStart = isValidSelection(selectedRegions);
+    const selectionValid = isValidSelection(selectedRegions);
     const stageCount = compactRegions(selectedRegions).length;
-    const buttonLabel = canStart
-      ? (stageCount === MAX_STAGES ? '确认出发' : `确认出发 (${stageCount}阶段)`)
-      : (stageCount === 0 ? '请选择至少一个区域' : '区域选择有空隙');
+
+    // 检查各项条件
+    let canStart = selectionValid && stageCount > 0;
+    let buttonLabel;
+    if (!selectionValid) {
+      buttonLabel = stageCount === 0 ? '请选择至少一个区域' : '区域选择有空隙';
+    } else {
+      // 进一步校验（工人等）
+      const check = expeditionSystem.canStartExpedition(selectedRegions, [...equippedInstanceIds]);
+      if (!check.valid) {
+        canStart = false;
+        buttonLabel = check.reason;
+      } else {
+        buttonLabel = stageCount === MAX_STAGES ? '确认出发' : `确认出发 (${stageCount}阶段)`;
+      }
+    }
 
     startBtn.textContent = buttonLabel;
     startBtn.style.cssText = `flex:2;padding:10px;border:none;border-radius:8px;background:${canStart ? '#4a9' : '#555'};color:#fff;cursor:${canStart ? 'pointer' : 'default'};font-size:14px;font-weight:bold;`;

@@ -394,6 +394,10 @@ function renderRegionForm(r) {
   );
 
   // Base yields
+  html += '<div class="form-row">';
+  html += field('workerCost', '所需工人', r.workerCost ?? 0, { type: 'number' });
+  html += '</div>';
+
   html += '<div class="section-title">基础产出（每时段）</div>';
   const periods = ['morning','afternoon','evening','night'];
   html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
@@ -519,15 +523,20 @@ function renderMapForm() {
   html += '<div id="mapStatus" style="font-size:11px;color:var(--muted);margin-top:6px;min-height:18px">💡 点击画布绘制地形 | B/V/E/R/F/X/S切换模式 | Ctrl+Z撤销 Ctrl+Y重做 | 右下角拖拽调整视口</div>';
   html += '<div id="mapBuildingHint" style="display:none;font-size:11px;color:var(--warn);margin-top:4px;min-height:18px;background:rgba(240,160,64,0.06);padding:4px 10px;border-radius:4px;border:1px solid rgba(240,160,64,0.15)">💡 拖拽移动建筑 | 右键删除建筑 | Delete 删除选中建筑</div>';
 
-  // Expedition entrance
+  // Expedition entrances
   html += '<div class="section-title">探险入口</div>';
-  const ee = m.expeditionEntrance || {};
-  html += '<div class="form-row span-3">';
-  html += field('ee_gridX', 'X', ee.gridX, { type: 'number' });
-  html += field('ee_gridY', 'Y', ee.gridY, { type: 'number' });
-  html += field('ee_width', '宽', ee.width, { type: 'number' });
-  html += field('ee_height', '高', ee.height, { type: 'number' });
-  html += '</div>';
+  const entrances = m.expeditionEntrances || (m.expeditionEntrance ? [{
+    id: 'default_entrance', name: '探险出发口',
+    gridX: m.expeditionEntrance.gridX, gridY: m.expeditionEntrance.gridY,
+    regionIds: []
+  }] : []);
+  html += subListEditor('entrances', '入口列表', entrances, (e, i) =>
+    `<input data-subidx="${i}" data-key="id" value="${escapeHTML(e.id||'')}" placeholder="入口ID" />
+     <input data-subidx="${i}" data-key="name" value="${escapeHTML(e.name||'')}" placeholder="名称" />
+     <input class="amount" data-subidx="${i}" data-key="gridX" type="number" value="${e.gridX??0}" placeholder="X" />
+     <input class="amount" data-subidx="${i}" data-key="gridY" type="number" value="${e.gridY??0}" placeholder="Y" />
+     <input data-subidx="${i}" data-key="regionIds" value="${(e.regionIds||[]).join(',')}" placeholder="区域ID(逗号分隔)" />`
+  );
 
   // Initial buildings
   html += '<div class="section-title">初始建筑</div>';

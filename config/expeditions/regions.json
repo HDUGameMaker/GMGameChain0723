@@ -5,6 +5,7 @@
     "description": "茂密的原始森林，出产原木和少量石头。平衡型基础区域。",
     "image": "region_forest.png",
     "unlockConditions": [],
+    "workerCost": 2,
     "baseYields": {
       "morning": {
         "wood": 20,
@@ -30,6 +31,7 @@
     "description": "矿洞入口周围的崎岖地带，盛产石头，偶见煤炭和铁矿露头。",
     "image": "region_mine_periphery.png",
     "unlockConditions": [],
+    "workerCost": 2,
     "baseYields": {
       "morning": {
         "stone": 12,
@@ -68,6 +70,7 @@
         "buildingId": "mine_support"
       }
     ],
+    "workerCost": 3,
     "baseYields": {
       "morning": {
         "coal": 13,
@@ -102,6 +105,7 @@
         "buildingId": "watchtower"
       }
     ],
+    "workerCost": 4,
     "baseYields": {
       "morning": {
         "coal": 9,
@@ -136,6 +140,7 @@
         "itemId": "steel_tool_set"
       }
     ],
+    "workerCost": 3,
     "baseYields": {
       "morning": {
         "electronic_part": 6,
@@ -174,6 +179,7 @@
         "buildingId": "lumber_mill"
       }
     ],
+    "workerCost": 3,
     "baseYields": {
       "morning": {
         "wood": 28
@@ -200,6 +206,7 @@
         "buildingId": "furnace"
       }
     ],
+    "workerCost": 3,
     "baseYields": {
       "morning": {
         "stone": 5,
@@ -242,6 +249,7 @@
         "buildingId": "steel_furnace"
       }
     ],
+    "workerCost": 4,
     "baseYields": {
       "morning": {
         "coal": 22,
@@ -272,6 +280,7 @@
         "buildingId": "machine_shop"
       }
     ],
+    "workerCost": 4,
     "baseYields": {
       "morning": {
         "electronic_part": 5
@@ -298,6 +307,7 @@
         "itemId": "electronic_scanner"
       }
     ],
+    "workerCost": 5,
     "baseYields": {
       "morning": {
         "electronic_part": 8,

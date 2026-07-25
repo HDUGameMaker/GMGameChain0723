@@ -60,7 +60,7 @@ Layer 4: Data              → src/core/（EventBus, ConfigRegistry, Store, Save
 | `torchUpgraded` | 火把升级完成 | `{torchIndex, torch}` |
 | `torchUpgradeStarted` | 火把开始升级 | `{torchIndex, torch}` |
 | `torchFuelAdded` | 火把添加燃料 | `{torchIndex, torch}` |
-| `expeditionEntranceClicked` | 点击探险入口 | `{}` |
+| `expeditionEntranceClicked` | 点击探险入口 | `{entrance}` — entrance 含 `id`, `name`, `regionIds[]` |
 | `expeditionStarted` | 探险出发 | `{expedition}` |
 | `expeditionComplete` | 探险归来 | `ExpeditionResult` |
 | `itemObtained` | 获得物品 | `{itemId, instanceId}` |
@@ -104,6 +104,17 @@ consumeAll(costs) → boolean      // 消耗一组资源
 getAmount(id) → number
 getHUDResources() → [{id, name, icon, current, max}]
 hasEnough(id, amount) → boolean
+```
+
+### PopulationSystem
+```js
+getCurrent() → number                              // 当前总人口
+getAssignedWorkers() → number                      // 建筑已分配工人数
+getAvailableWorkers() → number                     // 可用工人 = 当前人口 - 建筑分配 - 探险占用
+occupyForExpedition(count) → void                  // 探险出发时锁定工人
+releaseFromExpedition(count) → void                // 探险归来时归还工人
+getState() → {current, declineCountdown, expeditionWorkers}
+restoreState(state) → void
 ```
 
 ### BuildingSystem
@@ -193,8 +204,11 @@ getOwnedInstances() → [{instanceId, itemId, name, equipped, inExpedition, ...}
 
 ### ExpeditionSystem
 ```js
-getAvailableRegions() → [{region, unlocked, unlockHint}]
-startExpedition(regionIds, instanceIds) → boolean
+getAvailableRegions(entranceRegionIds?) → [{region, unlocked, unlockHint}]  // 可选参数按入口过滤区域
+isRegionUnlocked(regionId) → boolean
+canStartExpedition(regionIds, instanceIds) → {valid, reason}   // 含工人数校验
+getTotalWorkerCost(regionIds) → number                         // 计算所选区域总工人消耗
+startExpedition(regionIds, instanceIds) → boolean              // 扣减工人，锁定物品
 getCurrentExpedition() → ExpeditionState | null
 getExpectedYields(regionIds, instanceIds) → {resourceId: amount}
 completeExpedition() → ExpeditionResult
@@ -262,7 +276,7 @@ WORK_PERIODS = [morning, afternoon]（仅此时段建筑生产）
   "version": 1,
   "timestamp": 1751558400000,
   "time": { "currentTick", "tickInPeriod", "periodIndex", "day", "elapsedInTick" },
-  "population": { "current", "declineCountdown" },
+  "population": { "current", "declineCountdown", "expeditionWorkers" },
   "resources": { "wood": {"current", "max"}, ... },
   "items": { "itemId": {"instances": [{instanceId, equipped, inExpedition}]} },
   "buildings": [{ "buildingId", "gridX", "gridY", "status", "currentWorkers", "buildProgress" }],

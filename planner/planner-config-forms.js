@@ -142,7 +142,7 @@ function bindFormEvents() {
       m.gridHeight = 100;
       m.grid = generateRandomMap(100, 100);
       m.initialBuildings = [];
-      if (m.expeditionEntrance) m.expeditionEntrance = null;
+      m.expeditionEntrances = [];
       state.mapEditorSelectedBuilding = -1;
       state.mapEditorDragTarget = null;
       state.canvasScale = 1.0;
@@ -289,22 +289,6 @@ function applyFieldChange(el) {
   } else if (fieldName === 'ic_zoom') {
     if (!state.data.base_map.initialCamera) state.data.base_map.initialCamera = {};
     state.data.base_map.initialCamera.zoom = parseFloat(value) || 1.0;
-  } else if (fieldName === 'ee_gridX') {
-    if (!state.data.base_map.expeditionEntrance) state.data.base_map.expeditionEntrance = {};
-    state.data.base_map.expeditionEntrance.gridX = parseInt(value) || 0;
-    scheduleCanvasRedraw();
-  } else if (fieldName === 'ee_gridY') {
-    if (!state.data.base_map.expeditionEntrance) state.data.base_map.expeditionEntrance = {};
-    state.data.base_map.expeditionEntrance.gridY = parseInt(value) || 0;
-    scheduleCanvasRedraw();
-  } else if (fieldName === 'ee_width') {
-    if (!state.data.base_map.expeditionEntrance) state.data.base_map.expeditionEntrance = {};
-    state.data.base_map.expeditionEntrance.width = parseInt(value) || 1;
-    scheduleCanvasRedraw();
-  } else if (fieldName === 'ee_height') {
-    if (!state.data.base_map.expeditionEntrance) state.data.base_map.expeditionEntrance = {};
-    state.data.base_map.expeditionEntrance.height = parseInt(value) || 1;
-    scheduleCanvasRedraw();
   } else {
     item[fieldName] = value;
   }
@@ -315,7 +299,10 @@ function applyFieldChange(el) {
 function addSubEntry(subName) {
   const item = getItem();
   if (!item) return;
-  const newEntry = { resourceId: '', amount: 0 };
+  let newEntry = { resourceId: '', amount: 0 };
+  if (subName === 'entrances') {
+    newEntry = { id: 'new_entrance', name: '新入口', gridX: 0, gridY: 0, regionIds: [] };
+  }
 
   // Resolve subName to the correct array on item
   let targetArray;
@@ -328,6 +315,7 @@ function addSubEntry(subName) {
     case 'expEffects': targetArray = item.expeditionEffects; if (!targetArray) { item.expeditionEffects = []; targetArray = item.expeditionEffects; } break;
     case 'effects': targetArray = item.effects; if (!targetArray) { item.effects = []; targetArray = item.effects; } break;
     case 'initBuildings': targetArray = state.data.base_map.initialBuildings; break;
+    case 'entrances': targetArray = state.data.base_map.expeditionEntrances; if (!targetArray) { state.data.base_map.expeditionEntrances = []; targetArray = state.data.base_map.expeditionEntrances; } break;
     case 'unlockConditions': targetArray = item.unlockConditions; if (!targetArray) { item.unlockConditions = []; targetArray = item.unlockConditions; } break;
     default:
       // Check for recipe cost or option effects
@@ -364,6 +352,7 @@ function removeSubEntry(subName, idx) {
     case 'expEffects': targetArray = item.expeditionEffects; break;
     case 'effects': targetArray = item.effects; break;
     case 'initBuildings': targetArray = state.data.base_map.initialBuildings; break;
+    case 'entrances': targetArray = state.data.base_map.expeditionEntrances; break;
     case 'unlockConditions': targetArray = item.unlockConditions; break;
     default:
       if (subName.startsWith('recipe_') && subName.endsWith('_cost')) {
@@ -404,6 +393,7 @@ function applySubChange(el) {
     case 'expEffects': targetArray = item.expeditionEffects; break;
     case 'effects': targetArray = item.effects; break;
     case 'initBuildings': targetArray = state.data.base_map.initialBuildings; break;
+    case 'entrances': targetArray = state.data.base_map.expeditionEntrances; break;
     case 'unlockConditions': targetArray = item.unlockConditions; break;
     default:
       if (subName.startsWith('recipe_') && subName.endsWith('_cost')) {
@@ -416,7 +406,7 @@ function applySubChange(el) {
   }
 
   if (targetArray && subIdx >= 0 && subIdx < targetArray.length) {
-    if (key === 'regions' && typeof value === 'string') {
+    if ((key === 'regions' || key === 'regionIds') && typeof value === 'string') {
       targetArray[subIdx][key] = value.split(',').map(s => s.trim()).filter(Boolean);
     } else if (key === 'buildable') {
       if (value === 'true') targetArray[subIdx][key] = true;

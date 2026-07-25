@@ -112,7 +112,7 @@ export class MapRenderer {
     // 先确定初始相机位置（居中），再绘制
     this._centerView();
     this._drawTerrainChunk();
-    this._drawExpeditionEntrance();
+    this._drawExpeditionEntrances();
     this._drawTorches();
     this._createFogCanvas();
     this._setupInteraction();
@@ -121,56 +121,68 @@ export class MapRenderer {
   }
 
   /**
-   * 绘制地图上的探险出发口
+   * 绘制地图上的所有探险出发口
    */
-  _drawExpeditionEntrance() {
-    const entrance = this.mapConfig.expeditionEntrance;
-    if (!entrance) return;
+  _drawExpeditionEntrances() {
+    // 兼容旧格式：单个 expeditionEntrance
+    let entrances = this.mapConfig.expeditionEntrances;
+    if (!entrances && this.mapConfig.expeditionEntrance) {
+      const old = this.mapConfig.expeditionEntrance;
+      entrances = [{
+        id: 'default_entrance',
+        name: '探险出发口',
+        gridX: old.gridX,
+        gridY: old.gridY,
+        regionIds: []
+      }];
+    }
+    if (!entrances || entrances.length === 0) return;
 
-    const { gridX, gridY, width, height } = entrance;
+    this._expeditionEntrances = entrances;
     const ts = this.tileSize;
-    const x = gridX * ts;
-    const y = gridY * ts;
-    const w = width * ts;
-    const h = height * ts;
 
-    const graphics = new PIXI.Graphics();
+    for (const entrance of entrances) {
+      const { gridX, gridY } = entrance;
+      const x = gridX * ts;
+      const y = gridY * ts;
+      const w = ts;  // 1x1
+      const h = ts;
 
-    // 底色
-    graphics.rect(x, y, w, h);
-    graphics.fill({ color: 0x2a4a6a, alpha: 0.8 });
+      const graphics = new PIXI.Graphics();
 
-    // 边框
-    graphics.rect(x, y, w, h);
-    graphics.stroke({ color: 0x66ccff, alpha: 0.8, width: 2 });
+      // 底色
+      graphics.rect(x, y, w, h);
+      graphics.fill({ color: 0x2a4a6a, alpha: 0.8 });
 
-    // 内部图标
-    const iconText = new PIXI.Text({
-      text: '🧭',
-      style: { fontSize: 28 }
-    });
-    iconText.anchor.set(0.5);
-    iconText.x = x + w / 2;
-    iconText.y = y + h / 2 - 10;
+      // 边框
+      graphics.rect(x, y, w, h);
+      graphics.stroke({ color: 0x66ccff, alpha: 0.8, width: 2 });
 
-    const labelText = new PIXI.Text({
-      text: '探险出发口',
-      style: { fontSize: 11, fill: 0x88ccff, align: 'center' }
-    });
-    labelText.anchor.set(0.5);
-    labelText.x = x + w / 2;
-    labelText.y = y + h / 2 + 18;
+      // 内部图标
+      const iconText = new PIXI.Text({
+        text: '🧭',
+        style: { fontSize: 24 }
+      });
+      iconText.anchor.set(0.5);
+      iconText.x = x + w / 2;
+      iconText.y = y + h / 2 - 8;
 
-    // 存储入口区域供点击检测
-    this._expeditionEntrance = entrance;
+      // 名称标签（放在格子下方）
+      const labelText = new PIXI.Text({
+        text: entrance.name || '入口',
+        style: { fontSize: 10, fill: 0x88ccff, align: 'center' }
+      });
+      labelText.anchor.set(0.5);
+      labelText.x = x + w / 2;
+      labelText.y = y + h + 6;
 
-    const entranceContainer = new PIXI.Container();
-    entranceContainer.addChild(graphics);
-    entranceContainer.addChild(iconText);
-    entranceContainer.addChild(labelText);
+      const entranceContainer = new PIXI.Container();
+      entranceContainer.addChild(graphics);
+      entranceContainer.addChild(iconText);
+      entranceContainer.addChild(labelText);
 
-    // 插入到世界层（随相机移动）
-    this.worldContainer.addChild(entranceContainer);
+      this.worldContainer.addChild(entranceContainer);
+    }
   }
 
   // ===== 火把渲染 =====
@@ -622,8 +634,9 @@ export class MapRenderer {
       if (!this._isTileRevealed(gridPos.col, gridPos.row)) return;
 
       // 检查是否点击了探险出发口
-      if (this._isClickOnExpeditionEntrance(gridPos.col, gridPos.row)) {
-        eventBus.emit('expeditionEntranceClicked', {});
+      const clickedEntrance = this._isClickOnExpeditionEntrance(gridPos.col, gridPos.row);
+      if (clickedEntrance) {
+        eventBus.emit('expeditionEntranceClicked', clickedEntrance);
         return;
       }
 
@@ -645,15 +658,17 @@ export class MapRenderer {
   }
 
   /**
-   * 检查点击是否在探险出发口范围内
+   * 检查点击是否在某个探险出发口范围内，返回入口对象或 null
    */
   _isClickOnExpeditionEntrance(col, row) {
-    const entrance = this._expeditionEntrance;
-    if (!entrance) return false;
-    return col >= entrance.gridX &&
-           col < entrance.gridX + entrance.width &&
-           row >= entrance.gridY &&
-           row < entrance.gridY + entrance.height;
+    const entrances = this._expeditionEntrances;
+    if (!entrances || entrances.length === 0) return null;
+    for (const entrance of entrances) {
+      if (col === entrance.gridX && row === entrance.gridY) {
+        return entrance;
+      }
+    }
+    return null;
   }
 
   /**

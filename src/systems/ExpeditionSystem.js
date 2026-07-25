@@ -17,10 +17,26 @@ export class ExpeditionSystem {
     eventBus.on('tick', (data) => this.onTick(data));
   }
 
-  setSystems({ resource, item, building }) {
+  setSystems({ resource, item, building, population }) {
     this._resourceSystem = resource;
     this._itemSystem = item;
     this._buildingSystem = building;
+    this._populationSystem = population;
+  }
+
+  /**
+   * 计算所选区域的总工人消耗
+   */
+  getTotalWorkerCost(regionIds) {
+    let total = 0;
+    for (const regionId of regionIds) {
+      if (!regionId) continue;
+      const region = configRegistry.getRegion(regionId);
+      if (region && region.workerCost) {
+        total += region.workerCost;
+      }
+    }
+    return total;
   }
 
   getExpeditionConfig() {
@@ -33,12 +49,17 @@ export class ExpeditionSystem {
 
   // ===== 区域解锁 =====
 
-  getAvailableRegions() {
+  getAvailableRegions(entranceRegionIds) {
     const regions = configRegistry.get('regions') || [];
     const equippedItems = this._itemSystem ? this._itemSystem.getEquippedInstances() : [];
     const equippedItemIds = equippedItems.map(i => i.itemId);
 
-    return regions.map(region => {
+    // 过滤：如果指定了入口区域列表，只返回入口绑定的区域
+    const filteredRegions = entranceRegionIds && entranceRegionIds.length > 0
+      ? regions.filter(r => entranceRegionIds.includes(r.id))
+      : regions;
+
+    return filteredRegions.map(region => {
       const unlocked = this._isRegionUnlocked(region, equippedItemIds);
       let unlockHint = '';
       if (!unlocked && region.unlockConditions) {
@@ -114,7 +135,16 @@ export class ExpeditionSystem {
       }
     }
 
-    return { valid: true, compactedRegions: compacted };
+    // 检查可用工人
+    const totalWorkerCost = this.getTotalWorkerCost(compacted);
+    if (this._populationSystem) {
+      const available = this._populationSystem.getAvailableWorkers();
+      if (available < totalWorkerCost) {
+        return { valid: false, reason: `可用工人不足（需要 ${totalWorkerCost} 人，当前可用 ${available} 人）` };
+      }
+    }
+
+    return { valid: true, compactedRegions: compacted, totalWorkerCost };
   }
 
   /**
@@ -152,6 +182,12 @@ export class ExpeditionSystem {
     // 标记物品为探险中
     if (this._itemSystem && instanceIds.length > 0) {
       if (!this._itemSystem.markExpedition(instanceIds)) return false;
+    }
+
+    // 占用工人
+    const occupiedWorkers = check.totalWorkerCost || this.getTotalWorkerCost(compactedRegions);
+    if (this._populationSystem && occupiedWorkers > 0) {
+      this._populationSystem.occupyForExpedition(occupiedWorkers);
     }
 
     // 计算背包容量和资源容量
@@ -194,7 +230,8 @@ export class ExpeditionSystem {
       yieldMultipliers,
       yieldFlatBonuses,
       backpackCapacity,
-      resourceCapacity
+      resourceCapacity,
+      occupiedWorkers
     };
 
     this._updateStore();
@@ -291,6 +328,11 @@ export class ExpeditionSystem {
       }
     }
 
+    // 归还工人
+    if (this._populationSystem && exp.occupiedWorkers > 0) {
+      this._populationSystem.releaseFromExpedition(exp.occupiedWorkers);
+    }
+
     // 物品归还
     if (this._itemSystem && exp.items.length > 0) {
       this._itemSystem.returnFromExpedition(exp.items);
@@ -373,6 +415,11 @@ export class ExpeditionSystem {
   // ===== 存档接口 =====
 
   restoreState(state) {
+    if (!state) return;
+    // 兼容旧存档：没有 occupiedWorkers 字段时默认 0
+    if (state.occupiedWorkers === undefined) {
+      state.occupiedWorkers = 0;
+    }
     this._expedition = state;
     this._updateStore();
   }

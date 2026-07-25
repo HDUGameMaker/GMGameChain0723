@@ -7,6 +7,8 @@
 3. **区域基准产出 × 物品加成** — 产出由区域配置决定，物品提供倍率/固定加成/容量加成
 4. **探险事件仅用于剧情** — 不干预产出数值，只在满足条件时弹出叙事
 5. **区域解锁 OR 逻辑** — 物品条件或建筑条件满足其一即可
+6. **多入口分区分流** — 地图上可放置多个探索入口，每个入口绑定不同区域，点击不同入口进入不同场地
+7. **按区域消耗人力** — 每个区域配置所需工人数，出发时从可用工人池扣减，探险期间锁定，归来后归还
 
 ---
 
@@ -21,6 +23,7 @@
   "description": "光线昏暗的原始森林，夜晚采集稀有草药效率最高。",
   "image": "region_dark_forest.png",
   "unlockConditions": [],
+  "workerCost": 2,
   "baseYields": {
     "morning":    { "wood": 120, "food": 60,  "herb": 0 },
     "afternoon":  { "wood": 100, "food": 80,  "herb": 2 },
@@ -34,6 +37,7 @@
 |------|------|
 | `baseYields` | 四个时段的基准产出，key 为时段名，value 为 `{ 资源ID: 数量 }` |
 | `unlockConditions` | 解锁条件数组，OR 关系，空数组 = 默认解锁 |
+| `workerCost` | 探索该区域所需工人数，0 或不填 = 不需要工人 |
 | `image` | 区域方框内展示的缩略图 |
 
 ### 解锁条件
@@ -557,6 +561,37 @@ config/
 
 建筑升级或特定物品可增加两个基础容量。
 
+### 地图入口配置 (`config/maps/base_map.json`)
+
+探险入口不是建筑，而是地图上的固定设施。每个入口是一个 1×1 的格子，点击后打开探险准备面板，只显示该入口绑定的区域列表。
+
+```json
+"expeditionEntrances": [
+  {
+    "id": "forest_entrance",
+    "name": "森林入口",
+    "gridX": 20,
+    "gridY": 18,
+    "regionIds": ["forest", "dense_forest"]
+  },
+  {
+    "id": "mine_entrance",
+    "name": "矿洞入口",
+    "gridX": 25,
+    "gridY": 13,
+    "regionIds": ["mine_periphery", "mine_interior", "coal_seam", "iron_ridge"]
+  }
+]
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `id` | `string` | 入口唯一标识 |
+| `name` | `string` | 入口显示名称 |
+| `gridX` | `number` | 入口所在网格列 |
+| `gridY` | `number` | 入口所在网格行 |
+| `regionIds` | `string[]` | 该入口绑定的区域 ID 列表。空数组 = 显示全部已解锁区域 |
+
 ### 建筑配置补充 (`buildings.json`)
 
 建筑配置除合成配方外，还包含以下关键字段：
@@ -646,10 +681,11 @@ config/
 
 | 函数 | 参数 | 返回值 | 说明 |
 |------|------|--------|------|
-| `getAvailableRegions()` | — | `[{region, unlocked, unlockHint}, ...]` | 所有区域及解锁状态 |
+| `getAvailableRegions(entranceRegionIds?)` | 区域ID数组(可选) | `[{region, unlocked, unlockHint}, ...]` | 所有区域及解锁状态；可选参数过滤为入口绑定的区域 |
 | `isRegionUnlocked(regionId)` | 区域ID | `boolean` | 单个区域解锁判断 |
-| `canStartExpedition(regions, instanceIds)` | 区域数组, 实例ID数组 | `{valid, reason}` | 出发前校验：使用 `_compactRegions()` 去除尾部空时段，`_hasGaps()` 检查中间空隙 |
-| `startExpedition(regions, instanceIds)` | 区域数组, 实例ID数组 | `boolean` | 确认出发，存储 compacted 区域数组（去除尾部空时段），锁定物品实例 |
+| `canStartExpedition(regions, instanceIds)` | 区域数组, 实例ID数组 | `{valid, reason}` | 出发前校验：含工人校验 |
+| `getTotalWorkerCost(regionIds)` | 区域ID数组 | `number` | 计算所选区域的总工人消耗 |
+| `startExpedition(regions, instanceIds)` | 区域数组, 实例ID数组 | `boolean` | 确认出发，扣减工人，锁定物品实例 |
 | `getCurrentExpedition()` | — | `ExpeditionState \| null` | 当前探险状态 |
 | `getExpectedYields(regions, instanceIds)` | 区域数组, 实例ID数组 | `{resourceId: amount}` | 预览预计产出（不计容量），自动跳过 null 条目 |
 | `recallExpedition()` | — | `boolean` | 提前召回队伍 `[计划中]` |
@@ -668,7 +704,8 @@ config/
   totalDiscarded: { wood: 10, herb: 5 },            // 因容量不足丢弃的资源
   triggeredEvents: ['exp_story_01'],                 // 已触发事件记录
   yieldMultipliers: { wood: 1.5, herb: 2.0 },       // 累积倍率
-  yieldFlatBonuses: {}                               // 固定加成
+  yieldFlatBonuses: {},                              // 固定加成
+  occupiedWorkers: 5                                 // 探险占用的工人数
 }
 ```
 
@@ -702,6 +739,7 @@ config/
 |------|---------|
 | **ResourceSystem** | 出发时扣减消耗，归来时 add 采集资源 |
 | **ItemSystem** | 出发时 `markExpedition(instanceIds)` 锁定物品（equipped → inExpedition），归来时 `returnFromExpedition(instanceIds)` — 消耗品自动 `lose()`，非消耗品清除标记；事件获得物品直接 `obtain` |
+| **PopulationSystem** | 出发时 `occupyForExpedition(count)` 扣减可用工人，归来时 `releaseFromExpedition(count)` 归还；可用工人池 = 当前人口 - 建筑分配 - 探险占用 |
 | **EventSystem** | 共用效果处理器注册表；探险事件走独立事件池 |
 | **TimeSystem** | 订阅 tick 事件，推动探险进度 |
 | **BuildingSystem** | 建筑等级影响基础容量；建筑解锁区域条件 |

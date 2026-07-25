@@ -61,7 +61,9 @@
     "triggerConditions": {
       "timePeriods": [],
       "requiredItems": [],
-      "requiredBuildings": []
+      "requiredBuildings": [],
+      "regions": [],
+      "requiredCarriedItems": []
     },
     "invalidationConditions": {
       "timePeriods": [],
@@ -347,5 +349,28 @@
         "effects": []
       }
     ]
+  },
+  {
+    "id": "new_base_event",
+    "name": "新基地事件",
+    "description": "",
+    "image": "",
+    "priority": 0,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": []
   }
 ]

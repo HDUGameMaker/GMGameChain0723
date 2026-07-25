@@ -280,13 +280,15 @@ export class HUD {
         return r ? r.name : rId;
       });
       const currentPeriod = state.currentPeriodIndex + 1;
+      const occupiedWorkers = state.occupiedWorkers || 0;
+      const workerInfo = occupiedWorkers > 0 ? ` | 👥 ${occupiedWorkers}人` : '';
       this.expeditionStatus.style.display = 'block';
 
       if (!this._expeditionProgressFill) {
         // 首次渲染：创建 DOM 并注册到统一进度管理器
         this.expeditionStatus.innerHTML = `
           <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:4px;">
-            <span class="expedition-label">🔍 探索中 | ${regionNames.join(' → ')} | 第 ${currentPeriod}/${totalPeriods} 时段</span>
+            <span class="expedition-label">🔍 探索中 | ${regionNames.join(' → ')} | 第 ${currentPeriod}/${totalPeriods} 时段${workerInfo}</span>
             <span class="expedition-pct" style="font-size:11px;opacity:0.8;flex-shrink:0;margin-left:8px;">0%</span>
           </div>
           <div class="progress-bar" style="height:5px;">
@@ -313,7 +315,7 @@ export class HUD {
         // 后续调用：仅更新文本标签
         const labelEl = this.expeditionStatus.querySelector('.expedition-label');
         if (labelEl) {
-          labelEl.textContent = `🔍 探索中 | ${regionNames.join(' → ')} | 第 ${currentPeriod}/${totalPeriods} 时段`;
+          labelEl.textContent = `🔍 探索中 | ${regionNames.join(' → ')} | 第 ${currentPeriod}/${totalPeriods} 时段${workerInfo}`;
         }
       }
 

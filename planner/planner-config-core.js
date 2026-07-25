@@ -164,7 +164,8 @@ const state = {
   mapEditorBuilding: null,       // selected building ID for placement
   mapEditorSelectedBuilding: -1, // index in initialBuildings being dragged
   mapEditorDragging: false,
-  mapEditorDragTarget: null,     // 'move' | 'nw' | 'ne' | 'sw' | 'se' for entrance
+  mapEditorDragTarget: null,     // 'move' for building/entrance
+  mapEditorSelectedEntrance: -1, // 当前选中的入口索引（在 entrances 数组中）
   mapHoverCol: -1,               // current hover tile col
   mapHoverRow: -1,               // current hover tile row
   mapRectStartCol: -1,           // rectangle tool drag start col

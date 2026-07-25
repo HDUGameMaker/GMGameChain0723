@@ -77,7 +77,8 @@ class Game {
     this.systems.expedition.setSystems({
       resource: this.systems.resource,
       item: this.systems.item,
-      building: this.systems.building
+      building: this.systems.building,
+      population: this.systems.population
     });
 
     // 注册人口每日结算
@@ -106,10 +107,10 @@ class Game {
     });
 
     // 注册探险出发口点击事件
-    eventBus.on('expeditionEntranceClicked', () => {
+    eventBus.on('expeditionEntranceClicked', (entrance) => {
       // 探险进行中不可进入准备界面
       if (this.systems.expedition.getCurrentExpedition()) return;
-      this.popupManager.open('expedition_prep', {});
+      this.popupManager.open('expedition_prep', { entrance });
     });
 
     // 注册火把点击事件

@@ -357,7 +357,12 @@
     { "buildingId": "warehouse",   "gridX": 8, "gridY": 3 }
   ],
 
-  "expeditionEntrance": { "gridX": 16, "gridY": 6 }
+  "expeditionEntrances": [
+    { "id": "forest_entrance",  "name": "森林入口",   "gridX": 16, "gridY": 6,  "regionIds": ["forest", "dense_forest"] },
+    { "id": "mine_entrance",    "name": "矿洞入口",   "gridX": 28, "gridY": 10, "regionIds": ["mine_periphery", "mine_interior", "coal_seam", "iron_ridge"] },
+    { "id": "mountain_entrance","name": "山麓入口",   "gridX": 35, "gridY": 12, "regionIds": ["mountain_summit", "summit_ruins"] },
+    { "id": "scrapyard_entrance","name": "回收场入口", "gridX": 42, "gridY": 8,  "regionIds": ["scrapyard", "scrapyard_core"] }
+  ]
 }
 ```
 
@@ -371,7 +376,7 @@
 | `groundTypes` | `object` | 地面类型字典，key 为单字符代码，value 为属性 |
 | `grid` | `string[]` | 网格数据，每行一个字符串，每字符对应一格的地面类型 key |
 | `initialBuildings` | `array` | 初始已放置的建筑列表 |
-| `expeditionEntrance` | `object` | 远征入口网格坐标（`{gridX, gridY}`） |
+| `expeditionEntrances` | `array` | 探险入口列表，每个入口为 1×1 格子。每项含 `id`、`name`、`gridX`、`gridY`、`regionIds`（该入口绑定的区域 ID 数组） |
 
 ### 地面类型属性
 

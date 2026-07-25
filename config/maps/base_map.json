@@ -1,6 +1,6 @@
 {
-  "viewportCols": 47,
-  "viewportRows": 21,
+  "viewportCols": 53,
+  "viewportRows": 26,
   "gridWidth": 100,
   "gridHeight": 100,
   "tileSize": 60,
@@ -143,12 +143,50 @@
     "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
     "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG"
   ],
-  "expeditionEntrance": {
-    "gridX": 25,
-    "gridY": 13,
-    "width": 2,
-    "height": 2
-  },
+  "expeditionEntrances": [
+    {
+      "id": "forest_entrance",
+      "name": "森林入口",
+      "gridX": 20,
+      "gridY": 18,
+      "regionIds": [
+        "forest",
+        "dense_forest"
+      ]
+    },
+    {
+      "id": "mine_entrance",
+      "name": "矿洞入口",
+      "gridX": 25,
+      "gridY": 13,
+      "regionIds": [
+        "mine_periphery",
+        "mine_interior",
+        "coal_seam",
+        "iron_ridge"
+      ]
+    },
+    {
+      "id": "mountain_entrance",
+      "name": "山麓入口",
+      "gridX": 20,
+      "gridY": 35,
+      "regionIds": [
+        "mountain_summit",
+        "summit_ruins"
+      ]
+    },
+    {
+      "id": "scrapyard_entrance",
+      "name": "回收场入口",
+      "gridX": 17,
+      "gridY": 45,
+      "regionIds": [
+        "scrapyard",
+        "scrapyard_core"
+      ]
+    }
+  ],
   "initialBuildings": [
     {
       "buildingId": "eternal_torch",

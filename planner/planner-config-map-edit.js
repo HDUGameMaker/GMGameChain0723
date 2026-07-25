@@ -525,7 +525,7 @@ function pushUndo() {
   const snapshot = {
     grid: (m.grid || []).slice(),
     initialBuildings: JSON.parse(JSON.stringify(m.initialBuildings || [])),
-    expeditionEntrance: m.expeditionEntrance ? JSON.parse(JSON.stringify(m.expeditionEntrance)) : null
+    expeditionEntrances: m.expeditionEntrances ? JSON.parse(JSON.stringify(m.expeditionEntrances)) : []
   };
   state.undoStack.push(snapshot);
   if (state.undoStack.length > 50) state.undoStack.shift();
@@ -538,15 +538,16 @@ function performUndo() {
   const current = {
     grid: (m.grid || []).slice(),
     initialBuildings: JSON.parse(JSON.stringify(m.initialBuildings || [])),
-    expeditionEntrance: m.expeditionEntrance ? JSON.parse(JSON.stringify(m.expeditionEntrance)) : null
+    expeditionEntrances: m.expeditionEntrances ? JSON.parse(JSON.stringify(m.expeditionEntrances)) : []
   };
   state.redoStack.push(current);
   if (state.redoStack.length > 50) state.redoStack.shift();
   const snap = state.undoStack.pop();
   m.grid = snap.grid;
   m.initialBuildings = snap.initialBuildings;
-  m.expeditionEntrance = snap.expeditionEntrance;
+  m.expeditionEntrances = snap.expeditionEntrances;
   state.mapEditorSelectedBuilding = -1;
+  state.mapEditorSelectedEntrance = -1;
   state.mapEditorDragTarget = null;
   markDirty();
   syncBuildingsToForm();
@@ -561,15 +562,16 @@ function performRedo() {
   const current = {
     grid: (m.grid || []).slice(),
     initialBuildings: JSON.parse(JSON.stringify(m.initialBuildings || [])),
-    expeditionEntrance: m.expeditionEntrance ? JSON.parse(JSON.stringify(m.expeditionEntrance)) : null
+    expeditionEntrances: m.expeditionEntrances ? JSON.parse(JSON.stringify(m.expeditionEntrances)) : []
   };
   state.undoStack.push(current);
   if (state.undoStack.length > 50) state.undoStack.shift();
   const snap = state.redoStack.pop();
   m.grid = snap.grid;
   m.initialBuildings = snap.initialBuildings;
-  m.expeditionEntrance = snap.expeditionEntrance;
+  m.expeditionEntrances = snap.expeditionEntrances;
   state.mapEditorSelectedBuilding = -1;
+  state.mapEditorSelectedEntrance = -1;
   state.mapEditorDragTarget = null;
   markDirty();
   syncBuildingsToForm();
@@ -697,85 +699,75 @@ function removeBuilding(idx) {
 }
 
 /* -- Entrance editing -- */
+// state.mapEditorSelectedEntrance 存储在 state 对象中（planner-config-core.js），跨文件共享
+
 function handleEntranceDown(col, row, e) {
   const m = state.data.base_map;
-  const ee = m.expeditionEntrance;
-  if (!ee || ee.gridX == null) {
-    // No entrance yet, create one
-    pushUndo();
-    m.expeditionEntrance = { gridX: col, gridY: row, width: 2, height: 2 };
-    markDirty();
-    syncEntranceToForm();
-    drawMapCanvas();
+  if (!m.expeditionEntrances) m.expeditionEntrances = [];
+
+  // 检查是否右键（删除）
+  if (e && e.button === 2) {
+    const foundIdx = findEntranceAt(col, row);
+    if (foundIdx >= 0) {
+      e.preventDefault();
+      pushUndo();
+      m.expeditionEntrances.splice(foundIdx, 1);
+      state.mapEditorSelectedEntrance = -1;
+      markDirty();
+      renderDetail();
+      drawMapCanvas();
+    }
     return;
   }
 
-  const x = ee.gridX, y = ee.gridY, w = ee.width || 1, h = ee.height || 1;
-  // Check if clicking on a corner handle
-  const threshold = 1.5;
-  const corners = [
-    { key: 'nw', cx: x, cy: y },
-    { key: 'ne', cx: x + w, cy: y },
-    { key: 'sw', cx: x, cy: y + h },
-    { key: 'se', cx: x + w, cy: y + h },
-  ];
-  for (const c of corners) {
-    if (Math.abs(col - c.cx) < threshold && Math.abs(row - c.cy) < threshold) {
-      pushUndo();
-      state.mapEditorDragTarget = c.key;
-      return;
-    }
-  }
-  // Check if inside the entrance rect
-  if (col >= x && col < x + w && row >= y && row < y + h) {
+  // 检查是否点击已有入口 → 开始移动
+  const clickedIdx = findEntranceAt(col, row);
+  if (clickedIdx >= 0) {
     pushUndo();
+    state.mapEditorSelectedEntrance = clickedIdx;
     state.mapEditorDragTarget = 'move';
     return;
   }
+
+  // 点击空位 → 新建入口
+  pushUndo();
+  const newId = 'entrance_' + Date.now();
+  m.expeditionEntrances.push({
+    id: newId,
+    name: '新入口',
+    gridX: col,
+    gridY: row,
+    regionIds: []
+  });
+  state.mapEditorSelectedEntrance = m.expeditionEntrances.length - 1;
+  markDirty();
+  renderDetail();
+  drawMapCanvas();
 }
 
 function handleEntranceDrag(col, row) {
   const m = state.data.base_map;
-  const ee = m.expeditionEntrance;
-  if (!ee) return;
+  if (!m.expeditionEntrances) return;
+  if (state.mapEditorDragTarget !== 'move' || state.mapEditorSelectedEntrance < 0) return;
 
-  const target = state.mapEditorDragTarget;
-  if (target === 'move') {
-    ee.gridX = Math.max(0, Math.min(col, m.gridWidth - (ee.width || 1)));
-    ee.gridY = Math.max(0, Math.min(row, m.gridHeight - (ee.height || 1)));
-  } else if (target === 'nw') {
-    const newW = (ee.gridX + ee.width) - col;
-    const newH = (ee.gridY + ee.height) - row;
-    if (newW >= 1) { ee.gridX = col; ee.width = newW; }
-    if (newH >= 1) { ee.gridY = row; ee.height = newH; }
-  } else if (target === 'ne') {
-    const newW = col - ee.gridX + 1;
-    const newH = (ee.gridY + ee.height) - row;
-    if (newW >= 1) ee.width = newW;
-    if (newH >= 1) { ee.gridY = row; ee.height = newH; }
-  } else if (target === 'sw') {
-    const newW = (ee.gridX + ee.width) - col;
-    const newH = row - ee.gridY + 1;
-    if (newW >= 1) { ee.gridX = col; ee.width = newW; }
-    if (newH >= 1) ee.height = newH;
-  } else if (target === 'se') {
-    const newW = col - ee.gridX + 1;
-    const newH = row - ee.gridY + 1;
-    if (newW >= 1) ee.width = newW;
-    if (newH >= 1) ee.height = newH;
+  const ent = m.expeditionEntrances[state.mapEditorSelectedEntrance];
+  if (!ent) return;
+  ent.gridX = Math.max(0, Math.min(col, m.gridWidth - 1));
+  ent.gridY = Math.max(0, Math.min(row, m.gridHeight - 1));
+}
+
+function findEntranceAt(col, row) {
+  const entrances = state.data.base_map.expeditionEntrances;
+  if (!entrances) return -1;
+  for (let i = 0; i < entrances.length; i++) {
+    const e = entrances[i];
+    if (e.gridX === col && e.gridY === row) return i;
   }
+  return -1;
 }
 
 function syncEntranceToForm() {
-  const ee = state.data.base_map.expeditionEntrance;
-  if (!ee) return;
-  ['ee_gridX', 'ee_gridY', 'ee_width', 'ee_height'].forEach(fid => {
-    const el = document.getElementById('f_' + fid);
-    if (el) {
-      const key = fid.replace('ee_', '');
-      el.value = ee[key] != null ? ee[key] : '';
-    }
-  });
+  renderDetail();
 }
 
 function syncBuildingsToForm() {
@@ -806,6 +798,7 @@ function setMapEditorMode(mode) {
   }
   state.mapEditorMode = mode;
   state.mapEditorSelectedBuilding = -1;
+  state.mapEditorSelectedEntrance = -1;
   state.mapEditorDragTarget = null;
 
   // Update button active states

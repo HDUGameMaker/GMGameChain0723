@@ -14,6 +14,7 @@ export class PopulationSystem {
 
     this.current = 0;
     this.declineCountdown = 0; // 人口减少倒计时天数
+    this._expeditionWorkers = 0; // 探险占用工人数
     this._buildingSystem = null; // 延迟注入
     this._resourceSystem = null; // 延迟注入
   }
@@ -56,10 +57,26 @@ export class PopulationSystem {
   }
 
   /**
-   * 获取可用工人池
+   * 获取可用工人池（扣除建筑分配 + 探险占用）
    */
   getAvailableWorkers() {
-    return Math.max(0, this.current - this.getAssignedWorkers());
+    return Math.max(0, this.current - this.getAssignedWorkers() - this._expeditionWorkers);
+  }
+
+  /**
+   * 探险出发时占用工人
+   */
+  occupyForExpedition(count) {
+    this._expeditionWorkers += count;
+    this._updateStore();
+  }
+
+  /**
+   * 探险归来时归还工人
+   */
+  releaseFromExpedition(count) {
+    this._expeditionWorkers = Math.max(0, this._expeditionWorkers - count);
+    this._updateStore();
   }
 
   /**
@@ -152,6 +169,7 @@ export class PopulationSystem {
       populationCurrent: this.current,
       populationHousing: this.getHousingCapacity(),
       populationAvailable: this.getAvailableWorkers(),
+      populationExpeditionWorkers: this._expeditionWorkers,
       populationDeclineCountdown: this.declineCountdown
     });
   }
@@ -168,7 +186,8 @@ export class PopulationSystem {
   getState() {
     return {
       current: this.current,
-      declineCountdown: this.declineCountdown
+      declineCountdown: this.declineCountdown,
+      expeditionWorkers: this._expeditionWorkers
     };
   }
 
@@ -176,6 +195,7 @@ export class PopulationSystem {
     if (!state) return;
     this.current = state.current || 0;
     this.declineCountdown = state.declineCountdown || 0;
+    this._expeditionWorkers = state.expeditionWorkers || 0;
     this._updateStore();
   }
 }
