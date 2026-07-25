@@ -17,13 +17,13 @@ function addItem() {
 
   // For events, ask which file to save to
   if (state.tab === 'events') {
-    const choice = prompt('请选择事件类型:\n\n  输入 1 → 🏠 基地事件 (存入 events_base.json)\n  输入 2 → 🗺️ 探险事件 (存入 events_expedition.json)\n\n默认: 基地事件', '1');
-    const isBase = choice !== '2';
-    newItem.id = isBase ? 'new_base_event' : 'new_expedition_event';
-    newItem.name = isBase ? '新基地事件' : '新探险事件';
+    const choice = prompt('请选择事件类型:\n\n  输入 1 → 🏠 基地事件 (存入 events_base.json)\n  输入 2 → 🗺️ 探险事件 (存入 events_expedition.json)\n  输入 3 → ❓ 地图事件 (存入 events_map.json)\n\n默认: 基地事件', '1');
+    const src = choice === '2' ? 'expedition' : choice === '3' ? 'map' : 'base';
+    newItem.id = src === 'map' ? 'new_map_event' : src === 'expedition' ? 'new_expedition_event' : 'new_base_event';
+    newItem.name = src === 'map' ? '新地图事件' : src === 'expedition' ? '新探险事件' : '新基地事件';
     data.push(newItem);
     if (!state.eventFileSource) state.eventFileSource = new Map();
-    state.eventFileSource.set(newItem.id, isBase ? 'base' : 'expedition');
+    state.eventFileSource.set(newItem.id, src);
   } else {
     data.push(newItem);
   }

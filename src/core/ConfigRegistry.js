@@ -21,6 +21,7 @@ class ConfigRegistry {
       'expeditionGlobal': 'config/expeditions/expedition_global.json',
       'eventsBase': 'config/events/events_base.json',
       'eventsExpedition': 'config/events/events_expedition.json',
+      'eventsMap': 'config/events/events_map.json',
       'sound': 'config/sound.json',
       'adjacency_bonuses': 'config/adjacency-bonuses.json'
     };
@@ -68,6 +69,9 @@ class ConfigRegistry {
     }
     if (Array.isArray(this._configs['eventsExpedition'])) {
       events.push(...this._configs['eventsExpedition']);
+    }
+    if (Array.isArray(this._configs['eventsMap'])) {
+      events.push(...this._configs['eventsMap']);
     }
     return events;
   }

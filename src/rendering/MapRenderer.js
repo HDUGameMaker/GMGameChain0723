@@ -113,6 +113,7 @@ export class MapRenderer {
     this._centerView();
     this._drawTerrainChunk();
     this._drawExpeditionEntrances();
+    this._drawEventMarkers();
     this._drawTorches();
     this._createFogCanvas();
     this._setupInteraction();
@@ -183,6 +184,98 @@ export class MapRenderer {
 
       this.worldContainer.addChild(entranceContainer);
     }
+  }
+
+  // ===== 地图事件标记渲染 =====
+
+  /**
+   * 绘制地图上的事件标记（"?"）
+   * 从 base_map.json 的 eventMarkers 数组读取
+   * 已移除的标记（通过 Store 的 removedEventMarkers 记录）不渲染
+   */
+  _drawEventMarkers() {
+    this._eventMarkerSprites = [];
+    this._eventMarkerData = [];
+    const markers = this.mapConfig.eventMarkers;
+    if (!markers || markers.length === 0) return;
+
+    const removedIds = store.getState('removedEventMarkers') || [];
+    const removedSet = new Set(removedIds);
+    const ts = this.tileSize;
+
+    for (const marker of markers) {
+      if (removedSet.has(marker.id)) continue;
+
+      const { gridX, gridY } = marker;
+      const x = gridX * ts;
+      const y = gridY * ts;
+      const w = ts;
+      const h = ts;
+
+      const container = new PIXI.Container();
+
+      // 底色
+      const bg = new PIXI.Graphics();
+      bg.rect(x, y, w, h);
+      bg.fill({ color: 0x8B6914, alpha: 0.7 });
+      bg.rect(x, y, w, h);
+      bg.stroke({ color: 0xFFD700, alpha: 0.9, width: 2 });
+      container.addChild(bg);
+
+      // "?" 图标
+      const iconText = new PIXI.Text({
+        text: '?',
+        style: { fontSize: 28, fontWeight: 'bold', fill: 0xFFD700, align: 'center' }
+      });
+      iconText.anchor.set(0.5);
+      iconText.x = x + w / 2;
+      iconText.y = y + h / 2;
+      container.addChild(iconText);
+
+      // 添加到世界容器
+      this.worldContainer.addChild(container);
+
+      this._eventMarkerSprites.push(container);
+      this._eventMarkerData.push(marker);
+    }
+  }
+
+  /**
+   * 移除指定的事件标记（点击后调用）
+   */
+  _removeEventMarkerSprite(markerId) {
+    const idx = this._eventMarkerData.findIndex(m => m.id === markerId);
+    if (idx < 0) return;
+
+    // 从世界容器移除
+    if (this._eventMarkerSprites[idx]) {
+      this.worldContainer.removeChild(this._eventMarkerSprites[idx]);
+      this._eventMarkerSprites[idx].destroy({ children: true });
+    }
+
+    this._eventMarkerSprites.splice(idx, 1);
+    this._eventMarkerData.splice(idx, 1);
+
+    // 更新 Store，持久化已移除标记
+    const removed = store.getState('removedEventMarkers') || [];
+    if (!removed.includes(markerId)) {
+      store.setState({ removedEventMarkers: [...removed, markerId] });
+    }
+  }
+
+  /**
+   * 刷新事件标记（当 Store 中 removedEventMarkers 变化时调用）
+   */
+  _refreshEventMarkers() {
+    // 清理旧标记
+    for (const sprite of this._eventMarkerSprites) {
+      this.worldContainer.removeChild(sprite);
+      sprite.destroy({ children: true });
+    }
+    this._eventMarkerSprites = [];
+    this._eventMarkerData = [];
+    // 重新绘制
+    this._drawEventMarkers();
   }
 
   // ===== 火把渲染 =====
@@ -633,6 +726,13 @@ export class MapRenderer {
       // 检查迷雾门控
       if (!this._isTileRevealed(gridPos.col, gridPos.row)) return;
 
+      // 检查是否点击了事件标记（"?"）
+      const clickedMarker = this._isClickOnEventMarker(gridPos.col, gridPos.row);
+      if (clickedMarker) {
+        eventBus.emit('eventMarkerClicked', clickedMarker);
+        return;
+      }
+
       // 检查是否点击了探险出发口
       const clickedEntrance = this._isClickOnExpeditionEntrance(gridPos.col, gridPos.row);
       if (clickedEntrance) {
@@ -669,6 +769,37 @@ export class MapRenderer {
       }
     }
     return null;
+  }
+
+  /**
+   * 检查点击是否在某个事件标记范围内，返回标记对象或 null
+   */
+  _isClickOnEventMarker(col, row) {
+    const data = this._eventMarkerData;
+    if (!data || data.length === 0) return null;
+    const removedSet = new Set(store.getState('removedEventMarkers') || []);
+    for (const marker of data) {
+      if (removedSet.has(marker.id)) continue;
+      if (col === marker.gridX && row === marker.gridY) {
+        return marker;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 获取已移除标记 ID 列表（用于存档）
+   */
+  getMarkerState() {
+    return store.getState('removedEventMarkers') || [];
+  }
+
+  /**
+   * 从存档恢复已移除标记状态
+   */
+  restoreMarkerState(removedIds) {
+    store.setState({ removedEventMarkers: removedIds || [] });
+    this._refreshEventMarkers();
   }
 
   /**
@@ -1672,6 +1803,11 @@ export class MapRenderer {
     eventBus.on('torchStateChanged', () => {
       this._drawTorches();
       this._updateFogTexture();
+    });
+
+    // 监听已移除事件标记的变化（来自存档恢复等）
+    store.subscribe('removedEventMarkers', () => {
+      this._refreshEventMarkers();
     });
   }
 

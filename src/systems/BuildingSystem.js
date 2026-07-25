@@ -113,6 +113,16 @@ export class BuildingSystem {
       }
     }
 
+    // 重叠检查（活跃的事件标记）
+    const removedIds = new Set(store.getState('removedEventMarkers') || []);
+    const eventMarkers = map.eventMarkers || [];
+    for (const marker of eventMarkers) {
+      if (removedIds.has(marker.id)) continue;
+      if (isAreaOverlap(gridX, gridY, w, h, marker.gridX, marker.gridY, 1, 1)) {
+        return { valid: false, reason: '与事件标记重叠' };
+      }
+    }
+
     // maxCount 检查
     if (config.maxCount !== null && config.maxCount !== undefined) {
       const count = this.buildings.filter(b => b.buildingId === buildingId).length;
@@ -381,6 +391,16 @@ export class BuildingSystem {
         if (isAreaOverlap(newGridX, newGridY, w, h, t.gridX, t.gridY, 1, 1)) {
           return { valid: false, reason: '与已有火把重叠' };
         }
+      }
+    }
+
+    // 重叠检查（活跃的事件标记）
+    const removedIds = new Set(store.getState('removedEventMarkers') || []);
+    const eventMarkers = map.eventMarkers || [];
+    for (const marker of eventMarkers) {
+      if (removedIds.has(marker.id)) continue;
+      if (isAreaOverlap(newGridX, newGridY, w, h, marker.gridX, marker.gridY, 1, 1)) {
+        return { valid: false, reason: '与事件标记重叠' };
       }
     }
 

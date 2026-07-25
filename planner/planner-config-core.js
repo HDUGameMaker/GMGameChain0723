@@ -73,6 +73,7 @@ const CONFIG_FILES = {
   items:       { path: 'items.json',                  dir: '' },
   events_base: { path: 'events_base.json',            dir: 'events' },
   events_exp:  { path: 'events_expedition.json',      dir: 'events' },
+  events_map:  { path: 'events_map.json',             dir: 'events' },
   regions:     { path: 'regions.json',                dir: 'expeditions' },
   exp_global:  { path: 'expedition_global.json',      dir: 'expeditions' },
   base_map:    { path: 'base_map.json',               dir: 'maps' },
@@ -156,16 +157,17 @@ const state = {
   saveTimer: null,
   undoStack: [],
   redoStack: [],
-  eventTypeFilter: 'all',  // 'all' | 'base' | 'expedition'
+  eventTypeFilter: 'all',  // 'all' | 'base' | 'expedition' | 'map'
 
   // Map Canvas editor state
-  mapEditorMode: 'brush',        // 'brush' | 'building' | 'entrance' | 'rectangle' | 'fill' | 'eraser' | 'select'
+  mapEditorMode: 'brush',        // 'brush' | 'building' | 'entrance' | 'marker' | 'rectangle' | 'fill' | 'eraser' | 'select'
   mapEditorBrush: 'G',           // selected ground type char
   mapEditorBuilding: null,       // selected building ID for placement
   mapEditorSelectedBuilding: -1, // index in initialBuildings being dragged
   mapEditorDragging: false,
   mapEditorDragTarget: null,     // 'move' for building/entrance
   mapEditorSelectedEntrance: -1, // 当前选中的入口索引（在 entrances 数组中）
+  mapEditorSelectedMarker: -1,   // 当前选中的事件标记索引（在 eventMarkers 数组中）
   mapHoverCol: -1,               // current hover tile col
   mapHoverRow: -1,               // current hover tile row
   mapRectStartCol: -1,           // rectangle tool drag start col
@@ -197,10 +199,10 @@ const MAP_CELL_SIZE = 28; // default tile size on canvas at 100% zoom
    ═══════════════════════════════════════════ */
 async function loadAllData() {
   try {
-    const [buildings, resources, items, eventsBase, eventsExp, regions, expGlobal, baseMap, adjacencyBonuses] =
+    const [buildings, resources, items, eventsBase, eventsExp, eventsMap, regions, expGlobal, baseMap, adjacencyBonuses] =
       await Promise.all([
         readFile('buildings'), readFile('resources'), readFile('items'),
-        readFile('events_base'), readFile('events_exp'),
+        readFile('events_base'), readFile('events_exp'), readFile('events_map'),
         readFile('regions'), readFile('exp_global'), readFile('base_map'),
         readFile('adjacency_bonuses').catch(() => '[]'),
       ]);
@@ -209,12 +211,15 @@ async function loadAllData() {
     state.data.items = JSON.parse(items);
     const eb = JSON.parse(eventsBase);
     const ee = JSON.parse(eventsExp);
-    state.data.events = [...eb, ...ee];
+    const em = JSON.parse(eventsMap);
+    state.data.events = [...eb, ...ee, ...em];
     state.data.events_base_file = eb;
     state.data.events_exp_file = ee;
+    state.data.events_map_file = em;
     state.eventFileSource = new Map();
     eb.forEach(e => state.eventFileSource.set(e.id, 'base'));
     ee.forEach(e => state.eventFileSource.set(e.id, 'expedition'));
+    em.forEach(e => state.eventFileSource.set(e.id, 'map'));
     state.data.regions = JSON.parse(regions);
     state.data.exp_global = JSON.parse(expGlobal);
     state.data.base_map = JSON.parse(baseMap);
@@ -255,7 +260,7 @@ function currentFileKeys() {
     case 'buildings': return ['buildings'];
     case 'resources': return ['resources'];
     case 'items':     return ['items'];
-    case 'events':    return ['events_base', 'events_exp'];
+    case 'events':    return ['events_base', 'events_exp', 'events_map'];
     case 'expeditions': return ['regions', 'exp_global'];
     case 'map':       return ['base_map'];
     case 'analysis':  return []; // 只读，无文件
@@ -316,9 +321,11 @@ async function doSave() {
     if (state.tab === 'events') {
       const allEvents = state.data.events;
       const baseEvents = allEvents.filter(e => state.eventFileSource.get(e.id) === 'base');
-      const expEvents = allEvents.filter(e => state.eventFileSource.get(e.id) !== 'base');
+      const expEvents = allEvents.filter(e => state.eventFileSource.get(e.id) === 'expedition');
+      const mapEvents = allEvents.filter(e => state.eventFileSource.get(e.id) === 'map');
       await writeFile('events_base', JSON.stringify(baseEvents, null, 2));
       await writeFile('events_exp', JSON.stringify(expEvents, null, 2));
+      await writeFile('events_map', JSON.stringify(mapEvents, null, 2));
     } else if (state.tab === 'expeditions') {
       await writeFile('regions', JSON.stringify(state.data.regions, null, 2));
       await writeFile('exp_global', JSON.stringify(state.data.exp_global, null, 2));

@@ -359,20 +359,28 @@ function renderEventForm(ev) {
 
   // Options
   html += '<div class="section-title">选项</div>';
+  html += '<div id="optionsContainer">';
   (ev.options || []).forEach((opt, oi) => {
-    html += `<div style="border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px">
-      <div class="form-group full"><label>选项 ${oi+1} 文本</label>
+    html += `<div class="option-block" data-oidx="${oi}" style="border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span style="font-weight:600;font-size:13px;color:var(--accent)">选项 ${oi+1}</span>
+        <button type="button" class="btn-danger btn-sm btn-del-option" data-oidx="${oi}" style="margin-left:auto">✕ 删除</button>
+      </div>
+      <div class="form-group full"><label>选项文本</label>
       <input type="text" id="f_opt_${oi}_text" data-opt="${oi}" data-key="text" value="${escapeHTML(opt.text)}" /></div>`;
-    html += subListEditor(`opt_${oi}_effects`, '效果', opt.effects || [], (ef, i) => {
+    html += subListEditor(`opt_${oi}_effects`, '选项效果', opt.effects || [], (ef, i) => {
       let typeOpts = ['add_resource','consume_resource','obtain_item','consume_item','unlock_building','trigger_event','schedule_event']
         .map(t => `<option value="${t}" ${ef.type===t?'selected':''}>${t}</option>`).join('');
       return `<select data-subidx="${i}" data-key="type" style="flex:1">${typeOpts}</select>
         ${resSelectSub(i, ef.resourceId||'')}
         <input class="amount" data-subidx="${i}" data-key="amount" type="number" value="${ef.amount||0}" placeholder="数量" />
-        <input class="amount" data-subidx="${i}" data-key="eventId" value="${escapeHTML(ef.eventId||'')}" placeholder="事件ID" />`;
+        <input class="amount" data-subidx="${i}" data-key="eventId" value="${escapeHTML(ef.eventId||'')}" placeholder="事件ID" />
+        <input class="amount" data-subidx="${i}" data-key="itemId" value="${escapeHTML(ef.itemId||'')}" placeholder="物品ID" />`;
     });
     html += '</div>';
   });
+  html += '</div>';
+  html += `<button type="button" id="btnAddOption" class="btn-secondary btn-sm" style="margin-top:4px">+ 添加选项</button>`;
 
   return html;
 }
@@ -463,13 +471,14 @@ function renderMapForm() {
   html += '<button class="btn-secondary btn-sm map-mode-btn active" data-mode="brush">🖌️ 笔刷</button>';
   html += '<button class="btn-secondary btn-sm map-mode-btn" data-mode="building">🏠 建筑</button>';
   html += '<button class="btn-secondary btn-sm map-mode-btn" data-mode="entrance">🚪 入口</button>';
+  html += '<button class="btn-secondary btn-sm map-mode-btn" data-mode="marker">❓ 事件标记</button>';
   html += '<button class="btn-secondary btn-sm map-mode-btn" data-mode="rectangle">◻ 矩形</button>';
   html += '<button class="btn-secondary btn-sm map-mode-btn" data-mode="fill">▦ 填充</button>';
   html += '<button class="btn-secondary btn-sm map-mode-btn" data-mode="eraser">🧹 橡皮擦</button>';
   html += '<span class="sep" style="width:1px;height:16px;background:var(--border);margin:0 4px;display:inline-block"></span>';
   html += '<button class="btn-secondary btn-sm map-mode-btn" data-mode="select">🔲 选区移动</button>';
   html += '<button id="btnGenerateMap" class="btn-secondary btn-sm" style="margin-left:auto" title="生成100×100随机地图">🎲 生成100×100</button>';
-  html += '<span style="margin-left:8px;font-size:11px;color:var(--muted)">滚轮缩放 | 中键平移 | B/V/E/R/F/X/S切换模式 | Ctrl+Z撤销 Ctrl+Y重做</span>';
+  html += '<span style="margin-left:8px;font-size:11px;color:var(--muted)">滚轮缩放 | 中键平移 | B/V/E/Q/R/F/X/S切换模式 | Ctrl+Z撤销 Ctrl+Y重做</span>';
   html += '</div>';
   html += '<div style="display:flex;gap:12px;align-items:flex-start;margin-top:8px">';
 
@@ -536,6 +545,16 @@ function renderMapForm() {
      <input class="amount" data-subidx="${i}" data-key="gridX" type="number" value="${e.gridX??0}" placeholder="X" />
      <input class="amount" data-subidx="${i}" data-key="gridY" type="number" value="${e.gridY??0}" placeholder="Y" />
      <input data-subidx="${i}" data-key="regionIds" value="${(e.regionIds||[]).join(',')}" placeholder="区域ID(逗号分隔)" />`
+  );
+
+  // Event markers
+  html += '<div class="section-title">❓ 地图事件标记</div>';
+  html += '<p class="hint" style="margin-bottom:4px">标记占1×1格，引用events_map.json中的事件ID。玩家点击触发事件后消失。</p>';
+  html += subListEditor('eventMarkers', '标记列表', m.eventMarkers || [], (mk, i) =>
+    `<input data-subidx="${i}" data-key="id" value="${escapeHTML(mk.id||'')}" placeholder="标记ID" />
+     <input data-subidx="${i}" data-key="eventId" value="${escapeHTML(mk.eventId||'')}" placeholder="事件ID" />
+     <input class="amount" data-subidx="${i}" data-key="gridX" type="number" value="${mk.gridX??0}" placeholder="X" />
+     <input class="amount" data-subidx="${i}" data-key="gridY" type="number" value="${mk.gridY??0}" placeholder="Y" />`
   );
 
   // Initial buildings

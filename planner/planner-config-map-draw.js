@@ -69,6 +69,7 @@ function drawMapCanvas() {
   drawTerrainTiles(ctx, m, cellSize);
   drawGridLines(ctx, m, MAP_CELL_SIZE);
   drawEntrances(ctx, m, MAP_CELL_SIZE);
+  drawEventMarkers(ctx, m, MAP_CELL_SIZE);
   drawBuildings(ctx, m, MAP_CELL_SIZE);
   drawHoverPreview(ctx, m, MAP_CELL_SIZE);
 
@@ -178,6 +179,52 @@ function drawEntrances(ctx, m, baseCell) {
     // Selection highlight in entrance mode
     if (isEntranceMode && typeof state.mapEditorSelectedEntrance !== 'undefined' && idx === state.mapEditorSelectedEntrance) {
       ctx.strokeStyle = '#ff6600';
+      ctx.lineWidth = 3 / state.canvasScale;
+      ctx.setLineDash([]);
+      ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+    }
+  });
+}
+
+function drawEventMarkers(ctx, m, baseCell) {
+  const markers = m.eventMarkers || [];
+  if (markers.length === 0) return;
+
+  const isMarkerMode = state.mapEditorMode === 'marker';
+  const cellSize = baseCell;
+
+  markers.forEach((mk, idx) => {
+    if (mk.gridX == null || mk.gridY == null) return;
+    const x = mk.gridX * cellSize;
+    const y = mk.gridY * cellSize;
+    const w = cellSize;
+    const h = cellSize;
+
+    // Fill (purple)
+    ctx.fillStyle = 'rgba(106,58,138,0.15)';
+    ctx.fillRect(x, y, w, h);
+
+    // Dashed border
+    ctx.strokeStyle = '#cc88ff';
+    ctx.lineWidth = 2 / state.canvasScale;
+    ctx.setLineDash([6 / state.canvasScale, 3 / state.canvasScale]);
+    ctx.strokeRect(x, y, w, h);
+    ctx.setLineDash([]);
+
+    // "?" text
+    ctx.fillStyle = '#cc88ff';
+    ctx.font = `bold ${Math.max(14, 18 / state.canvasScale)}px -apple-system, "Microsoft YaHei", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('?', x + w / 2, y + h / 2);
+
+    // Event ID label above
+    ctx.font = `${Math.max(7, 9 / state.canvasScale)}px -apple-system, "Microsoft YaHei", sans-serif`;
+    ctx.fillText(mk.eventId || '(无事件)', x + w / 2, y - 4 / state.canvasScale);
+
+    // Selection highlight in marker mode
+    if (isMarkerMode && typeof state.mapEditorSelectedMarker !== 'undefined' && idx === state.mapEditorSelectedMarker) {
+      ctx.strokeStyle = '#cc88ff';
       ctx.lineWidth = 3 / state.canvasScale;
       ctx.setLineDash([]);
       ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
@@ -482,7 +529,7 @@ function updateMapStatus(col, row) {
   const ch = m.grid[row]?.[col];
   const gt = m.groundTypes?.[ch];
   const gtName = gt ? gt.name : '未知';
-  const modeLabel = { brush: '🖌️笔刷', rectangle: '◻矩形', fill: '▦填充', eraser: '🧹橡皮擦', building: '🏠建筑', entrance: '🚪入口', select: '🔲选区移动' }[state.mapEditorMode] || '';
+  const modeLabel = { brush: '🖌️笔刷', rectangle: '◻矩形', fill: '▦填充', eraser: '🧹橡皮擦', building: '🏠建筑', entrance: '🚪入口', marker: '❓事件标记', select: '🔲选区移动' }[state.mapEditorMode] || '';
   el.textContent = `📍 (${col}, ${row}) ${gtName} | ${modeLabel} | 缩放:${Math.round(state.canvasScale * 100)}%`;
 }
 

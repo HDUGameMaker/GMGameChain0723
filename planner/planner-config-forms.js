@@ -92,6 +92,35 @@ function bindFormEvents() {
     el.addEventListener('change', () => applyOptionChange(el));
   });
 
+  // Add option button (event form)
+  const btnAddOption = document.getElementById('btnAddOption');
+  if (btnAddOption) {
+    btnAddOption.addEventListener('click', () => {
+      const item = getItem();
+      if (!item) return;
+      if (!item.options) item.options = [];
+      item.options.push({ text: '新选项', effects: [] });
+      markDirty();
+      renderDetail(); // Re-render to regenerate sublist IDs
+    });
+  }
+
+  // Delete option buttons (event form) — delegate on options container
+  const optionsContainer = document.getElementById('optionsContainer');
+  if (optionsContainer) {
+    optionsContainer.addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-del-option');
+      if (!btn) return;
+      const oi = parseInt(btn.dataset.oidx);
+      const item = getItem();
+      if (!item || !item.options || oi < 0 || oi >= item.options.length) return;
+      if (!confirm(`确定删除选项 ${oi + 1}？`)) return;
+      item.options.splice(oi, 1);
+      markDirty();
+      renderDetail();
+    });
+  }
+
   // Torch checkbox toggles torch fields visibility
   const isTorchCheckbox = document.getElementById('f_isTorch');
   const torchFields = document.getElementById('torchFields');
@@ -290,6 +319,17 @@ function applyFieldChange(el) {
     if (!state.data.base_map.initialCamera) state.data.base_map.initialCamera = {};
     state.data.base_map.initialCamera.zoom = parseFloat(value) || 1.0;
   } else {
+    // 如果修改的是事件 ID，同步更新 eventFileSource 映射
+    if (state.tab === 'events' && fieldName === 'id' && state.eventFileSource) {
+      const oldId = item.id;
+      if (oldId && oldId !== value) {
+        const src = state.eventFileSource.get(oldId);
+        if (src) {
+          state.eventFileSource.delete(oldId);
+          state.eventFileSource.set(value, src);
+        }
+      }
+    }
     item[fieldName] = value;
   }
 
@@ -316,6 +356,7 @@ function addSubEntry(subName) {
     case 'effects': targetArray = item.effects; if (!targetArray) { item.effects = []; targetArray = item.effects; } break;
     case 'initBuildings': targetArray = state.data.base_map.initialBuildings; break;
     case 'entrances': targetArray = state.data.base_map.expeditionEntrances; if (!targetArray) { state.data.base_map.expeditionEntrances = []; targetArray = state.data.base_map.expeditionEntrances; } break;
+    case 'eventMarkers': targetArray = state.data.base_map.eventMarkers; if (!targetArray) { state.data.base_map.eventMarkers = []; targetArray = state.data.base_map.eventMarkers; } break;
     case 'unlockConditions': targetArray = item.unlockConditions; if (!targetArray) { item.unlockConditions = []; targetArray = item.unlockConditions; } break;
     default:
       // Check for recipe cost or option effects
@@ -353,6 +394,7 @@ function removeSubEntry(subName, idx) {
     case 'effects': targetArray = item.effects; break;
     case 'initBuildings': targetArray = state.data.base_map.initialBuildings; break;
     case 'entrances': targetArray = state.data.base_map.expeditionEntrances; break;
+    case 'eventMarkers': targetArray = state.data.base_map.eventMarkers; break;
     case 'unlockConditions': targetArray = item.unlockConditions; break;
     default:
       if (subName.startsWith('recipe_') && subName.endsWith('_cost')) {
@@ -394,6 +436,7 @@ function applySubChange(el) {
     case 'effects': targetArray = item.effects; break;
     case 'initBuildings': targetArray = state.data.base_map.initialBuildings; break;
     case 'entrances': targetArray = state.data.base_map.expeditionEntrances; break;
+    case 'eventMarkers': targetArray = state.data.base_map.eventMarkers; break;
     case 'unlockConditions': targetArray = item.unlockConditions; break;
     default:
       if (subName.startsWith('recipe_') && subName.endsWith('_cost')) {

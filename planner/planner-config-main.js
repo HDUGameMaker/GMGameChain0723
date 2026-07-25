@@ -36,7 +36,7 @@ document.getElementById('eventFilterGroup').addEventListener('click', (e) => {
   btn.classList.add('active');
   state.selectedIdx = -1;
   refreshList();
-  document.getElementById('detailPanel').innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>类型筛选: ${filter === 'base' ? '🏠 基地事件' : filter === 'expedition' ? '🗺️ 探险事件' : '全部事件'}</p></div>`;
+  document.getElementById('detailPanel').innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>类型筛选: ${filter === 'base' ? '🏠 基地事件' : filter === 'expedition' ? '🗺️ 探险事件' : filter === 'map' ? '❓ 地图事件' : '全部事件'}</p></div>`;
 });
 
 // Keyboard shortcuts
@@ -66,6 +66,9 @@ document.addEventListener('keydown', (e) => {
     } else if (e.key === 'e' || e.key === 'E') {
       e.preventDefault();
       setMapEditorMode('entrance');
+    } else if (e.key === 'q' || e.key === 'Q') {
+      e.preventDefault();
+      setMapEditorMode('marker');
     } else if (e.key === 'r' || e.key === 'R') {
       e.preventDefault();
       setMapEditorMode('rectangle');

@@ -118,6 +118,25 @@ class Game {
       this.popupManager.open('torch_detail', { torchIndex });
     });
 
+    // 注册事件标记点击事件
+    let _pendingMarkerId = null;
+    eventBus.on('eventMarkerClicked', (marker) => {
+      // 触发引用的地图事件
+      this.systems.event.triggerEventById(marker.eventId);
+      _pendingMarkerId = marker.id;
+    });
+
+    // 事件弹窗关闭后移除标记
+    eventBus.on('popupClosed', () => {
+      if (_pendingMarkerId) {
+        const removed = store.getState('removedEventMarkers') || [];
+        if (!removed.includes(_pendingMarkerId)) {
+          store.setState({ removedEventMarkers: [...removed, _pendingMarkerId] });
+        }
+        _pendingMarkerId = null;
+      }
+    });
+
     // 建筑与火把系统桥接：拆除 → 同步火把运行时条目
     eventBus.on('buildingDemolished', ({ buildingId }) => {
       if (buildingId) {
@@ -157,6 +176,12 @@ class Game {
         this._savedCamera.zoom || 1.0
       );
       this._savedCamera = null;
+    }
+
+    // 6.05 恢复已移除事件标记
+    if (this._savedRemovedEventMarkers) {
+      this.mapRenderer.restoreMarkerState(this._savedRemovedEventMarkers);
+      this._savedRemovedEventMarkers = null;
     }
 
     // 6.1 从 localStorage 恢复 3D 透视偏好
@@ -225,6 +250,9 @@ class Game {
 
     // 初始化火把
     this.systems.torch.initFromConfig();
+
+    // 初始化事件标记状态（新游戏 = 无已移除标记）
+    store.setState({ removedEventMarkers: [] });
   }
 
   restoreFromSave(saveData) {
@@ -245,6 +273,7 @@ class Game {
     }
     // 恢复相机位置（后续 MapRenderer 初始化后应用）
     this._savedCamera = saveData.camera || null;
+    this._savedRemovedEventMarkers = saveData.removedEventMarkers || null;
   }
 
   update(delta) {
@@ -277,7 +306,8 @@ class Game {
       events: this.systems.event.getSaveState(),
       torches: this.systems.torch.getAllStates(),
       audio: this.systems.audio.getAllStates(),
-      camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null
+      camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
+      removedEventMarkers: this.mapRenderer ? this.mapRenderer.getMarkerState() : []
     };
     await SaveManager.save(state);
     console.log('[Game] Auto-saved');
@@ -299,7 +329,8 @@ class Game {
       events: this.systems.event.getSaveState(),
       torches: this.systems.torch.getAllStates(),
       audio: this.systems.audio.getAllStates(),
-      camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null
+      camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
+      removedEventMarkers: this.mapRenderer ? this.mapRenderer.getMarkerState() : []
     };
     try {
       localStorage.setItem('gmgc_emergency_save', JSON.stringify(state));

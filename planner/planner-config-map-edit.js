@@ -73,6 +73,9 @@ function initMapCanvasEvents() {
       case 'entrance':
         handleEntranceDown(col, row, e);
         break;
+      case 'marker':
+        handleMarkerDown(col, row, e);
+        break;
       case 'select':
         handleSelectDown(col, row);
         break;
@@ -129,6 +132,12 @@ function initMapCanvasEvents() {
       drawMapCanvas();
     }
 
+    // Marker drag
+    if (_mapMouseDown && state.mapEditorMode === 'marker' && state.mapEditorDragTarget && state.mapEditorSelectedMarker >= 0) {
+      handleMarkerDrag(col, row);
+      drawMapCanvas();
+    }
+
     // Building drag
     if (_mapMouseDown && state.mapEditorMode === 'building' && state.mapEditorSelectedBuilding >= 0 && state.mapEditorDragTarget === 'move') {
       moveBuildingTo(col, row);
@@ -165,6 +174,11 @@ function initMapCanvasEvents() {
       state.mapEditorDragTarget = null;
       markDirty();
       syncEntranceToForm();
+    }
+    if (state.mapEditorMode === 'marker' && state.mapEditorDragTarget) {
+      state.mapEditorDragTarget = null;
+      markDirty();
+      syncMarkerToForm();
     }
     if (state.mapEditorMode === 'building' && state.mapEditorDragTarget === 'move') {
       state.mapEditorDragTarget = null;
@@ -525,7 +539,8 @@ function pushUndo() {
   const snapshot = {
     grid: (m.grid || []).slice(),
     initialBuildings: JSON.parse(JSON.stringify(m.initialBuildings || [])),
-    expeditionEntrances: m.expeditionEntrances ? JSON.parse(JSON.stringify(m.expeditionEntrances)) : []
+    expeditionEntrances: m.expeditionEntrances ? JSON.parse(JSON.stringify(m.expeditionEntrances)) : [],
+    eventMarkers: m.eventMarkers ? JSON.parse(JSON.stringify(m.eventMarkers)) : []
   };
   state.undoStack.push(snapshot);
   if (state.undoStack.length > 50) state.undoStack.shift();
@@ -538,7 +553,8 @@ function performUndo() {
   const current = {
     grid: (m.grid || []).slice(),
     initialBuildings: JSON.parse(JSON.stringify(m.initialBuildings || [])),
-    expeditionEntrances: m.expeditionEntrances ? JSON.parse(JSON.stringify(m.expeditionEntrances)) : []
+    expeditionEntrances: m.expeditionEntrances ? JSON.parse(JSON.stringify(m.expeditionEntrances)) : [],
+    eventMarkers: m.eventMarkers ? JSON.parse(JSON.stringify(m.eventMarkers)) : []
   };
   state.redoStack.push(current);
   if (state.redoStack.length > 50) state.redoStack.shift();
@@ -546,12 +562,15 @@ function performUndo() {
   m.grid = snap.grid;
   m.initialBuildings = snap.initialBuildings;
   m.expeditionEntrances = snap.expeditionEntrances;
+  m.eventMarkers = snap.eventMarkers;
   state.mapEditorSelectedBuilding = -1;
   state.mapEditorSelectedEntrance = -1;
+  state.mapEditorSelectedMarker = -1;
   state.mapEditorDragTarget = null;
   markDirty();
   syncBuildingsToForm();
   syncEntranceToForm();
+  syncMarkerToForm();
   drawMapCanvas();
   showToast('已撤销', 'success');
 }
@@ -562,7 +581,8 @@ function performRedo() {
   const current = {
     grid: (m.grid || []).slice(),
     initialBuildings: JSON.parse(JSON.stringify(m.initialBuildings || [])),
-    expeditionEntrances: m.expeditionEntrances ? JSON.parse(JSON.stringify(m.expeditionEntrances)) : []
+    expeditionEntrances: m.expeditionEntrances ? JSON.parse(JSON.stringify(m.expeditionEntrances)) : [],
+    eventMarkers: m.eventMarkers ? JSON.parse(JSON.stringify(m.eventMarkers)) : []
   };
   state.undoStack.push(current);
   if (state.undoStack.length > 50) state.undoStack.shift();
@@ -570,12 +590,15 @@ function performRedo() {
   m.grid = snap.grid;
   m.initialBuildings = snap.initialBuildings;
   m.expeditionEntrances = snap.expeditionEntrances;
+  m.eventMarkers = snap.eventMarkers;
   state.mapEditorSelectedBuilding = -1;
   state.mapEditorSelectedEntrance = -1;
+  state.mapEditorSelectedMarker = -1;
   state.mapEditorDragTarget = null;
   markDirty();
   syncBuildingsToForm();
   syncEntranceToForm();
+  syncMarkerToForm();
   drawMapCanvas();
   showToast('已重做', 'success');
 }
@@ -770,6 +793,76 @@ function syncEntranceToForm() {
   renderDetail();
 }
 
+// ===== 事件标记工具 =====
+
+function findMarkerAt(col, row) {
+  const markers = state.data.base_map.eventMarkers;
+  if (!markers) return -1;
+  for (let i = 0; i < markers.length; i++) {
+    const mk = markers[i];
+    if (mk.gridX === col && mk.gridY === row) return i;
+  }
+  return -1;
+}
+
+function handleMarkerDown(col, row, e) {
+  const m = state.data.base_map;
+  if (!m.eventMarkers) m.eventMarkers = [];
+
+  // 右键删除
+  if (e && e.button === 2) {
+    const foundIdx = findMarkerAt(col, row);
+    if (foundIdx >= 0) {
+      e.preventDefault();
+      pushUndo();
+      m.eventMarkers.splice(foundIdx, 1);
+      state.mapEditorSelectedMarker = -1;
+      markDirty();
+      renderDetail();
+      drawMapCanvas();
+    }
+    return;
+  }
+
+  // 点击已有标记 → 开始拖动
+  const clickedIdx = findMarkerAt(col, row);
+  if (clickedIdx >= 0) {
+    pushUndo();
+    state.mapEditorSelectedMarker = clickedIdx;
+    state.mapEditorDragTarget = 'move';
+    return;
+  }
+
+  // 空地块 → 创建新标记
+  pushUndo();
+  const newId = 'marker_' + Date.now();
+  m.eventMarkers.push({
+    id: newId,
+    eventId: '',
+    gridX: col,
+    gridY: row
+  });
+  state.mapEditorSelectedMarker = m.eventMarkers.length - 1;
+  markDirty();
+  renderDetail();
+  drawMapCanvas();
+}
+
+function handleMarkerDrag(col, row) {
+  const m = state.data.base_map;
+  if (!m.eventMarkers) return;
+  if (state.mapEditorDragTarget !== 'move' || state.mapEditorSelectedMarker < 0) return;
+
+  const marker = m.eventMarkers[state.mapEditorSelectedMarker];
+  if (!marker) return;
+  marker.gridX = Math.max(0, Math.min(col, m.gridWidth - 1));
+  marker.gridY = Math.max(0, Math.min(row, m.gridHeight - 1));
+}
+
+function syncMarkerToForm() {
+  renderDetail();
+}
+
 function syncBuildingsToForm() {
   // Re-render the sub-list to sync
   const m = state.data.base_map;
@@ -799,6 +892,7 @@ function setMapEditorMode(mode) {
   state.mapEditorMode = mode;
   state.mapEditorSelectedBuilding = -1;
   state.mapEditorSelectedEntrance = -1;
+  state.mapEditorSelectedMarker = -1;
   state.mapEditorDragTarget = null;
 
   // Update button active states
@@ -826,7 +920,8 @@ function setMapEditorMode(mode) {
 function switchMapMode() {
   if (state.tab !== 'map') return;
   if (state.mapEditorMode === 'building') setMapEditorMode('entrance');
-  else if (state.mapEditorMode === 'entrance') setMapEditorMode('brush');
+  else if (state.mapEditorMode === 'entrance') setMapEditorMode('marker');
+  else if (state.mapEditorMode === 'marker') setMapEditorMode('brush');
   else setMapEditorMode('building');
 }
 

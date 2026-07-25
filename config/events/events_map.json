@@ -1,0 +1,46 @@
+[
+  {
+    "id": "new_map_event1",
+    "name": "废弃营地",
+    "description": "你在地图上发现了一个废弃的旧营地，地上散落着一些还能使用的物资。",
+    "image": "",
+    "priority": 10,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "搜刮物资（+15木材）",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 15
+          }
+        ]
+      },
+      {
+        "text": "搜刮物资（+10石头）",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "stone",
+            "amount": 10
+          }
+        ]
+      }
+    ]
+  }
+]
