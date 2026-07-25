@@ -241,6 +241,24 @@ WORK_PERIODS = [morning, afternoon]（仅此时段建筑生产）
 9. **迷雾门控**：所有交互入口需调用 `_isTileRevealed(col, row)` 检查，BuildingSystem 通过 `canBuild()` 检查建造合法性。`_visibleGrid` 在 `_updateFogTexture()` 中同步更新
 10. **火把存档**：`fuel` 字段中 `Infinity`（永恒火把）序列化时存为 `-1`，读档时还原。旧存档无 `torches` 字段则调用 `initFromConfig()` 重新初始化
 
+## 配置编辑器文件结构
+
+`planner-config.html` 已拆分为 1 个 HTML 壳 + `planner/` 目录下的 8 个 JS 文件（`<script src>` 加载，全局函数）：
+
+| 文件 | 内容 | 何时读取 |
+|------|------|---------|
+| `planner-config.html` | HTML 骨架 + CSS + 8 个 script 标签 | 修改布局/样式 |
+| `planner/planner-config-core.js` | State、File System Access API、数据加载/保存、Toast | 修改数据流/存储 |
+| `planner/planner-config-render.js` | 6 个 Tab 的表单渲染（renderDetail/field/subListEditor） | 增删表单字段 |
+| `planner/planner-config-map-draw.js` | Canvas 绘制管线（drawMapCanvas 及其子函数） | 修改地图渲染 |
+| `planner/planner-config-map-edit.js` | 地图交互/工具/撤销/建筑放置/选区/随机生成 | 修改地图编辑行为 |
+| `planner/planner-config-forms.js` | 表单事件绑定、字段变更处理 | 修改表单交互 |
+| `planner/planner-config-actions.js` | CRUD 增删改 + Tab 切换 | 修改列表/Tab |
+| `planner/planner-config-analysis.js` | 数值分析面板 + SVG 图表 | 修改分析功能 |
+| `planner/planner-config-main.js` | DOM 事件监听 + 键盘快捷键 | 修改快捷键/事件 |
+
+**加载顺序严格**：core → render → map-draw → map-edit → forms → actions → analysis → main。所有函数为全局函数，与 `artist-config.html`（独立单文件）共享相同的 File System Access API 模式。
+
 ## 设计文档位置
 
 所有游戏设计细节在 `docs/` 目录中，修改游戏逻辑前应先阅读对应文档：

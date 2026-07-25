@@ -2,7 +2,10 @@
 
 ## 概述
 
-为策划和美术提供两个独立的可视化配置编辑器（HTML 单文件），替代直接编辑 JSON 文件。打开网页即可编辑，修改自动写回 `config/` 源文件，零手动操作。
+为策划和美术提供两个独立的可视化配置编辑器，替代直接编辑 JSON 文件。打开网页即可编辑，修改自动写回 `config/` 源文件，零手动操作。
+
+**策划编辑器**：HTML 壳 + 8 个独立 JS 文件（`planner-config-*.js`），按功能模块拆分以减少维护时 token 消耗。
+**美术编辑器**：独立单文件（`artist-config.html`）。
 
 ## 核心设计原则
 
@@ -39,10 +42,35 @@
 ## 文件清单
 
 ```
-E:\unityproject\GMGameChain0723\
-  planner-config.html    ← 策划配置编辑器
-  artist-config.html     ← 美术配置编辑器
+项目根目录/
+  planner-config.html          ← 策划配置编辑器 HTML 壳（CSS + 布局）
+  planner/
+    planner-config-core.js       ← 基础设施：State、File System Access API、数据加载/保存
+    planner-config-render.js     ← 6 个 Tab 的表单渲染函数
+    planner-config-map-draw.js   ← Canvas 地图绘制管线（地形/网格/建筑/预览）
+    planner-config-map-edit.js   ← 地图交互工具（笔刷/填充/矩形/选区/撤销/建筑放置）
+    planner-config-forms.js      ← 表单事件绑定、字段变更处理
+    planner-config-actions.js    ← CRUD 增删改 + Tab 切换
+    planner-config-analysis.js   ← 数值分析面板 + SVG 图表
+    planner-config-main.js       ← DOM 事件监听 + 键盘快捷键（最后加载）
+  artist-config.html           ← 美术配置编辑器（独立单文件）
 ```
+
+### 依赖与加载顺序
+
+```
+planner-config.html
+  ├─ planner/planner-config-core.js        ← 最先加载（含自执行 init IIFE）
+  ├─ planner/planner-config-render.js      ← 依赖 core
+  ├─ planner/planner-config-map-draw.js    ← 依赖 core
+  ├─ planner/planner-config-map-edit.js    ← 依赖 core + map-draw
+  ├─ planner/planner-config-forms.js       ← 依赖 core + render + map-edit
+  ├─ planner/planner-config-actions.js     ← 依赖 core + render
+  ├─ planner/planner-config-analysis.js    ← 依赖 core
+  └─ planner/planner-config-main.js        ← 最后加载（依赖所有上述文件）
+```
+
+所有函数为全局函数（`<script src>` 而非 ES modules），保持向后兼容。修改某个功能区域时只需读取对应的 JS 文件。
 
 ## 通用 UI 布局（Dashboard 基底）
 
@@ -67,7 +95,7 @@ E:\unityproject\GMGameChain0723\
 
 ---
 
-## 一、策划配置编辑器（planner-config.html）
+## 一、策划配置编辑器（planner-config.html + 8 JS 文件）
 
 ### 目标用户
 游戏策划（数值策划、系统策划）— 负责游戏数据配置，不直接写 JSON。
@@ -81,24 +109,30 @@ E:\unityproject\GMGameChain0723\
 | **物品** | `config/items.json` | 增删物品、唯一性/消耗品标记、容量消耗、expeditionEffects 配置 | 文本框、数字、开关、效果类型下拉 + 动态参数表单 |
 | **事件** | `config/events/*.json` | 增删事件、触发条件（时段/建筑/物品/互斥组）、选项编辑、效果链编辑、trigger_event/schedule_event 引用 | 多选（时段）、引用选择（建筑/物品/事件ID）、效果类型下拉、事件节点连线图（SVG） |
 | **探险** | `config/expeditions/*.json` | 区域产出矩阵（4时段 × N资源）、解锁条件、全局参数（周期数/容量） | 数字矩阵、条件编辑器（item OR building） |
-| **地图** | `config/maps/base_map.json` | Canvas 交互式地图编辑器：笔刷绘制地形、点击放置/拖拽建筑、探险入口拖拽调整、缩放平移、视口裁剪 | 地形调色板（点击选择笔刷颜色）、建筑下拉选择 + footprint 预览（绿/红）、探险入口拖拽手柄、滚轮缩放、中键平移、键盘快捷键 B/V/E/Delete/Ctrl+0 |
+| **地图** | `config/maps/base_map.json` | Canvas 交互式地图编辑器：笔刷绘制地形、点击放置/拖拽建筑、探险入口拖拽调整、缩放平移、视口裁剪 + 拖拽调整 | 地形调色板（点击选择笔刷颜色）、建筑下拉选择 + footprint 预览（绿/红）、探险入口拖拽手柄、滚轮缩放、中键平移、右下角拖拽调整视口（含角标提示）、键盘快捷键 B/V/E/R/F/X/S/Delete/Ctrl+0 |
 
 ### 地图编辑器（Canvas 笔刷模式）
 
 地图 Tab 使用 **HTML5 Canvas 2D** 实现了交互式可视化地图编辑器，完全替代了旧版的 textarea 文本编辑方式。
 
-**编辑模式（工具栏切换或键盘 B/V/E）：**
+**编辑模式（工具栏切换或键盘快捷键）：**
 
 | 模式 | 快捷键 | 操作 |
 |------|--------|------|
 | 🖌️ 地形笔刷 | `B` | 左侧调色板选择地形颜色，点击/拖拽绘制地面格子 |
 | 🏠 建筑放置 | `V` | 下拉选择建筑类型，点击放置（footprint 绿/红预览），拖拽移动，右键/Del 删除 |
 | 🚪 探险入口 | `E` | 拖拽入口矩形移动/调整大小，四角手柄精确调整 |
+| ◻ 矩形绘制 | `R` | 拖拽绘制矩形区域，批量设置地形 |
+| ▦ 填充 | `F` | 点击区域，自动填充相同地形类型的连通区域 |
+| 🧹 橡皮擦 | `X` | 擦除地形（还原为默认地形） |
+| 🔲 选区移动 | `S` | 框选矩形区域剪切/移动，支持撤销 |
 
 **视角控制：**
 - 滚轮缩放（0.25× ~ 4×，以鼠标为中心）
 - 中键拖拽平移
 - `Ctrl+0` 重置缩放
+- 画布右下角拖拽调整视口大小（格数对齐，双向同步左侧"视口列数/行数"输入框）
+- 💡 右下角有 `↕↔` 角标 + 画布下方文字提示：**"地图区域右下角可拖拽调整视口大小"**
 - 视口裁剪渲染：只绘制可见格子，支持 500×500+ 大地图
 
 **数据同步：**

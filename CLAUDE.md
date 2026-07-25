@@ -56,6 +56,7 @@ config/                 ← JSON game data (buildings, resources, items, maps, e
   expeditions/          ← Expedition regions and global params
   maps/base_map.json    ← Grid layout, initial buildings, expedition entrance, initial torches
 lib/                    ← Third-party (pixi.min.js, gsap.min.js)
+scripts/                ← Build/dev scripts (generate-asset-manifest.js)
 src/
   main.js               ← Entry point: init PixiJS → load config → wire systems → start loop
   GameLoop.js           ← rAF-driven loop with multi-layer pause support
@@ -67,6 +68,9 @@ src/
   ui/                   ← HUD.js, PopupManager.js, panels/ (one render function per popup type)
   utils/                ← gridUtils.js (coordinate conversion, euclideanDistance), ProgressManager.js
 docs/                   ← Design documents (read before modifying game logic)
+planner-config.html     ← Config editor HTML shell (CSS + layout)
+planner/                ← Config editor JS (8 files: core/render/map-draw/map-edit/forms/actions/analysis/main)
+artist-config.html      ← Art config editor (standalone single-file)
 ```
 
 ## Key Constraints
@@ -110,7 +114,7 @@ Certain popups **block the game loop** (pause) while open: `event`, `expedition_
 | Modify resource caps | `ResourceSystem.getMaxResourceCapacity()` — cap = config max × warehouse multiplier |
 | Modify torch behavior | `TorchSystem` — fuel consumption in `onPeriodEnd()`, upgrade in `onTick()`, visibility in `getVisibilityMatrix()` |
 | Modify fog rendering | `MapRenderer._updateFogTexture()` — Canvas 2D radialGradient + destination-out |
-| Modify map editor | `planner-config.html` — Canvas 2D brush editor: `drawMapCanvas()` layers, `setTile()`, `handleBuildingClick()`, `setMapEditorMode()` |
+| Modify map editor | `planner/planner-config-map-edit.js` (interaction/tools/undo) + `planner/planner-config-map-draw.js` (Canvas rendering) + `planner/planner-config-forms.js` (form binding) — Canvas 2D brush editor: `drawMapCanvas()` layers, `setTile()`, `handleBuildingClick()`, `setMapEditorMode()` |
 
 ## Design Documents (`docs/`)
 
@@ -127,7 +131,7 @@ Each design doc covers one subsystem in depth. Read the relevant doc before modi
 | `save-system-design.md` | **Save system.** Single-slot IndexedDB save, auto-save on `periodEnd` + emergency `beforeunload` localStorage backup, complete save data schema (time/resources/items/buildings/expedition/events), versioned migration path, load vs new-game initialization flow. |
 | `progress-bar-system-design.md` | **Progress bar system.** Single rAF-driven `ProgressManager` singleton that smooth-interpolates discrete tick progress using `timeProgress` (0→1). Two modes: DOM (width-based) and callback (for PIXI Graphics). Covers HUD tick bar, build progress, synthesis progress, expedition progress. |
 | `label-layout-config.md` | **Building label layout.** Per-building `labelLayout` config in `buildings.json` (`nameOffsetY`/`progressBarOffsetY`/`workersOffsetY`) to fine-tune name/progress/worker text positions on the map. Default layout described for 1×1 buildings. |
-| `config-editors-design.md` | **Config editors (planner & artist).** Single-file HTML editors with File System Access API auto-save. Planner: 7 tabs for buildings/resources/items/events/expeditions/map/analysis. Map tab: Canvas 2D brush editor with terrain painting, interactive building placement (footprint preview), entrance drag-to-edit, zoom/pan with viewport culling. Artist: color palette, label layout preview, asset reference scanning. |
+| `config-editors-design.md` | **Config editors (planner & artist).** Planner: HTML shell + 8 JS files in `planner/` with File System Access API auto-save, 7 tabs covering buildings/resources/items/events/expeditions/map/analysis. Map tab: Canvas 2D brush editor with terrain painting, interactive building placement (footprint preview), entrance drag-to-edit, zoom/pan with viewport culling. Artist: standalone single-file editor with color palette, label layout preview, asset reference scanning. |
 
 ## Reference: AGENT.md
 
