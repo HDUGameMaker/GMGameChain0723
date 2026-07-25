@@ -3,7 +3,7 @@
     "id": "eternal_torch",
     "name": "永恒火把",
     "type": "eternal",
-    "radius": 3,
+    "radius": 5,
     "coalPerPeriod": 0,
     "coalBuffer": 0,
     "colorHint": "#ffaa33",

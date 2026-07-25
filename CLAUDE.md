@@ -43,26 +43,29 @@ GameLoop (rAF)  → TimeSystem.update() → tick event → each System settles �
 - `MapRenderer` is **read-only** — it reads state to draw but never mutates game data.
 - Systems communicate via `EventBus` events and `Store` state subscriptions, never by direct cross-references (except for the few wired in `main.js` during initialization).
 - All game numeric values live in `config/*.json`; code should never hardcode tuning parameters.
+- **TorchSystem** manages fog-of-war: torches illuminate circular areas (Euclidean distance), hidden tiles block interaction/building. Fog visual uses **Canvas 2D offscreen** (`createRadialGradient` + `destination-out`) → `PIXI.Texture` → `PIXI.Sprite` overlay, NOT PixiJS mask.
 
 ## Project Layout
 
 ```
-config/                 ← JSON game data (buildings, resources, items, maps, events, expeditions)
+config/                 ← JSON game data (buildings, resources, items, maps, events, expeditions, torches)
   buildings.json        ← Add new buildings here, no code changes needed
   resources.json        ← Add new resources here, auto-recognized by ResourceSystem
+  torches.json          ← Torch type definitions (radius, coal cost, upgrade path)
   events/               ← Add new events here following existing schema
   expeditions/          ← Expedition regions and global params
-  maps/base_map.json    ← Grid layout, initial buildings, expedition entrance positions
+  maps/base_map.json    ← Grid layout, initial buildings, expedition entrance, initial torches
 lib/                    ← Third-party (pixi.min.js, gsap.min.js)
 src/
   main.js               ← Entry point: init PixiJS → load config → wire systems → start loop
   GameLoop.js           ← rAF-driven loop with multi-layer pause support
   core/                 ← EventBus, ConfigRegistry, Store, SaveManager (all singletons)
   systems/              ← TimeSystem, ResourceSystem, BuildingSystem, PopulationSystem,
-                          ItemSystem, EventSystem, ExpeditionSystem
-  rendering/            ← MapRenderer (PixiJS drawing of grid, buildings, expedition entrances)
+                          ItemSystem, EventSystem, ExpeditionSystem, TorchSystem
+  rendering/            ← MapRenderer (PixiJS drawing of grid, buildings, expedition entrances,
+                          torches, fog-of-war via Canvas 2D offscreen texture)
   ui/                   ← HUD.js, PopupManager.js, panels/ (one render function per popup type)
-  utils/                ← gridUtils.js (coordinate conversion), ProgressManager.js
+  utils/                ← gridUtils.js (coordinate conversion, euclideanDistance), ProgressManager.js
 docs/                   ← Design documents (read before modifying game logic)
 ```
 
@@ -99,11 +102,14 @@ Certain popups **block the game loop** (pause) while open: `event`, `expedition_
 |------|-------|
 | New building type | `config/buildings.json` only |
 | New resource type | `config/resources.json` only |
+| New torch type | `config/torches.json` only |
 | New event | `config/events/` — follow existing schema |
 | New popup/panel | `src/ui/panels/xxx-panel.js` + register in `PopupManager._registerBuiltinPanels()` |
 | New event effect handler | `EventSystem._registerBuiltinEffects()` via `registerEffect()` |
 | New map element rendering | `MapRenderer` — add draw method + click detection in `_onClick` |
 | Modify resource caps | `ResourceSystem.getMaxResourceCapacity()` — cap = config max × warehouse multiplier |
+| Modify torch behavior | `TorchSystem` — fuel consumption in `onPeriodEnd()`, upgrade in `onTick()`, visibility in `getVisibilityMatrix()` |
+| Modify fog rendering | `MapRenderer._updateFogTexture()` — Canvas 2D radialGradient + destination-out |
 
 ## Design Documents (`docs/`)
 
