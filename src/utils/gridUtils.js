@@ -58,6 +58,20 @@ export function isAreaOverlap(x1, y1, w1, h1, x2, y2, w2, h2) {
 /**
  * 获取区域覆盖的所有网格坐标
  */
+/**
+ * 计算两个格子中心点之间的欧几里得距离
+ * @param {number} col1 - 第一个格子的列
+ * @param {number} row1 - 第一个格子的行
+ * @param {number} col2 - 第二个格子的列
+ * @param {number} row2 - 第二个格子的行
+ * @returns {number} 距离（以格子为单位）
+ */
+export function euclideanDistance(col1, row1, col2, row2) {
+  const dx = (col1 + 0.5) - (col2 + 0.5);
+  const dy = (row1 + 0.5) - (row2 + 0.5);
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
 export function getAreaCells(gridX, gridY, width, height) {
   const cells = [];
   for (let r = gridY; r < gridY + height; r++) {

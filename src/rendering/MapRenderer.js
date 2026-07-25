@@ -10,19 +10,24 @@ import { gridToScreenTopLeft, screenToGrid } from '../utils/gridUtils.js';
 import { AnimatedSpriteHelper } from './AnimatedSpriteHelper.js';
 
 export class MapRenderer {
-  constructor(app, buildingSystem) {
+  constructor(app, buildingSystem, torchSystem) {
     this.app = app;
     this.buildingSystem = buildingSystem;
+    this._torchSystem = torchSystem || null;
     this.mapConfig = configRegistry.get('map');
     this.tileSize = this.mapConfig.tileSize;
 
     // 容器
     this.mapContainer = new PIXI.Container();
+    this.torchLayer = new PIXI.Container();
     this.buildingLayer = new PIXI.Container();
     this.ghostLayer = new PIXI.Container();
+    this.fogContainer = new PIXI.Container();
     this.app.stage.addChild(this.mapContainer);
+    this.mapContainer.addChild(this.torchLayer);
     this.mapContainer.addChild(this.buildingLayer);
     this.mapContainer.addChild(this.ghostLayer);
+    this.mapContainer.addChild(this.fogContainer);
 
     // 视口状态
     this.offsetX = 0;
@@ -79,6 +84,8 @@ export class MapRenderer {
 
     this._drawMap();
     this._drawExpeditionEntrance();
+    this._drawTorches();
+    this._createFogCanvas();
     this._setupInteraction();
     this._centerView();
     this._subscribeEvents();
@@ -136,6 +143,156 @@ export class MapRenderer {
 
     // 插入到地图层和建筑层之间
     this.mapContainer.addChildAt(entranceContainer, 1);
+  }
+
+  // ===== 火把渲染 =====
+
+  _drawTorches() {
+    if (!this._torchSystem) return;
+    this.torchLayer.removeChildren();
+    this._torchSprites = [];
+
+    const ts = this.tileSize;
+
+    for (let i = 0; i < this._torchSystem.torches.length; i++) {
+      const torch = this._torchSystem.torches[i];
+      const cfg = this._torchSystem.getTorchConfig(torch.torchId);
+      if (!cfg) continue;
+
+      const container = new PIXI.Container();
+      const cx = (torch.gridX + 0.5) * ts;
+      const cy = (torch.gridY + 0.5) * ts;
+
+      // 微弱光晕（点燃时）
+      if (torch.lit) {
+        const glow = new PIXI.Graphics();
+        glow.circle(cx, cy, cfg.radius * ts);
+        glow.fill({ color: 0xffaa00, alpha: 0.04 });
+        container.addChild(glow);
+      }
+
+      // 火把图标
+      const icon = new PIXI.Text({
+        text: torch.lit ? '🔥' : '🕯️',
+        style: { fontSize: Math.min(20, ts * 0.35) }
+      });
+      icon.anchor.set(0.5);
+      icon.x = cx;
+      icon.y = cy;
+      container.addChild(icon);
+
+      // 升级进度条
+      if (torch.upgrading) {
+        const barW = ts * 0.7;
+        const barH = 4;
+        const barX = cx - barW / 2;
+        const barY = cy + ts * 0.35;
+        const pct = Math.min((torch.upgradeProgress || 0) / (cfg.upgradeTime || 1), 1);
+
+        const barBg = new PIXI.Graphics();
+        barBg.rect(barX, barY, barW, barH);
+        barBg.fill({ color: 0x000000, alpha: 0.5 });
+        container.addChild(barBg);
+
+        const barFill = new PIXI.Graphics();
+        barFill.rect(barX, barY, barW * pct, barH);
+        barFill.fill({ color: 0xf0a040, alpha: 0.9 });
+        container.addChild(barFill);
+      }
+
+      // 存储索引
+      container.__torchIndex = i;
+
+      this.torchLayer.addChild(container);
+      this._torchSprites.push(container);
+    }
+  }
+
+  // ===== 迷雾渲染（Canvas 2D 离屏纹理）=====
+
+  /**
+   * 创建离屏 Canvas 用于渲染迷雾纹理
+   */
+  _createFogCanvas() {
+    const mapW = this.mapConfig.gridWidth * this.tileSize;
+    const mapH = this.mapConfig.gridHeight * this.tileSize;
+
+    // 创建离屏 Canvas
+    this._fogCanvas = document.createElement('canvas');
+    this._fogCanvas.width = mapW;
+    this._fogCanvas.height = mapH;
+
+    // 从 Canvas 创建 PIXI 纹理和精灵
+    this._fogTexture = PIXI.Texture.from(this._fogCanvas);
+    this._fogSprite = new PIXI.Sprite(this._fogTexture);
+    this.fogContainer.addChild(this._fogSprite);
+
+    this._updateFogTexture();
+  }
+
+  /**
+   * 在 Canvas 2D 上重新绘制迷雾纹理
+   * 使用 radialGradient + destination-out 清除火把照亮区域
+   */
+  _updateFogTexture() {
+    if (!this._fogCanvas) return;
+
+    const ctx = this._fogCanvas.getContext('2d');
+    const mapW = this.mapConfig.gridWidth * this.tileSize;
+    const mapH = this.mapConfig.gridHeight * this.tileSize;
+
+    // 1. 全图填充迷雾色（完全不透明）
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#08081a';
+    ctx.fillRect(0, 0, mapW, mapH);
+
+    // 2. 用 destination-out 清除每个点燃火把的照亮区域
+    if (this._torchSystem) {
+      ctx.globalCompositeOperation = 'destination-out';
+
+      const ts = this.tileSize;
+      const litTorches = this._torchSystem.getLitTorches();
+      for (const t of litTorches) {
+        const cfg = this._torchSystem.getTorchConfig(t.torchId);
+        if (!cfg) continue;
+
+        const cx = (t.gridX + 0.5) * ts;
+        const cy = (t.gridY + 0.5) * ts;
+        const maxR = cfg.radius * ts;
+
+        // 径向渐变：中心完全清除 → 边缘保留迷雾（柔边过渡）
+        const gradient = ctx.createRadialGradient(cx, cy, maxR * 0.2, cx, cy, maxR);
+        gradient.addColorStop(0, 'rgba(0,0,0,1)');     // 完全清除
+        gradient.addColorStop(0.4, 'rgba(0,0,0,0.95)'); // 几乎完全清除
+        gradient.addColorStop(0.65, 'rgba(0,0,0,0.7)'); // 大部分清除
+        gradient.addColorStop(0.85, 'rgba(0,0,0,0.2)'); // 少量清除
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');     // 不清除
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(cx - maxR, cy - maxR, maxR * 2, maxR * 2);
+      }
+    }
+
+    // 恢复默认混合模式
+    ctx.globalCompositeOperation = 'source-over';
+
+    // 3. 上传到 PIXI 纹理
+    this._fogTexture.update();
+
+    // 缓存可见性格子，供 _isTileRevealed 快速查询
+    if (this._torchSystem) {
+      this._visibleGrid = this._torchSystem.getVisibilityMatrix();
+    }
+  }
+
+  /**
+   * 检查指定格子是否可见（迷雾已驱散）
+   */
+  _isTileRevealed(col, row) {
+    if (!this._torchSystem || !this._visibleGrid) return true; // 无火把系统时全可见
+    if (row < 0 || row >= this._visibleGrid.length) return false;
+    if (col < 0 || col >= this._visibleGrid[0].length) return false;
+    return this._visibleGrid[row][col];
   }
 
   _drawMap() {
@@ -201,8 +358,8 @@ export class MapRenderer {
 
       const gridPos = this._clientToGrid(e.clientX, e.clientY);
 
-      // 检查是否点击了建筑 → 启动建筑拖动
-      if (gridPos) {
+      // 检查是否点击了建筑 → 启动建筑拖动（迷雾门控）
+      if (gridPos && this._isTileRevealed(gridPos.col, gridPos.row)) {
         const buildingIndex = this._getBuildingAt(gridPos.col, gridPos.row);
         if (buildingIndex >= 0) {
           const building = this.buildingSystem.buildings[buildingIndex];
@@ -308,7 +465,9 @@ export class MapRenderer {
     if (!gridPos) return;
 
     if (this.buildingSystem.placingState === 'PLACING') {
-      // 放置模式：尝试放置
+      // 放置模式：先检查迷雾
+      if (!this._isTileRevealed(gridPos.col, gridPos.row)) return;
+
       const buildingId = this.buildingSystem.placingBuildingId;
       const config = configRegistry.getBuilding(buildingId);
       if (!config) return;
@@ -320,10 +479,22 @@ export class MapRenderer {
         this.refreshBuildings();
       }
     } else {
-      // 普通模式：先检查是否点击了探险出发口
+      // 检查迷雾门控
+      if (!this._isTileRevealed(gridPos.col, gridPos.row)) return;
+
+      // 检查是否点击了探险出发口
       if (this._isClickOnExpeditionEntrance(gridPos.col, gridPos.row)) {
         eventBus.emit('expeditionEntranceClicked', {});
         return;
+      }
+
+      // 检查是否点击了火把
+      if (this._torchSystem) {
+        const torchIndex = this._torchSystem.getTorchAt(gridPos.col, gridPos.row);
+        if (torchIndex >= 0) {
+          eventBus.emit('torchClicked', { torchIndex });
+          return;
+        }
       }
 
       // 再检查是否点击了建筑
@@ -1053,6 +1224,12 @@ export class MapRenderer {
 
     // tick 时刷新建筑（建造进度）
     eventBus.on('tick', () => this.refreshBuildings());
+
+    // 火把状态变化：重绘火把和迷雾
+    eventBus.on('torchStateChanged', () => {
+      this._drawTorches();
+      this._updateFogTexture();
+    });
   }
 
   /**

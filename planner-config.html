@@ -962,6 +962,14 @@ function renderMapForm() {
      <input class="amount" data-subidx="${i}" data-key="gridY" type="number" value="${b.gridY??0}" placeholder="Y" />`
   );
 
+  // Initial torches
+  html += '<div class="section-title">初始火把</div>';
+  html += subListEditor('initialTorches', '火把列表', m.initialTorches || [], (t, i) =>
+    `<input data-subidx="${i}" data-key="torchId" value="${escapeHTML(t.torchId||'')}" placeholder="火把ID (如 eternal_torch)" />
+     <input class="amount" data-subidx="${i}" data-key="gridX" type="number" value="${t.gridX??0}" placeholder="X" />
+     <input class="amount" data-subidx="${i}" data-key="gridY" type="number" value="${t.gridY??0}" placeholder="Y" />`
+  );
+
   // Schedule mini map render
   setTimeout(renderMiniMap, 100);
 
@@ -1245,7 +1253,9 @@ function applyFieldChange(el) {
 function addSubEntry(subName) {
   const item = getItem();
   if (!item) return;
-  const newEntry = { resourceId: '', amount: 0 };
+  const newEntry = (subName === 'initialTorches')
+    ? { torchId: '', gridX: 0, gridY: 0 }
+    : { resourceId: '', amount: 0 };
 
   // Resolve subName to the correct array on item
   let targetArray;
@@ -1257,6 +1267,7 @@ function addSubEntry(subName) {
     case 'expEffects': targetArray = item.expeditionEffects; if (!targetArray) { item.expeditionEffects = []; targetArray = item.expeditionEffects; } break;
     case 'effects': targetArray = item.effects; if (!targetArray) { item.effects = []; targetArray = item.effects; } break;
     case 'initBuildings': targetArray = state.data.base_map.initialBuildings; break;
+    case 'initialTorches': targetArray = state.data.base_map.initialTorches; if (!targetArray) { state.data.base_map.initialTorches = []; targetArray = state.data.base_map.initialTorches; } break;
     case 'unlockConditions': targetArray = item.unlockConditions; if (!targetArray) { item.unlockConditions = []; targetArray = item.unlockConditions; } break;
     default:
       // Check for recipe cost or option effects
@@ -1292,6 +1303,7 @@ function removeSubEntry(subName, idx) {
     case 'expEffects': targetArray = item.expeditionEffects; break;
     case 'effects': targetArray = item.effects; break;
     case 'initBuildings': targetArray = state.data.base_map.initialBuildings; break;
+    case 'initialTorches': targetArray = state.data.base_map.initialTorches; break;
     case 'unlockConditions': targetArray = item.unlockConditions; break;
     default:
       if (subName.startsWith('recipe_') && subName.endsWith('_cost')) {
@@ -1331,6 +1343,7 @@ function applySubChange(el) {
     case 'expEffects': targetArray = item.expeditionEffects; break;
     case 'effects': targetArray = item.effects; break;
     case 'initBuildings': targetArray = state.data.base_map.initialBuildings; break;
+    case 'initialTorches': targetArray = state.data.base_map.initialTorches; break;
     case 'unlockConditions': targetArray = item.unlockConditions; break;
     default:
       if (subName.startsWith('recipe_') && subName.endsWith('_cost')) {

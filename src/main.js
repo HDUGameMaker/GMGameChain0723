@@ -13,6 +13,7 @@ import { BuildingSystem } from './systems/BuildingSystem.js';
 import { ItemSystem } from './systems/ItemSystem.js';
 import { EventSystem } from './systems/EventSystem.js';
 import { ExpeditionSystem } from './systems/ExpeditionSystem.js';
+import { TorchSystem } from './systems/TorchSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
@@ -46,11 +47,17 @@ class Game {
     this.systems.event = new EventSystem(this.popupManager);
     this.systems.expedition = new ExpeditionSystem();
 
+    // 火把系统
+    this.systems.torch = new TorchSystem();
+
     // 连接系统间交叉引用
     this.systems.building.setResourceSystem(this.systems.resource);
     this.systems.building.setPopulationSystem(this.systems.population);
     this.systems.building.setItemSystem(this.systems.item);
+    this.systems.building.setTorchSystem(this.systems.torch);
     this.systems.building.init();
+    this.systems.torch.setResourceSystem(this.systems.resource);
+    this.systems.torch.init();
     this.systems.population.setBuildingSystem(this.systems.building);
     this.systems.event.setSystems({
       resource: this.systems.resource,
@@ -82,6 +89,11 @@ class Game {
       this.popupManager.open('expedition_prep', {});
     });
 
+    // 注册火把点击事件
+    eventBus.on('torchClicked', ({ torchIndex }) => {
+      this.popupManager.open('torch_detail', { torchIndex });
+    });
+
     // 5. 尝试加载存档
     const saveData = await SaveManager.load();
     if (saveData) {
@@ -93,7 +105,7 @@ class Game {
     }
 
     // 6. 初始化渲染器
-    this.mapRenderer = new MapRenderer(this.app, this.systems.building);
+    this.mapRenderer = new MapRenderer(this.app, this.systems.building, this.systems.torch);
 
     // 6.1 从 localStorage 恢复 3D 透视偏好
     try {
@@ -158,6 +170,9 @@ class Game {
 
     // 初始化事件系统
     this.systems.event.initNew();
+
+    // 初始化火把
+    this.systems.torch.initFromConfig();
   }
 
   restoreFromSave(saveData) {
@@ -169,6 +184,9 @@ class Game {
     this.systems.event.restoreState(saveData.events);
     if (saveData.expedition) {
       this.systems.expedition.restoreState(saveData.expedition);
+    }
+    if (saveData.torches) {
+      this.systems.torch.restoreState(saveData.torches);
     }
   }
 
@@ -199,7 +217,8 @@ class Game {
       items: this.systems.item.getAllStates(),
       buildings: this.systems.building.getAllStates(),
       expedition: this.systems.expedition.getCurrentExpedition(),
-      events: this.systems.event.getSaveState()
+      events: this.systems.event.getSaveState(),
+      torches: this.systems.torch.getAllStates()
     };
     await SaveManager.save(state);
     console.log('[Game] Auto-saved');
@@ -218,7 +237,8 @@ class Game {
       items: this.systems.item.getAllStates(),
       buildings: this.systems.building.getAllStates(),
       expedition: this.systems.expedition.getCurrentExpedition(),
-      events: this.systems.event.getSaveState()
+      events: this.systems.event.getSaveState(),
+      torches: this.systems.torch.getAllStates()
     };
     try {
       localStorage.setItem('gmgc_emergency_save', JSON.stringify(state));

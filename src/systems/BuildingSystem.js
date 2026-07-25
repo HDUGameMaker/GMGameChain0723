@@ -24,6 +24,7 @@ export class BuildingSystem {
   setResourceSystem(rs) { this._resourceSystem = rs; }
   setPopulationSystem(ps) { this._populationSystem = ps; }
   setItemSystem(is) { this._itemSystem = is; }
+  setTorchSystem(ts) { this._torchSystem = ts; }
 
   init() {
     this._mapConfig = configRegistry.get('map');
@@ -53,6 +54,11 @@ export class BuildingSystem {
     const w = config.footprint.width;
     const h = config.footprint.height;
     const map = this._mapConfig;
+
+    // 迷雾检查：区域必须全部可见
+    if (this._torchSystem && !this._torchSystem.canBuild(gridX, gridY, w, h)) {
+      return { valid: false, reason: '该区域尚未探索' };
+    }
 
     // 边界检查
     if (!isAreaInBounds(gridX, gridY, w, h, map.gridWidth, map.gridHeight)) {
@@ -305,6 +311,11 @@ export class BuildingSystem {
     const w = config.footprint.width;
     const h = config.footprint.height;
     const map = this._mapConfig;
+
+    // 迷雾检查：目标区域必须全部可见
+    if (this._torchSystem && !this._torchSystem.canBuild(newGridX, newGridY, w, h)) {
+      return { valid: false, reason: '目标区域尚未探索' };
+    }
 
     // 边界检查
     if (!isAreaInBounds(newGridX, newGridY, w, h, map.gridWidth, map.gridHeight)) {

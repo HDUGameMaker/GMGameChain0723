@@ -1,0 +1,64 @@
+[
+  {
+    "id": "eternal_torch",
+    "name": "永恒火把",
+    "type": "eternal",
+    "radius": 3,
+    "coalPerPeriod": 0,
+    "coalBuffer": 0,
+    "colorHint": "#ffaa33",
+    "lightCost": [],
+    "upgradesTo": null
+  },
+  {
+    "id": "normal_torch_l1",
+    "name": "火把",
+    "type": "normal",
+    "radius": 3,
+    "coalPerPeriod": 2,
+    "coalBuffer": 10,
+    "colorHint": "#ff8800",
+    "lightCost": [
+      { "resourceId": "coal", "amount": 5 }
+    ],
+    "upgradesTo": "normal_torch_l2"
+  },
+  {
+    "id": "normal_torch_l2",
+    "name": "强化火把",
+    "type": "normal",
+    "radius": 3,
+    "coalPerPeriod": 1,
+    "coalBuffer": 15,
+    "colorHint": "#ffcc00",
+    "lightCost": [
+      { "resourceId": "coal", "amount": 5 }
+    ],
+    "upgradesTo": "normal_torch_l3",
+    "upgradesFrom": "normal_torch_l1",
+    "upgradeCost": [
+      { "resourceId": "coal", "amount": 20 },
+      { "resourceId": "iron_ingot", "amount": 5 }
+    ],
+    "upgradeTime": 3
+  },
+  {
+    "id": "normal_torch_l3",
+    "name": "超级火把",
+    "type": "normal",
+    "radius": 5,
+    "coalPerPeriod": 1,
+    "coalBuffer": 20,
+    "colorHint": "#ff4444",
+    "lightCost": [
+      { "resourceId": "coal", "amount": 5 }
+    ],
+    "upgradesTo": null,
+    "upgradesFrom": "normal_torch_l2",
+    "upgradeCost": [
+      { "resourceId": "coal", "amount": 50 },
+      { "resourceId": "steel", "amount": 10 }
+    ],
+    "upgradeTime": 5
+  }
+]

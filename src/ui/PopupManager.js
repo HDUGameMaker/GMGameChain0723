@@ -181,7 +181,8 @@ export class PopupManager {
       'settings': '设置',
       'expedition_prep': '探险准备',
       'expedition_detail': '探险详情',
-      'item_detail': '物品详情'
+      'item_detail': '物品详情',
+      'torch_detail': '火把详情'
     };
     return titles[type] || '';
   }
@@ -217,6 +218,9 @@ export class PopupManager {
     });
     import('./panels/expedition-detail-panel.js').then(m => {
       this.register('expedition_detail', m.renderExpeditionDetailPanel);
+    });
+    import('./panels/torch-detail-panel.js').then(m => {
+      this.register('torch_detail', m.renderTorchDetailPanel);
     });
   }
 }

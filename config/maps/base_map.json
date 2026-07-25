@@ -60,6 +60,12 @@
     "width": 2,
     "height": 2
   },
+  "initialTorches": [
+    { "torchId": "eternal_torch", "gridX": 12, "gridY": 7 },
+    { "torchId": "eternal_torch", "gridX": 5, "gridY": 8 },
+    { "torchId": "normal_torch_l1", "gridX": 16, "gridY": 8 },
+    { "torchId": "normal_torch_l1", "gridX": 10, "gridY": 13 }
+  ],
   "initialBuildings": [
     {
       "buildingId": "work_shed",
