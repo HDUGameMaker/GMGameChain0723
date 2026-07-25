@@ -126,6 +126,16 @@ class Game {
     // 6. 初始化渲染器
     this.mapRenderer = new MapRenderer(this.app, this.systems.building, this.systems.torch);
 
+    // 6.05 加载存档后恢复相机位置（覆盖 _centerView 的默认/配置位置）
+    if (this._savedCamera) {
+      this.mapRenderer.setCameraState(
+        this._savedCamera.camX,
+        this._savedCamera.camY,
+        this._savedCamera.zoom || 1.0
+      );
+      this._savedCamera = null;
+    }
+
     // 6.1 从 localStorage 恢复 3D 透视偏好
     try {
       const saved = localStorage.getItem('gmgc_perspective_3d');
@@ -207,6 +217,8 @@ class Game {
     if (saveData.torches) {
       this.systems.torch.restoreState(saveData.torches);
     }
+    // 恢复相机位置（后续 MapRenderer 初始化后应用）
+    this._savedCamera = saveData.camera || null;
   }
 
   update(delta) {
@@ -237,7 +249,8 @@ class Game {
       buildings: this.systems.building.getAllStates(),
       expedition: this.systems.expedition.getCurrentExpedition(),
       events: this.systems.event.getSaveState(),
-      torches: this.systems.torch.getAllStates()
+      torches: this.systems.torch.getAllStates(),
+      camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null
     };
     await SaveManager.save(state);
     console.log('[Game] Auto-saved');
@@ -257,7 +270,8 @@ class Game {
       buildings: this.systems.building.getAllStates(),
       expedition: this.systems.expedition.getCurrentExpedition(),
       events: this.systems.event.getSaveState(),
-      torches: this.systems.torch.getAllStates()
+      torches: this.systems.torch.getAllStates(),
+      camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null
     };
     try {
       localStorage.setItem('gmgc_emergency_save', JSON.stringify(state));

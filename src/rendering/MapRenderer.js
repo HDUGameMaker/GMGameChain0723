@@ -17,26 +17,48 @@ export class MapRenderer {
     this.mapConfig = configRegistry.get('map');
     this.tileSize = this.mapConfig.tileSize;
 
-    // 容器
-    this.mapContainer = new PIXI.Container();
+    // 屏幕尺寸缓存
+    this.screenW = window.innerWidth;
+    this.screenH = window.innerHeight;
+
+    // 相机位置：屏幕左上角对应的世界像素坐标
+    this.camX = 0;
+    this.camY = 0;
+
+    // 缩放级别（1.0 = 默认，滚轮缩放以鼠标为中心）
+    this.zoom = 1.0;
+    this.MIN_ZOOM = 0.5;
+    this.MAX_ZOOM = 3.0;
+
+    // 游戏视图容器（包裹所有地图层，统一缩放）
+    this.gameView = new PIXI.Container();
+    this.app.stage.addChild(this.gameView);
+
+    // 容器层级（三层分离，参考 planner-config.html 的固定视口方案）
+    // 1. 固定地形层（永远在 0,0，地形以视口本地坐标绘制 → 始终铺满屏幕）
+    this.terrainContainer = new PIXI.Container();
+    this.gameView.addChild(this.terrainContainer);
+
+    // 2. 移动世界层（建筑/火把/虚影，世界坐标，容器位移 = -cam）
+    this.worldContainer = new PIXI.Container();
     this.torchLayer = new PIXI.Container();
     this.buildingLayer = new PIXI.Container();
     this.ghostLayer = new PIXI.Container();
-    this.fogContainer = new PIXI.Container();
-    this.app.stage.addChild(this.mapContainer);
-    this.mapContainer.addChild(this.buildingLayer);
-    this.mapContainer.addChild(this.torchLayer);
-    this.mapContainer.addChild(this.ghostLayer);
-    this.mapContainer.addChild(this.fogContainer);
+    this.gameView.addChild(this.worldContainer);
+    this.worldContainer.addChild(this.buildingLayer);
+    this.worldContainer.addChild(this.torchLayer);
+    this.worldContainer.addChild(this.ghostLayer);
 
-    // 视口状态
-    this.offsetX = 0;
-    this.offsetY = 0;
+    // 3. 固定迷雾层（永远在 0,0，迷雾以视口本地坐标绘制 → 始终铺满屏幕）
+    this.fogContainer = new PIXI.Container();
+    this.gameView.addChild(this.fogContainer);
+
+    // 拖拽状态
     this.isDragging = false;
     this.dragStartX = 0;
     this.dragStartY = 0;
-    this.dragOffsetX = 0;
-    this.dragOffsetY = 0;
+    this.dragStartCamX = 0;
+    this.dragStartCamY = 0;
     this.hasMoved = false;
 
     // 虚影状态
@@ -82,12 +104,13 @@ export class MapRenderer {
       () => this._updateMapSynthBars()
     );
 
-    this._drawMap();
+    // 先确定初始相机位置（居中），再绘制
+    this._centerView();
+    this._drawTerrainChunk();
     this._drawExpeditionEntrance();
     this._drawTorches();
     this._createFogCanvas();
     this._setupInteraction();
-    this._centerView();
     this._subscribeEvents();
     this.refreshBuildings(); // 立即渲染初始建筑
   }
@@ -141,8 +164,8 @@ export class MapRenderer {
     entranceContainer.addChild(iconText);
     entranceContainer.addChild(labelText);
 
-    // 插入到地图层和建筑层之间
-    this.mapContainer.addChildAt(entranceContainer, 1);
+    // 插入到世界层（随相机移动）
+    this.worldContainer.addChild(entranceContainer);
   }
 
   // ===== 火把渲染 =====
@@ -201,20 +224,22 @@ export class MapRenderer {
   // ===== 迷雾渲染（Canvas 2D 离屏纹理）=====
 
   /**
-   * 创建离屏 Canvas 用于渲染迷雾纹理
+   * 创建离屏 Canvas 用于渲染迷雾纹理（覆盖整个屏幕，固定视口）
    */
   _createFogCanvas() {
-    const mapW = this.mapConfig.gridWidth * this.tileSize;
-    const mapH = this.mapConfig.gridHeight * this.tileSize;
+    // 迷雾画布覆盖视口范围（缩放越大，画布越小 → 靠 gameView 缩放撑满屏幕）
+    const viewW = Math.ceil(this.screenW / this.zoom);
+    const viewH = Math.ceil(this.screenH / this.zoom);
 
-    // 创建离屏 Canvas
     this._fogCanvas = document.createElement('canvas');
-    this._fogCanvas.width = mapW;
-    this._fogCanvas.height = mapH;
+    this._fogCanvas.width = viewW;
+    this._fogCanvas.height = viewH;
 
-    // 从 Canvas 创建 PIXI 纹理和精灵
     this._fogTexture = PIXI.Texture.from(this._fogCanvas);
     this._fogSprite = new PIXI.Sprite(this._fogTexture);
+    // 迷雾精灵固定在视口原点（fogContainer 是固定的）
+    this._fogSprite.x = 0;
+    this._fogSprite.y = 0;
     this.fogContainer.addChild(this._fogSprite);
 
     this._updateFogTexture();
@@ -222,56 +247,68 @@ export class MapRenderer {
 
   /**
    * 在 Canvas 2D 上重新绘制迷雾纹理
-   * 使用 radialGradient + destination-out 清除火把照亮区域
+   * 迷雾覆盖整个屏幕，火把世界坐标转视口本地坐标（减去 camX/camY）
    */
   _updateFogTexture() {
     if (!this._fogCanvas) return;
 
     const ctx = this._fogCanvas.getContext('2d');
-    const mapW = this.mapConfig.gridWidth * this.tileSize;
-    const mapH = this.mapConfig.gridHeight * this.tileSize;
+    const ts = this.tileSize;
+    const w = this._fogCanvas.width;
+    const h = this._fogCanvas.height;
 
-    // 1. 全图填充迷雾色（完全不透明）
+    // 1. 全屏填充迷雾色（完全不透明）
     ctx.globalCompositeOperation = 'source-over';
     ctx.fillStyle = '#08081a';
-    ctx.fillRect(0, 0, mapW, mapH);
+    ctx.fillRect(0, 0, w, h);
 
-    // 2. 用 destination-out 清除每个点燃火把的照亮区域
+    // 2. 用 destination-out 清除每个点燃火把的照亮区域（世界坐标 → 视口本地坐标）
     if (this._torchSystem) {
       ctx.globalCompositeOperation = 'destination-out';
 
-      const ts = this.tileSize;
       const litTorches = this._torchSystem.getLitTorches();
       for (const t of litTorches) {
         const cfg = this._torchSystem.getTorchConfig(t.torchId);
         if (!cfg) continue;
 
-        const cx = (t.gridX + 0.5) * ts;
-        const cy = (t.gridY + 0.5) * ts;
         const maxR = cfg.radius * ts;
 
-        // 径向渐变：中心完全清除 → 边缘保留迷雾（柔边过渡）
+        // 火把世界坐标 → 视口本地坐标（不受 zoom 影响，仅在 gameView 本地空间）
+        const worldCx = (t.gridX + 0.5) * ts;
+        const worldCy = (t.gridY + 0.5) * ts;
+        const cx = worldCx - this.camX;
+        const cy = worldCy - this.camY;
+
+        // 视口裁剪：跳过完全在屏幕外的火把
+        if (cx + maxR < -ts || cx - maxR > w + ts ||
+            cy + maxR < -ts || cy - maxR > h + ts) continue;
+
+        // 径向渐变柔边
         const gradient = ctx.createRadialGradient(cx, cy, maxR * 0.2, cx, cy, maxR);
-        gradient.addColorStop(0, 'rgba(0,0,0,1)');     // 完全清除
-        gradient.addColorStop(0.4, 'rgba(0,0,0,0.95)'); // 几乎完全清除
-        gradient.addColorStop(0.65, 'rgba(0,0,0,0.7)'); // 大部分清除
-        gradient.addColorStop(0.85, 'rgba(0,0,0,0.2)'); // 少量清除
-        gradient.addColorStop(1, 'rgba(0,0,0,0)');     // 不清除
+        gradient.addColorStop(0, 'rgba(0,0,0,1)');
+        gradient.addColorStop(0.4, 'rgba(0,0,0,0.95)');
+        gradient.addColorStop(0.65, 'rgba(0,0,0,0.7)');
+        gradient.addColorStop(0.85, 'rgba(0,0,0,0.2)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
 
         ctx.fillStyle = gradient;
         ctx.fillRect(cx - maxR, cy - maxR, maxR * 2, maxR * 2);
       }
     }
 
-    // 恢复默认混合模式
     ctx.globalCompositeOperation = 'source-over';
 
-    // 3. 上传到 PIXI 纹理（v8: 直接更新 source 确保 Canvas 内容刷新到 GPU）
     if (this._fogTexture.source) {
       this._fogTexture.source.update();
     }
 
-    // 缓存可见性格子，供 _isTileRevealed 快速查询
+    // 迷雾精灵固定在视口原点
+    if (this._fogSprite) {
+      this._fogSprite.x = 0;
+      this._fogSprite.y = 0;
+    }
+
+    // 缓存可见性格子供 _isTileRevealed 查询
     if (this._torchSystem) {
       this._visibleGrid = this._torchSystem.getVisibilityMatrix();
     }
@@ -287,46 +324,117 @@ export class MapRenderer {
     return this._visibleGrid[row][col];
   }
 
-  _drawMap() {
+  /**
+   * 绘制当前屏幕范围内的地形（视口裁剪 + 视口本地坐标）
+   * 参考 planner-config.html 的 drawTerrainTiles 方案：
+   * terrainContainer 固定在 (0,0)，地形以本地坐标绘制 → 始终铺满屏幕
+   */
+  _drawTerrainChunk() {
+    if (this._terrainGraphics) {
+      this.terrainContainer.removeChild(this._terrainGraphics);
+      this._terrainGraphics.destroy();
+    }
+
     const { gridWidth, gridHeight, tileSize, grid, groundTypes } = this.mapConfig;
+    const ts = tileSize;
+    // 视口覆盖的世界范围（缩放越大，可见世界范围越小）
+    const viewW = this.screenW / this.zoom;
+    const viewH = this.screenH / this.zoom;
+
+    // 计算可见的世界格范围（与 planner 公式一致）
+    const startCol = Math.max(0, Math.floor(this.camX / ts));
+    const endCol = Math.min(gridWidth - 1, Math.ceil((this.camX + viewW) / ts));
+    const startRow = Math.max(0, Math.floor(this.camY / ts));
+    const endRow = Math.min(gridHeight - 1, Math.ceil((this.camY + viewH) / ts));
+
     const graphics = new PIXI.Graphics();
 
-    for (let row = 0; row < gridHeight; row++) {
-      for (let col = 0; col < gridWidth; col++) {
+    // 先绘制地图背景（深色基底，让地图边界外也可见）
+    const mapW = gridWidth * ts;
+    const mapH = gridHeight * ts;
+    graphics.rect(-this.camX, -this.camY, mapW, mapH);
+    graphics.fill({ color: 0x0a0a18, alpha: 1 });
+
+    for (let row = startRow; row <= endRow; row++) {
+      for (let col = startCol; col <= endCol; col++) {
         const char = grid[row][col];
         const groundType = groundTypes[char];
         const color = groundType ? parseInt(groundType.colorHint.replace('#', ''), 16) : 0x333333;
 
-        const x = col * tileSize;
-        const y = row * tileSize;
+        // 世界坐标 → 视口本地坐标（关键：与 planner 的 ctx.translate 等效）
+        const lx = col * ts - this.camX;
+        const ly = row * ts - this.camY;
 
-        graphics.rect(x, y, tileSize, tileSize);
+        graphics.rect(lx, ly, ts, ts);
         graphics.fill({ color, alpha: 1 });
 
         // 网格线
-        graphics.rect(x, y, tileSize, tileSize);
+        graphics.rect(lx, ly, ts, ts);
         graphics.stroke({ color: 0x000000, alpha: 0.15, width: 1 });
       }
     }
 
-    this.mapContainer.addChildAt(graphics, 0);
+    // 地图边界线（提示玩家地图范围）
+    graphics.rect(-this.camX, -this.camY, mapW, mapH);
+    graphics.stroke({ color: 0x886633, alpha: 0.9, width: 4 });
+    // 内层发光线
+    graphics.rect(2 - this.camX, 2 - this.camY, mapW - 4, mapH - 4);
+    graphics.stroke({ color: 0xffaa44, alpha: 0.3, width: 1 });
+
+    this.terrainContainer.addChildAt(graphics, 0);
+    this._terrainGraphics = graphics;
   }
 
-  _centerView() {
+  /**
+   * 更新世界层容器位置（建筑/火把/虚影跟随相机平移）
+   */
+  _updateWorldContainerPosition() {
+    this.worldContainer.x = -this.camX;
+    this.worldContainer.y = -this.camY;
+  }
+
+  /**
+   * 钳制相机到地图边界
+   * 地图大于屏幕时不许拖出边界；地图小于屏幕时居中
+   */
+  _clampCamera() {
     const { gridWidth, gridHeight, tileSize } = this.mapConfig;
     const mapW = gridWidth * tileSize;
     const mapH = gridHeight * tileSize;
-    const screenW = window.innerWidth;
-    const screenH = window.innerHeight;
 
-    this.offsetX = (screenW - mapW) / 2;
-    this.offsetY = (screenH - mapH) / 2;
-    this._updatePosition();
+    if (mapW <= this.screenW) {
+      this.camX = (mapW - this.screenW) / 2;
+    } else {
+      this.camX = Math.max(0, Math.min(this.camX, mapW - this.screenW));
+    }
+    if (mapH <= this.screenH) {
+      this.camY = (mapH - this.screenH) / 2;
+    } else {
+      this.camY = Math.max(0, Math.min(this.camY, mapH - this.screenH));
+    }
   }
 
-  _updatePosition() {
-    this.mapContainer.x = this.offsetX;
-    this.mapContainer.y = this.offsetY;
+  _centerView() {
+    // 优先使用配置的初始相机位置（以网格坐标指定）
+    const initCam = this.mapConfig.initialCamera;
+    if (initCam && initCam.gridX != null && initCam.gridY != null) {
+      const ts = this.tileSize;
+      // 将网格坐标居中到屏幕中心
+      this.camX = (initCam.gridX + 0.5) * ts - this.screenW / 2;
+      this.camY = (initCam.gridY + 0.5) * ts - this.screenH / 2;
+      if (initCam.zoom != null) {
+        this.zoom = Math.max(this.MIN_ZOOM, Math.min(this.MAX_ZOOM, initCam.zoom));
+        this.gameView.scale.set(this.zoom);
+      }
+    } else {
+      const { gridWidth, gridHeight, tileSize } = this.mapConfig;
+      const mapW = gridWidth * tileSize;
+      const mapH = gridHeight * tileSize;
+      this.camX = (mapW - this.screenW) / 2;
+      this.camY = (mapH - this.screenH) / 2;
+    }
+    this._clampCamera();
+    this._updateWorldContainerPosition();
   }
 
   _setupInteraction() {
@@ -343,8 +451,8 @@ export class MapRenderer {
         this.hasMoved = false;
         this.dragStartX = e.clientX;
         this.dragStartY = e.clientY;
-        this.dragOffsetX = this.offsetX;
-        this.dragOffsetY = this.offsetY;
+        this.dragStartCamX = this.camX;
+        this.dragStartCamY = this.camY;
         return;
       }
 
@@ -375,8 +483,8 @@ export class MapRenderer {
       this.hasMoved = false;
       this.dragStartX = e.clientX;
       this.dragStartY = e.clientY;
-      this.dragOffsetX = this.offsetX;
-      this.dragOffsetY = this.offsetY;
+      this.dragStartCamX = this.camX;
+      this.dragStartCamY = this.camY;
     });
 
     canvas.addEventListener('pointermove', (e) => {
@@ -393,9 +501,14 @@ export class MapRenderer {
         const dx = e.clientX - this.dragStartX;
         const dy = e.clientY - this.dragStartY;
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) this.hasMoved = true;
-        this.offsetX = this.dragOffsetX + dx;
-        this.offsetY = this.dragOffsetY + dy;
-        this._updatePosition();
+        // 固定视口方案：拖拽更新相机位置 → 重绘地形和迷雾（参考 planner 每帧 drawMapCanvas）
+        // 屏幕像素 → 世界像素：除以 zoom
+        this.camX = this.dragStartCamX - dx / this.zoom;
+        this.camY = this.dragStartCamY - dy / this.zoom;
+        this._clampCamera();
+        this._updateWorldContainerPosition();
+        this._drawTerrainChunk();
+        this._updateFogTexture();
       }
 
       // 放置模式下更新虚影
@@ -431,6 +544,7 @@ export class MapRenderer {
       if (this.isDragging && !this.hasMoved) {
         this._onClick(e.clientX, e.clientY);
       }
+      // 地形和迷雾已在 pointermove 中实时更新，无需在 pointerup 重复处理
       this.isDragging = false;
     });
 
@@ -441,6 +555,7 @@ export class MapRenderer {
         this._dragBuildingIndex = null;
         this._dragBuildingConfig = null;
       }
+      // 拖拽中离开画布 → 地形和迷雾已在 pointermove 中实时更新
       this.isDragging = false;
     });
 
@@ -451,6 +566,32 @@ export class MapRenderer {
         this._clearGhost();
       }
     });
+
+    // 滚轮缩放（以鼠标为中心，参考 planner 的 zoom-toward-cursor）
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const oldZoom = this.zoom;
+      const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+      const newZoom = Math.max(this.MIN_ZOOM, Math.min(this.MAX_ZOOM, oldZoom * zoomFactor));
+
+      if (newZoom === oldZoom) return;
+
+      // 缩放以鼠标位置为中心：保持鼠标下的世界点不变
+      // wp = cx / oldZoom + oldCamX = cx / newZoom + newCamX
+      // newCamX = oldCamX + cx * (1/oldZoom - 1/newZoom)
+      this.camX = this.camX + e.clientX * (1 / oldZoom - 1 / newZoom);
+      this.camY = this.camY + e.clientY * (1 / oldZoom - 1 / newZoom);
+      this.zoom = newZoom;
+
+      // 应用缩放到游戏视图
+      this.gameView.scale.set(this.zoom);
+
+      // 缩放改变后重新钳制相机、重绘地形和迷雾
+      this._clampCamera();
+      this._updateWorldContainerPosition();
+      this._recreateFogCanvas();
+      this._drawTerrainChunk();
+    }, { passive: false });
   }
 
   _onClick(clientX, clientY) {
@@ -526,6 +667,7 @@ export class MapRenderer {
     const canvasCSSW = parseFloat(canvas.style.width) || window.innerWidth;
     const canvasCSSH = parseFloat(canvas.style.height) || window.innerHeight;
 
+    const zoom = this.zoom || 1;
     let worldX, worldY;
 
     if (this._perspectiveEnabled) {
@@ -545,12 +687,15 @@ export class MapRenderer {
       const pixiX = cx + canvasCSSW / 2;
       const pixiY = cy + canvasCSSH / 2;
 
-      worldX = pixiX - this.offsetX;
-      worldY = pixiY - this.offsetY;
+      // 3D 下也需要除以 zoom：pixi 坐标是 gameView 本地坐标
+      worldX = pixiX / zoom + this.camX;
+      worldY = pixiY / zoom + this.camY;
     } else {
-      // 2D 平面模式：屏幕像素直接映射
-      worldX = clientX - this.offsetX;
-      worldY = clientY - this.offsetY;
+      // 2D 平面模式：gameView 在 (0,0) 且 scale=zoom
+      // 屏幕坐标 → gameView 本地坐标：除以 zoom
+      // worldX = localX + camX = screenX / zoom + camX
+      worldX = clientX / zoom + this.camX;
+      worldY = clientY / zoom + this.camY;
     }
 
     const { col, row } = screenToGrid(worldX, worldY, this.tileSize);
@@ -1104,7 +1249,7 @@ export class MapRenderer {
     if (!this._colorFilter) {
       this._colorFilter = new PIXI.ColorMatrixFilter();
       this._colorFilter.matrix = targetMatrix.slice();
-      this.mapContainer.filters = [this._colorFilter];
+      this.app.stage.filters = [this._colorFilter];
     }
 
     // 如果已有进行中的过渡，从当前插值位置开始新过渡
@@ -1187,6 +1332,34 @@ export class MapRenderer {
   }
 
   /**
+   * 获取相机状态（用于存档）
+   */
+  getCameraState() {
+    return {
+      camX: this.camX,
+      camY: this.camY,
+      zoom: this.zoom
+    };
+  }
+
+  /**
+   * 设置相机状态（从存档恢复，或从配置初始化）
+   * @param {number} camX
+   * @param {number} camY
+   * @param {number} [zoom=1.0]
+   */
+  setCameraState(camX, camY, zoom = 1.0) {
+    this.camX = camX;
+    this.camY = camY;
+    this.zoom = Math.max(this.MIN_ZOOM, Math.min(this.MAX_ZOOM, zoom));
+    this.gameView.scale.set(this.zoom);
+    this._clampCamera();
+    this._updateWorldContainerPosition();
+    this._recreateFogCanvas();
+    this._drawTerrainChunk();
+  }
+
+  /**
    * 销毁时清理过渡
    */
   destroy() {
@@ -1251,6 +1424,37 @@ export class MapRenderer {
   }
 
   onResize() {
-    // 保持地图居中（可选）
+    this.screenW = window.innerWidth;
+    this.screenH = window.innerHeight;
+
+    // 确保 gameView 缩放正确
+    this.gameView.scale.set(this.zoom);
+
+    // 重钳制相机（屏幕尺寸变了）
+    this._clampCamera();
+    this._updateWorldContainerPosition();
+
+    // 重建迷雾 Canvas（尺寸取决于 screenW/H 和 zoom）
+    this._recreateFogCanvas();
+
+    // 重绘地形（铺满新视口）
+    this._drawTerrainChunk();
+  }
+
+  /**
+   * 重建迷雾离屏Canvas（屏幕尺寸变化时调用）
+   */
+  _recreateFogCanvas() {
+    if (this._fogSprite) {
+      this.fogContainer.removeChild(this._fogSprite);
+      this._fogSprite.destroy();
+      this._fogSprite = null;
+    }
+    if (this._fogTexture) {
+      this._fogTexture.destroy();
+      this._fogTexture = null;
+    }
+    this._fogCanvas = null;
+    this._createFogCanvas();
   }
 }
