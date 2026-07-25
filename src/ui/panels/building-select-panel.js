@@ -104,7 +104,7 @@ export function renderBuildingSelectPanel(data, body, pm) {
     if (b.isTorch) tags.push('🔥 照明');
     if (b.maxWorkers) tags.push(`👷 ${b.maxWorkers}`);
     if (b.housingCapacity) tags.push(`🏠 +${b.housingCapacity}`);
-    if (b.foodCapacity) tags.push(`🍞 +${b.foodCapacity}`);
+    if (b.foodCapacity) tags.push(`🍞 +${b.foodCapacity}/天/工人`);
 
     infoEl.innerHTML = `
       <div style="font-weight:600;color:#ececf0;font-size:14px;margin-bottom:3px;">

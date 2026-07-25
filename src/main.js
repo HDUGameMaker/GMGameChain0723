@@ -65,6 +65,7 @@ class Game {
     this.systems.torch.init();
     this.systems.audio.init();
     this.systems.population.setBuildingSystem(this.systems.building);
+    this.systems.population.setResourceSystem(this.systems.resource);
     this.systems.event.setSystems({
       resource: this.systems.resource,
       item: this.systems.item,
@@ -81,6 +82,11 @@ class Game {
     // 注册人口每日结算
     eventBus.on('dayStart', () => {
       this.systems.population.onDayStart();
+    });
+
+    // 游戏结束事件
+    eventBus.on('gameOver', (data) => {
+      this.popupManager.open('game_over', data);
     });
 
     // 注册建筑点击事件

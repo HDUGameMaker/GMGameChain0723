@@ -514,18 +514,27 @@ export class BuildingSystem {
     return total;
   }
 
-  getTotalFoodCapacity() {
+  /**
+   * 获取每天食物产出量（每工人每天产出 foodCapacity 食物）
+   */
+  getTotalFoodProduction() {
     let total = 0;
     for (const b of this.buildings) {
       if (b.status !== 'active') continue;
-      if (b.currentWorkers <= 0) continue; // 需要分配工人
+      if (b.currentWorkers <= 0) continue;
       const config = configRegistry.getBuilding(b.buildingId);
       if (config && config.foodCapacity) {
-        // foodCapacity 按每工人计算（如农田 7/工人 × 5工人 = 35）
         total += config.foodCapacity * b.currentWorkers;
       }
     }
     return total;
+  }
+
+  /**
+   * @deprecated 使用 getTotalFoodProduction() 替代
+   */
+  getTotalFoodCapacity() {
+    return this.getTotalFoodProduction();
   }
 
   getTotalAssignedWorkers() {

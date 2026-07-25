@@ -7,7 +7,6 @@
   "eventMinInterval": 4,
   "population": {
     "growthPerDay": { "min": 4, "max": 8 },
-    "foodFloor": 5,
     "declineDelayDays": 2
   }
 }

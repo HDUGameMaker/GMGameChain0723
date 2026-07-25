@@ -5,7 +5,7 @@
 import { eventBus } from '../core/EventBus.js';
 
 // 阻塞时间的面板类型
-const BLOCKING_TYPES = ['event', 'expedition_prep'];
+const BLOCKING_TYPES = ['event', 'expedition_prep', 'game_over'];
 
 export class PopupManager {
   constructor(gameLoop) {
@@ -182,7 +182,8 @@ export class PopupManager {
       'expedition_prep': '探险准备',
       'expedition_detail': '探险详情',
       'item_detail': '物品详情',
-      'torch_detail': '火把详情'
+      'torch_detail': '火把详情',
+      'game_over': '游戏结束'
     };
     return titles[type] || '';
   }
@@ -221,6 +222,9 @@ export class PopupManager {
     });
     import('./panels/torch-detail-panel.js').then(m => {
       this.register('torch_detail', m.renderTorchDetailPanel);
+    });
+    import('./panels/gameover-panel.js').then(m => {
+      this.register('game_over', m.renderGameOverPanel);
     });
   }
 }

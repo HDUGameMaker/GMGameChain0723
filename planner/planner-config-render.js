@@ -137,7 +137,7 @@ function renderBuildingForm(b) {
 
   html += '<div class="form-row span-3">';
   html += field('housingCapacity', '人口容量', b.housingCapacity, { type: 'number', placeholder: '无' });
-  html += field('foodCapacity', '食物容量', b.foodCapacity, { type: 'number', placeholder: '无' });
+  html += field('foodCapacity', '食物产出(天/工人)', b.foodCapacity, { type: 'number', placeholder: '无' });
   html += field('maxWorkers', '最大工人', b.maxWorkers ?? 0, { type: 'number' });
   html += '</div>';
 

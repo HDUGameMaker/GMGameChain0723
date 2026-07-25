@@ -563,15 +563,14 @@ config/
 
 #### 食物产出相关
 
-`getTotalFoodCapacity()` 计算：`config.foodCapacity * b.currentWorkers`（每个工人独立携带食物容量）。
+`getTotalFoodProduction()` 计算：`config.foodCapacity * b.currentWorkers`（每个工人每天产出对应食物量）。食物在每天开始时（`dayStart`）统一结算，产出直接加入食物资源池。
 
 ```json
 {
   "id": "farm",
   "name": "农场",
   "maxWorkers": 5,
-  "foodCapacity": 7,
-  "perWorker": true
+  "foodCapacity": 7
 }
 ```
 
@@ -580,15 +579,16 @@ config/
   "id": "hunting_hut",
   "name": "狩猎小屋",
   "maxWorkers": 1,
-  "foodCapacity": 5,
-  "perWorker": true
+  "foodCapacity": 5
 }
 ```
 
-| 建筑 | foodCapacity | maxWorkers | 总容量 |
-|------|-------------|-----------|--------|
-| 农场 | 7/worker | 5 | 35 |
-| 狩猎小屋 | 5/worker | 1 | 5 |
+| 建筑 | foodCapacity | maxWorkers | 每日产出 |
+|------|-------------|-----------|----------|
+| 农场 | 7/工人/天 | 5 | 35 |
+| 狩猎小屋 | 5/工人/天 | 1 | 5 |
+
+> 食物每日消耗 = 当前人口数（每人 1/天）。若储量不足，差额人数因饥饿死亡。人口 < 2 时游戏结束。
 
 #### 锯木厂工人配置
 

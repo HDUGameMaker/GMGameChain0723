@@ -74,7 +74,7 @@ function deleteItem() {
 function getDefaultItem() {
   switch(state.tab) {
     case 'buildings':
-      return { id: 'new_building', name: '新建筑', description: '', icon: '', mapIcon: '', imageDetail: '', mapIconLayout: { scaleX: 1.0, scaleY: 1.0, offsetX: 0, offsetY: 0 }, animation: { spriteSheet: '', frameCount: 8, fps: 8, frameWidth: 256, frameHeight: 256, pingpong: false }, footprint: { width: 1, height: 1 }, maxCount: null, initialBuilding: false, housingCapacity: 0, maxWorkers: 0, buildCost: [], buildTime: 1, upgradesTo: null, production: null, synthesisRecipes: [], labelLayout: { nameOffsetY: 0, progressBarOffsetY: 0, workersOffsetY: 0 } };
+      return { id: 'new_building', name: '新建筑', description: '', icon: '', mapIcon: '', imageDetail: '', mapIconLayout: { scaleX: 1.0, scaleY: 1.0, offsetX: 0, offsetY: 0 }, animation: { spriteSheet: '', frameCount: 8, fps: 8, frameWidth: 256, frameHeight: 256, pingpong: false }, footprint: { width: 1, height: 1 }, maxCount: null, initialBuilding: false, housingCapacity: 0, foodCapacity: 0, maxWorkers: 0, buildCost: [], buildTime: 1, upgradesTo: null, production: null, synthesisRecipes: [], labelLayout: { nameOffsetY: 0, progressBarOffsetY: 0, workersOffsetY: 0 } };
     case 'resources':
       return { id: 'new_resource', name: '新资源', icon: '', initial: 0, max: 1000, rare: false, showInHUD: true };
     case 'items':

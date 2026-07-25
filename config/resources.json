@@ -93,7 +93,7 @@
     "id": "food",
     "name": "食物",
     "icon": "",
-    "initial": 15,
+    "initial": 5,
     "max": 2000,
     "rare": false,
     "showInHUD": true

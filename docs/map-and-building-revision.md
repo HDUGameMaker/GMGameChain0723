@@ -244,7 +244,7 @@
 | `production` | `object\|null` | 产出配置，含 `perWorker`/`input`/`output` |
 | `synthesisRecipes` | `array` | 合成配方列表（工作站建筑） |
 | `housingCapacity` | `number\|null` | 提供的居住人口上限（住宅类） |
-| `foodCapacity` | `number\|null` | 提供的食物人口上限/每工人（食物类建筑） |
+| `foodCapacity` | `number\|null` | 每工人每天食物产出量（食物类建筑） |
 | `storageMultiplier` | `number\|null` | 仓库存储倍率（仓库类建筑） |
 | `allowedGrounds` | `string[]\|null` | 可建造的地面类型字符，null=不限 |
 | `labelLayout` | `object` | 地图标签偏移配置（可选） |
