@@ -532,6 +532,42 @@ export class BuildingSystem {
     return this.buildings.reduce((sum, b) => sum + (b.currentWorkers || 0), 0);
   }
 
+  /**
+   * 计算所有活跃建筑的每Tick净资源产量
+   * @returns {Object} { resourceId: netAmountPerTick }
+   *   正数 = 净产出，负数 = 净消耗，0 不出现在结果中
+   */
+  getProductionRates() {
+    const rates = {};
+
+    for (const building of this.buildings) {
+      if (building.status !== 'active') continue;
+
+      const config = configRegistry.getBuilding(building.buildingId);
+      if (!config || !config.production) continue;
+
+      const prod = config.production;
+      const multiplier = prod.perWorker ? (building.currentWorkers || 0) : 1;
+      if (multiplier <= 0) continue;
+
+      // 消耗（负数）
+      if (prod.input) {
+        for (const inp of prod.input) {
+          rates[inp.resourceId] = (rates[inp.resourceId] || 0) - inp.amount * multiplier;
+        }
+      }
+
+      // 产出（正数）
+      if (prod.output) {
+        for (const out of prod.output) {
+          rates[out.resourceId] = (rates[out.resourceId] || 0) + out.amount * multiplier;
+        }
+      }
+    }
+
+    return rates;
+  }
+
   getBuildingCount(buildingId) {
     return this.buildings.filter(b => b.buildingId === buildingId).length;
   }

@@ -96,7 +96,10 @@ export class HUD {
     store.subscribe('timeUserPaused', () => this._refreshPauseBtn());
     store.subscribe('placingState', (state) => this._refreshPlacingMode(state));
     store.subscribe('expeditionState', (state) => this._refreshExpeditionStatus(state));
-    store.subscribe('buildingVersion', () => this._refreshPopulation());
+    store.subscribe('buildingVersion', () => {
+      this._refreshPopulation();
+      this._refreshResources();
+    });
   }
 
   _subscribeEvents() {
@@ -117,17 +120,33 @@ export class HUD {
 
   _refreshResources() {
     const resources = this.systems.resource.getHUDResources();
+    const rates = this.systems.building.getProductionRates();
     this.resourceBar.innerHTML = '';
 
     for (const res of resources) {
+      const rate = rates[res.id] || 0;
+      const isFull = res.current >= res.max;
       const item = document.createElement('div');
-      item.className = 'resource-item' + (res.current >= res.max ? ' full' : '');
+      item.className = 'resource-item' + (isFull ? ' full' : '');
       const iconHtml = res.icon
         ? `<img src="${res.icon}" alt="${res.name}" class="res-icon" style="width:22px;height:22px;object-fit:contain;vertical-align:middle" onerror="this.replaceWith(document.createTextNode('${this._getResourceEmoji(res.id)}'))" />`
         : this._getResourceEmoji(res.id);
-      item.innerHTML = `<span>${iconHtml}</span><span class="res-value">${res.current}</span>`;
+
+      // 构建 HTML：图标 + 数值 + 产量速率标记
+      let innerHTML = `<span>${iconHtml}</span><span class="res-value">${res.current}</span>`;
+      if (rate !== 0) {
+        const sign = rate > 0 ? '+' : '';
+        const rateClass = rate > 0 ? 'positive' : 'negative';
+        innerHTML += `<span class="res-rate ${rateClass}">${sign}${rate}</span>`;
+      }
+      item.innerHTML = innerHTML;
+
+      // 点击弹窗：含产量速率信息
+      const rateText = rate !== 0
+        ? `\n每Tick: ${rate > 0 ? '+' : ''}${rate}`
+        : '';
       item.addEventListener('click', (e) => {
-        this._showPopover(e.target, `${res.name}: ${res.current} / ${res.max}`);
+        this._showPopover(e.target, `${res.name}: ${res.current} / ${res.max}${rateText}`);
       });
       this.resourceBar.appendChild(item);
 
