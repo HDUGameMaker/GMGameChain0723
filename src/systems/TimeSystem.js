@@ -118,7 +118,8 @@ export class TimeSystem {
   }
 
   cycleSpeed() {
-    const speeds = [1, 2, 4];
+    const cheatEnabled = window.__cheatManager?.isEnabled();
+    const speeds = cheatEnabled ? [1, 2, 4, 8, 16] : [1, 2, 4];
     const idx = speeds.indexOf(this.speed);
     this.speed = speeds[(idx + 1) % speeds.length];
     store.setState({ timeSpeed: this.speed });

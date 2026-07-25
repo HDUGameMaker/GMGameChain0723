@@ -241,7 +241,10 @@ export class HUD {
 
   _refreshSpeedBtn() {
     const speed = store.getState('timeSpeed') || 1;
-    this.btnSpeed.textContent = speed === 1 ? '⏩' : `${speed}×`;
+    const label = speed === 1 ? '⏩' : `${speed}×`;
+    this.btnSpeed.textContent = label;
+    // 高倍速红色警告
+    this.btnSpeed.style.color = speed >= 8 ? '#ff6b6b' : '';
   }
 
   _refreshPauseBtn() {

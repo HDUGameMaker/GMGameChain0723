@@ -19,6 +19,7 @@ import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
 import { SaveManager } from './core/SaveManager.js';
+import { cheatManager } from './utils/CheatManager.js';
 
 class Game {
   constructor() {
@@ -87,6 +88,16 @@ class Game {
     // 游戏结束事件
     eventBus.on('gameOver', (data) => {
       this.popupManager.open('game_over', data);
+    });
+
+    // 作弊状态变化
+    eventBus.on('cheatToggled', ({ enabled }) => {
+      if (!enabled) {
+        const currentSpeed = this.systems.time.speed;
+        if (currentSpeed > 4) {
+          this.systems.time.setSpeed(1);
+        }
+      }
     });
 
     // 注册建筑点击事件
@@ -314,3 +325,4 @@ game.init().catch(err => {
 
 // 导出到全局（调试用）
 window.__game = game;
+window.__cheatManager = cheatManager;
