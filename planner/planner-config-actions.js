@@ -83,6 +83,8 @@ function getDefaultItem() {
       return { id: 'new_event', name: '新事件', description: '', image: '', priority: 0, mutexGroup: null, cooldownTicks: 0, maxTriggers: 1, triggerConditions: { timePeriods: [], requiredItems: [], requiredBuildings: [] }, invalidationConditions: { timePeriods: [], requiredItems: [], requiredBuildings: [] }, probability: 1, effects: [], options: [] };
     case 'expeditions':
       return { id: 'new_region', name: '新区域', description: '', image: '', unlockConditions: [], baseYields: {} };
+    case 'adjacency':
+      return getAdjacencyDefaultItem();
     default: return {};
   }
 }
@@ -93,12 +95,12 @@ function getDefaultItem() {
 const tabTitles = {
   buildings: '建筑配置', resources: '资源配置', items: '物品配置',
   events: '事件配置', expeditions: '探险配置', map: '地图配置',
-  analysis: '数值分析',
+  adjacency: '相邻加成', analysis: '数值分析',
 };
 const tabFiles = {
   buildings: 'buildings.json', resources: 'resources.json', items: 'items.json',
   events: 'events_base.json + events_expedition.json', expeditions: 'regions.json + expedition_global.json', map: 'base_map.json',
-  analysis: '自动分析（只读）',
+  adjacency: 'adjacency-bonuses.json', analysis: '自动分析（只读）',
 };
 
 function switchTab(tab) {

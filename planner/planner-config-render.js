@@ -34,9 +34,14 @@ function renderDetail() {
     case 'expeditions': html = renderRegionForm(item); break;
     case 'map':       html = renderMapForm(); break;
     case 'analysis':  html = renderAnalysisPanel(); break;
+    case 'adjacency': html = renderAdjacencyForm(item) + '<div class="section-title">加成关系图</div><div class="event-graph" id="adjGraph">' + renderAdjacencyGraph() + '</div>'; break;
   }
   panel.innerHTML = html;
-  bindFormEvents();
+  if (state.tab === 'adjacency') {
+    bindAdjacencyFormEvents();
+  } else {
+    bindFormEvents();
+  }
 }
 
 function field(name, label, value, opts = {}) {

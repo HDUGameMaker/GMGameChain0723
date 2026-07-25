@@ -16,6 +16,7 @@ export class BuildingSystem {
     this._populationSystem = null;
     this._mapConfig = null;
     this._newlyUnlocked = new Set(); // 本轮新解锁的建筑ID
+    this._adjacencyConfig = []; // 相邻加成配置
 
     // 订阅 tick 事件处理建造和生产
     eventBus.on('tick', (data) => this.onTick(data));
@@ -28,6 +29,7 @@ export class BuildingSystem {
 
   init() {
     this._mapConfig = configRegistry.get('map');
+    this._adjacencyConfig = configRegistry.get('adjacency_bonuses') || [];
   }
 
   // ===== 放置模式 =====
@@ -463,6 +465,10 @@ export class BuildingSystem {
 
     const prod = config.production;
 
+    // 获取相邻加成
+    const bIndex = this.buildings.indexOf(building);
+    const bonuses = bIndex >= 0 ? this.getAdjacencyBonuses(bIndex) : [];
+
     // 检查输入资源
     if (prod.input) {
       const inputAmount = prod.perWorker ? building.currentWorkers : 1;
@@ -476,11 +482,15 @@ export class BuildingSystem {
       }
     }
 
-    // 产出
+    // 产出（应用相邻加成）
     if (prod.output) {
       const outputMultiplier = prod.perWorker ? building.currentWorkers : 1;
       for (const out of prod.output) {
-        this._resourceSystem.addClamped(out.resourceId, out.amount * outputMultiplier);
+        const baseAmount = out.amount * outputMultiplier;
+        const adjusted = this.applyAdjacencyToProduction(
+          building.buildingId, out.resourceId, baseAmount, 'production', bonuses
+        );
+        this._resourceSystem.addClamped(out.resourceId, Math.round(adjusted));
       }
     }
   }
@@ -519,12 +529,18 @@ export class BuildingSystem {
    */
   getTotalFoodProduction() {
     let total = 0;
-    for (const b of this.buildings) {
+    for (let i = 0; i < this.buildings.length; i++) {
+      const b = this.buildings[i];
       if (b.status !== 'active') continue;
       if (b.currentWorkers <= 0) continue;
       const config = configRegistry.getBuilding(b.buildingId);
       if (config && config.foodCapacity) {
-        total += config.foodCapacity * b.currentWorkers;
+        const baseAmount = config.foodCapacity * b.currentWorkers;
+        const bonuses = this.getAdjacencyBonuses(i);
+        const adjusted = this.applyAdjacencyToProduction(
+          b.buildingId, 'food', baseAmount, 'foodCapacity', bonuses
+        );
+        total += Math.round(adjusted);
       }
     }
     return total;
@@ -549,7 +565,8 @@ export class BuildingSystem {
   getProductionRates() {
     const rates = {};
 
-    for (const building of this.buildings) {
+    for (let i = 0; i < this.buildings.length; i++) {
+      const building = this.buildings[i];
       if (building.status !== 'active') continue;
 
       const config = configRegistry.getBuilding(building.buildingId);
@@ -559,6 +576,9 @@ export class BuildingSystem {
       const multiplier = prod.perWorker ? (building.currentWorkers || 0) : 1;
       if (multiplier <= 0) continue;
 
+      // 获取相邻加成
+      const bonuses = this.getAdjacencyBonuses(i);
+
       // 消耗（负数）
       if (prod.input) {
         for (const inp of prod.input) {
@@ -566,10 +586,14 @@ export class BuildingSystem {
         }
       }
 
-      // 产出（正数）
+      // 产出（正数，应用相邻加成）
       if (prod.output) {
         for (const out of prod.output) {
-          rates[out.resourceId] = (rates[out.resourceId] || 0) + out.amount * multiplier;
+          const baseAmount = out.amount * multiplier;
+          const adjusted = this.applyAdjacencyToProduction(
+            building.buildingId, out.resourceId, baseAmount, 'production', bonuses
+          );
+          rates[out.resourceId] = (rates[out.resourceId] || 0) + Math.round(adjusted);
         }
       }
     }
@@ -657,6 +681,221 @@ export class BuildingSystem {
 
   _updateStore() {
     store.setState({ buildingVersion: Date.now() });
+  }
+
+  // ===== 相邻加成系统 =====
+
+  /**
+   * 计算两个矩形区域之间的 Chebyshev 距离
+   * 距离 0 = 相邻（紧挨着），距离 1 = 隔一格，以此类推
+   */
+  _chebyshevDistance(ax, ay, aw, ah, bx, by, bw, bh) {
+    const aRight = ax + aw - 1;
+    const aBottom = ay + ah - 1;
+    const bRight = bx + bw - 1;
+    const bBottom = by + bh - 1;
+
+    // 水平间隙（负数表示重叠，0 表示相邻无间隙）
+    const dx = Math.max(0, bx - aRight - 1, ax - bRight - 1);
+    // 垂直间隙
+    const dy = Math.max(0, by - aBottom - 1, ay - bBottom - 1);
+
+    return Math.max(dx, dy);
+  }
+
+  /**
+   * 获取某建筑当前生效的相邻加成
+   * @returns {Array} [{ rule, targetBuilding, distance, bonusDesc }]
+   */
+  getAdjacencyBonuses(buildingIndex) {
+    const building = this.buildings[buildingIndex];
+    if (!building || building.status !== 'active') return [];
+    const config = configRegistry.getBuilding(building.buildingId);
+    if (!config) return [];
+    return this._calcAdjacencyBonuses(
+      building.buildingId, building.gridX, building.gridY,
+      config.footprint.width, config.footprint.height
+    );
+  }
+
+  /**
+   * 计算假设位置下的相邻加成（用于放置预览/拖动预览）
+   * @param {string} buildingId 建筑配置ID
+   * @param {number} gridX 假设的X坐标
+   * @param {number} gridY 假设的Y坐标
+   * @returns {Array} [{ rule, targetBuilding, distance, bonusDesc, isPositive }]
+   */
+  getAdjacencyBonusesAt(buildingId, gridX, gridY) {
+    const config = configRegistry.getBuilding(buildingId);
+    if (!config) return [];
+    return this._calcAdjacencyBonuses(
+      buildingId, gridX, gridY,
+      config.footprint.width, config.footprint.height
+    );
+  }
+
+  /**
+   * 计算假设位置下的所有相邻交互（双向、全距离）
+   * 包括：placed building 作为接收方 + placed building 作为提供方
+   * @param {string} buildingId 建筑配置ID
+   * @param {number} gridX 假设的X坐标
+   * @param {number} gridY 假设的Y坐标
+   * @returns {Array} [{ rule, otherBuilding, otherName, distance, inRange, direction, isPositive, effectDesc }]
+   */
+  getAllAdjacencyInteractionsAt(buildingId, gridX, gridY) {
+    const config = configRegistry.getBuilding(buildingId);
+    if (!config) return [];
+    const w = config.footprint.width;
+    const h = config.footprint.height;
+
+    const results = [];
+
+    for (const rule of this._adjacencyConfig) {
+      // Direction 1: placed building is the SOURCE (receiver) — other buildings give it bonuses
+      if (rule.sourceBuildingId === buildingId) {
+        for (const other of this.buildings) {
+          if (other.buildingId !== rule.targetBuildingId) continue;
+          if (other.status !== 'active') continue;
+          const otherConfig = configRegistry.getBuilding(other.buildingId);
+          if (!otherConfig) continue;
+
+          const dist = this._chebyshevDistance(
+            gridX, gridY, w, h,
+            other.gridX, other.gridY,
+            otherConfig.footprint.width, otherConfig.footprint.height
+          );
+
+          const inRange = dist <= rule.maxDistance;
+          const isPositive = rule.effectType === 'multiplier'
+            ? rule.effectValue >= 1
+            : rule.effectValue >= 0;
+          const otherName = otherConfig.name || other.buildingId;
+          const effectDesc = rule.effectType === 'multiplier'
+            ? `×${rule.effectValue}`
+            : `${rule.effectValue >= 0 ? '+' : ''}${rule.effectValue}`;
+
+          results.push({
+            rule, otherBuilding: other, otherName,
+            distance: dist, inRange,
+            direction: 'receiving', // placed building receives the bonus
+            isPositive,
+            effectDesc
+          });
+        }
+      }
+
+      // Direction 2: placed building is the TARGET (provider) — it gives bonuses to other buildings
+      if (rule.targetBuildingId === buildingId) {
+        for (const other of this.buildings) {
+          if (other.buildingId !== rule.sourceBuildingId) continue;
+          if (other.status !== 'active') continue;
+          const otherConfig = configRegistry.getBuilding(other.buildingId);
+          if (!otherConfig) continue;
+
+          const dist = this._chebyshevDistance(
+            gridX, gridY, w, h,
+            other.gridX, other.gridY,
+            otherConfig.footprint.width, otherConfig.footprint.height
+          );
+
+          const inRange = dist <= rule.maxDistance;
+          const isPositive = rule.effectType === 'multiplier'
+            ? rule.effectValue >= 1
+            : rule.effectValue >= 0;
+          const otherName = otherConfig.name || other.buildingId;
+          const effectDesc = rule.effectType === 'multiplier'
+            ? `×${rule.effectValue}`
+            : `${rule.effectValue >= 0 ? '+' : ''}${rule.effectValue}`;
+
+          results.push({
+            rule, otherBuilding: other, otherName,
+            distance: dist, inRange,
+            direction: 'providing', // placed building provides the bonus
+            isPositive,
+            effectDesc
+          });
+        }
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * 内部：计算给定建筑在给定位置下的相邻加成
+   */
+  _calcAdjacencyBonuses(sourceBuildingId, gridX, gridY, width, height) {
+    const results = [];
+
+    for (const rule of this._adjacencyConfig) {
+      if (rule.sourceBuildingId !== sourceBuildingId) continue;
+
+      // 查找范围内所有 targetBuildingId 的建筑
+      for (const other of this.buildings) {
+        if (other.buildingId !== rule.targetBuildingId) continue;
+        if (other.status !== 'active') continue;
+
+        const otherConfig = configRegistry.getBuilding(other.buildingId);
+        if (!otherConfig) continue;
+
+        const dist = this._chebyshevDistance(
+          gridX, gridY, width, height,
+          other.gridX, other.gridY,
+          otherConfig.footprint.width, otherConfig.footprint.height
+        );
+
+        if (dist <= rule.maxDistance) {
+          const isPositive = rule.effectType === 'multiplier'
+            ? rule.effectValue >= 1
+            : rule.effectValue >= 0;
+
+          const otherName = otherConfig.name || other.buildingId;
+          const effectDesc = rule.effectType === 'multiplier'
+            ? `产出 ×${rule.effectValue}`
+            : `产出 ${rule.effectValue >= 0 ? '+' : ''}${rule.effectValue}`;
+
+          results.push({
+            rule,
+            targetBuilding: other,
+            otherName,
+            distance: dist,
+            isPositive,
+            bonusDesc: `靠近${otherName} (${dist}格): ${effectDesc}`
+          });
+        }
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * 应用相邻加成到产出值
+   * @param {string} buildingId 建筑配置ID
+   * @param {string} resourceId 产出的资源ID
+   * @param {number} baseAmount 基础产出量
+   * @param {string} applyToField 'production' | 'foodCapacity' | 'housingCapacity'
+   * @param {Array} bonuses 已计算的加成列表（可选，不传则用 buildingIndex 查询）
+   * @returns {number} 加成后的产出量
+   */
+  applyAdjacencyToProduction(buildingId, resourceId, baseAmount, applyToField, bonuses) {
+    if (!bonuses) return baseAmount;
+
+    let result = baseAmount;
+    for (const bonus of bonuses) {
+      const rule = bonus.rule;
+      if (rule.applyToField !== applyToField) continue;
+      if (rule.applyTo !== 'all' && rule.applyTo !== resourceId) continue;
+
+      if (rule.effectType === 'multiplier') {
+        result *= rule.effectValue;
+      } else {
+        result += rule.effectValue;
+      }
+    }
+
+    // 确保不会变成负数
+    return Math.max(0, result);
   }
 
   // ===== 存档接口 =====

@@ -21,7 +21,8 @@ class ConfigRegistry {
       'expeditionGlobal': 'config/expeditions/expedition_global.json',
       'eventsBase': 'config/events/events_base.json',
       'eventsExpedition': 'config/events/events_expedition.json',
-      'sound': 'config/sound.json'
+      'sound': 'config/sound.json',
+      'adjacency_bonuses': 'config/adjacency-bonuses.json'
     };
 
     const loadPromises = Object.entries(configFiles).map(async ([key, path]) => {

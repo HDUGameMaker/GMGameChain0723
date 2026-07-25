@@ -112,6 +112,8 @@ enterPlacingMode(buildingId)     // 进入放置模式
 exitPlacingMode()                // 退出放置模式
 canPlaceAt(gridX, gridY, id) → {valid, reason}
 placeBuilding(gridX, gridY, id) → boolean
+canMoveTo(buildingIndex, newGridX, newGridY) → {valid, reason}
+moveBuilding(buildingIndex, newGridX, newGridY) → boolean
 assignWorker(buildingIndex) → boolean
 removeWorker(buildingIndex) → boolean
 canUpgrade(buildingIndex) → {valid, reason, targetId, cost}
@@ -119,6 +121,12 @@ upgradeBuilding(buildingIndex) → boolean
 startSynthesis(buildingIndex, recipeId) → boolean
 demolishBuilding(buildingIndex) → boolean
 hasBuilding(buildingId) → boolean
+// 相邻加成
+getAdjacencyBonuses(buildingIndex) → [{rule, targetBuilding, distance, bonusDesc, isPositive}]
+getAdjacencyBonusesAt(buildingId, gridX, gridY) → [...]     // 放置预览
+getAllAdjacencyInteractionsAt(buildingId, gridX, gridY) → [...]  // 双向、全距离
+applyAdjacencyToProduction(buildingId, resourceId, baseAmount, applyToField, bonuses) → number
+getProductionRates() → {resourceId: netAmountPerTick}       // 含相邻加成
 ```
 
 ### TorchSystem
@@ -294,9 +302,10 @@ WORK_PERIODS = [morning, afternoon]（仅此时段建筑生产）
 | `planner/planner-config-forms.js` | 表单事件绑定、字段变更处理 | 修改表单交互 |
 | `planner/planner-config-actions.js` | CRUD 增删改 + Tab 切换 | 修改列表/Tab |
 | `planner/planner-config-analysis.js` | 数值分析面板 + SVG 图表 | 修改分析功能 |
+| `planner/planner-config-adjacency.js` | 相邻加成编辑器（表单 + SVG 节点图 + 拖拽） | 修改相邻加成功能 |
 | `planner/planner-config-main.js` | DOM 事件监听 + 键盘快捷键 | 修改快捷键/事件 |
 
-**加载顺序严格**：core → render → map-draw → map-edit → forms → actions → analysis → main。所有函数为全局函数，与 `artist-config.html`（独立单文件）共享相同的 File System Access API 模式。
+**加载顺序严格**：core → render → map-draw → map-edit → forms → actions → analysis → adjacency → main。所有函数为全局函数，与 `artist-config.html`（独立单文件）共享相同的 File System Access API 模式。
 
 `sound-config.html` 同样拆分为 1 个 HTML 壳 + `sound-editor/` 目录下的 4 个 JS 文件：
 
@@ -319,4 +328,5 @@ WORK_PERIODS = [morning, afternoon]（仅此时段建筑生产）
 - 探险系统 → `docs/expedition-system-design.md`
 - 弹窗系统 → `docs/popup-system-design.md`
 - 存档系统 → `docs/save-system-design.md`
+- 相邻加成系统 → `config/adjacency-bonuses.json` + `docs/map-and-building-revision.md` §相邻加成
 - 火把/迷雾系统 → `config/buildings.json`（火把参数配置，`isTorch: true` 条目） + `src/systems/TorchSystem.js`（火把逻辑） + `src/rendering/MapRenderer.js`（迷雾渲染，搜索 `_createFogCanvas`/`_updateFogTexture`）

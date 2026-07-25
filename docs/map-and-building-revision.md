@@ -275,6 +275,36 @@
 
 绑定在工作站建筑上，详见 `docs/expedition-system-design.md` 第八节。
 
+### 相邻加成 (adjacencyBonuses)
+
+建筑之间根据 Chebyshev 距离产生**正加成或负加成**，影响生产产出、食物产出或住宅容量。规则配置在 `config/adjacency-bonuses.json` 中，由 BuildingSystem 在每次 tick 生产结算时自动应用。
+
+**配置结构：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `id` | `string` | 唯一标识 |
+| `name` | `string` | 显示名称 |
+| `sourceBuildingId` | `string` | 受益建筑（谁获得加成） |
+| `targetBuildingId` | `string` | 提供建筑（靠近谁才有加成） |
+| `maxDistance` | `number` | 最大生效距离（Chebyshev 距离，0=相邻紧挨） |
+| `effectType` | `"multiplier" \| "flat"` | 乘算（×value）或加算（+value） |
+| `effectValue` | `number` | 效果数值（乘算: 1.5=×1.5; 加算: 3=+3; 负加成: 0.7=×0.7 或 -2=-2） |
+| `applyToField` | `"production" \| "foodCapacity" \| "housingCapacity"` | 作用于哪个字段 |
+| `applyTo` | `"all" \| resourceId` | 作用于全部产出或指定资源 |
+
+**Chebyshev 距离：** 两建筑 footprint 矩形之间的最小水平/垂直间隙中的较大值。距离 0 = 紧挨着，距离 1 = 隔一格，以此类推。
+
+**运行时效果：**
+- 生产 tick 时自动查询当前建筑的所有生效加成，乘算和加算依次应用
+- `getProductionRates()` 返回的净产出率已包含加成影响
+- `getTotalFoodProduction()` 的食物产出已应用 `foodCapacity` 加成
+- 放置/拖动建筑时显示可视化提示（边框高亮 + 箭头 + 浮动标签）
+
+**示例规则：**
+- 木材处理厂靠近伐木集散点（≤1格）→ 产出 ×1.5（正加成）
+- 农田靠近熔炉（≤2格）→ 食物产出 ×0.7（负加成）
+
 ---
 
 ## 六、基地地图网格配置

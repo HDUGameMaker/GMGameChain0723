@@ -66,6 +66,11 @@ export class MapRenderer {
     this.ghostValid = false;
     this._dragGhostGraphic = null;
 
+    // 相邻加成提示（放置/拖动时显示）
+    this._adjacencyHighlights = [];   // 高亮边框
+    this._adjacencyLines = [];        // 连接线
+    this._adjacencyTexts = [];        // 浮动文字
+
     // 建筑精灵缓存
     this._buildingSprites = [];
 
@@ -748,6 +753,9 @@ export class MapRenderer {
 
     this.ghostLayer.addChild(graphics);
     this.ghostGraphic = graphics;
+
+    // 显示相邻加成提示（即使位置无效也显示交互信息）
+    this._updateAdjacencyHints(gridPos.col, gridPos.row, buildingId, this.ghostValid);
   }
 
   _clearGhost() {
@@ -756,6 +764,7 @@ export class MapRenderer {
       this.ghostGraphic.destroy();
       this.ghostGraphic = null;
     }
+    this._clearAdjacencyHints();
   }
 
   // ===== 建筑拖动虚影 =====
@@ -792,6 +801,9 @@ export class MapRenderer {
 
     this.ghostLayer.addChild(graphics);
     this._dragGhostGraphic = graphics;
+
+    // 显示相邻加成提示（即使位置无效也显示交互信息）
+    this._updateAdjacencyHints(gridPos.col, gridPos.row, this._dragBuildingConfig.id, valid);
   }
 
   /**
@@ -803,6 +815,254 @@ export class MapRenderer {
       this._dragGhostGraphic.destroy();
       this._dragGhostGraphic = null;
     }
+    this._clearAdjacencyHints();
+  }
+
+  // ===== 相邻加成可视化提示 =====
+
+  /**
+   * 更新相邻加成提示（放置模式或拖动模式）
+   * 显示所有可能的相邻交互（双向），箭头永远指向被影响者
+   * @param {number} col 虚影所在列
+   * @param {number} row 虚影所在行
+   * @param {string} buildingId 建筑配置ID
+   */
+  _updateAdjacencyHints(col, row, buildingId, valid) {
+    this._clearAdjacencyHints();
+
+    const interactions = this.buildingSystem.getAllAdjacencyInteractionsAt(buildingId, col, row);
+    if (!interactions || interactions.length === 0) return;
+
+    const bldConfig = configRegistry.getBuilding(buildingId);
+    if (!bldConfig) return;
+
+    const ts = this.tileSize;
+    const ghostCenterX = (col + bldConfig.footprint.width / 2) * ts;
+    const ghostCenterY = (row + bldConfig.footprint.height / 2) * ts;
+
+    // Track which buildings have been highlighted
+    const highlightedBuildings = new Map(); // buildingIndex -> { inRange, isPositive }
+    const inRangeInteractions = interactions.filter(i => i.inRange);
+    const outOfRangeInteractions = interactions.filter(i => !i.inRange);
+
+    // Combine: show in-range first, then show up to N out-of-range
+    const displayInteractions = [
+      ...inRangeInteractions,
+      ...outOfRangeInteractions.slice(0, 4) // cap out-of-range to avoid clutter
+    ];
+
+    for (const interaction of displayInteractions) {
+      const otherBld = interaction.otherBuilding;
+      const otherConfig = configRegistry.getBuilding(otherBld.buildingId);
+      if (!otherConfig) continue;
+
+      const bIndex = this.buildingSystem.buildings.indexOf(otherBld);
+      const existing = highlightedBuildings.get(bIndex);
+
+      // If already highlighted with inRange, don't downgrade; prefer positive
+      if (existing) {
+        if (existing.inRange && !interaction.inRange) continue;
+        if (existing.isPositive && !interaction.isPositive) continue;
+      }
+      highlightedBuildings.set(bIndex, {
+        inRange: interaction.inRange,
+        isPositive: interaction.isPositive
+      });
+
+      const hx = otherBld.gridX * ts;
+      const hy = otherBld.gridY * ts;
+      const hw = otherConfig.footprint.width * ts;
+      const hh = otherConfig.footprint.height * ts;
+      const otherCenterX = hx + hw / 2;
+      const otherCenterY = hy + hh / 2;
+
+      // Colors: in-range = bright, out-of-range = dim
+      const baseColor = interaction.isPositive ? 0x44ff44 : 0xff4444;
+      const borderAlpha = interaction.inRange ? 0.9 : 0.4;
+      const borderWidth = interaction.inRange ? 3 : 1.5;
+
+      // 1. Highlight border on affected building
+      const highlight = new PIXI.Graphics();
+      highlight.rect(hx - 2, hy - 2, hw + 4, hh + 4);
+      highlight.stroke({ color: baseColor, alpha: borderAlpha * 0.5, width: borderWidth + 2 });
+      highlight.rect(hx - 1, hy - 1, hw + 2, hh + 2);
+      highlight.stroke({ color: baseColor, alpha: borderAlpha, width: borderWidth });
+      this.ghostLayer.addChild(highlight);
+      this._adjacencyHighlights.push({ graphic: highlight });
+
+      // 2. Arrow: always from provider → receiver (affected)
+      // receiving: ghost receives → arrow from other to ghost
+      // providing: ghost provides → arrow from ghost to other
+      const fromProvider = interaction.direction === 'receiving';
+      const arrowFromX = fromProvider ? otherCenterX : ghostCenterX;
+      const arrowFromY = fromProvider ? otherCenterY : ghostCenterY;
+      const arrowToX = fromProvider ? ghostCenterX : otherCenterX;
+      const arrowToY = fromProvider ? ghostCenterY : otherCenterY;
+
+      // Determine which building is the "affected" one (the receiver)
+      const affectedCenterX = fromProvider ? ghostCenterX : otherCenterX;
+      const affectedCenterY = fromProvider ? ghostCenterY : otherCenterY;
+
+      const dx = arrowToX - arrowFromX;
+      const dy = arrowToY - arrowFromY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 1) continue;
+      const nx = dx / dist;
+      const ny = dy / dist;
+
+      // Shorten line to stop at building bounds
+      const nodeR = Math.max(hw, hh) * 0.6;
+      const ghostR = Math.max(bldConfig.footprint.width, bldConfig.footprint.height) * ts * 0.6;
+      const fromR = fromProvider ? nodeR : ghostR;
+      const toR = fromProvider ? ghostR : nodeR;
+
+      const lineX1 = arrowFromX + nx * fromR;
+      const lineY1 = arrowFromY + ny * fromR;
+      const lineX2 = arrowToX - nx * toR;
+      const lineY2 = arrowToY - ny * toR;
+
+      const lineAlpha = interaction.inRange ? 0.8 : 0.3;
+      const lineWidth = interaction.inRange ? 3 : 1.5;
+
+      const line = new PIXI.Graphics();
+      if (interaction.inRange) {
+        // Solid line
+        line.moveTo(lineX1, lineY1);
+        line.lineTo(lineX2, lineY2);
+        line.stroke({ color: baseColor, alpha: lineAlpha, width: lineWidth });
+      } else {
+        // Dashed line for out-of-range
+        const lineLen = Math.sqrt((lineX2 - lineX1) ** 2 + (lineY2 - lineY1) ** 2);
+        const dashLen = 8;
+        const gapLen = 6;
+        const totalSeg = dashLen + gapLen;
+        const numDashes = Math.floor(lineLen / totalSeg);
+        for (let i = 0; i < numDashes; i++) {
+          const t0 = i * totalSeg / lineLen;
+          const t1 = (i * totalSeg + dashLen) / lineLen;
+          line.moveTo(lineX1 + (lineX2 - lineX1) * t0, lineY1 + (lineY2 - lineY1) * t0);
+          line.lineTo(lineX1 + (lineX2 - lineX1) * t1, lineY1 + (lineY2 - lineY1) * t1);
+          line.stroke({ color: baseColor, alpha: lineAlpha, width: lineWidth });
+        }
+      }
+
+      // 3. Arrowhead (triangle) at the affected end
+      const arrowSize = interaction.inRange ? 10 : 7;
+      const perpX = -ny;
+      const perpY = nx;
+      const tipX = lineX2;
+      const tipY = lineY2;
+      const baseX = tipX - nx * arrowSize;
+      const baseY = tipY - ny * arrowSize;
+
+      line.moveTo(tipX, tipY);
+      line.lineTo(baseX + perpX * arrowSize * 0.5, baseY + perpY * arrowSize * 0.5);
+      line.lineTo(baseX - perpX * arrowSize * 0.5, baseY - perpY * arrowSize * 0.5);
+      line.fill({ color: baseColor, alpha: lineAlpha });
+
+      this.ghostLayer.addChild(line);
+      this._adjacencyLines.push(line);
+
+      // 4. Label near the arrow midpoint
+      const midX = (lineX1 + lineX2) / 2;
+      const midY = (lineY1 + lineY2) / 2;
+      const labelText = interaction.inRange
+        ? `${interaction.effectDesc}`
+        : `(d${interaction.distance}>${interaction.rule.maxDistance})`;
+
+      const text = new PIXI.Text({
+        text: labelText,
+        style: {
+          fontSize: interaction.inRange ? 13 : 10,
+          fill: interaction.inRange ? (interaction.isPositive ? 0x44ff44 : 0xff6666) : 0x888888,
+          fontWeight: 'bold',
+          fontFamily: 'Arial, Microsoft YaHei, sans-serif',
+          stroke: { color: 0x000000, width: 2 }
+        }
+      });
+      text.anchor.set(0.5);
+      text.x = midX;
+      text.y = midY - 14;
+      this.ghostLayer.addChild(text);
+      this._adjacencyTexts.push(text);
+
+      // 5. Floating icon above the affected building
+      const iconText = new PIXI.Text({
+        text: interaction.isPositive ? '↑' : '↓',
+        style: {
+          fontSize: 18,
+          fill: interaction.isPositive ? 0x44ff44 : 0xff4444,
+          fontWeight: 'bold',
+          fontFamily: 'Arial',
+          stroke: { color: 0x000000, width: 3 }
+        }
+      });
+      iconText.anchor.set(0.5);
+      iconText.x = affectedCenterX;
+      iconText.y = (fromProvider ? (row * ts) : hy) - 18;
+      this.ghostLayer.addChild(iconText);
+      this._adjacencyTexts.push(iconText);
+    }
+
+    // 6. Summary label near ghost
+    const positiveCount = inRangeInteractions.filter(i => i.isPositive).length;
+    const negativeCount = inRangeInteractions.filter(i => !i.isPositive).length;
+    const outCount = outOfRangeInteractions.length;
+
+    let summaryText = '';
+    if (positiveCount > 0 || negativeCount > 0) {
+      const parts = [];
+      if (positiveCount > 0) parts.push(`${positiveCount}加成`);
+      if (negativeCount > 0) parts.push(`${negativeCount}减益`);
+      summaryText = '🔗 ' + parts.join(' ');
+    }
+    if (outCount > 0) {
+      summaryText += (summaryText ? ' ' : '') + `⚡${outCount}潜在`;
+    }
+
+    if (summaryText) {
+      const ghostX = col * ts;
+      const ghostY = row * ts;
+      const summary = new PIXI.Text({
+        text: summaryText,
+        style: {
+          fontSize: 13,
+          fill: positiveCount > 0 ? 0x44ff44 : (negativeCount > 0 ? 0xffaa44 : 0x888888),
+          fontWeight: 'bold',
+          fontFamily: 'Arial, Microsoft YaHei, sans-serif',
+          stroke: { color: 0x000000, width: 3 }
+        }
+      });
+      summary.x = ghostX + (bldConfig.footprint.width * ts - summary.width) / 2;
+      summary.y = ghostY - 24;
+      this.ghostLayer.addChild(summary);
+      this._adjacencyTexts.push(summary);
+    }
+  }
+
+  /**
+   * 清除所有相邻加成提示
+   */
+  _clearAdjacencyHints() {
+    for (const h of this._adjacencyHighlights) {
+      if (h.graphic) {
+        this.ghostLayer.removeChild(h.graphic);
+        h.graphic.destroy();
+      }
+    }
+    this._adjacencyHighlights = [];
+
+    for (const line of this._adjacencyLines) {
+      this.ghostLayer.removeChild(line);
+      line.destroy();
+    }
+    this._adjacencyLines = [];
+
+    for (const text of this._adjacencyTexts) {
+      this.ghostLayer.removeChild(text);
+      text.destroy();
+    }
+    this._adjacencyTexts = [];
   }
 
   // ===== 建筑渲染 =====

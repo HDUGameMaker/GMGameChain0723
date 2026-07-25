@@ -1,6 +1,6 @@
 {
-  "viewportCols": 49,
-  "viewportRows": 34,
+  "viewportCols": 47,
+  "viewportRows": 21,
   "gridWidth": 100,
   "gridHeight": 100,
   "tileSize": 60,
@@ -163,6 +163,11 @@
     {
       "buildingId": "work_shed",
       "gridX": 26,
+      "gridY": 19
+    },
+    {
+      "buildingId": "warehouse",
+      "gridX": 24,
       "gridY": 20
     }
   ]

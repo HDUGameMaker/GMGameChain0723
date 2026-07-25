@@ -244,6 +244,31 @@ export function renderBuildingDetailPanel(data, body, pm) {
     container.appendChild(prodSection);
   }
 
+  // ===== 相邻加成 =====
+  if (building.status === 'active') {
+    const bonuses = buildingSystem.getAdjacencyBonuses(buildingIndex);
+    if (bonuses && bonuses.length > 0) {
+      const adjSection = section('相邻加成', '🔗');
+
+      for (const bonus of bonuses) {
+        const color = bonus.isPositive ? '#4ecb71' : '#ff6b6b';
+        const icon = bonus.isPositive ? '↑' : '↓';
+        const row = document.createElement('div');
+        row.style.cssText = `
+          display:flex;justify-content:space-between;align-items:center;
+          padding:6px 0;font-size:12px;
+        `;
+        row.innerHTML = `
+          <span style="color:#a0a0ba;">${icon} ${bonus.otherName}（${bonus.distance}格）</span>
+          <span style="color:${color};font-weight:600;">${bonus.bonusDesc.split(': ')[1]}</span>
+        `;
+        adjSection.appendChild(row);
+      }
+
+      container.appendChild(adjSection);
+    }
+  }
+
   // ===== 合成配方 =====
   if (config.synthesisRecipes && config.synthesisRecipes.length > 0 && building.status === 'active') {
     const synthSection = section('合成', '🔨');

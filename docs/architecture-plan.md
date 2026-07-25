@@ -327,7 +327,46 @@ document.exitFullscreen();
 - 交互流程（详见 `docs/map-and-building-revision.md`）：
   - HUD 建设按钮 → 建筑选择窗口 → 选择建筑 → 虚影跟随至地图 → 点击放置
 - 点击已建建筑 → 建筑详情弹窗（人力分配 / 升级 / 合成 / 拆除）
-- 产出在每次 tick 结算
+- 产出在每次 tick 结算（产出量受相邻加成影响，见下方）
+
+#### 相邻加成系统
+
+建筑之间根据距离产生**正加成或负加成**，影响产出、食物产出或住宅容量。配置在 `config/adjacency-bonuses.json` 中，由 BuildingSystem 在运行时计算并应用。
+
+**核心机制：**
+
+| 概念 | 说明 |
+|------|------|
+| Chebyshev 距离 | 两建筑 footprint 矩形之间的最小间隙（0 = 相邻紧挨，1 = 隔一格） |
+| 加成方向 | `sourceBuildingId`（受益方/接收方）靠近 `targetBuildingId`（提供方）时触发 |
+| 效果类型 | `multiplier`（乘算 ×value）或 `flat`（加算 +value） |
+| 应用于字段 | `production`（生产产出）、`foodCapacity`（食物产出）、`housingCapacity`（住宅容量） |
+| 应用于资源 | `all`（全部产出）或指定 `resourceId` |
+
+**配置结构** (`config/adjacency-bonuses.json`)：
+
+```json
+{
+  "id": "lumber_mill_near_logging_camp",
+  "name": "木材处理厂·伐木协同",
+  "sourceBuildingId": "lumber_mill",
+  "targetBuildingId": "logging_camp",
+  "maxDistance": 1,
+  "effectType": "multiplier",
+  "effectValue": 1.5,
+  "applyToField": "production",
+  "applyTo": "all"
+}
+```
+
+**运行时行为：**
+- 每次 tick 生产结算时，BuildingSystem 自动查询当前建筑的相邻加成并应用到产出
+- `getProductionRates()` 返回值已包含加成影响
+- 放置/拖动建筑时，MapRenderer 显示相邻加成提示：绿色边框+实线=范围内正加成，红色边框+实线=范围内负加成，灰色虚线=规则中但超出距离
+- 箭头永远从提供方 → 受益方（被影响者）
+- 建筑详情面板显示当前生效的所有相邻加成
+
+**策划配置：** 在 `planner-config.html` 的「🔗 相邻加成」Tab 中可视化编辑，含 SVG 可拖拽节点关系图。
 
 ---
 
@@ -452,6 +491,7 @@ GMGameChain0723/
 ├── config/                       # JSON配置，加载时由 ConfigRegistry 统一读取
 │   ├── global.json               # 全局参数（时间段、结算间隔等）
 │   ├── buildings.json            # 建筑配置
+│   ├── adjacency-bonuses.json    # 建筑相邻加成规则
 │   ├── items.json                # 物品配置
 │   ├── resources.json            # 资源配置
 │   ├── events/                   # 事件配置（按场景分文件）

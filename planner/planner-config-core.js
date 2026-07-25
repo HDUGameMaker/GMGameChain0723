@@ -76,6 +76,7 @@ const CONFIG_FILES = {
   regions:     { path: 'regions.json',                dir: 'expeditions' },
   exp_global:  { path: 'expedition_global.json',      dir: 'expeditions' },
   base_map:    { path: 'base_map.json',               dir: 'maps' },
+  adjacency_bonuses: { path: 'adjacency-bonuses.json', dir: '' },
 };
 
 async function selectDir() {
@@ -195,11 +196,12 @@ const MAP_CELL_SIZE = 28; // default tile size on canvas at 100% zoom
    ═══════════════════════════════════════════ */
 async function loadAllData() {
   try {
-    const [buildings, resources, items, eventsBase, eventsExp, regions, expGlobal, baseMap] =
+    const [buildings, resources, items, eventsBase, eventsExp, regions, expGlobal, baseMap, adjacencyBonuses] =
       await Promise.all([
         readFile('buildings'), readFile('resources'), readFile('items'),
         readFile('events_base'), readFile('events_exp'),
         readFile('regions'), readFile('exp_global'), readFile('base_map'),
+        readFile('adjacency_bonuses').catch(() => '[]'),
       ]);
     state.data.buildings = JSON.parse(buildings);
     state.data.resources = JSON.parse(resources);
@@ -215,6 +217,7 @@ async function loadAllData() {
     state.data.regions = JSON.parse(regions);
     state.data.exp_global = JSON.parse(expGlobal);
     state.data.base_map = JSON.parse(baseMap);
+    state.data.adjacency_bonuses = JSON.parse(adjacencyBonuses);
     refreshList();
   } catch(e) {
     showToast('数据加载失败: ' + e.message, 'error');
@@ -241,6 +244,7 @@ function currentData() {
     case 'expeditions': return state.data.regions;
     case 'map':       return [state.data.base_map]; // 单例包装为数组
     case 'analysis':  return []; // 只读分析，无编辑数据
+    case 'adjacency': return state.data.adjacency_bonuses;
     default: return [];
   }
 }
@@ -254,6 +258,7 @@ function currentFileKeys() {
     case 'expeditions': return ['regions', 'exp_global'];
     case 'map':       return ['base_map'];
     case 'analysis':  return []; // 只读，无文件
+    case 'adjacency': return ['adjacency_bonuses'];
     default: return [];
   }
 }
