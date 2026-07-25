@@ -1,7 +1,7 @@
 {
   "gridWidth": 24,
-  "gridHeight": 18,
-  "tileSize": 58,
+  "gridHeight": 30,
+  "tileSize": 60,
   "groundTypes": {
     "R": {
       "name": "裸露石头",
@@ -36,28 +36,40 @@
   },
   "grid": [
     "MMMMMMMFWWWWWWWWFMMMMMMM",
-    "MMMMMMMFWWWWWWWWFMMMMMMM",
-    "MMMMMMMFWWWWWWWWFMMMMMMM",
-    "MMMMMGGGWWWWWWWWGGGMMMMM",
-    "MMMMMGGGGGGGGWWWGGGMMMMM",
-    "MMMGGGGGGGGGFGWWGGGGGMMM",
+    "MMMMMMMFWWGWWWWWFMMMMMMM",
+    "MMMMMMMFWWDFDWGWFGMGMMMM",
+    "MMMMMGGGWWDFFWGGGGGGMMMM",
+    "MMMMMGGGGGDFFFGGGFGMMMMM",
+    "MMMGGGGGGGGGFFWWGGFGGMMM",
     "MMMGGGGGGGGGGGWWGGGGGMMM",
     "MMMGGGGGGGGGGGWWGGGGGMMM",
     "MMMGGGGGGGGGFWWGGGGGGMMM",
-    "MMMGGGGGGGGGGWWGGGGGGMMM",
+    "MMMGGGGGGGGFGWWGGGGGGMMM",
     "MMMMRRRGGGGGWWWGGGGGGMMM",
     "MMMMRRRGGGGGWWWGGGGGGMMM",
-    "MMMMRRGGGDDDWWWDDDDGGMMM",
-    "MMMMMGGGGDDWWWGDDDDGMMMM",
+    "MMMMRRGGGDFDWWWDDDDGGMMM",
+    "MMMMMGGGGDFWWWGDDDDGMMMM",
     "MMMMMGGGDDDWWWDDDDGGMMMM",
     "MMMMMGGGDDDWWWDDDDGGMMMM",
-    "MMMMMMGDDDDWWDDDDDDMMMMM",
-    "MMMMMMGDDDDWWDDDDDDMMMMM"
+    "MMMMMMMDDDDWWDDDDDDMMMMM",
+    "MMMMMMMDDDDWWDDDDDDMMMMM",
+    "MMMMMMRRRRRRRRRRRRRRRRRR",
+    "MMMMMMGGGGGGGRRRRRRRRRRR",
+    "MMMMMRRRRRRRGGRRRRRRRRRR",
+    "MRMMMRRGRRRRGGRRRRRRRRRR",
+    "RMMMMRRGGGGGGRRRRRRRRRRR",
+    "RRMMMRRRRRRRRRRRRRRRRRRR",
+    "MMMMMRRRRRRRRRRRRRRRRRRR",
+    "MMMMMRRRRRRRRRRRRRRRRRRR",
+    "MMMMRRRRRRRRRRRRRRRRRRRR",
+    "RRMMRRRRRRRRRRRRRRRRRRRR",
+    "RRRRRRRRRRRRRRRRRRRRRRRR",
+    "RRRRRRRRRRRRRRRRRRRRRRRR"
   ],
   "expeditionEntrance": {
-    "gridX": 10,
+    "gridX": 11,
     "gridY": 1,
-    "width": 2,
+    "width": 1,
     "height": 2
   },
   "initialBuildings": [
@@ -90,6 +102,31 @@
       "buildingId": "normal_torch_l1",
       "gridX": 10,
       "gridY": 13
+    },
+    {
+      "buildingId": "plank_house",
+      "gridX": 18,
+      "gridY": 4
+    },
+    {
+      "buildingId": "plank_house",
+      "gridX": 11,
+      "gridY": 8
+    },
+    {
+      "buildingId": "plank_house",
+      "gridX": 5,
+      "gridY": 6
+    },
+    {
+      "buildingId": "plank_house",
+      "gridX": 9,
+      "gridY": 6
+    },
+    {
+      "buildingId": "plank_house",
+      "gridX": 15,
+      "gridY": 15
     }
   ]
 }

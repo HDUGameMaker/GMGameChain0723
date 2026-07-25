@@ -114,6 +114,18 @@ main { grid-column: 2; display: flex; flex-direction: column; overflow: hidden; 
 .dir-banner.connected { background: rgba(78,203,113,0.1); border-bottom-color: rgba(78,203,113,0.3); padding: 4px 24px; font-size: 11px; max-height: 28px; }
 .dir-banner.connected .msg { color: #4ecb71; }
 .dir-banner.hidden { max-height: 0; padding-top: 0; padding-bottom: 0; border-bottom-width: 0; opacity: 0; overflow: hidden; }
+/* ── Map Canvas Editor ── */
+.map-toolbar { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.map-mode-btn { font-size: 12px; padding: 4px 12px; }
+.map-mode-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+.map-palette-swatch { width: 100%; height: 32px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.9); text-shadow: 0 1px 2px rgba(0,0,0,0.6); border: 2px solid transparent; transition: border-color 0.15s, transform 0.1s; }
+.map-palette-swatch:hover { border-color: rgba(255,255,255,0.4); transform: scale(1.05); }
+.map-palette-swatch-active { border-color: var(--accent) !important; box-shadow: 0 0 8px rgba(78,203,113,0.4); }
+.map-bld-item:hover { background: var(--bg) !important; }
+.map-bld-item:active { background: rgba(78,203,113,0.1) !important; }
+#mapBuildingList { max-height: 420px; overflow-y: auto; }
+#mapBuildingList::-webkit-scrollbar { width: 4px; }
+#mapBuildingList::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -335,7 +347,26 @@ const state = {
   undoStack: [],
   redoStack: [],
   eventTypeFilter: 'all',  // 'all' | 'base' | 'expedition'
+
+  // Map Canvas editor state
+  mapEditorMode: 'brush',        // 'brush' | 'building' | 'entrance'
+  mapEditorBrush: 'G',           // selected ground type char
+  mapEditorBuilding: null,       // selected building ID for placement
+  mapEditorSelectedBuilding: -1, // index in initialBuildings being dragged
+  mapEditorDragging: false,
+  mapEditorDragTarget: null,     // 'move' | 'nw' | 'ne' | 'sw' | 'se' for entrance
+  mapHoverCol: -1,               // current hover tile col
+  mapHoverRow: -1,               // current hover tile row
+
+  // Canvas viewport state
+  canvasScale: 1.0,
+  canvasOffsetX: 0,
+  canvasOffsetY: 0,
+  canvasPanning: false,
+  canvasPanStartX: 0,
+  canvasPanStartY: 0,
 };
+const MAP_CELL_SIZE = 28; // default tile size on canvas at 100% zoom
 
 /* ═══════════════════════════════════════════
    Data loading
@@ -968,16 +999,60 @@ function renderMapForm() {
   });
   html += `<button class="btn-secondary btn-sm" onclick="addGroundType()" style="margin-top:6px">+ 添加地形类型</button>`;
 
-  // Mini map preview + grid editor
-  html += '<div class="section-title">地图预览 & 网格编辑</div>';
-  const cellSize = 12, gap = 1;
-  html += '<div style="display:flex;gap:16px;align-items:flex-start">';
-  html += `<div id="miniMap" style="flex-shrink:0;display:flex;flex-wrap:wrap;width:${m.gridWidth*(cellSize+gap)+2}px;border:1px solid var(--border);border-radius:4px;overflow:hidden"></div>`;
-  html += '<div style="flex:1;min-width:200px">';
-  html += '<textarea id="gridEditor" spellcheck="false" style="width:100%;height:' + (m.gridHeight * 17 + 16) + 'px;font:12px/1.35 monospace;white-space:pre;overflow-x:auto;resize:vertical" placeholder="每行一个字符串..."></textarea>';
-  html += '<div id="gridValidation" style="font-size:11px;margin-top:4px;min-height:18px"></div>';
-  html += '<button class="btn-primary btn-sm" onclick="applyGridEdit()" style="margin-top:6px">应用修改</button>';
+  // Interactive Canvas map editor
+  html += '<div class="section-title">地图编辑器</div>';
+  html += '<div class="map-toolbar">';
+  html += '<button class="btn-secondary btn-sm map-mode-btn active" data-mode="brush">🖌️ 笔刷</button>';
+  html += '<button class="btn-secondary btn-sm map-mode-btn" data-mode="building">🏠 建筑</button>';
+  html += '<button class="btn-secondary btn-sm map-mode-btn" data-mode="entrance">🚪 入口</button>';
+  html += '<span style="margin-left:8px;font-size:11px;color:var(--muted)">滚轮缩放 | 中键平移 | B/V/E切换模式</span>';
+  html += '</div>';
+  html += '<div style="display:flex;gap:12px;align-items:flex-start;margin-top:8px">';
+
+  // Terrain palette (visible in brush mode)
+  html += '<div id="mapPalette" style="width:90px;flex-shrink:0">';
+  html += '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">🎨 地形</div>';
+  const groundChars = Object.keys(m.groundTypes || {});
+  groundChars.forEach(ch => {
+    const gt = m.groundTypes[ch];
+    const active = ch === state.mapEditorBrush ? ' map-palette-swatch-active' : '';
+    html += `<div class="map-palette-swatch${active}" data-ground="${ch}" title="${gt.name} (${ch})" style="background:${gt.colorHint};margin-bottom:4px">
+      <span>${ch}</span></div>`;
+  });
+  html += '</div>';
+
+  // Canvas
+  const canvasW = m.gridWidth * MAP_CELL_SIZE;
+  const canvasH = m.gridHeight * MAP_CELL_SIZE;
+  html += `<div style="position:relative;flex-shrink:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:#111">
+    <canvas id="mapCanvas" width="${Math.round(canvasW * (window.devicePixelRatio||1))}" height="${Math.round(canvasH * (window.devicePixelRatio||1))}"
+      style="width:${canvasW}px;height:${canvasH}px;display:block;cursor:crosshair"></canvas>
+  </div>`;
+
+  // Right panel: building selector (in building mode) + building list
+  html += '<div id="mapRightPanel" style="width:180px;flex-shrink:0;font-size:12px">';
+  html += '<div id="mapBuildingSelector" style="display:none">';
+  html += '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">🏠 选择建筑</div>';
+  html += '<select id="mapBldSelect" style="width:100%;margin-bottom:8px;font-size:12px"><option value="">-- 选择建筑 --</option>';
+  (state.data.buildings || []).forEach(b => {
+    const fp = b.footprint || { width: 1, height: 1 };
+    html += `<option value="${b.id}" ${b.id === state.mapEditorBuilding ? 'selected' : ''}>${b.name} (${fp.width}×${fp.height})</option>`;
+  });
+  html += '</select></div>';
+  html += '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">📋 已放置建筑</div>';
+  html += '<div id="mapBuildingList" style="max-height:400px;overflow-y:auto">';
+  (m.initialBuildings || []).forEach((b, i) => {
+    const bCfg = (state.data.buildings || []).find(bld => bld.id === b.buildingId);
+    const bName = bCfg ? bCfg.name : b.buildingId;
+    html += `<div class="map-bld-item" data-idx="${i}" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;margin-bottom:3px;cursor:pointer;font-size:11px;display:flex;justify-content:space-between;align-items:center">
+      <span>${bName}</span><span style="color:var(--muted)">(${b.gridX},${b.gridY})</span></div>`;
+  });
   html += '</div></div>';
+
+  html += '</div>'; // end flex row
+
+  // Status bar
+  html += '<div id="mapStatus" style="font-size:11px;color:var(--muted);margin-top:6px;min-height:18px">💡 点击画布绘制地形 | B=笔刷 V=建筑 E=入口 | 滚轮缩放 中键平移</div>';
 
   // Expedition entrance
   html += '<div class="section-title">探险入口</div>';
@@ -997,74 +1072,739 @@ function renderMapForm() {
      <input class="amount" data-subidx="${i}" data-key="gridY" type="number" value="${b.gridY??0}" placeholder="Y" />`
   );
 
-  // Schedule mini map render
-  setTimeout(renderMiniMap, 100);
+  // Schedule canvas render
+  setTimeout(drawMapCanvas, 100);
 
   return html;
 }
 
-function renderMiniMap() {
-  const m = state.data.base_map;
-  const container = document.getElementById('miniMap');
-  if (!container) return;
-  const cellSize = 12, gap = 1;
-  container.innerHTML = (m.grid || []).map(row =>
-    [...row].map(ch => {
-      const gt = m.groundTypes?.[ch];
-      const color = gt?.colorHint || '#888';
-      const tileTitle = `${ch}: ${gt?.name || ''}`;
-      return `<span style="width:${cellSize}px;height:${cellSize}px;margin:0 ${gap}px ${gap}px 0;background:${color};border-radius:1px;display:block" title="${tileTitle}"></span>`;
-    }).join('')
-  ).join('');
+/* ═══════════════════════════════════════════
+   Canvas Map Editor — rendering & interaction
+   ═══════════════════════════════════════════ */
 
-  // Populate the grid text editor
-  const editor = document.getElementById('gridEditor');
-  if (editor) editor.value = (m.grid || []).join('\n');
-
-  // Clear validation message
-  const vmsg = document.getElementById('gridValidation');
-  if (vmsg) vmsg.innerHTML = '';
+function getCanvasCtx() {
+  const canvas = document.getElementById('mapCanvas');
+  if (!canvas) return null;
+  return canvas.getContext('2d');
 }
 
-function applyGridEdit() {
+function getEffectiveCellSize() {
+  return MAP_CELL_SIZE * state.canvasScale;
+}
+
+function canvasToTile(e, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  // Reverse the canvas transform chain: translate(ox,oy) * scale(zoom)
+  // mouseCSS = logicalX * zoom + offsetX → logicalX = (mouseCSS - offsetX) / zoom
+  const mx = ((e.clientX - rect.left) - state.canvasOffsetX) / state.canvasScale;
+  const my = ((e.clientY - rect.top) - state.canvasOffsetY) / state.canvasScale;
+  return {
+    col: Math.floor(mx / MAP_CELL_SIZE),
+    row: Math.floor(my / MAP_CELL_SIZE)
+  };
+}
+
+function drawMapCanvas() {
+  const canvas = document.getElementById('mapCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
   const m = state.data.base_map;
-  const editor = document.getElementById('gridEditor');
-  const vmsg = document.getElementById('gridValidation');
-  if (!editor) return;
+  const cellSize = getEffectiveCellSize();
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = m.gridWidth * MAP_CELL_SIZE;
+  const cssH = m.gridHeight * MAP_CELL_SIZE;
 
-  const raw = editor.value;
-  const lines = raw.split(/[\r\n]+/).filter(line => line.trim() !== '');
-  const validChars = new Set(Object.keys(m.groundTypes || {}));
-  const validCharsStr = [...validChars].join('');
-
-  // Validate
-  const errors = [];
-  if (lines.length !== m.gridHeight) {
-    errors.push(`行数: ${lines.length} (期望 ${m.gridHeight})`);
+  // Update canvas size if grid dimensions changed
+  if (Math.round(cssW * dpr) !== canvas.width || Math.round(cssH * dpr) !== canvas.height) {
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
   }
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].length !== m.gridWidth) {
-      errors.push(`第 ${i+1} 行长度: ${lines[i].length} (期望 ${m.gridWidth})`);
+
+  ctx.save();
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, cssW, cssH);
+
+  // Apply viewport transform
+  ctx.save();
+  ctx.translate(state.canvasOffsetX, state.canvasOffsetY);
+  ctx.scale(state.canvasScale, state.canvasScale);
+
+  drawTerrainTiles(ctx, m, cellSize);
+  drawGridLines(ctx, m, MAP_CELL_SIZE);
+  drawEntrance(ctx, m, MAP_CELL_SIZE);
+  drawBuildings(ctx, m, MAP_CELL_SIZE);
+  drawHoverPreview(ctx, m, MAP_CELL_SIZE);
+
+  ctx.restore(); // viewport transform
+  ctx.restore(); // dpr
+
+  // Sync building list
+  updateMapBuildingList();
+}
+
+function drawTerrainTiles(ctx, m, cellSize) {
+  // Viewport culling: only draw visible tiles
+  const baseCell = MAP_CELL_SIZE;
+  const vpLeft = -state.canvasOffsetX / state.canvasScale;
+  const vpTop = -state.canvasOffsetY / state.canvasScale;
+  const vpRight = vpLeft + (m.gridWidth * MAP_CELL_SIZE) / state.canvasScale;
+  const vpBottom = vpTop + (m.gridHeight * MAP_CELL_SIZE) / state.canvasScale;
+
+  const startCol = Math.max(0, Math.floor(vpLeft / baseCell));
+  const endCol = Math.min(m.gridWidth - 1, Math.ceil(vpRight / baseCell));
+  const startRow = Math.max(0, Math.floor(vpTop / baseCell));
+  const endRow = Math.min(m.gridHeight - 1, Math.ceil(vpBottom / baseCell));
+
+  for (let row = startRow; row <= endRow; row++) {
+    const line = m.grid[row];
+    if (!line) continue;
+    for (let col = startCol; col <= endCol; col++) {
+      const ch = line[col];
+      const gt = m.groundTypes?.[ch];
+      const color = gt?.colorHint || '#ff00ff';
+      ctx.fillStyle = color;
+      ctx.fillRect(col * baseCell, row * baseCell, baseCell, baseCell);
     }
-    for (let j = 0; j < lines[i].length; j++) {
-      if (!validChars.has(lines[i][j])) {
-        errors.push(`第 ${i+1} 行第 ${j+1} 列非法字符 '${lines[i][j]}' (合法: ${validCharsStr})`);
+  }
+}
+
+function drawGridLines(ctx, m, baseCell) {
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1 / state.canvasScale;
+
+  // Only draw visible grid lines
+  const vpLeft = -state.canvasOffsetX / state.canvasScale;
+  const vpTop = -state.canvasOffsetY / state.canvasScale;
+  const vpRight = vpLeft + (m.gridWidth * MAP_CELL_SIZE) / state.canvasScale;
+  const vpBottom = vpTop + (m.gridHeight * MAP_CELL_SIZE) / state.canvasScale;
+
+  const startCol = Math.max(0, Math.floor(vpLeft / baseCell));
+  const endCol = Math.min(m.gridWidth, Math.ceil(vpRight / baseCell) + 1);
+  const startRow = Math.max(0, Math.floor(vpTop / baseCell));
+  const endRow = Math.min(m.gridHeight, Math.ceil(vpBottom / baseCell) + 1);
+
+  ctx.beginPath();
+  for (let col = startCol; col <= endCol; col++) {
+    const x = col * baseCell + 0.5;
+    ctx.moveTo(x, startRow * baseCell);
+    ctx.lineTo(x, endRow * baseCell);
+  }
+  for (let row = startRow; row <= endRow; row++) {
+    const y = row * baseCell + 0.5;
+    ctx.moveTo(startCol * baseCell, y);
+    ctx.lineTo(endCol * baseCell, y);
+  }
+  ctx.stroke();
+}
+
+function drawEntrance(ctx, m, baseCell) {
+  const ee = m.expeditionEntrance;
+  if (!ee || ee.gridX == null) return;
+  const x = ee.gridX * baseCell;
+  const y = ee.gridY * baseCell;
+  const w = (ee.width || 1) * baseCell;
+  const h = (ee.height || 1) * baseCell;
+
+  // Fill
+  ctx.fillStyle = 'rgba(240,160,64,0.12)';
+  ctx.fillRect(x, y, w, h);
+
+  // Dashed border
+  ctx.strokeStyle = '#f0a040';
+  ctx.lineWidth = 2 / state.canvasScale;
+  ctx.setLineDash([6 / state.canvasScale, 3 / state.canvasScale]);
+  ctx.strokeRect(x, y, w, h);
+  ctx.setLineDash([]);
+
+  // Label
+  ctx.fillStyle = '#f0a040';
+  ctx.font = `${Math.max(9, 11 / state.canvasScale)}px -apple-system, "Microsoft YaHei", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('🚪 探险入口', x + w / 2, y - 4 / state.canvasScale);
+
+  // Corner handles in entrance mode
+  if (state.mapEditorMode === 'entrance') {
+    const hs = 8 / state.canvasScale;
+    ctx.fillStyle = '#f0a040';
+    [[x, y], [x + w - hs, y], [x, y + h - hs], [x + w - hs, y + h - hs]].forEach(([hx, hy]) => {
+      ctx.fillRect(hx, hy, hs, hs);
+    });
+  }
+}
+
+function drawBuildings(ctx, m, baseCell) {
+  const buildings = m.initialBuildings || [];
+  buildings.forEach((b, i) => {
+    const bCfg = (state.data.buildings || []).find(bld => bld.id === b.buildingId);
+    const fp = bCfg?.footprint || { width: 1, height: 1 };
+    const x = b.gridX * baseCell;
+    const y = b.gridY * baseCell;
+    const w = fp.width * baseCell;
+    const h = fp.height * baseCell;
+
+    // Fill
+    if (bCfg?.isTorch) {
+      const color = bCfg.colorHint || '#ffaa33';
+      ctx.fillStyle = color + '55'; // alpha
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2 / state.canvasScale;
+      ctx.strokeRect(x, y, w, h);
+      // Glow effect
+      ctx.fillStyle = color + '22';
+      ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
+    } else {
+      ctx.fillStyle = 'rgba(78,203,113,0.35)';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = 'rgba(78,203,113,0.7)';
+      ctx.lineWidth = 1.5 / state.canvasScale;
+      ctx.strokeRect(x, y, w, h);
+    }
+
+    // Selection highlight
+    if (i === state.mapEditorSelectedBuilding) {
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2.5 / state.canvasScale;
+      ctx.setLineDash([4 / state.canvasScale, 2 / state.canvasScale]);
+      ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
+      ctx.setLineDash([]);
+    }
+
+    // Label
+    const name = bCfg ? bCfg.name : b.buildingId;
+    const fontSize = Math.max(8, Math.min(12, 11 / state.canvasScale));
+    ctx.fillStyle = '#fff';
+    ctx.font = `600 ${fontSize}px -apple-system, "Microsoft YaHei", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const label = name.length > 4 ? name.substring(0, 4) + '…' : name;
+    ctx.fillText(label, x + w / 2, y + h / 2);
+    ctx.textBaseline = 'alphabetic';
+  });
+}
+
+function drawHoverPreview(ctx, m, baseCell) {
+  const col = state.mapHoverCol;
+  const row = state.mapHoverRow;
+  if (col < 0 || row < 0 || col >= m.gridWidth || row >= m.gridHeight) return;
+
+  if (state.mapEditorMode === 'brush') {
+    // Highlight tile under cursor
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 2 / state.canvasScale;
+    ctx.strokeRect(col * baseCell + 0.5, row * baseCell + 0.5, baseCell - 1, baseCell - 1);
+    // Also show brush preview color
+    const brushGt = m.groundTypes?.[state.mapEditorBrush];
+    if (brushGt) {
+      ctx.fillStyle = brushGt.colorHint + '44';
+      ctx.fillRect(col * baseCell, row * baseCell, baseCell, baseCell);
+    }
+  } else if (state.mapEditorMode === 'building' && state.mapEditorBuilding && !_mapMouseDown) {
+    // Show footprint preview
+    const bCfg = (state.data.buildings || []).find(bld => bld.id === state.mapEditorBuilding);
+    if (!bCfg) return;
+    const fp = bCfg.footprint || { width: 1, height: 1 };
+    const result = validateBuildingPlacement(col, row, state.mapEditorBuilding);
+
+    const x = col * baseCell;
+    const y = row * baseCell;
+    const w = fp.width * baseCell;
+    const h = fp.height * baseCell;
+
+    ctx.fillStyle = result.valid ? 'rgba(78,203,113,0.35)' : 'rgba(255,107,107,0.35)';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = result.valid ? 'rgba(78,203,113,0.8)' : 'rgba(255,107,107,0.8)';
+    ctx.lineWidth = 2 / state.canvasScale;
+    ctx.strokeRect(x, y, w, h);
+  }
+}
+
+/* -- Building list sync -- */
+function updateMapBuildingList() {
+  const list = document.getElementById('mapBuildingList');
+  if (!list) return;
+  const m = state.data.base_map;
+  const buildings = m.initialBuildings || [];
+  let html = '';
+  buildings.forEach((b, i) => {
+    const bCfg = (state.data.buildings || []).find(bld => bld.id === b.buildingId);
+    const bName = bCfg ? bCfg.name : b.buildingId;
+    const sel = i === state.mapEditorSelectedBuilding ? 'background:rgba(78,203,113,0.15);border-color:var(--accent)' : '';
+    html += `<div class="map-bld-item" data-idx="${i}" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;margin-bottom:3px;cursor:pointer;font-size:11px;display:flex;justify-content:space-between;align-items:center;${sel}">
+      <span>${bName}</span><span style="color:var(--muted)">(${b.gridX},${b.gridY})</span></div>`;
+  });
+  list.innerHTML = html || '<div style="color:var(--muted);font-size:11px;padding:4px">(无建筑)</div>';
+
+  // Click handlers: select building on click
+  list.querySelectorAll('.map-bld-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.dataset.idx);
+      state.mapEditorSelectedBuilding = idx;
+      drawMapCanvas();
+    });
+  });
+}
+
+/* -- Canvas mouse event handlers -- */
+let _mapMouseDown = false;
+let _mapLastPaintedTile = null;
+
+function initMapCanvasEvents() {
+  const canvas = document.getElementById('mapCanvas');
+  if (!canvas || canvas._eventsInit) return;
+  canvas._eventsInit = true;
+
+  canvas.addEventListener('mousedown', (e) => {
+    if (e.button === 1) {
+      // Middle mouse: start panning
+      state.canvasPanning = true;
+      state.canvasPanStartX = e.clientX - state.canvasOffsetX;
+      state.canvasPanStartY = e.clientY - state.canvasOffsetY;
+      canvas.style.cursor = 'grabbing';
+      e.preventDefault();
+      return;
+    }
+    if (e.button !== 0) return;
+
+    _mapMouseDown = true;
+    const { col, row } = canvasToTile(e, canvas);
+    _mapLastPaintedTile = { col, row };
+
+    switch (state.mapEditorMode) {
+      case 'brush':
+        setTile(col, row, state.mapEditorBrush);
+        drawMapCanvas();
         break;
+      case 'building':
+        handleBuildingClick(col, row);
+        break;
+      case 'entrance':
+        handleEntranceDown(col, row, e);
+        break;
+    }
+  });
+
+  canvas.addEventListener('mousemove', (e) => {
+    const { col, row } = canvasToTile(e, canvas);
+
+    // Track hover position
+    if (state.mapHoverCol !== col || state.mapHoverRow !== row) {
+      state.mapHoverCol = col;
+      state.mapHoverRow = row;
+      // Redraw on hover change for preview updates
+      if (!_mapMouseDown && !state.canvasPanning) {
+        drawMapCanvas();
+      }
+    }
+
+    // Panning
+    if (state.canvasPanning) {
+      state.canvasOffsetX = e.clientX - state.canvasPanStartX;
+      state.canvasOffsetY = e.clientY - state.canvasPanStartY;
+      drawMapCanvas();
+      return;
+    }
+
+    // Brush drag-paint
+    if (_mapMouseDown && state.mapEditorMode === 'brush') {
+      if (!_mapLastPaintedTile || _mapLastPaintedTile.col !== col || _mapLastPaintedTile.row !== row) {
+        setTile(col, row, state.mapEditorBrush);
+        _mapLastPaintedTile = { col, row };
+        drawMapCanvas();
+      }
+    }
+
+    // Entrance drag
+    if (_mapMouseDown && state.mapEditorMode === 'entrance' && state.mapEditorDragTarget) {
+      handleEntranceDrag(col, row);
+      drawMapCanvas();
+    }
+
+    // Building drag
+    if (_mapMouseDown && state.mapEditorMode === 'building' && state.mapEditorSelectedBuilding >= 0 && state.mapEditorDragTarget === 'move') {
+      moveBuildingTo(col, row);
+      drawMapCanvas();
+    }
+
+    // Update status bar
+    updateMapStatus(col, row);
+  });
+
+  canvas.addEventListener('mouseup', (e) => {
+    _mapMouseDown = false;
+    _mapLastPaintedTile = null;
+
+    if (state.mapEditorMode === 'brush' && state.mapEditorDragging) {
+      state.mapEditorDragging = false;
+      markDirty();
+    }
+    if (state.mapEditorMode === 'entrance' && state.mapEditorDragTarget) {
+      state.mapEditorDragTarget = null;
+      markDirty();
+      syncEntranceToForm();
+    }
+    if (state.mapEditorMode === 'building' && state.mapEditorDragTarget === 'move') {
+      state.mapEditorDragTarget = null;
+      markDirty();
+      syncBuildingsToForm();
+    }
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    _mapMouseDown = false;
+    _mapLastPaintedTile = null;
+  });
+
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+    const newScale = Math.max(0.25, Math.min(4.0, state.canvasScale * zoomFactor));
+
+    // Zoom toward cursor
+    const scaleChange = newScale / state.canvasScale;
+    state.canvasOffsetX = mx - scaleChange * (mx - state.canvasOffsetX);
+    state.canvasOffsetY = my - scaleChange * (my - state.canvasOffsetY);
+    state.canvasScale = newScale;
+
+    drawMapCanvas();
+  });
+
+  canvas.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    if (state.mapEditorMode === 'building') {
+      const { col, row } = canvasToTile(e, canvas);
+      const idx = findBuildingAt(col, row);
+      if (idx >= 0) {
+        removeBuilding(idx);
+      }
+    }
+  });
+
+  // Global mouseup to stop panning
+  window.addEventListener('mouseup', () => {
+    if (state.canvasPanning) {
+      state.canvasPanning = false;
+      const canvas = document.getElementById('mapCanvas');
+      if (canvas) canvas.style.cursor = 'crosshair';
+    }
+    if (state.mapEditorMode === 'brush' && state.mapEditorDragging) {
+      state.mapEditorDragging = false;
+      markDirty();
+    }
+  });
+}
+
+/* -- Tile painting -- */
+function setTile(col, row, char) {
+  const m = state.data.base_map;
+  if (col < 0 || col >= m.gridWidth || row < 0 || row >= m.gridHeight) return;
+  const line = m.grid[row];
+  if (!line || line.length <= col) return;
+  if (line[col] !== char) {
+    m.grid[row] = line.substring(0, col) + char + line.substring(col + 1);
+    state.mapEditorDragging = true;
+    if (!_mapMouseDown) markDirty(); // single click
+  }
+}
+
+/* -- Building placement -- */
+function findBuildingAt(col, row) {
+  const m = state.data.base_map;
+  const buildings = m.initialBuildings || [];
+  for (let i = buildings.length - 1; i >= 0; i--) {
+    const b = buildings[i];
+    const bCfg = (state.data.buildings || []).find(bld => bld.id === b.buildingId);
+    const fp = bCfg?.footprint || { width: 1, height: 1 };
+    if (col >= b.gridX && col < b.gridX + fp.width && row >= b.gridY && row < b.gridY + fp.height) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function validateBuildingPlacement(col, row, buildingId) {
+  const m = state.data.base_map;
+  const bCfg = (state.data.buildings || []).find(bld => bld.id === buildingId);
+  if (!bCfg) return { valid: false, reason: '未知建筑类型' };
+
+  const fp = bCfg.footprint || { width: 1, height: 1 };
+
+  // Check bounds
+  if (col < 0 || row < 0 || col + fp.width > m.gridWidth || row + fp.height > m.gridHeight) {
+    return { valid: false, reason: '超出地图边界' };
+  }
+
+  // Check ground types
+  for (let r = row; r < row + fp.height; r++) {
+    const line = m.grid[r];
+    if (!line) return { valid: false, reason: '超出地图边界' };
+    for (let c = col; c < col + fp.width; c++) {
+      const ch = line[c];
+      const gt = m.groundTypes?.[ch];
+      if (!gt) return { valid: false, reason: `未知地形 '${ch}'` };
+      if (gt.buildable === false) {
+        return { valid: false, reason: `地形 ${gt.name} 不可建造` };
+      }
+      if (bCfg.allowedGrounds && bCfg.allowedGrounds.length > 0 && !bCfg.allowedGrounds.includes(ch)) {
+        return { valid: false, reason: `建筑不允许在地形 ${gt.name}(${ch}) 上` };
       }
     }
   }
 
-  if (errors.length > 0) {
-    vmsg.innerHTML = errors.slice(0, 5).map(e => '<span style="color:var(--bad)">❌ ' + e + '</span>').join('<br>');
-    if (errors.length > 5) vmsg.innerHTML += '<br><span style="color:var(--muted)">...及其他 ' + (errors.length - 5) + ' 个错误</span>';
+  // Check overlap with other buildings
+  const buildings = m.initialBuildings || [];
+  for (let i = 0; i < buildings.length; i++) {
+    const ob = buildings[i];
+    const obCfg = (state.data.buildings || []).find(bld => bld.id === ob.buildingId);
+    const ofp = obCfg?.footprint || { width: 1, height: 1 };
+    if (!(col + fp.width <= ob.gridX || ob.gridX + ofp.width <= col ||
+          row + fp.height <= ob.gridY || ob.gridY + ofp.height <= row)) {
+      return { valid: false, reason: `与已有建筑 ${obCfg?.name || ob.buildingId} 重叠` };
+    }
+  }
+
+  // Check maxCount
+  if (bCfg.maxCount != null) {
+    const count = buildings.filter(b => b.buildingId === buildingId).length;
+    if (count >= bCfg.maxCount) {
+      return { valid: false, reason: `建筑数量已达上限 (${bCfg.maxCount})` };
+    }
+  }
+
+  return { valid: true, reason: '' };
+}
+
+function handleBuildingClick(col, row) {
+  const m = state.data.base_map;
+  const existingIdx = findBuildingAt(col, row);
+
+  if (existingIdx >= 0) {
+    // Select existing building
+    state.mapEditorSelectedBuilding = existingIdx;
+    state.mapEditorDragTarget = 'move';
+    drawMapCanvas();
+  } else if (state.mapEditorBuilding) {
+    // Place new building
+    const result = validateBuildingPlacement(col, row, state.mapEditorBuilding);
+    if (result.valid) {
+      m.initialBuildings = m.initialBuildings || [];
+      m.initialBuildings.push({ buildingId: state.mapEditorBuilding, gridX: col, gridY: row });
+      state.mapEditorSelectedBuilding = m.initialBuildings.length - 1;
+      markDirty();
+      syncBuildingsToForm();
+      drawMapCanvas();
+      const bCfg = (state.data.buildings || []).find(bld => bld.id === state.mapEditorBuilding);
+      showToast(`已放置 ${bCfg?.name || state.mapEditorBuilding}`, 'success');
+    } else {
+      showToast(result.reason, 'error');
+    }
+  }
+}
+
+function moveBuildingTo(col, row) {
+  const m = state.data.base_map;
+  const idx = state.mapEditorSelectedBuilding;
+  if (idx < 0 || idx >= (m.initialBuildings || []).length) return;
+
+  const b = m.initialBuildings[idx];
+  b.gridX = col;
+  b.gridY = row;
+}
+
+function removeBuilding(idx) {
+  const m = state.data.base_map;
+  if (idx < 0 || idx >= (m.initialBuildings || []).length) return;
+  m.initialBuildings.splice(idx, 1);
+  if (state.mapEditorSelectedBuilding === idx) state.mapEditorSelectedBuilding = -1;
+  if (state.mapEditorSelectedBuilding > idx) state.mapEditorSelectedBuilding--;
+  markDirty();
+  syncBuildingsToForm();
+  drawMapCanvas();
+  showToast('已删除建筑', 'success');
+}
+
+/* -- Entrance editing -- */
+function handleEntranceDown(col, row, e) {
+  const m = state.data.base_map;
+  const ee = m.expeditionEntrance;
+  if (!ee || ee.gridX == null) {
+    // No entrance yet, create one
+    m.expeditionEntrance = { gridX: col, gridY: row, width: 2, height: 2 };
+    markDirty();
+    syncEntranceToForm();
+    drawMapCanvas();
     return;
   }
 
-  // Apply
-  m.grid = lines;
-  markDirty();
-  renderMiniMap();
-  vmsg.innerHTML = '<span style="color:var(--good)">✅ 网格数据已更新 (' + m.gridHeight + '×' + m.gridWidth + ')</span>';
+  const x = ee.gridX, y = ee.gridY, w = ee.width || 1, h = ee.height || 1;
+  // Check if clicking on a corner handle
+  const threshold = 1.5;
+  const corners = [
+    { key: 'nw', cx: x, cy: y },
+    { key: 'ne', cx: x + w, cy: y },
+    { key: 'sw', cx: x, cy: y + h },
+    { key: 'se', cx: x + w, cy: y + h },
+  ];
+  for (const c of corners) {
+    if (Math.abs(col - c.cx) < threshold && Math.abs(row - c.cy) < threshold) {
+      state.mapEditorDragTarget = c.key;
+      return;
+    }
+  }
+  // Check if inside the entrance rect
+  if (col >= x && col < x + w && row >= y && row < y + h) {
+    state.mapEditorDragTarget = 'move';
+    return;
+  }
+}
+
+function handleEntranceDrag(col, row) {
+  const m = state.data.base_map;
+  const ee = m.expeditionEntrance;
+  if (!ee) return;
+
+  const target = state.mapEditorDragTarget;
+  if (target === 'move') {
+    ee.gridX = Math.max(0, Math.min(col, m.gridWidth - (ee.width || 1)));
+    ee.gridY = Math.max(0, Math.min(row, m.gridHeight - (ee.height || 1)));
+  } else if (target === 'nw') {
+    const newW = (ee.gridX + ee.width) - col;
+    const newH = (ee.gridY + ee.height) - row;
+    if (newW >= 1) { ee.gridX = col; ee.width = newW; }
+    if (newH >= 1) { ee.gridY = row; ee.height = newH; }
+  } else if (target === 'ne') {
+    const newW = col - ee.gridX + 1;
+    const newH = (ee.gridY + ee.height) - row;
+    if (newW >= 1) ee.width = newW;
+    if (newH >= 1) { ee.gridY = row; ee.height = newH; }
+  } else if (target === 'sw') {
+    const newW = (ee.gridX + ee.width) - col;
+    const newH = row - ee.gridY + 1;
+    if (newW >= 1) { ee.gridX = col; ee.width = newW; }
+    if (newH >= 1) ee.height = newH;
+  } else if (target === 'se') {
+    const newW = col - ee.gridX + 1;
+    const newH = row - ee.gridY + 1;
+    if (newW >= 1) ee.width = newW;
+    if (newH >= 1) ee.height = newH;
+  }
+}
+
+function syncEntranceToForm() {
+  const ee = state.data.base_map.expeditionEntrance;
+  if (!ee) return;
+  ['ee_gridX', 'ee_gridY', 'ee_width', 'ee_height'].forEach(fid => {
+    const el = document.getElementById('f_' + fid);
+    if (el) {
+      const key = fid.replace('ee_', '');
+      el.value = ee[key] != null ? ee[key] : '';
+    }
+  });
+}
+
+function syncBuildingsToForm() {
+  // Re-render the sub-list to sync
+  const m = state.data.base_map;
+  const sl = document.getElementById('sl_initBuildings');
+  if (!sl) return;
+  // Trigger form re-render by calling renderDetail
+  // But that would lose canvas state... Instead, update inline
+  const rows = sl.querySelectorAll('.sub-row');
+  const buildings = m.initialBuildings || [];
+  rows.forEach((row, i) => {
+    if (i < buildings.length) {
+      const bIdInput = row.querySelector('[data-key="buildingId"]');
+      const xInput = row.querySelector('[data-key="gridX"]');
+      const yInput = row.querySelector('[data-key="gridY"]');
+      if (bIdInput) bIdInput.value = buildings[i].buildingId || '';
+      if (xInput) xInput.value = buildings[i].gridX || 0;
+      if (yInput) yInput.value = buildings[i].gridY || 0;
+    }
+  });
+}
+
+/* -- Status bar -- */
+function updateMapStatus(col, row) {
+  const el = document.getElementById('mapStatus');
+  if (!el) return;
+  const m = state.data.base_map;
+  if (col < 0 || col >= m.gridWidth || row < 0 || row >= m.gridHeight) {
+    el.textContent = '💡 点击画布操作 | B=笔刷 V=建筑 E=入口 | 滚轮缩放 中键平移';
+    return;
+  }
+  const ch = m.grid[row]?.[col];
+  const gt = m.groundTypes?.[ch];
+  const gtName = gt ? gt.name : '未知';
+  const modeLabel = { brush: '🖌️笔刷', building: '🏠建筑', entrance: '🚪入口' }[state.mapEditorMode] || '';
+  el.textContent = `📍 (${col}, ${row}) ${gtName} | ${modeLabel} | 缩放:${Math.round(state.canvasScale * 100)}%`;
+}
+
+/* -- Canvas redraw scheduling (debounced for form field changes) -- */
+function setMapEditorMode(mode) {
+  state.mapEditorMode = mode;
+  state.mapEditorSelectedBuilding = -1;
+  state.mapEditorDragTarget = null;
+
+  // Update button active states
+  document.querySelectorAll('.map-mode-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+
+  // Show/hide building selector
+  const bldSel = document.getElementById('mapBuildingSelector');
+  if (bldSel) bldSel.style.display = mode === 'building' ? 'block' : 'none';
+
+  // Update canvas cursor
+  const canvas = document.getElementById('mapCanvas');
+  if (canvas) canvas.style.cursor = 'crosshair';
+
+  drawMapCanvas();
+}
+
+function switchMapMode() {
+  if (state.tab !== 'map') return;
+  if (state.mapEditorMode === 'building') setMapEditorMode('entrance');
+  else if (state.mapEditorMode === 'entrance') setMapEditorMode('brush');
+  else setMapEditorMode('building');
+}
+let _canvasRedrawTimer = null;
+function scheduleCanvasRedraw() {
+  if (_canvasRedrawTimer) clearTimeout(_canvasRedrawTimer);
+  _canvasRedrawTimer = setTimeout(() => {
+    drawMapCanvas();
+    _canvasRedrawTimer = null;
+  }, 50);
+}
+
+/* -- Grid resize helper -- */
+function adjustGridForResize() {
+  const m = state.data.base_map;
+  const grid = m.grid || [];
+  const defaultChar = Object.keys(m.groundTypes || {})[0] || 'G';
+
+  // Adjust rows
+  while (grid.length < m.gridHeight) {
+    grid.push(defaultChar.repeat(m.gridWidth));
+  }
+  while (grid.length > m.gridHeight) {
+    grid.pop();
+  }
+  // Adjust columns in each row
+  for (let i = 0; i < grid.length; i++) {
+    while (grid[i].length < m.gridWidth) {
+      grid[i] += defaultChar;
+    }
+    if (grid[i].length > m.gridWidth) {
+      grid[i] = grid[i].substring(0, m.gridWidth);
+    }
+  }
+  m.grid = grid;
 }
 
 /* ═══════════════════════════════════════════
@@ -1158,6 +1898,40 @@ function bindFormEvents() {
       torchFields.style.display = this.checked ? 'block' : 'none';
     });
   }
+
+  // Map editor: mode buttons
+  panel.querySelectorAll('.map-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.mode;
+      setMapEditorMode(mode);
+    });
+  });
+
+  // Map editor: terrain palette swatches
+  panel.querySelectorAll('.map-palette-swatch').forEach(swatch => {
+    swatch.addEventListener('click', () => {
+      const ch = swatch.dataset.ground;
+      state.mapEditorBrush = ch;
+      // Update active highlight
+      panel.querySelectorAll('.map-palette-swatch').forEach(s => s.classList.remove('map-palette-swatch-active'));
+      swatch.classList.add('map-palette-swatch-active');
+      // If not in brush mode, switch to it
+      if (state.mapEditorMode !== 'brush') setMapEditorMode('brush');
+    });
+  });
+
+  // Map editor: building selector
+  const bldSelect = document.getElementById('mapBldSelect');
+  if (bldSelect) {
+    bldSelect.addEventListener('change', () => {
+      state.mapEditorBuilding = bldSelect.value || null;
+    });
+  }
+
+  // Init canvas events (once per render)
+  setTimeout(initMapCanvasEvents, 50);
+  // Redraw canvas
+  setTimeout(drawMapCanvas, 100);
 }
 
 function getItem() {
@@ -1262,23 +2036,35 @@ function applyFieldChange(el) {
   } else if (fieldName === 'prod_perWorker') {
     if (item.production) item.production.perWorker = !!value;
   } else if (fieldName === 'map_gridWidth') {
-    state.data.base_map.gridWidth = parseInt(value) || 1;
+    const newW = parseInt(value) || 1;
+    const oldW = state.data.base_map.gridWidth;
+    state.data.base_map.gridWidth = newW;
+    if (newW !== oldW) adjustGridForResize();
+    scheduleCanvasRedraw();
   } else if (fieldName === 'map_gridHeight') {
-    state.data.base_map.gridHeight = parseInt(value) || 1;
+    const newH = parseInt(value) || 1;
+    const oldH = state.data.base_map.gridHeight;
+    state.data.base_map.gridHeight = newH;
+    if (newH !== oldH) adjustGridForResize();
+    scheduleCanvasRedraw();
   } else if (fieldName === 'map_tileSize') {
     state.data.base_map.tileSize = parseInt(value) || 32;
   } else if (fieldName === 'ee_gridX') {
     if (!state.data.base_map.expeditionEntrance) state.data.base_map.expeditionEntrance = {};
     state.data.base_map.expeditionEntrance.gridX = parseInt(value) || 0;
+    scheduleCanvasRedraw();
   } else if (fieldName === 'ee_gridY') {
     if (!state.data.base_map.expeditionEntrance) state.data.base_map.expeditionEntrance = {};
     state.data.base_map.expeditionEntrance.gridY = parseInt(value) || 0;
+    scheduleCanvasRedraw();
   } else if (fieldName === 'ee_width') {
     if (!state.data.base_map.expeditionEntrance) state.data.base_map.expeditionEntrance = {};
     state.data.base_map.expeditionEntrance.width = parseInt(value) || 1;
+    scheduleCanvasRedraw();
   } else if (fieldName === 'ee_height') {
     if (!state.data.base_map.expeditionEntrance) state.data.base_map.expeditionEntrance = {};
     state.data.base_map.expeditionEntrance.height = parseInt(value) || 1;
+    scheduleCanvasRedraw();
   } else {
     item[fieldName] = value;
   }
@@ -1429,8 +2215,8 @@ function applyGroundTypeChange(el) {
   }
   state.data.base_map.groundTypes[gtKey][key] = value;
   markDirty();
-  // Refresh mini map
-  if (key === 'colorHint') renderMiniMap();
+  // Refresh canvas map
+  if (key === 'colorHint' || key === 'name') drawMapCanvas();
 }
 
 function applyOptionChange(el) {
@@ -1571,6 +2357,13 @@ function switchTab(tab) {
     } else {
       // 地图等单例：自动选中唯一项走正常编辑流程
       state.selectedIdx = 0;
+      // Reset canvas viewport
+      state.canvasScale = 1.0;
+      state.canvasOffsetX = 0;
+      state.canvasOffsetY = 0;
+      state.mapEditorMode = 'brush';
+      state.mapEditorSelectedBuilding = -1;
+      state.mapEditorDragTarget = null;
       refreshList();
       renderDetail();
     }
@@ -2119,6 +2912,30 @@ document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
     e.preventDefault();
     // TODO: undo
+  }
+
+  // Map editor shortcuts (only when no input/textarea is focused)
+  const tag = document.activeElement?.tagName;
+  if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT' && state.tab === 'map') {
+    if (e.key === 'b' || e.key === 'B') {
+      e.preventDefault();
+      setMapEditorMode('brush');
+    } else if (e.key === 'v' || e.key === 'V') {
+      e.preventDefault();
+      setMapEditorMode('building');
+    } else if (e.key === 'e' || e.key === 'E') {
+      e.preventDefault();
+      setMapEditorMode('entrance');
+    } else if (e.key === 'Delete' && state.mapEditorSelectedBuilding >= 0) {
+      e.preventDefault();
+      removeBuilding(state.mapEditorSelectedBuilding);
+    } else if (e.key === '0' && e.ctrlKey) {
+      e.preventDefault();
+      state.canvasScale = 1.0;
+      state.canvasOffsetX = 0;
+      state.canvasOffsetY = 0;
+      drawMapCanvas();
+    }
   }
 });
 </script>
