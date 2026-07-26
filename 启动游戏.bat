@@ -1,5 +1,6 @@
 @echo off
-setlocal enabledelapsedexpansion
+chcp 65001 >nul
+setlocal enabledelayedexpansion
 cd /d "%~dp0"
 title GMGameChain
 
@@ -39,7 +40,7 @@ if not errorlevel 1 (
 )
 
 REM ==========================================
-REM  Step 2: Node.js NOT found ¡ª show banner
+REM  Step 2: Node.js NOT found - show banner
 REM ==========================================
 echo.
 echo ============================================
@@ -129,7 +130,7 @@ echo.
 echo     1. Open: https://nodejs.org/
 echo     2. Download the LTS version
 echo     3. Run the installer (keep all default settings)
-echo     4. Double-click Æô¶¯ÓÎÏ·.bat again
+echo     4. Double-click start_game.bat again
 echo.
 echo   (Press any key to open the download page...)
 pause >nul
@@ -141,7 +142,7 @@ pause
 exit /b 1
 
 REM ==========================================
-REM  LAUNCH ¡ª start the game
+REM  LAUNCH - start the game
 REM ==========================================
 :launch
 echo.

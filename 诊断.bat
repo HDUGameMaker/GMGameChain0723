@@ -1,11 +1,12 @@
 @echo off
+chcp 65001 >nul
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
 title Diagnostic
 
 > "%~dp0diag.log" echo ========== DIAGNOSTIC START ==========
 
-REM ©¤©¤ Step 1: check Node.js ©¤©¤
+REM Step 1: check Node.js
 >> "%~dp0diag.log" echo [Step 1] Check Node.js + npx...
 where node >nul 2>&1
 if errorlevel 1 (
@@ -23,7 +24,7 @@ if errorlevel 1 (
     for /f "tokens=*" %%i in ('npx --version 2^>^&1') do >> "%~dp0diag.log" echo   npx version: %%i
 )
 
-REM ©¤©¤ Step 2: check winget ©¤©¤
+REM Step 2: check winget
 >> "%~dp0diag.log" echo [Step 2] Check winget...
 where winget >nul 2>&1
 if errorlevel 1 (
@@ -33,11 +34,11 @@ if errorlevel 1 (
     for /f "tokens=*" %%i in ('winget --version 2^>^&1') do >> "%~dp0diag.log" echo   winget version: %%i
 )
 
-REM ©¤©¤ Step 3: check PATH ©¤©¤
+REM Step 3: check PATH
 >> "%~dp0diag.log" echo [Step 3] Current PATH (truncated):
 >> "%~dp0diag.log" echo   %PATH%
 
-REM ©¤©¤ Step 4: try to refresh PATH from registry ©¤©¤
+REM Step 4: try to refresh PATH from registry
 >> "%~dp0diag.log" echo [Step 4] Registry PATH scan...
 for /f "tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PATH 2^>nul') do (
     >> "%~dp0diag.log" echo   System PATH: %%b
@@ -46,7 +47,7 @@ for /f "tokens=2*" %%a in ('reg query "HKCU\Environment" /v PATH 2^>nul') do (
     >> "%~dp0diag.log" echo   User PATH: %%b
 )
 
-REM ©¤©¤ Step 5: common install dirs ©¤©¤
+REM Step 5: common install dirs
 >> "%~dp0diag.log" echo [Step 5] Common Node.js directories:
 for %%d in (
     "C:\Program Files\nodejs"
@@ -62,7 +63,7 @@ for %%d in (
     )
 )
 
-REM ©¤©¤ Step 6: test npx http-server dry-run ©¤©¤
+REM Step 6: test npx http-server dry-run
 >> "%~dp0diag.log" echo [Step 6] npx http-server test...
 where node >nul 2>&1
 if not errorlevel 1 (

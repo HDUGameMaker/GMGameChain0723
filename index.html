@@ -229,6 +229,33 @@
       -webkit-backdrop-filter: blur(4px);
     }
 
+    #viewport-center-display {
+      color: var(--text-primary);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: var(--radius-xl);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      font-variant-numeric: tabular-nums;
+      cursor: default;
+    }
+
+    #viewport-center-display .vc-label {
+      color: var(--text-muted);
+      font-size: 11px;
+    }
+
+    #viewport-center-display .vc-coord {
+      color: var(--accent);
+    }
+
     /* ===== 底部操作栏 ===== */
     #hud-bottom {
       position: absolute;
@@ -294,7 +321,7 @@
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 100;
+      z-index: 1200;
     }
 
     #popup-overlay.active {
@@ -503,6 +530,66 @@
       letter-spacing: 0.02em;
     }
 
+    /* ===== 消息播报系统 ===== */
+    #msg-log-container {
+      position: absolute;
+      top: 80px;
+      left: 0;
+      right: 0;
+      bottom: 80px;
+      pointer-events: none;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 12px;
+      z-index: 5;
+    }
+
+    .msg-log-side {
+      width: 240px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    #msg-log-left {
+      align-items: flex-start;
+    }
+
+    #msg-log-right {
+      align-items: flex-end;
+    }
+
+    .msg-item {
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.4;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      pointer-events: auto;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .msg-item.left {
+      background: linear-gradient(135deg, rgba(78, 203, 113, 0.2), rgba(78, 203, 113, 0.08));
+      border: 1px solid rgba(78, 203, 113, 0.25);
+      color: var(--accent-green);
+      text-align: left;
+    }
+
+    .msg-item.right {
+      background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(255, 107, 107, 0.08));
+      border: 1px solid rgba(255, 107, 107, 0.25);
+      color: var(--text-danger);
+      text-align: right;
+    }
+
     /* ===== 事件面板增强 ===== */
     .event-panel-header {
       text-align: center;
@@ -569,7 +656,14 @@
       <div id="hud-info">
         <div id="population-display"></div>
         <div id="time-display"></div>
+        <div id="viewport-center-display" title="当前视角中心所在的网格坐标"></div>
       </div>
+    </div>
+
+    <!-- 消息播报系统 -->
+    <div id="msg-log-container">
+      <div id="msg-log-left" class="msg-log-side"></div>
+      <div id="msg-log-right" class="msg-log-side"></div>
     </div>
 
     <div id="expedition-status"></div>
