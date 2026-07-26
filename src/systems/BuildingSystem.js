@@ -113,16 +113,6 @@ export class BuildingSystem {
       }
     }
 
-    // 重叠检查（活跃的事件标记）
-    const removedIds = new Set(store.getState('removedEventMarkers') || []);
-    const eventMarkers = map.eventMarkers || [];
-    for (const marker of eventMarkers) {
-      if (removedIds.has(marker.id)) continue;
-      if (isAreaOverlap(gridX, gridY, w, h, marker.gridX, marker.gridY, 1, 1)) {
-        return { valid: false, reason: '与事件标记重叠' };
-      }
-    }
-
     // maxCount 检查
     if (config.maxCount !== null && config.maxCount !== undefined) {
       const count = this.buildings.filter(b => b.buildingId === buildingId).length;
@@ -157,7 +147,8 @@ export class BuildingSystem {
       status: 'constructing',
       buildProgress: 0,
       currentWorkers: 0,
-      synthesisProgress: null // { recipeId, progress }
+      synthesisProgress: null, // { recipeId, progress }
+      storedFood: 0 // 粮仓存储的食物量
     };
 
     this.buildings.push(building);
@@ -178,7 +169,8 @@ export class BuildingSystem {
       status: 'active',
       buildProgress: null,
       currentWorkers: 0,
-      synthesisProgress: null
+      synthesisProgress: null,
+      storedFood: 0
     };
     this.buildings.push(building);
     this._updateStore();
@@ -240,6 +232,10 @@ export class BuildingSystem {
     building.currentWorkers++;
     this._updateStore();
     this._populationSystem.refresh();
+    
+    // 追踪工人名字
+    this._populationSystem.assignWorkerToBuilding(buildingIndex);
+    
     eventBus.emit('workerChanged', { buildingIndex });
     return true;
   }
@@ -251,6 +247,10 @@ export class BuildingSystem {
     building.currentWorkers--;
     this._updateStore();
     this._populationSystem.refresh();
+    
+    // 追踪工人名字
+    this._populationSystem.removeWorkerFromBuilding(buildingIndex);
+    
     eventBus.emit('workerChanged', { buildingIndex });
     return true;
   }
@@ -391,16 +391,6 @@ export class BuildingSystem {
         if (isAreaOverlap(newGridX, newGridY, w, h, t.gridX, t.gridY, 1, 1)) {
           return { valid: false, reason: '与已有火把重叠' };
         }
-      }
-    }
-
-    // 重叠检查（活跃的事件标记）
-    const removedIds = new Set(store.getState('removedEventMarkers') || []);
-    const eventMarkers = map.eventMarkers || [];
-    for (const marker of eventMarkers) {
-      if (removedIds.has(marker.id)) continue;
-      if (isAreaOverlap(newGridX, newGridY, w, h, marker.gridX, marker.gridY, 1, 1)) {
-        return { valid: false, reason: '与事件标记重叠' };
       }
     }
 
@@ -549,18 +539,45 @@ export class BuildingSystem {
    */
   getTotalFoodProduction() {
     let total = 0;
+
     for (let i = 0; i < this.buildings.length; i++) {
       const b = this.buildings[i];
       if (b.status !== 'active') continue;
-      if (b.currentWorkers <= 0) continue;
+
       const config = configRegistry.getBuilding(b.buildingId);
-      if (config && config.foodCapacity) {
+      if (!config) continue;
+
+      // 1. foodCapacity 类型建筑（狩猎小屋）- 每日一次性产出
+      if (config.foodCapacity) {
+        if (b.currentWorkers <= 0) continue;
         const baseAmount = config.foodCapacity * b.currentWorkers;
         const bonuses = this.getAdjacencyBonuses(i);
         const adjusted = this.applyAdjacencyToProduction(
           b.buildingId, 'food', baseAmount, 'foodCapacity', bonuses
         );
         total += Math.round(adjusted);
+      }
+
+      // 2. production 类型建筑（农田、渔场、狩猎场）- per-tick 产出
+      // 工作时段每天有 2 个时段 × 3 ticks/时段 = 6 ticks
+      if (config.production) {
+        const prod = config.production;
+        const multiplier = prod.perWorker ? (b.currentWorkers || 0) : 1;
+        if (multiplier <= 0) continue;
+
+        const bonuses = this.getAdjacencyBonuses(i);
+        if (prod.output) {
+          for (const out of prod.output) {
+            if (out.resourceId === 'food') {
+              const ticksPerDay = 6; // 2 work periods × 3 ticks/period
+              const baseAmount = out.amount * multiplier * ticksPerDay;
+              const adjusted = this.applyAdjacencyToProduction(
+                b.buildingId, out.resourceId, baseAmount, 'production', bonuses
+              );
+              total += Math.round(adjusted);
+            }
+          }
+        }
       }
     }
     return total;
@@ -630,7 +647,37 @@ export class BuildingSystem {
   }
 
   /**
-   * 检查建筑是否已解锁（前置建筑已建造）
+   * 获取建筑的完整升级链（包括自身和所有升级后代）
+   * @returns {Array} 升级链中所有建筑ID
+   */
+  _getUpgradeChain(buildingId) {
+    const chain = [];
+    let current = buildingId;
+    
+    // 向上遍历找到升级链的根节点
+    while (current) {
+      const config = configRegistry.getBuilding(current);
+      if (!config) break;
+      chain.unshift(current); // 插入到开头
+      current = config.upgradesFrom;
+    }
+    
+    // 向下遍历找到所有升级后代
+    current = buildingId;
+    while (current) {
+      const config = configRegistry.getBuilding(current);
+      if (!config) break;
+      if (!chain.includes(current)) {
+        chain.push(current);
+      }
+      current = config.upgradesTo;
+    }
+    
+    return [...new Set(chain)];
+  }
+
+  /**
+   * 检查建筑是否已解锁（前置建筑已建造，支持升级链）
    */
   isUnlocked(buildingId) {
     const config = configRegistry.getBuilding(buildingId);
@@ -641,8 +688,12 @@ export class BuildingSystem {
 
     return conditions.every(cond => {
       switch (cond.type) {
-        case 'building':
-          return this.hasBuilding(cond.buildingId);
+        case 'building': {
+          // 获取目标建筑的完整升级链
+          const upgradeChain = this._getUpgradeChain(cond.buildingId);
+          // 检查升级链中是否有任意一个建筑已建造
+          return upgradeChain.some(bid => this.hasBuilding(bid));
+        }
         default:
           return false;
       }
@@ -654,6 +705,112 @@ export class BuildingSystem {
    */
   getNewlyUnlocked() {
     return [...this._newlyUnlocked];
+  }
+
+  // ===== 粮仓系统 =====
+
+  /**
+   * 获取粮仓的存储容量
+   */
+  getGranaryCapacity(buildingIndex) {
+    const building = this.buildings[buildingIndex];
+    if (!building) return 0;
+    const config = configRegistry.getBuilding(building.buildingId);
+    if (!config || !config.foodStorage) return 0;
+    return config.foodStorage.capacity;
+  }
+
+  /**
+   * 获取粮仓当前存储的食物量
+   */
+  getGranaryStoredFood(buildingIndex) {
+    const building = this.buildings[buildingIndex];
+    if (!building) return 0;
+    return building.storedFood || 0;
+  }
+
+  /**
+   * 向粮仓存入食物
+   * @returns {number} 实际存入的数量
+   */
+  depositFoodToGranary(buildingIndex, amount) {
+    const building = this.buildings[buildingIndex];
+    if (!building || building.status !== 'active') return 0;
+    if (amount <= 0) return 0;
+
+    const config = configRegistry.getBuilding(building.buildingId);
+    if (!config || !config.foodStorage) return 0;
+
+    const capacity = config.foodStorage.capacity;
+    const currentStored = building.storedFood || 0;
+    const availableSpace = capacity - currentStored;
+    const actualDeposit = Math.min(amount, availableSpace);
+
+    if (actualDeposit > 0 && this._resourceSystem) {
+      const consumed = this._resourceSystem.tryConsume('food', actualDeposit);
+      if (consumed) {
+        building.storedFood = currentStored + actualDeposit;
+        this._updateStore();
+        eventBus.emit('granaryChanged', { buildingIndex, storedFood: building.storedFood });
+        return actualDeposit;
+      }
+    }
+    return 0;
+  }
+
+  /**
+   * 从粮仓取出食物
+   * @returns {number} 实际取出的数量
+   */
+  withdrawFoodFromGranary(buildingIndex, amount) {
+    const building = this.buildings[buildingIndex];
+    if (!building || building.status !== 'active') return 0;
+    if (amount <= 0) return 0;
+
+    const config = configRegistry.getBuilding(building.buildingId);
+    if (!config || !config.foodStorage) return 0;
+
+    const currentStored = building.storedFood || 0;
+    const actualWithdraw = Math.min(amount, currentStored);
+
+    if (actualWithdraw > 0 && this._resourceSystem) {
+      building.storedFood = currentStored - actualWithdraw;
+      this._resourceSystem.addClamped('food', actualWithdraw);
+      this._updateStore();
+      eventBus.emit('granaryChanged', { buildingIndex, storedFood: building.storedFood });
+      return actualWithdraw;
+    }
+    return 0;
+  }
+
+  /**
+   * 获取所有粮仓存储的总食物量
+   */
+  getTotalGranaryFood() {
+    let total = 0;
+    for (const building of this.buildings) {
+      if (building.status !== 'active') continue;
+      const config = configRegistry.getBuilding(building.buildingId);
+      if (config && config.foodStorage) {
+        total += building.storedFood || 0;
+      }
+    }
+    return total;
+  }
+
+  /**
+   * 获取所有资源扩容室的总容量加成
+   */
+  getTotalCapacityBonus() {
+    let total = 0;
+    for (const building of this.buildings) {
+      if (building.status !== 'active') continue;
+      const config = configRegistry.getBuilding(building.buildingId);
+      if (config && config.capacityBonus) {
+        total += config.capacityBonus;
+      }
+    }
+    return total;
   }
 
   /**
@@ -685,17 +842,31 @@ export class BuildingSystem {
   }
 
   _updateStorageMultiplier() {
-    // 查找仓库类建筑的最大倍率
-    let maxMultiplier = 1;
+    // 计算所有 warehouse 系建筑的倍率之和，最小值为 0.5
+    let warehouseMultiplier = 0;
+    let capacityBonus = 0;
     for (const b of this.buildings) {
       if (b.status !== 'active') continue;
       const config = configRegistry.getBuilding(b.buildingId);
-      if (config && config.storageMultiplier) {
-        maxMultiplier = Math.max(maxMultiplier, config.storageMultiplier);
+      if (!config) continue;
+      
+      // 仓库倍率
+      if (config.storageMultiplier) {
+        const tags = config.tags || [];
+        if (tags.includes('warehouse')) {
+          warehouseMultiplier += config.storageMultiplier;
+        }
+      }
+      
+      // 资源扩容室容量加成
+      if (config.capacityBonus) {
+        capacityBonus += config.capacityBonus;
       }
     }
+    const finalMultiplier = Math.max(warehouseMultiplier, 0.5);
     if (this._resourceSystem) {
-      this._resourceSystem.setStorageMultiplier(maxMultiplier);
+      this._resourceSystem.setStorageMultiplier(finalMultiplier);
+      this._resourceSystem.setCapacityBonus(capacityBonus);
     }
   }
 
@@ -928,7 +1099,8 @@ export class BuildingSystem {
       status: b.status,
       currentWorkers: b.currentWorkers,
       buildProgress: b.buildProgress,
-      synthesisProgress: b.synthesisProgress
+      synthesisProgress: b.synthesisProgress,
+      storedFood: b.storedFood || 0
     }));
   }
 
@@ -941,7 +1113,8 @@ export class BuildingSystem {
       status: s.status,
       currentWorkers: s.currentWorkers || 0,
       buildProgress: s.buildProgress || null,
-      synthesisProgress: s.synthesisProgress || null
+      synthesisProgress: s.synthesisProgress || null,
+      storedFood: s.storedFood || 0
     }));
     this._updateStorageMultiplier();
     this._updateStore();

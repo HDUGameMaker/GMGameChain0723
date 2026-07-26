@@ -3,6 +3,7 @@
  * 使用统一设计系统
  */
 import { SaveManager } from '../../core/SaveManager.js';
+import { configRegistry } from '../../core/ConfigRegistry.js';
 
 export function renderSettingsPanel(data, body, pm) {
   const container = document.createElement('div');
@@ -24,9 +25,11 @@ export function renderSettingsPanel(data, body, pm) {
   toggleLabel.textContent = '3D 透视效果';
 
   const toggleBtn = document.createElement('button');
-  const is3D = window.__game && window.__game.mapRenderer
-    ? window.__game.mapRenderer.isPerspectiveEnabled()
-    : document.getElementById('game-canvas').classList.contains('perspective-3d');
+  const game = window.__game;
+  const hasMapRenderer = !!(game && game.mapRenderer);
+  const is3D = hasMapRenderer
+    ? game.mapRenderer.isPerspectiveEnabled()
+    : document.getElementById('game-canvas')?.classList.contains('perspective-3d') || false;
 
   const updateToggle = (enabled) => {
     toggleBtn.textContent = enabled ? '已开启' : '已关闭';
@@ -40,11 +43,12 @@ export function renderSettingsPanel(data, body, pm) {
   updateToggle(is3D);
 
   toggleBtn.addEventListener('click', () => {
-    const game = window.__game;
     if (game && game.mapRenderer) {
       const current = game.mapRenderer.isPerspectiveEnabled();
       game.mapRenderer.setPerspective(!current);
       updateToggle(!current);
+      // 持久化
+      try { localStorage.setItem('gmgc_perspective_3d', game.mapRenderer.isPerspectiveEnabled() ? '1' : '0'); } catch(e) {}
     }
   });
 
@@ -80,6 +84,10 @@ export function renderSettingsPanel(data, body, pm) {
     muteBtn.addEventListener('click', () => {
       audioSys.toggleMute();
       updateMuteBtn();
+      // 持久化
+      try {
+        localStorage.setItem('gmgc_audio_muted', audioSys.isMuted() ? '1' : '0');
+      } catch(e) {}
       // 更新滑块以反映静音状态
       masterSlider.value = Math.round(audioSys.getMasterVolume() * 100);
       bgmSlider.value = Math.round(audioSys.getBGMVolume() * 100);
@@ -88,9 +96,9 @@ export function renderSettingsPanel(data, body, pm) {
 
     // 音量滑块
     const sliders = [
-      { label: '主音量', get: () => audioSys.getMasterVolume(), set: (v) => audioSys.setMasterVolume(v) },
-      { label: '背景音乐', get: () => audioSys.getBGMVolume(), set: (v) => audioSys.setBGMVolume(v) },
-      { label: '音效', get: () => audioSys.getSFXVolume(), set: (v) => audioSys.setSFXVolume(v) }
+      { label: '主音量', get: () => audioSys.getMasterVolume(), set: (v) => { audioSys.setMasterVolume(v); try { localStorage.setItem('gmgc_vol_master', v); } catch(e) {} } },
+      { label: '背景音乐', get: () => audioSys.getBGMVolume(), set: (v) => { audioSys.setBGMVolume(v); try { localStorage.setItem('gmgc_vol_bgm', v); } catch(e) {} } },
+      { label: '音效', get: () => audioSys.getSFXVolume(), set: (v) => { audioSys.setSFXVolume(v); try { localStorage.setItem('gmgc_vol_sfx', v); } catch(e) {} } }
     ];
 
     const sliderContainer = document.createElement('div');
@@ -222,6 +230,8 @@ export function renderSettingsPanel(data, body, pm) {
       ].join('');
       btn.addEventListener('click', () => {
         timeSys?.setSpeed(n);
+        // 持久化
+        try { localStorage.setItem('gmgc_game_speed', n); } catch(e) {}
         // 刷新作弊面板按钮状态
         cheatSection.querySelectorAll('button').forEach(b => {
           const txt = b.textContent;
@@ -239,19 +249,19 @@ export function renderSettingsPanel(data, body, pm) {
     });
     cheatSection.appendChild(speedRow);
 
-    // ---- 资源 +100 按钮组 ----
+    // ---- 资源控制 ----
     const resLabel = document.createElement('div');
     resLabel.style.cssText = 'font-size:12px;color:#a0a0ba;margin-bottom:8px;';
-    resLabel.textContent = '📦 资源补给（点击 +100）';
+    resLabel.textContent = '📦 资源控制';
     cheatSection.appendChild(resLabel);
 
     const resSys = game?.systems?.resource;
     if (resSys) {
-      const hudResources = resSys.getHUDResources();
+      const allResources = (configRegistry.get('resources') || []).filter(r => r.showInHUD !== false);
       const resList = document.createElement('div');
       resList.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
 
-      hudResources.forEach(res => {
+      allResources.forEach(res => {
         const row = document.createElement('div');
         row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;';
 
@@ -260,64 +270,104 @@ export function renderSettingsPanel(data, body, pm) {
         const icon = res.icon
           ? `<img src="${res.icon}" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:4px;" onerror="this.remove()" />`
           : '';
-        const emojiMap = { wood: '🪵', plank: '📐', stone: '🪨', iron_ore: '⛏️', coal: '⚫', iron_ingot: '🔩', food: '🍞' };
-        info.innerHTML = `${icon}${emojiMap[res.id] || ''} ${res.name} <span style="color:#888;font-size:11px;">${res.current}/${res.max}</span>`;
+        info.innerHTML = `${icon}${res.name} <span style="color:#888;font-size:11px;">${resSys.getAmount(res.id)}/${resSys.getMaxResourceCapacity(res.id)}</span>`;
 
-        const addBtn = document.createElement('button');
-        const isFull = res.current >= res.max;
-        addBtn.textContent = isFull ? '已满' : '+100';
-        addBtn.style.cssText = [
-          'padding:3px 12px;border-radius:14px;border:1px solid',
-          isFull ? 'rgba(255,255,255,0.06)' : 'rgba(78,203,113,0.3)',
-          ';background:', isFull ? 'rgba(255,255,255,0.03)' : 'rgba(78,203,113,0.12)',
-          ';color:', isFull ? '#666' : '#4ecb71',
-          ';font-size:12px;font-weight:500;cursor:', isFull ? 'default' : 'pointer',
-          ';font-family:inherit;transition:all 0.2s;flex-shrink:0;'
-        ].join('');
+        const btnGroup = document.createElement('div');
+        btnGroup.style.cssText = 'display:flex;gap:4px;flex-shrink:0;';
 
-        if (!isFull) {
-          addBtn.addEventListener('click', () => {
-            const added = resSys.addClamped(res.id, 100);
-            if (added > 0) {
-              // 更新按钮反馈
-              addBtn.textContent = `+${added}`;
-              addBtn.style.background = 'rgba(78,203,113,0.3)';
-              // 更新当前值显示
-              const countSpan = info.querySelector('span');
-              const latest = resSys.getAmount(res.id);
-              if (countSpan) {
-                countSpan.textContent = `${latest}/${res.max}`;
-              }
-              // 延迟恢复按钮状态
-              setTimeout(() => {
-                const latestNow = resSys.getAmount(res.id);
-                if (latestNow >= res.max) {
-                  addBtn.textContent = '已满';
-                  addBtn.style.color = '#666';
-                  addBtn.style.background = 'rgba(255,255,255,0.03)';
-                  addBtn.style.borderColor = 'rgba(255,255,255,0.06)';
-                  addBtn.style.cursor = 'default';
-                } else {
-                  addBtn.textContent = '+100';
-                  addBtn.style.background = 'rgba(78,203,113,0.12)';
-                }
-              }, 500);
+        // 创建操作按钮
+        const createCheatBtn = (label, delta, color, bgColor) => {
+          const btn = document.createElement('button');
+          btn.textContent = label;
+          btn.style.cssText = [
+            'padding:3px 8px;border-radius:8px;border:1px solid',
+            `rgba(${color},0.3)`,
+            ';background:', `rgba(${color},${bgColor})`,
+            ';color:#' + color,
+            ';font-size:11px;font-weight:500;cursor:pointer',
+            ';font-family:inherit;transition:all 0.2s;min-width:36px;'
+          ].join('');
+          btn.addEventListener('click', () => {
+            if (delta > 0) {
+              resSys.addClamped(res.id, delta);
             } else {
-              // 资源已满（可能被其他操作填满）
-              addBtn.textContent = '已满';
-              addBtn.style.color = '#666';
-              addBtn.style.background = 'rgba(255,255,255,0.03)';
-              addBtn.style.borderColor = 'rgba(255,255,255,0.06)';
-              addBtn.style.cursor = 'default';
+              const current = resSys.getAmount(res.id);
+              const removed = Math.min(-delta, current);
+              resSys.addClamped(res.id, -removed);
+            }
+            const countSpan = info.querySelector('span');
+            if (countSpan) {
+              countSpan.textContent = `${resSys.getAmount(res.id)}/${resSys.getMaxResourceCapacity(res.id)}`;
             }
           });
-        }
+          return btn;
+        };
+
+        btnGroup.appendChild(createCheatBtn('-100', -100, 'ff6b6b', 0.1));
+        btnGroup.appendChild(createCheatBtn('-10', -10, 'ff6b6b', 0.06));
+        btnGroup.appendChild(createCheatBtn('+10', 10, '4ecb71', 0.06));
+        btnGroup.appendChild(createCheatBtn('+100', 100, '4ecb71', 0.12));
 
         row.appendChild(info);
-        row.appendChild(addBtn);
+        row.appendChild(btnGroup);
         resList.appendChild(row);
       });
       cheatSection.appendChild(resList);
+    }
+
+    // ---- 人口控制 ----
+    const popLabel = document.createElement('div');
+    popLabel.style.cssText = 'font-size:12px;color:#a0a0ba;margin-bottom:8px;margin-top:14px;';
+    popLabel.textContent = '👥 人口控制';
+    cheatSection.appendChild(popLabel);
+
+    const popSys = game?.systems?.population;
+    if (popSys) {
+      const popRow = document.createElement('div');
+      popRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;';
+
+      const popInfo = document.createElement('span');
+      popInfo.style.cssText = 'font-size:13px;color:#ececf0;flex:1;';
+      popInfo.innerHTML = `人口 <span style="color:#888;font-size:11px;">${popSys.getTotal()}/${popSys.getMax()}</span>`;
+
+      const popBtnGroup = document.createElement('div');
+      popBtnGroup.style.cssText = 'display:flex;gap:4px;flex-shrink:0;';
+
+      const createPopBtn = (label, delta, color, bgColor) => {
+        const btn = document.createElement('button');
+        btn.textContent = label;
+        btn.style.cssText = [
+          'padding:3px 8px;border-radius:8px;border:1px solid',
+          `rgba(${color},0.3)`,
+          ';background:', `rgba(${color},${bgColor})`,
+          ';color:#' + color,
+          ';font-size:11px;font-weight:500;cursor:pointer',
+          ';font-family:inherit;transition:all 0.2s;min-width:36px;'
+        ].join('');
+        btn.addEventListener('click', () => {
+          if (delta > 0) {
+            popSys.addPopulation(delta);
+          } else {
+            const current = popSys.getTotal();
+            const removed = Math.min(-delta, current);
+            popSys.removePopulation(removed);
+          }
+          const countSpan = popInfo.querySelector('span');
+          if (countSpan) {
+            countSpan.textContent = `${popSys.getTotal()}/${popSys.getMax()}`;
+          }
+        });
+        return btn;
+      };
+
+      popBtnGroup.appendChild(createPopBtn('-100', -100, 'ff6b6b', 0.1));
+      popBtnGroup.appendChild(createPopBtn('-10', -10, 'ff6b6b', 0.06));
+      popBtnGroup.appendChild(createPopBtn('+10', 10, '4ecb71', 0.06));
+      popBtnGroup.appendChild(createPopBtn('+100', 100, '4ecb71', 0.12));
+
+      popRow.appendChild(popInfo);
+      popRow.appendChild(popBtnGroup);
+      cheatSection.appendChild(popRow);
     }
 
     // ---- 关闭作弊 ----
@@ -340,6 +390,31 @@ export function renderSettingsPanel(data, body, pm) {
     cheatSection.appendChild(disableBtn);
 
     container.appendChild(cheatSection);
+  }
+
+  // ===== 返回标题菜单（仅在游戏内显示，即主菜单已隐藏时）=====
+  {
+    const isMainMenuVisible = !!(game?.mainMenu?.container && game.mainMenu.container.style.display !== 'none');
+    const isInGame = !!game?.mapRenderer; // 游戏内才有 mapRenderer
+    if (game && isInGame && !isMainMenuVisible) {
+      const titleBtn = document.createElement('button');
+      titleBtn.textContent = '🏠 返回标题菜单';
+      titleBtn.style.cssText = `
+        width:100%; padding:10px; border:1px solid rgba(91,141,239,0.2);
+        border-radius:10px; background:rgba(91,141,239,0.08);
+        color:#5b8def; font-size:14px; font-weight:500; cursor:pointer;
+        font-family:inherit; transition:background 0.2s;
+      `;
+      titleBtn.addEventListener('mouseenter', () => { titleBtn.style.background = 'rgba(91,141,239,0.16)'; });
+      titleBtn.addEventListener('mouseleave', () => { titleBtn.style.background = 'rgba(91,141,239,0.08)'; });
+      titleBtn.addEventListener('click', () => {
+        if (confirm('确定要返回标题菜单吗？当前进度会自动保存。')) {
+          pm.close();
+          game.returnToMainMenu();
+        }
+      });
+      container.appendChild(titleBtn);
+    }
   }
 
   // ===== 关闭 =====

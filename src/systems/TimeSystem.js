@@ -115,6 +115,7 @@ export class TimeSystem {
   setSpeed(speed) {
     this.speed = speed;
     store.setState({ timeSpeed: speed });
+    try { localStorage.setItem('gmgc_game_speed', String(speed)); } catch (e) { /* ignore */ }
   }
 
   cycleSpeed() {
@@ -123,6 +124,7 @@ export class TimeSystem {
     const idx = speeds.indexOf(this.speed);
     this.speed = speeds[(idx + 1) % speeds.length];
     store.setState({ timeSpeed: this.speed });
+    try { localStorage.setItem('gmgc_game_speed', String(this.speed)); } catch (e) { /* ignore */ }
     return this.speed;
   }
 

@@ -162,7 +162,8 @@ export function renderBuildingDetailPanel(data, body, pm) {
         progressFill,
         () => {
           const b = buildingSystem.buildings[buildingIndex];
-          return (b && b.status === 'constructing') ? (b.buildProgress || 0) : 0;
+          // 当建造完成时返回total，使进度条固定在100%
+          return (b && b.status === 'constructing') ? (b.buildProgress || 0) : config.buildTime;
         },
         () => config.buildTime,
         {
@@ -329,7 +330,8 @@ export function renderBuildingDetailPanel(data, body, pm) {
           synthFill,
           () => {
             const b = buildingSystem.buildings[buildingIndex];
-            return (b && b.synthesisProgress) ? b.synthesisProgress.progress : 0;
+            // 当合成完成时返回total，使进度条固定在100%
+            return (b && b.synthesisProgress) ? b.synthesisProgress.progress : sp.total;
           },
           () => sp.total,
           {
@@ -345,6 +347,155 @@ export function renderBuildingDetailPanel(data, body, pm) {
     }
 
     container.appendChild(synthSection);
+  }
+
+  // ===== 粮仓存储 =====
+  if (config.foodStorage && building.status === 'active') {
+    const granarySection = section('粮仓存储', '🌾');
+    
+    const storedFood = building.storedFood || 0;
+    const capacity = config.foodStorage.capacity;
+    const foodInHUD = resourceSystem.getAmount('food');
+    
+    granarySection.innerHTML += `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
+        <div style="font-size:12px;color:#a0a0ba;">当前存储</div>
+        <div style="font-size:12px;color:#ececf0;font-weight:500;">${storedFood} / ${capacity}</div>
+      </div>
+      <div style="height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin:8px 0;">
+        <div style="height:100%;background:#ffd700;width:${(storedFood / capacity) * 100}%;border-radius:3px;"></div>
+      </div>
+      <div style="font-size:11px;color:#6a6a82;text-align:right;">HUD中食物: ${foodInHUD}</div>
+    `;
+    
+    // 存入区域
+    const depositDiv = document.createElement('div');
+    depositDiv.style.cssText = 'margin-top:12px;';
+    const maxDeposit = Math.min(foodInHUD, capacity - storedFood);
+    depositDiv.innerHTML = `
+      <div style="font-size:12px;color:#a0a0ba;margin-bottom:6px;">存入食物</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="btn-minus" style="width:36px;height:32px;border:1px solid rgba(78,203,113,0.3);border-radius:6px;background:rgba(78,203,113,0.1);color:#4ecb71;font-size:18px;cursor:pointer;font-family:inherit;">−</button>
+        <input type="number" class="deposit-input" value="${Math.min(100, maxDeposit)}" min="0" max="${maxDeposit}" style="flex:1;height:32px;text-align:center;border:1px solid rgba(255,255,255,0.1);border-radius:6px;background:rgba(255,255,255,0.03);color:#ececf0;font-size:14px;font-family:inherit;outline:none;" />
+        <button class="btn-plus" style="width:36px;height:32px;border:1px solid rgba(78,203,113,0.3);border-radius:6px;background:rgba(78,203,113,0.1);color:#4ecb71;font-size:18px;cursor:pointer;font-family:inherit;">+</button>
+        <button class="btn-deposit" style="padding:0 16px;height:32px;border:none;border-radius:6px;background:rgba(78,203,113,0.25);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">存入</button>
+      </div>
+    `;
+    
+    const depositInput = depositDiv.querySelector('.deposit-input');
+    const depositBtn = depositDiv.querySelector('.btn-deposit');
+    const minusBtn = depositDiv.querySelector('.btn-minus');
+    const plusBtn = depositDiv.querySelector('.btn-plus');
+    
+    if (maxDeposit <= 0) {
+      depositBtn.style.cursor = 'default';
+      depositBtn.style.background = 'rgba(255,255,255,0.05)';
+      depositBtn.style.color = '#666';
+      minusBtn.style.cursor = 'default';
+      plusBtn.style.cursor = 'default';
+      depositInput.disabled = true;
+    }
+    
+    // 输入校验：无效输入视为0，超出范围取边界
+    const validateDepositInput = () => {
+      let val = parseInt(depositInput.value);
+      if (isNaN(val) || val < 0) {
+        val = 0;
+      } else if (val > maxDeposit) {
+        val = maxDeposit;
+      }
+      depositInput.value = val;
+    };
+    
+    depositInput.addEventListener('blur', validateDepositInput);
+    depositInput.addEventListener('change', validateDepositInput);
+    
+    minusBtn.addEventListener('click', () => {
+      let val = parseInt(depositInput.value) || 0;
+      val = Math.max(0, val - 100);
+      depositInput.value = val;
+    });
+    
+    plusBtn.addEventListener('click', () => {
+      let val = parseInt(depositInput.value) || 0;
+      val = Math.min(maxDeposit, val + 100);
+      depositInput.value = val;
+    });
+    
+    depositBtn.addEventListener('click', () => {
+      validateDepositInput();
+      const amount = parseInt(depositInput.value) || 0;
+      if (amount > 0 && amount <= maxDeposit) {
+        buildingSystem.depositFoodToGranary(buildingIndex, amount);
+        pm.refresh({ buildingIndex });
+      }
+    });
+    
+    // 取出区域
+    const withdrawDiv = document.createElement('div');
+    withdrawDiv.style.cssText = 'margin-top:10px;';
+    withdrawDiv.innerHTML = `
+      <div style="font-size:12px;color:#a0a0ba;margin-bottom:6px;">取出食物</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="btn-minus-w" style="width:36px;height:32px;border:1px solid rgba(255,107,107,0.3);border-radius:6px;background:rgba(255,107,107,0.1);color:#ff6b6b;font-size:18px;cursor:pointer;font-family:inherit;">−</button>
+        <input type="number" class="withdraw-input" value="${Math.min(100, storedFood)}" min="0" max="${storedFood}" style="flex:1;height:32px;text-align:center;border:1px solid rgba(255,255,255,0.1);border-radius:6px;background:rgba(255,255,255,0.03);color:#ececf0;font-size:14px;font-family:inherit;outline:none;" />
+        <button class="btn-plus-w" style="width:36px;height:32px;border:1px solid rgba(255,107,107,0.3);border-radius:6px;background:rgba(255,107,107,0.1);color:#ff6b6b;font-size:18px;cursor:pointer;font-family:inherit;">+</button>
+        <button class="btn-withdraw" style="padding:0 16px;height:32px;border:none;border-radius:6px;background:rgba(255,107,107,0.25);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">取出</button>
+      </div>
+    `;
+    
+    const withdrawInput = withdrawDiv.querySelector('.withdraw-input');
+    const withdrawBtn = withdrawDiv.querySelector('.btn-withdraw');
+    const minusBtnW = withdrawDiv.querySelector('.btn-minus-w');
+    const plusBtnW = withdrawDiv.querySelector('.btn-plus-w');
+    
+    if (storedFood <= 0) {
+      withdrawBtn.style.cursor = 'default';
+      withdrawBtn.style.background = 'rgba(255,255,255,0.05)';
+      withdrawBtn.style.color = '#666';
+      minusBtnW.style.cursor = 'default';
+      plusBtnW.style.cursor = 'default';
+      withdrawInput.disabled = true;
+    }
+    
+    // 输入校验：无效输入视为0，超出范围取边界
+    const validateWithdrawInput = () => {
+      let val = parseInt(withdrawInput.value);
+      if (isNaN(val) || val < 0) {
+        val = 0;
+      } else if (val > storedFood) {
+        val = storedFood;
+      }
+      withdrawInput.value = val;
+    };
+    
+    withdrawInput.addEventListener('blur', validateWithdrawInput);
+    withdrawInput.addEventListener('change', validateWithdrawInput);
+    
+    minusBtnW.addEventListener('click', () => {
+      let val = parseInt(withdrawInput.value) || 0;
+      val = Math.max(0, val - 100);
+      withdrawInput.value = val;
+    });
+    
+    plusBtnW.addEventListener('click', () => {
+      let val = parseInt(withdrawInput.value) || 0;
+      val = Math.min(storedFood, val + 100);
+      withdrawInput.value = val;
+    });
+    
+    withdrawBtn.addEventListener('click', () => {
+      validateWithdrawInput();
+      const amount = parseInt(withdrawInput.value) || 0;
+      if (amount > 0 && amount <= storedFood) {
+        buildingSystem.withdrawFoodFromGranary(buildingIndex, amount);
+        pm.refresh({ buildingIndex });
+      }
+    });
+    
+    granarySection.appendChild(depositDiv);
+    granarySection.appendChild(withdrawDiv);
+    container.appendChild(granarySection);
   }
 
   // ===== 升级 =====

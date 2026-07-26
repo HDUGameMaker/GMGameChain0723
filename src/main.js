@@ -18,8 +18,11 @@ import { AudioSystem } from './systems/AudioSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
+import { MainMenu } from './ui/MainMenu.js';
+import { MessageLog, messageLog } from './ui/MessageLog.js';
 import { SaveManager } from './core/SaveManager.js';
 import { cheatManager } from './utils/CheatManager.js';
+import { npcNameGenerator } from './utils/NpcNameGenerator.js';
 
 class Game {
   constructor() {
@@ -39,6 +42,9 @@ class Game {
 
     // 3. 初始化弹窗管理器
     this.popupManager = new PopupManager(gameLoop);
+
+    // 3.5 设置全局引用（供设置面板等使用，在主菜单阶段也可访问）
+    window.__game = this;
 
     // 4. 初始化各系统
     this.systems.time = new TimeSystem();
@@ -81,9 +87,23 @@ class Game {
       population: this.systems.population
     });
 
+    // 初始化NPC名字生成器（必须在游戏开始前完成）
+    await npcNameGenerator.init();
+
     // 注册人口每日结算
     eventBus.on('dayStart', () => {
       this.systems.population.onDayStart();
+    });
+
+    // 深夜时段播报日消耗
+    eventBus.on('periodChange', ({ period }) => {
+      if (period === 'night') {
+        const pop = this.systems.population;
+        const foodConsumption = pop.current * pop.foodPerPerson;
+        const foodProduction = this.systems.building.getTotalFoodProduction();
+        const netChange = foodProduction - foodConsumption;
+        messageLog.addLeft(`今日消耗食物 ${foodConsumption}，产出 ${foodProduction}，${netChange >= 0 ? '结余' : '缺口'} ${Math.abs(netChange)}`);
+      }
     });
 
     // 游戏结束事件
@@ -118,25 +138,6 @@ class Game {
       this.popupManager.open('torch_detail', { torchIndex });
     });
 
-    // 注册事件标记点击事件
-    let _pendingMarkerId = null;
-    eventBus.on('eventMarkerClicked', (marker) => {
-      // 触发引用的地图事件
-      this.systems.event.triggerEventById(marker.eventId);
-      _pendingMarkerId = marker.id;
-    });
-
-    // 事件弹窗关闭后移除标记
-    eventBus.on('popupClosed', () => {
-      if (_pendingMarkerId) {
-        const removed = store.getState('removedEventMarkers') || [];
-        if (!removed.includes(_pendingMarkerId)) {
-          store.setState({ removedEventMarkers: [...removed, _pendingMarkerId] });
-        }
-        _pendingMarkerId = null;
-      }
-    });
-
     // 建筑与火把系统桥接：拆除 → 同步火把运行时条目
     eventBus.on('buildingDemolished', ({ buildingId }) => {
       if (buildingId) {
@@ -155,59 +156,63 @@ class Game {
       }
     });
 
-    // 5. 尝试加载存档
-    const saveData = await SaveManager.load();
-    if (saveData) {
-      this.restoreFromSave(saveData);
-      console.log('[Game] Save data restored');
-    } else {
-      this.initNewGame();
-      console.log('[Game] New game initialized');
-    }
-
-    // 6. 初始化渲染器
-    this.mapRenderer = new MapRenderer(this.app, this.systems.building, this.systems.torch);
-
-    // 6.05 加载存档后恢复相机位置（覆盖 _centerView 的默认/配置位置）
-    if (this._savedCamera) {
-      this.mapRenderer.setCameraState(
-        this._savedCamera.camX,
-        this._savedCamera.camY,
-        this._savedCamera.zoom || 1.0
-      );
-      this._savedCamera = null;
-    }
-
-    // 6.05 恢复已移除事件标记
-    if (this._savedRemovedEventMarkers) {
-      this.mapRenderer.restoreMarkerState(this._savedRemovedEventMarkers);
-      this._savedRemovedEventMarkers = null;
-    }
-
-    // 6.1 从 localStorage 恢复 3D 透视偏好
-    try {
-      const saved = localStorage.getItem('gmgc_perspective_3d');
-      if (saved === '0') {
-        this.mapRenderer.setPerspective(false);
+    // 5. 创建主菜单
+    const menuConfig = configRegistry.get('ui_main_menu') || {};
+    if (menuConfig.enabled === false) {
+      // 标题菜单被禁用，直接进入游戏（有存档则继续，否则新游戏）
+      this.mainMenu = null;
+      const hasSave = await SaveManager.hasSave();
+      if (hasSave) {
+        await this.continueGame();
+      } else {
+        await this.startNewGame();
       }
-    } catch (e) { /* ignore */ }
+      return;
+    }
 
-    // 7. 初始化 HUD
-    this.hud = new HUD(this.systems, this.popupManager);
+    this.mainMenu = new MainMenu();
+    this.mainMenu.init({
+      onNewGame: () => this.startNewGame(),
+      onContinueGame: () => this.continueGame(),
+      onSettings: () => this.showSettings(),
+      onExit: () => this.exitGame()
+    });
 
-    // 8. 设置主循环更新函数
-    gameLoop.setUpdateFunction((delta) => this.update(delta));
+    // 暂时不自动进入游戏，等待用户选择
+    return;
+  }
 
-    // 9. 启动主循环
-    gameLoop.start();
-
-    // 10. 注册自动保存
-    this.registerAutoSave();
-
-    // 11. 窗口大小变化
-    window.addEventListener('resize', () => this.onResize());
-
-    console.log('[Game] Initialization complete!');
+  /**
+   * 设置音效配置热更新监听
+   * 当 sound-config.html 保存配置时，通过 localStorage 通知游戏重载配置
+   */
+  _setupSoundHotReload() {
+    let lastReloadTime = 0;
+    
+    // 定时检查热更新信号
+    setInterval(() => {
+      try {
+        const reloadSignal = localStorage.getItem('gmgame_sound_reload');
+        if (reloadSignal) {
+          const signalTime = parseInt(reloadSignal, 10);
+          if (signalTime > lastReloadTime) {
+            lastReloadTime = signalTime;
+            console.log('[Game] Sound config reload triggered');
+            
+            // 重新加载配置
+            configRegistry.loadConfig('sound').then(() => {
+              // 通知 AudioSystem 重新加载配置
+              this.systems.audio.reloadConfig();
+              console.log('[Game] Sound config reloaded successfully');
+            }).catch(err => {
+              console.warn('[Game] Failed to reload sound config:', err);
+            });
+          }
+        }
+      } catch (e) {
+        // localStorage 不可用或其他错误，忽略
+      }
+    }, 1000);
   }
 
   async initPixi() {
@@ -250,9 +255,6 @@ class Game {
 
     // 初始化火把
     this.systems.torch.initFromConfig();
-
-    // 初始化事件标记状态（新游戏 = 无已移除标记）
-    store.setState({ removedEventMarkers: [] });
   }
 
   restoreFromSave(saveData) {
@@ -273,7 +275,206 @@ class Game {
     }
     // 恢复相机位置（后续 MapRenderer 初始化后应用）
     this._savedCamera = saveData.camera || null;
-    this._savedRemovedEventMarkers = saveData.removedEventMarkers || null;
+  }
+
+  /**
+   * 开始新游戏
+   */
+  async startNewGame() {
+    // 隐藏主菜单（标题菜单可能被禁用）
+    if (this.mainMenu) {
+      this.mainMenu.hide();
+    }
+    
+    // 清除旧存档
+    await SaveManager.reset();
+    
+    // 初始化新游戏数据
+    this.initNewGame();
+    
+    // 完成游戏初始化
+    await this.completeInit();
+  }
+
+  /**
+   * 继续游戏
+   */
+  async continueGame() {
+    // 隐藏主菜单（标题菜单可能被禁用）
+    if (this.mainMenu) {
+      this.mainMenu.hide();
+    }
+    
+    // 加载存档
+    const saveData = await SaveManager.load();
+    if (saveData) {
+      this.restoreFromSave(saveData);
+      console.log('[Game] Save data restored');
+    } else {
+      this.initNewGame();
+      console.log('[Game] New game initialized (no save found)');
+    }
+    
+    // 完成游戏初始化
+    await this.completeInit();
+  }
+
+  /**
+   * 显示设置
+   */
+  showSettings() {
+    this.popupManager.open('settings');
+  }
+
+  /**
+   * 退出游戏
+   */
+  exitGame() {
+    if (confirm('确定要退出游戏吗？')) {
+      window.close();
+    }
+  }
+
+  /**
+   * 返回标题菜单（从游戏内）
+   */
+  returnToMainMenu() {
+    // 停止主循环
+    gameLoop.stop();
+
+    // 保存当前进度
+    this.saveGameState();
+
+    // 隐藏 HUD
+    if (this.hud) {
+      document.getElementById('hud').style.display = 'none';
+    }
+
+    // 如果标题菜单被禁用，直接刷新页面
+    if (!this.mainMenu) {
+      location.reload();
+      return;
+    }
+
+    // 显示主菜单
+    this.mainMenu.show();
+  }
+
+  /**
+   * 保存当前游戏状态
+   */
+  saveGameState() {
+    const state = {
+      timestamp: Date.now(),
+      time: this.systems.time.serializeState(),
+      resources: this.systems.resource.serializeState(),
+      buildings: this.systems.building.serializeState(),
+      population: this.systems.population.serializeState(),
+      items: this.systems.item.serializeState(),
+      events: this.systems.event.serializeState(),
+    };
+
+    if (this.systems.expedition.getCurrentExpedition()) {
+      state.expedition = this.systems.expedition.serializeState();
+    }
+
+    if (this.systems.torch) {
+      state.torches = this.systems.torch.serializeState();
+    }
+
+    if (this.systems.audio) {
+      state.audio = this.systems.audio.serializeState();
+    }
+
+    if (this.mapRenderer) {
+      state.camera = this.mapRenderer.getCameraState();
+    }
+
+    SaveManager.save(state);
+  }
+
+  /**
+   * 完成游戏初始化（在用户选择后执行）
+   */
+  async completeInit() {
+    // 6. 初始化渲染器
+    this.mapRenderer = new MapRenderer(this.app, this.systems.building, this.systems.torch);
+
+    // 6.05 加载存档后恢复相机位置（覆盖 _centerView 的默认/配置位置）
+    //     根据 viewportCenter.useLastSavedPosition 决定是否使用存档相机：
+    //     - true（默认）：恢复存档相机位置，保留玩家上次视角
+    //     - false：忽略存档相机，使用配置中的默认视角中心
+    const vcConfig = configRegistry.get('map')?.viewportCenter || {};
+    const useSaved = vcConfig.useLastSavedPosition !== false;
+    if (this._savedCamera && useSaved) {
+      this.mapRenderer.setCameraState(
+        this._savedCamera.camX,
+        this._savedCamera.camY,
+        this._savedCamera.zoom || 1.0
+      );
+    }
+    this._savedCamera = null;
+
+    // 6.1 从 localStorage 恢复 3D 透视偏好（初始化时不播放过渡动画）
+    try {
+      const saved = localStorage.getItem('gmgc_perspective_3d');
+      if (saved === '0') {
+        this.mapRenderer.setPerspective(false, false);
+      } else if (saved === '1') {
+        this.mapRenderer.setPerspective(true, false);
+      }
+    } catch (e) { /* ignore */ }
+
+    // 6.2 从 localStorage 恢复游戏速度偏好
+    try {
+      const savedSpeed = localStorage.getItem('gmgc_game_speed');
+      if (savedSpeed) {
+        this.systems.time.setSpeed(parseInt(savedSpeed, 10));
+      }
+    } catch (e) { /* ignore */ }
+
+    // 6.3 从 localStorage 恢复音频设置
+    try {
+      const audioSys = this.systems.audio;
+      if (audioSys && audioSys._initialized) {
+        const muted = localStorage.getItem('gmgc_audio_muted');
+        if (muted === '1' && !audioSys.isMuted()) audioSys.toggleMute();
+        const volMaster = localStorage.getItem('gmgc_vol_master');
+        if (volMaster) audioSys.setMasterVolume(parseFloat(volMaster));
+        const volBgm = localStorage.getItem('gmgc_vol_bgm');
+        if (volBgm) audioSys.setBGMVolume(parseFloat(volBgm));
+        const volSfx = localStorage.getItem('gmgc_vol_sfx');
+        if (volSfx) audioSys.setSFXVolume(parseFloat(volSfx));
+        // 进入游戏后主动启动 BGM（用户手势已发生，浏览器允许播放）
+        if (!audioSys.isMuted() && !audioSys._currentBGM) {
+          audioSys.playBGM('bgm_main');
+        }
+      }
+    } catch (e) { /* ignore */ }
+
+    // 7. 初始化 HUD
+    this.hud = new HUD(this.systems, this.popupManager);
+
+    // 7.5 初始化消息播报系统
+    this.messageLog = new MessageLog();
+    this.messageLog.init();
+
+    // 8. 设置主循环更新函数
+    gameLoop.setUpdateFunction((delta) => this.update(delta));
+
+    // 9. 启动主循环
+    gameLoop.start();
+
+    // 10. 注册自动保存
+    this.registerAutoSave();
+
+    // 11. 窗口大小变化
+    window.addEventListener('resize', () => this.onResize());
+
+    // 12. 监听音效配置热更新（从 sound-config.html 保存后触发）
+    this._setupSoundHotReload();
+
+    console.log('[Game] Initialization complete!');
   }
 
   update(delta) {
@@ -306,8 +507,7 @@ class Game {
       events: this.systems.event.getSaveState(),
       torches: this.systems.torch.getAllStates(),
       audio: this.systems.audio.getAllStates(),
-      camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
-      removedEventMarkers: this.mapRenderer ? this.mapRenderer.getMarkerState() : []
+      camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null
     };
     await SaveManager.save(state);
     console.log('[Game] Auto-saved');
@@ -329,8 +529,7 @@ class Game {
       events: this.systems.event.getSaveState(),
       torches: this.systems.torch.getAllStates(),
       audio: this.systems.audio.getAllStates(),
-      camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
-      removedEventMarkers: this.mapRenderer ? this.mapRenderer.getMarkerState() : []
+      camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null
     };
     try {
       localStorage.setItem('gmgc_emergency_save', JSON.stringify(state));

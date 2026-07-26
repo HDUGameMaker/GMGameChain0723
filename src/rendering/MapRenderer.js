@@ -113,7 +113,6 @@ export class MapRenderer {
     this._centerView();
     this._drawTerrainChunk();
     this._drawExpeditionEntrances();
-    this._drawEventMarkers();
     this._drawTorches();
     this._createFogCanvas();
     this._setupInteraction();
@@ -184,98 +183,6 @@ export class MapRenderer {
 
       this.worldContainer.addChild(entranceContainer);
     }
-  }
-
-  // ===== 地图事件标记渲染 =====
-
-  /**
-   * 绘制地图上的事件标记（"?"）
-   * 从 base_map.json 的 eventMarkers 数组读取
-   * 已移除的标记（通过 Store 的 removedEventMarkers 记录）不渲染
-   */
-  _drawEventMarkers() {
-    this._eventMarkerSprites = [];
-    this._eventMarkerData = [];
-    const markers = this.mapConfig.eventMarkers;
-    if (!markers || markers.length === 0) return;
-
-    const removedIds = store.getState('removedEventMarkers') || [];
-    const removedSet = new Set(removedIds);
-    const ts = this.tileSize;
-
-    for (const marker of markers) {
-      if (removedSet.has(marker.id)) continue;
-
-      const { gridX, gridY } = marker;
-      const x = gridX * ts;
-      const y = gridY * ts;
-      const w = ts;
-      const h = ts;
-
-      const container = new PIXI.Container();
-
-      // 底色
-      const bg = new PIXI.Graphics();
-      bg.rect(x, y, w, h);
-      bg.fill({ color: 0x8B6914, alpha: 0.7 });
-      bg.rect(x, y, w, h);
-      bg.stroke({ color: 0xFFD700, alpha: 0.9, width: 2 });
-      container.addChild(bg);
-
-      // "?" 图标
-      const iconText = new PIXI.Text({
-        text: '?',
-        style: { fontSize: 28, fontWeight: 'bold', fill: 0xFFD700, align: 'center' }
-      });
-      iconText.anchor.set(0.5);
-      iconText.x = x + w / 2;
-      iconText.y = y + h / 2;
-      container.addChild(iconText);
-
-      // 添加到世界容器
-      this.worldContainer.addChild(container);
-
-      this._eventMarkerSprites.push(container);
-      this._eventMarkerData.push(marker);
-    }
-  }
-
-  /**
-   * 移除指定的事件标记（点击后调用）
-   */
-  _removeEventMarkerSprite(markerId) {
-    const idx = this._eventMarkerData.findIndex(m => m.id === markerId);
-    if (idx < 0) return;
-
-    // 从世界容器移除
-    if (this._eventMarkerSprites[idx]) {
-      this.worldContainer.removeChild(this._eventMarkerSprites[idx]);
-      this._eventMarkerSprites[idx].destroy({ children: true });
-    }
-
-    this._eventMarkerSprites.splice(idx, 1);
-    this._eventMarkerData.splice(idx, 1);
-
-    // 更新 Store，持久化已移除标记
-    const removed = store.getState('removedEventMarkers') || [];
-    if (!removed.includes(markerId)) {
-      store.setState({ removedEventMarkers: [...removed, markerId] });
-    }
-  }
-
-  /**
-   * 刷新事件标记（当 Store 中 removedEventMarkers 变化时调用）
-   */
-  _refreshEventMarkers() {
-    // 清理旧标记
-    for (const sprite of this._eventMarkerSprites) {
-      this.worldContainer.removeChild(sprite);
-      sprite.destroy({ children: true });
-    }
-    this._eventMarkerSprites = [];
-    this._eventMarkerData = [];
-    // 重新绘制
-    this._drawEventMarkers();
   }
 
   // ===== 火把渲染 =====
@@ -376,12 +283,17 @@ export class MapRenderer {
     if (this._torchSystem) {
       ctx.globalCompositeOperation = 'destination-out';
 
+      // 获取当前时段的照明加成倍率（考虑过渡动画）
+      const lightMultiplier = this._torchSystem._getCurrentLightMultiplier();
+
+      // 处理火把照明
       const litTorches = this._torchSystem.getLitTorches();
       for (const t of litTorches) {
         const cfg = this._torchSystem.getTorchConfig(t.torchId);
         if (!cfg) continue;
 
-        const maxR = cfg.radius * ts;
+        // 应用时段加成
+        const maxR = cfg.radius * lightMultiplier * ts;
 
         // 火把世界坐标 → 视口本地坐标（不受 zoom 影响，仅在 gameView 本地空间）
         const worldCx = (t.gridX + 0.5) * ts;
@@ -403,6 +315,37 @@ export class MapRenderer {
 
         ctx.fillStyle = gradient;
         ctx.fillRect(cx - maxR, cy - maxR, maxR * 2, maxR * 2);
+      }
+
+      // 处理瞭望塔照明
+      const watchtowerRadius = this._torchSystem._getCurrentWatchtowerRadius();
+      if (watchtowerRadius > 0 && this.buildingSystem) {
+        const buildings = this.buildingSystem.buildings;
+        for (const b of buildings) {
+          if (b.status !== 'active') continue;
+          const cfg = configRegistry.getBuilding(b.buildingId);
+          if (!cfg || !cfg.isWatchtower) continue;
+
+          const maxR = watchtowerRadius * ts;
+          const worldCx = (b.gridX + (b.width || 1) / 2) * ts;
+          const worldCy = (b.gridY + (b.height || 1) / 2) * ts;
+          const cx = worldCx - this.camX;
+          const cy = worldCy - this.camY;
+
+          if (cx + maxR < -ts || cx - maxR > w + ts ||
+              cy + maxR < -ts || cy - maxR > h + ts) continue;
+
+          // 瞭望塔照明也使用径向渐变
+          const gradient = ctx.createRadialGradient(cx, cy, maxR * 0.2, cx, cy, maxR);
+          gradient.addColorStop(0, 'rgba(0,0,0,1)');
+          gradient.addColorStop(0.4, 'rgba(0,0,0,0.95)');
+          gradient.addColorStop(0.65, 'rgba(0,0,0,0.7)');
+          gradient.addColorStop(0.85, 'rgba(0,0,0,0.2)');
+          gradient.addColorStop(1, 'rgba(0,0,0,0)');
+
+          ctx.fillStyle = gradient;
+          ctx.fillRect(cx - maxR, cy - maxR, maxR * 2, maxR * 2);
+        }
       }
     }
 
@@ -497,10 +440,33 @@ export class MapRenderer {
 
   /**
    * 更新世界层容器位置（建筑/火把/虚影跟随相机平移）
+   * 同时发射 cameraMoved 事件，供 HUD 等订阅者更新视角中心坐标显示
    */
   _updateWorldContainerPosition() {
     this.worldContainer.x = -this.camX;
     this.worldContainer.y = -this.camY;
+    // 通知 HUD/其他系统相机已移动
+    if (eventBus) {
+      eventBus.emit('cameraMoved', {
+        camX: this.camX,
+        camY: this.camY,
+        zoom: this.zoom
+      });
+    }
+  }
+
+  /**
+   * 获取当前视口中心对应的网格坐标 {col, row}
+   * 3D 透视模式下，屏幕中心点无透视畸变，等价于 2D 中心计算
+   * @returns {{col:number, row:number}}
+   */
+  getViewportCenterCell() {
+    const zoom = this.zoom || 1;
+    const worldX = (this.screenW / 2) / zoom + this.camX;
+    const worldY = (this.screenH / 2) / zoom + this.camY;
+    const col = Math.floor(worldX / this.tileSize);
+    const row = Math.floor(worldY / this.tileSize);
+    return { col, row };
   }
 
   /**
@@ -525,23 +491,32 @@ export class MapRenderer {
   }
 
   _centerView() {
-    // 优先使用配置的初始相机位置（以网格坐标指定）
-    const initCam = this.mapConfig.initialCamera;
-    if (initCam && initCam.gridX != null && initCam.gridY != null) {
+    // 优先使用 viewportCenter 配置（编辑器中可见的"视角中心坐标"）
+    const vc = this.mapConfig.viewportCenter;
+    if (vc && (vc.defaultGridX != null || vc.defaultGridY != null)) {
       const ts = this.tileSize;
-      // 将网格坐标居中到屏幕中心
-      this.camX = (initCam.gridX + 0.5) * ts - this.screenW / 2;
-      this.camY = (initCam.gridY + 0.5) * ts - this.screenH / 2;
-      if (initCam.zoom != null) {
-        this.zoom = Math.max(this.MIN_ZOOM, Math.min(this.MAX_ZOOM, initCam.zoom));
-        this.gameView.scale.set(this.zoom);
-      }
+      const gx = vc.defaultGridX != null ? vc.defaultGridX : Math.floor(this.mapConfig.gridWidth / 2);
+      const gy = vc.defaultGridY != null ? vc.defaultGridY : Math.floor(this.mapConfig.gridHeight / 2);
+      this.camX = (gx + 0.5) * ts - this.screenW / 2;
+      this.camY = (gy + 0.5) * ts - this.screenH / 2;
     } else {
-      const { gridWidth, gridHeight, tileSize } = this.mapConfig;
-      const mapW = gridWidth * tileSize;
-      const mapH = gridHeight * tileSize;
-      this.camX = (mapW - this.screenW) / 2;
-      this.camY = (mapH - this.screenH) / 2;
+      // 兼容旧配置：initialCamera（含 zoom 字段）
+      const initCam = this.mapConfig.initialCamera;
+      if (initCam && initCam.gridX != null && initCam.gridY != null) {
+        const ts = this.tileSize;
+        this.camX = (initCam.gridX + 0.5) * ts - this.screenW / 2;
+        this.camY = (initCam.gridY + 0.5) * ts - this.screenH / 2;
+        if (initCam.zoom != null) {
+          this.zoom = Math.max(this.MIN_ZOOM, Math.min(this.MAX_ZOOM, initCam.zoom));
+          this.gameView.scale.set(this.zoom);
+        }
+      } else {
+        const { gridWidth, gridHeight, tileSize } = this.mapConfig;
+        const mapW = gridWidth * tileSize;
+        const mapH = gridHeight * tileSize;
+        this.camX = (mapW - this.screenW) / 2;
+        this.camY = (mapH - this.screenH) / 2;
+      }
     }
     this._clampCamera();
     this._updateWorldContainerPosition();
@@ -709,12 +684,18 @@ export class MapRenderer {
     if (!gridPos) return;
 
     if (this.buildingSystem.placingState === 'PLACING') {
-      // 放置模式：先检查迷雾
-      if (!this._isTileRevealed(gridPos.col, gridPos.row)) return;
-
       const buildingId = this.buildingSystem.placingBuildingId;
       const config = configRegistry.getBuilding(buildingId);
       if (!config) return;
+
+      const w = config.footprint.width;
+      const h = config.footprint.height;
+
+      // 放置模式：检查整个建筑区域是否都可见（与 _updateGhost 的 canPlaceAt 检查一致）
+      if (this._torchSystem) {
+        const canBuild = this._torchSystem.canBuild(gridPos.col, gridPos.row, w, h);
+        if (!canBuild) return;
+      }
 
       // 以点击位置为左上角
       const success = this.buildingSystem.placeBuilding(gridPos.col, gridPos.row, buildingId);
@@ -725,13 +706,6 @@ export class MapRenderer {
     } else {
       // 检查迷雾门控
       if (!this._isTileRevealed(gridPos.col, gridPos.row)) return;
-
-      // 检查是否点击了事件标记（"?"）
-      const clickedMarker = this._isClickOnEventMarker(gridPos.col, gridPos.row);
-      if (clickedMarker) {
-        eventBus.emit('eventMarkerClicked', clickedMarker);
-        return;
-      }
 
       // 检查是否点击了探险出发口
       const clickedEntrance = this._isClickOnExpeditionEntrance(gridPos.col, gridPos.row);
@@ -769,37 +743,6 @@ export class MapRenderer {
       }
     }
     return null;
-  }
-
-  /**
-   * 检查点击是否在某个事件标记范围内，返回标记对象或 null
-   */
-  _isClickOnEventMarker(col, row) {
-    const data = this._eventMarkerData;
-    if (!data || data.length === 0) return null;
-    const removedSet = new Set(store.getState('removedEventMarkers') || []);
-    for (const marker of data) {
-      if (removedSet.has(marker.id)) continue;
-      if (col === marker.gridX && row === marker.gridY) {
-        return marker;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * 获取已移除标记 ID 列表（用于存档）
-   */
-  getMarkerState() {
-    return store.getState('removedEventMarkers') || [];
-  }
-
-  /**
-   * 从存档恢复已移除标记状态
-   */
-  restoreMarkerState(removedIds) {
-    store.setState({ removedEventMarkers: removedIds || [] });
-    this._refreshEventMarkers();
   }
 
   /**
@@ -882,14 +825,21 @@ export class MapRenderer {
 
     const w = config.footprint.width;
     const h = config.footprint.height;
-    const check = this.buildingSystem.canPlaceAt(gridPos.col, gridPos.row, buildingId);
+    
+    // 将鼠标位置映射到建筑的左上角位置
+    // 这样当鼠标悬停在建筑范围内的任何格子上时，都能显示正确的虚影
+    const map = configRegistry.get('map');
+    const adjustedCol = Math.max(0, Math.min(gridPos.col, map.gridWidth - w));
+    const adjustedRow = Math.max(0, Math.min(gridPos.row, map.gridHeight - h));
+    
+    const check = this.buildingSystem.canPlaceAt(adjustedCol, adjustedRow, buildingId);
     this.ghostValid = check.valid;
 
     this._clearGhost();
 
     const graphics = new PIXI.Graphics();
-    const x = gridPos.col * this.tileSize;
-    const y = gridPos.row * this.tileSize;
+    const x = adjustedCol * this.tileSize;
+    const y = adjustedRow * this.tileSize;
     const color = this.ghostValid ? 0x44ff44 : 0xff4444;
 
     graphics.rect(x, y, w * this.tileSize, h * this.tileSize);
@@ -901,7 +851,7 @@ export class MapRenderer {
     this.ghostGraphic = graphics;
 
     // 显示相邻加成提示（即使位置无效也显示交互信息）
-    this._updateAdjacencyHints(gridPos.col, gridPos.row, buildingId, this.ghostValid);
+    this._updateAdjacencyHints(adjustedCol, adjustedRow, buildingId, this.ghostValid);
   }
 
   _clearGhost() {
@@ -1553,6 +1503,7 @@ export class MapRenderer {
       'industrial_warehouse': 0x2F4F8F,
       'lumber_mill': 0x8B6914,
       'quarry': 0x696969,
+      'stope': 0x696969,
       'logging_camp': 0x228B22,
       'furnace': 0xB22222,
       'mine_support': 0x4A4A4A,
@@ -1804,25 +1755,30 @@ export class MapRenderer {
       this._drawTorches();
       this._updateFogTexture();
     });
-
-    // 监听已移除事件标记的变化（来自存档恢复等）
-    store.subscribe('removedEventMarkers', () => {
-      this._refreshEventMarkers();
-    });
   }
 
   /**
    * 切换 3D 透视模式
    * @param {boolean} enabled
+   * @param {boolean} [animate=true] - 是否播放过渡动画（初始化时设为 false）
    */
-  setPerspective(enabled) {
+  setPerspective(enabled, animate = true) {
     this._perspectiveEnabled = enabled;
     const canvasDiv = document.getElementById('game-canvas');
     if (canvasDiv) {
+      if (!animate) {
+        // 临时禁用过渡动画（用于初始化时避免 2D→3D 动画）
+        canvasDiv.style.transition = 'none';
+      }
       if (enabled) {
         canvasDiv.classList.add('perspective-3d');
       } else {
         canvasDiv.classList.remove('perspective-3d');
+      }
+      if (!animate) {
+        // 强制浏览器重绘后恢复 transition
+        void canvasDiv.offsetWidth;
+        canvasDiv.style.transition = '';
       }
     }
     // 持久化偏好

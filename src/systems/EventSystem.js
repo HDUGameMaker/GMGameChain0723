@@ -203,12 +203,9 @@ export class EventSystem {
     const hasTimeCond = cond.timePeriods && cond.timePeriods.length > 0;
     const hasItemCond = cond.requiredItems && cond.requiredItems.length > 0;
     const hasBuildingCond = cond.requiredBuildings && cond.requiredBuildings.length > 0;
-    const hasRegionCond = cond.regions && cond.regions.length > 0;
-    const hasCarriedCond = cond.requiredCarriedItems && cond.requiredCarriedItems.length > 0;
 
     // 所有触发条件都为空，且 probability 为 1 → 链式专用
-    return !hasTimeCond && !hasItemCond && !hasBuildingCond
-        && !hasRegionCond && !hasCarriedCond && evt.probability === 1;
+    return !hasTimeCond && !hasItemCond && !hasBuildingCond && evt.probability === 1;
   }
 
   _collectCandidates(data) {
@@ -216,8 +213,8 @@ export class EventSystem {
     const currentPeriod = data.period;
 
     for (const evt of this._events) {
-      // 跳过探险事件（有非空 regions 字段的）
-      if (evt.triggerConditions && evt.triggerConditions.regions && evt.triggerConditions.regions.length > 0) continue;
+      // 跳过探险事件（有 regions 字段的）
+      if (evt.triggerConditions && evt.triggerConditions.regions) continue;
 
       // 跳过链式专用事件（空条件 + probability=1），它们只能通过 trigger_event 触发
       if (this._isChainOnly(evt)) continue;
@@ -552,15 +549,6 @@ export class EventSystem {
   clearQueue() {
     this._eventQueue = [];
     this._isProcessing = false;
-  }
-
-  /**
-   * 通过事件 ID 直接触发事件（公开接口）
-   * 跳过条件检查，用于地图标记点击等外部触发
-   * @param {string} eventId
-   */
-  triggerEventById(eventId) {
-    this._triggerEventDirect(eventId);
   }
 
   // ===== 存档接口 =====

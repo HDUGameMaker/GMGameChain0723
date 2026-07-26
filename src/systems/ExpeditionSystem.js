@@ -26,25 +26,56 @@ export class ExpeditionSystem {
 
   /**
    * 计算所选区域的总工人消耗
+   * @param {Array<string>} regionIds - 选中的区域ID列表（紧凑化后）
+   * @param {object} [entrance] - 入口配置（可选，含 regions[] 和 differentWorkersPerPeriod）
+   *   - 当 entrance.differentWorkersPerPeriod === false 时，使用"所有时段相同工人"模式，
+   *     工人数 = 各选中区域所需工人数的最大值
+   *   - 否则（默认）使用"每时段不同工人"模式，工人数 = 各选中区域所需工人数之和
+   *   - 入口 regions[].workerCost 覆盖 region.workerCost
    */
-  getTotalWorkerCost(regionIds) {
-    let total = 0;
-    for (const regionId of regionIds) {
-      if (!regionId) continue;
-      const region = configRegistry.getRegion(regionId);
-      if (region && region.workerCost) {
-        total += region.workerCost;
+  getTotalWorkerCost(regionIds, entrance) {
+    // 解析入口的区块工人数映射（如果提供）
+    const entranceWorkerCost = new Map();
+    if (entrance && Array.isArray(entrance.regions)) {
+      for (const r of entrance.regions) {
+        if (r && r.regionId) entranceWorkerCost.set(r.regionId, r.workerCost);
       }
     }
-    return total;
+    const useSameWorkers = entrance && entrance.differentWorkersPerPeriod === false;
+
+    let result = 0;
+    let maxCost = 0;
+    for (const regionId of regionIds) {
+      if (!regionId) continue;
+      // 优先使用入口定义的工人数，其次使用 region 配置
+      let cost = entranceWorkerCost.has(regionId)
+        ? entranceWorkerCost.get(regionId)
+        : (configRegistry.getRegion(regionId)?.workerCost || 0);
+      cost = Number(cost) || 0;
+      result += cost;
+      if (cost > maxCost) maxCost = cost;
+    }
+    return useSameWorkers ? maxCost : result;
   }
 
   getExpeditionConfig() {
-    return configRegistry.get('expeditionGlobal') || {
+    const expConfig = configRegistry.get('expeditionGlobal') || {
       expeditionPeriods: 3,
       baseBackpackCapacity: 10,
       baseResourceCapacity: 100
     };
+    
+    // 从 initial 配置读取容量，如果存在则覆盖
+    const initialConfig = configRegistry.get('initial') || {};
+    const capacities = initialConfig.capacities || {};
+    if (capacities.backpackCapacity !== undefined) {
+      expConfig.baseBackpackCapacity = capacities.backpackCapacity;
+    }
+    if (capacities.expeditionResourceCapacity !== undefined) {
+      expConfig.baseResourceCapacity = capacities.expeditionResourceCapacity;
+    }
+    
+    return expConfig;
   }
 
   // ===== 区域解锁 =====
@@ -72,6 +103,11 @@ export class ExpeditionSystem {
             const bCfg = configRegistry.getBuilding(c.buildingId);
             return `建造: ${bCfg ? bCfg.name : c.buildingId}`;
           }
+          if (c.type === 'tag') {
+            const tagCfg = configRegistry.get('tags')?.find(t => t.id === c.tag);
+            const tagName = tagCfg ? tagCfg.name : c.tag;
+            return `需要: ${tagName}`;
+          }
           return '';
         });
         unlockHint = hints.join(' 或 ');
@@ -90,10 +126,27 @@ export class ExpeditionSystem {
           return equippedItemIds.includes(cond.itemId);
         case 'building':
           return this._buildingSystem ? this._buildingSystem.hasBuilding(cond.buildingId) : false;
+        case 'tag':
+          return this._hasBuildingWithTag(cond.tag);
         default:
           return false;
       }
     });
+  }
+
+  /**
+   * 检查当前基地中是否存在拥有指定 tag 的建筑
+   * @param {string} tag
+   * @returns {boolean}
+   */
+  _hasBuildingWithTag(tag) {
+    if (!this._buildingSystem || !tag) return false;
+    const buildings = this._buildingSystem.buildings || [];
+    for (const b of buildings) {
+      const cfg = configRegistry.getBuilding(b.buildingId);
+      if (cfg && Array.isArray(cfg.tags) && cfg.tags.includes(tag)) return true;
+    }
+    return false;
   }
 
   isRegionUnlocked(regionId) {
@@ -105,7 +158,7 @@ export class ExpeditionSystem {
 
   // ===== 出发 =====
 
-  canStartExpedition(regionIds, instanceIds) {
+  canStartExpedition(regionIds, instanceIds, entrance) {
     const expConfig = this.getExpeditionConfig();
 
     // 紧凑化：去掉末尾的 null（允许只选 1 或 2 个阶段）
@@ -135,8 +188,8 @@ export class ExpeditionSystem {
       }
     }
 
-    // 检查可用工人
-    const totalWorkerCost = this.getTotalWorkerCost(compacted);
+    // 检查可用工人（传入 entrance 以使用入口特定工人数和时段模式）
+    const totalWorkerCost = this.getTotalWorkerCost(compacted, entrance);
     if (this._populationSystem) {
       const available = this._populationSystem.getAvailableWorkers();
       if (available < totalWorkerCost) {
@@ -172,8 +225,8 @@ export class ExpeditionSystem {
     return false;
   }
 
-  startExpedition(regionIds, instanceIds) {
-    const check = this.canStartExpedition(regionIds, instanceIds);
+  startExpedition(regionIds, instanceIds, entrance) {
+    const check = this.canStartExpedition(regionIds, instanceIds, entrance);
     if (!check.valid) return false;
 
     const expConfig = this.getExpeditionConfig();
@@ -184,8 +237,8 @@ export class ExpeditionSystem {
       if (!this._itemSystem.markExpedition(instanceIds)) return false;
     }
 
-    // 占用工人
-    const occupiedWorkers = check.totalWorkerCost || this.getTotalWorkerCost(compactedRegions);
+    // 占用工人（使用 check 中已计算好的工人数，已考虑入口模式）
+    const occupiedWorkers = check.totalWorkerCost || this.getTotalWorkerCost(compactedRegions, entrance);
     if (this._populationSystem && occupiedWorkers > 0) {
       this._populationSystem.occupyForExpedition(occupiedWorkers);
     }

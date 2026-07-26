@@ -27,6 +27,7 @@ export class HUD {
     this.resourceBar = document.getElementById('resource-bar');
     this.populationDisplay = document.getElementById('population-display');
     this.timeDisplay = document.getElementById('time-display');
+    this.viewportCenterDisplay = document.getElementById('viewport-center-display');
     this.btnBuild = document.getElementById('btn-build');
     this.btnCancelPlace = document.getElementById('btn-cancel-place');
     this.btnFullscreen = document.getElementById('btn-fullscreen');
@@ -108,6 +109,8 @@ export class HUD {
     eventBus.on('expeditionComplete', (result) => {
       this._showExpeditionResult(result);
     });
+    // 视角中心坐标：相机移动时刷新显示（RAF 节流避免拖拽时频繁更新 DOM）
+    eventBus.on('cameraMoved', () => this._scheduleViewportCenterRefresh());
   }
 
   refresh() {
@@ -116,23 +119,53 @@ export class HUD {
     this._refreshTime();
     this._refreshSpeedBtn();
     this._refreshPauseBtn();
+    this._refreshViewportCenter();
+  }
+
+  /**
+   * 调度视角中心坐标刷新（使用 RAF 合并同一帧内的多次 cameraMoved 事件）
+   */
+  _scheduleViewportCenterRefresh() {
+    if (this._vcRafPending) return;
+    this._vcRafPending = true;
+    requestAnimationFrame(() => {
+      this._vcRafPending = false;
+      this._refreshViewportCenter();
+    });
+  }
+
+  /**
+   * 刷新视角中心坐标显示
+   * 通过 MapRenderer.getViewportCenterCell() 获取屏幕中心对应的网格坐标
+   */
+  _refreshViewportCenter() {
+    if (!this.viewportCenterDisplay) return;
+    const game = window.__game;
+    const mapRenderer = game?.mapRenderer;
+    if (!mapRenderer || typeof mapRenderer.getViewportCenterCell !== 'function') {
+      this.viewportCenterDisplay.innerHTML = '';
+      return;
+    }
+    const { col, row } = mapRenderer.getViewportCenterCell();
+    this.viewportCenterDisplay.innerHTML =
+      `<span class="vc-label">📍</span>` +
+      `<span class="vc-coord">X:${col}</span>` +
+      `<span class="vc-coord">Y:${row}</span>`;
   }
 
   _refreshResources() {
     const resources = this.systems.resource.getHUDResources();
     const rates = this.systems.building.getProductionRates();
 
-    // 计算食物每日净变化（产出 - 消耗）
+    // 计算食物日产出（仅显示产出，消耗在深夜时段统一结算播报）
     const foodProduction = this.systems.building.getTotalFoodProduction();
-    const foodConsumption = this.systems.population.current;
-    const foodDailyRate = foodProduction - foodConsumption;
 
     this.resourceBar.innerHTML = '';
 
     for (const res of resources) {
-      // 食物使用每日速率，其他资源使用 per-tick 速率
       const isFood = res.id === 'food';
-      let rate = isFood ? foodDailyRate : (rates[res.id] || 0);
+      // 食物只显示产出（不显示消耗和净变化），其他资源使用 per-tick 速率
+      let rate = isFood ? foodProduction : (rates[res.id] || 0);
       const rateUnit = isFood ? '天' : 'Tick';
 
       const isFull = res.current >= res.max;
@@ -152,9 +185,14 @@ export class HUD {
       item.innerHTML = innerHTML;
 
       // 点击弹窗：含产量速率信息
-      const rateText = rate !== 0
-        ? `\n每${rateUnit}: ${rate > 0 ? '+' : ''}${rate}`
-        : '';
+      let rateText;
+      if (isFood && rate !== 0) {
+        rateText = `\n日产出: +${foodProduction}`;
+      } else if (rate !== 0) {
+        rateText = `\n每${rateUnit}: ${rate > 0 ? '+' : ''}${rate}`;
+      } else {
+        rateText = '';
+      }
       item.addEventListener('click', (e) => {
         this._showPopover(e.target, `${res.name}: ${res.current} / ${res.max}${rateText}`);
       });
@@ -174,18 +212,20 @@ export class HUD {
   }
 
   _getResourceEmoji(id) {
-    const emojis = { wood: '🪵', plank: '📐', stone: '🪨', iron_ore: '⛏️', coal: '⚫', iron_ingot: '🔩', food: '🍞' };
+    const emojis = { wood: '🪵', plank: '📐', stone: '🪨', hematite: '⛏️', coal: '⚫', iron_ingot: '🔩', food: '🍞' };
     return emojis[id] || '📦';
   }
 
   _refreshPopulation() {
     const current = this.systems.population.current;
     const housing = this.systems.population.getHousingCapacity();
+    const availableWorkers = this.systems.population.getAvailableWorkers();
 
     const housingClass = current >= housing ? ' class="bottleneck"' : '';
 
+    // 人口显示改为：人口数/住宅数/可用工人数
     this.populationDisplay.innerHTML =
-      `👥 ${current} / <span${housingClass}>${housing}</span>`;
+      `👥 ${current} / <span${housingClass}>${housing}</span> / ${availableWorkers}`;
 
     // 人口变化弹跳动画
     if (this._prevPopulation !== 0 && this._prevPopulation !== current && window.gsap) {
@@ -199,9 +239,10 @@ export class HUD {
     this.populationDisplay.onclick = (e) => {
       const available = this.systems.population.getAvailableWorkers();
       const assigned = this.systems.population.getAssignedWorkers();
+      const maxWorkers = this.systems.population.getMaxWorkerCapacity();
       const foodAmount = this.systems.resource ? this.systems.resource.getAmount('food') : 0;
       this._showPopover(e.target,
-        `当前人口: ${current}\n住宅上限: ${housing}\n可用工人: ${available}\n已分配: ${assigned}\n食物储备: ${foodAmount}`
+        `当前人口: ${current}\n住宅上限: ${housing}\n可用工人: ${available}\n已分配: ${assigned}\n最大工人: ${maxWorkers}\n食物储备: ${foodAmount}`
       );
     };
   }

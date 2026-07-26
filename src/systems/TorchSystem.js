@@ -17,9 +17,15 @@ export class TorchSystem {
     /** @type {Map<string, object>} torchId → config cache */
     this._torchConfigMap = new Map();
 
+    // 光照过渡状态
+    this._lightTransition = null; // { startMultiplier, targetMultiplier, startWatchtowerRadius, targetWatchtowerRadius, elapsed, duration, ticker }
+    this._currentMultiplier = 1.0;
+    this._currentWatchtowerRadius = 0;
+
     // 监听 tick 和 periodEnd 事件
     eventBus.on('tick', (data) => this.onTick(data));
     eventBus.on('periodEnd', (data) => this.onPeriodEnd(data));
+    eventBus.on('periodChange', (data) => this.onPeriodChange(data));
 
     // 监听 BuildingSystem 升级事件（火把升级统一走 BuildingSystem）
     eventBus.on('buildingUpgraded', (data) => this.onBuildingUpgraded(data));
@@ -242,18 +248,158 @@ export class TorchSystem {
   }
 
   /**
+   * 获取指定时段的照明加成倍率（静态计算）
+   * @param {string} period - 时段名称
+   * @returns {number} 倍率（1 = 无加成）
+   */
+  _getMultiplierForPeriod(period) {
+    switch (period) {
+      case 'morning':
+      case 'afternoon':
+        return 1.5; // 白天/下午增加50%
+      case 'evening':
+        return 1.25; // 傍晚增加25%
+      case 'night':
+      default:
+        return 1.0; // 深夜不增加
+    }
+  }
+
+  /**
+   * 获取指定时段的瞭望塔照明范围（静态计算）
+   * @param {string} period - 时段名称
+   * @returns {number} 照明范围（0 = 无照明）
+   */
+  _getWatchtowerRadiusForPeriod(period) {
+    switch (period) {
+      case 'morning':
+      case 'afternoon':
+        return 10; // 白天/下午照明范围10格
+      case 'evening':
+        return 5; // 傍晚照明范围5格
+      case 'night':
+      default:
+        return 0; // 深夜无照明
+    }
+  }
+
+  /**
+   * 获取当前照明加成倍率（考虑过渡动画）
+   * @returns {number} 倍率（1 = 无加成）
+   */
+  _getCurrentLightMultiplier() {
+    if (this._lightTransition) {
+      return this._currentMultiplier;
+    }
+    const period = store.getState('timePeriod') || 'morning';
+    return this._getMultiplierForPeriod(period);
+  }
+
+  /**
+   * 获取当前瞭望塔照明范围（考虑过渡动画）
+   * @returns {number} 照明范围（0 = 无照明）
+   */
+  _getCurrentWatchtowerRadius() {
+    if (this._lightTransition) {
+      return this._currentWatchtowerRadius;
+    }
+    const period = store.getState('timePeriod') || 'morning';
+    return this._getWatchtowerRadiusForPeriod(period);
+  }
+
+  /**
+   * 时段变化回调：启动光照过渡动画
+   * @param {object} data - { period, duration }
+   */
+  onPeriodChange(data) {
+    const { period, duration = 1.5 } = data;
+    
+    // 获取当前值（作为过渡起点）
+    const startMultiplier = this._getCurrentLightMultiplier();
+    const startWatchtowerRadius = this._getCurrentWatchtowerRadius();
+    
+    // 获取目标值
+    const targetMultiplier = this._getMultiplierForPeriod(period);
+    const targetWatchtowerRadius = this._getWatchtowerRadiusForPeriod(period);
+    
+    // 如果值相同，无需过渡
+    if (startMultiplier === targetMultiplier && startWatchtowerRadius === targetWatchtowerRadius) {
+      return;
+    }
+    
+    // 停止当前过渡
+    this._stopLightTransition();
+    
+    // 启动新过渡
+    this._lightTransition = {
+      startMultiplier,
+      targetMultiplier,
+      startWatchtowerRadius,
+      targetWatchtowerRadius,
+      elapsed: 0,
+      duration
+    };
+    
+    // 使用 requestAnimationFrame 进行过渡（与 MapRenderer 的 tint 过渡同步）
+    const animate = () => {
+      if (!this._lightTransition) return;
+      
+      const trans = this._lightTransition;
+      trans.elapsed += 16.67 / 1000; // 假设 60fps
+      
+      // 使用 easeInOutCubic 让过渡更自然
+      const raw = Math.min(trans.elapsed / trans.duration, 1.0);
+      const t = raw < 0.5
+        ? 4 * raw * raw * raw
+        : 1 - Math.pow(-2 * raw + 2, 3) / 2;
+      
+      // 插值计算当前值
+      this._currentMultiplier = trans.startMultiplier + (trans.targetMultiplier - trans.startMultiplier) * t;
+      this._currentWatchtowerRadius = trans.startWatchtowerRadius + (trans.targetWatchtowerRadius - trans.startWatchtowerRadius) * t;
+      
+      // 通知变化，触发迷雾重绘
+      this._notifyChange();
+      
+      if (trans.elapsed < trans.duration) {
+        requestAnimationFrame(animate);
+      } else {
+        // 过渡完成，设置最终值并停止
+        this._currentMultiplier = trans.targetMultiplier;
+        this._currentWatchtowerRadius = trans.targetWatchtowerRadius;
+        this._stopLightTransition();
+        this._notifyChange();
+      }
+    };
+    
+    this._lightTransition.ticker = animate;
+    requestAnimationFrame(animate);
+  }
+
+  /**
+   * 停止当前的光照过渡动画
+   */
+  _stopLightTransition() {
+    if (this._lightTransition) {
+      this._lightTransition = null;
+    }
+  }
+
+  /**
    * 计算可见性矩阵
    * @returns {boolean[][]} [row][col] 是否可见
    */
   getVisibilityMatrix() {
     const { gridWidth, gridHeight } = this._mapConfig;
     const visible = Array.from({ length: gridHeight }, () => Array(gridWidth).fill(false));
+    const periodMultiplier = this._getCurrentLightMultiplier();
 
+    // 处理 torch 系火把的照明
     for (const torch of this.torches) {
       if (!torch.lit) continue;
       const cfg = this._torchConfigMap.get(torch.torchId);
       if (!cfg) continue;
-      const radius = cfg.radius;
+      // 应用时段加成（考虑过渡动画）
+      const radius = cfg.radius * periodMultiplier;
 
       // 火把占有 1 格，照明中心在 (gridX + 0.5, gridY + 0.5)
       const tcx = torch.gridX + 0.5;
@@ -266,6 +412,32 @@ export class TorchSystem {
           const dy = (row + 0.5) - tcy;
           if (Math.sqrt(dx * dx + dy * dy) <= radius) {
             visible[row][col] = true;
+          }
+        }
+      }
+    }
+
+    // 处理瞭望塔的照明
+    const watchtowerRadius = this._getCurrentWatchtowerRadius();
+    if (watchtowerRadius > 0 && this._buildingSystem) {
+      const buildings = this._buildingSystem.buildings;
+      for (const b of buildings) {
+        if (b.status !== 'active') continue;
+        const cfg = configRegistry.getBuilding(b.buildingId);
+        if (!cfg || !cfg.isWatchtower) continue;
+
+        // 瞭望塔照明中心在建筑中心
+        const tcx = b.gridX + (b.width || 1) / 2;
+        const tcy = b.gridY + (b.height || 1) / 2;
+
+        for (let row = 0; row < gridHeight; row++) {
+          for (let col = 0; col < gridWidth; col++) {
+            if (visible[row][col]) continue;
+            const dx = (col + 0.5) - tcx;
+            const dy = (row + 0.5) - tcy;
+            if (Math.sqrt(dx * dx + dy * dy) <= watchtowerRadius) {
+              visible[row][col] = true;
+            }
           }
         }
       }
