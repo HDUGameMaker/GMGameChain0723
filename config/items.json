@@ -62,7 +62,7 @@
       },
       {
         "type": "yield_flat_bonus",
-        "resourceId": "iron_ore",
+        "resourceId": "hematite",
         "value": 10,
         "regions": [
           "mine_periphery"
@@ -144,7 +144,7 @@
       },
       {
         "type": "yield_flat_bonus",
-        "resourceId": "iron_ore",
+        "resourceId": "hematite",
         "value": 80,
         "regions": [
           "mine_interior"

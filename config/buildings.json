@@ -41,9 +41,12 @@
       "offsetX": 0,
       "offsetY": 0
     },
-    "icon": "assets/buildings/building_work_shed_1784771193.png",
+    "icon": "",
     "imageDetail": "assets/buildings/building_work_shed_1784771193.png",
-    "mapIcon": "assets/buildings/building_work_shed_1784771193.png"
+    "mapIcon": "assets/buildings/building_work_shed_1784771193.png",
+    "tags": [
+      "dorm"
+    ]
   },
   {
     "id": "plank_house",
@@ -89,7 +92,10 @@
       "frameWidth": 1024,
       "frameHeight": 1024,
       "pingpong": true
-    }
+    },
+    "tags": [
+      "dorm"
+    ]
   },
   {
     "id": "tile_house",
@@ -104,7 +110,7 @@
     "unlockConditions": [
       {
         "type": "building",
-        "buildingId": "furnace"
+        "buildingId": "forge"
       }
     ],
     "housingCapacity": 12,
@@ -130,7 +136,10 @@
       "nameOffsetY": 0,
       "progressBarOffsetY": 0,
       "workersOffsetY": 0
-    }
+    },
+    "tags": [
+      "dorm"
+    ]
   },
   {
     "id": "hunting_hut",
@@ -180,7 +189,7 @@
         "buildingId": "hunting_hut"
       }
     ],
-    "foodCapacity": 7,
+    "foodCapacity": 0,
     "maxWorkers": 5,
     "buildCost": [
       {
@@ -189,14 +198,145 @@
       }
     ],
     "buildTime": 3,
-    "upgradesTo": null,
-    "production": null,
+    "upgradesTo": "enhanced_farm",
+    "production": {
+      "perWorker": true,
+      "output": [
+        {
+          "resourceId": "food",
+          "amount": 5
+        }
+      ]
+    },
     "synthesisRecipes": [],
     "labelLayout": {
       "nameOffsetY": 0,
       "progressBarOffsetY": 0,
       "workersOffsetY": 0
-    }
+    },
+    "tags": [
+      "farm"
+    ]
+  },
+  {
+    "id": "enhanced_farm",
+    "name": "进阶农田",
+    "description": "改良了土壤和灌溉系统，每个工人产出更高。",
+    "footprint": {
+      "width": 3,
+      "height": 3
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "allowedGrounds": [
+      "G"
+    ],
+    "unlockConditions": [
+      {
+        "type": "building",
+        "buildingId": "hunting_hut"
+      }
+    ],
+    "foodCapacity": 0,
+    "maxWorkers": 5,
+    "buildCost": [],
+    "buildTime": 4,
+    "upgradesFrom": "farm",
+    "upgradesTo": "advanced_farm",
+    "upgradeCost": [
+      {
+        "resourceId": "wood",
+        "amount": 50
+      },
+      {
+        "resourceId": "stone",
+        "amount": 30
+      },
+      {
+        "resourceId": "plank",
+        "amount": 20
+      }
+    ],
+    "production": {
+      "perWorker": true,
+      "output": [
+        {
+          "resourceId": "food",
+          "amount": 8
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "farm"
+    ]
+  },
+  {
+    "id": "advanced_farm",
+    "name": "高阶农田",
+    "description": "采用现代化农业技术，产量达到顶峰。",
+    "footprint": {
+      "width": 3,
+      "height": 3
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "allowedGrounds": [
+      "G"
+    ],
+    "unlockConditions": [
+      {
+        "type": "building",
+        "buildingId": "hunting_hut"
+      }
+    ],
+    "foodCapacity": 0,
+    "maxWorkers": 6,
+    "buildCost": [],
+    "buildTime": 6,
+    "upgradesFrom": "enhanced_farm",
+    "upgradesTo": null,
+    "upgradeCost": [
+      {
+        "resourceId": "wood",
+        "amount": 100
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 30
+      },
+      {
+        "resourceId": "plank",
+        "amount": 50
+      },
+      {
+        "resourceId": "steel",
+        "amount": 20
+      }
+    ],
+    "production": {
+      "perWorker": true,
+      "output": [
+        {
+          "resourceId": "food",
+          "amount": 12
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "farm"
+    ]
   },
   {
     "id": "warehouse",
@@ -208,7 +348,7 @@
       "width": 3,
       "height": 3
     },
-    "maxCount": 1,
+    "maxCount": 0,
     "initialBuilding": true,
     "storageMultiplier": 1,
     "buildCost": [
@@ -229,7 +369,10 @@
       "nameOffsetY": 0,
       "progressBarOffsetY": 0,
       "workersOffsetY": 0
-    }
+    },
+    "tags": [
+      "warehouse"
+    ]
   },
   {
     "id": "industrial_warehouse",
@@ -239,13 +382,13 @@
       "width": 3,
       "height": 3
     },
-    "maxCount": 1,
+    "maxCount": 0,
     "initialBuilding": false,
     "storageMultiplier": 2,
     "unlockConditions": [
       {
         "type": "building",
-        "buildingId": "furnace"
+        "buildingId": "forge"
       }
     ],
     "upgradesFrom": "warehouse",
@@ -271,7 +414,10 @@
       "nameOffsetY": 0,
       "progressBarOffsetY": 0,
       "workersOffsetY": 0
-    }
+    },
+    "tags": [
+      "warehouse"
+    ]
   },
   {
     "id": "lumber_mill",
@@ -316,7 +462,7 @@
       }
     ],
     "buildTime": 3,
-    "upgradesTo": null,
+    "upgradesTo": "enhanced_lumber_mill",
     "production": {
       "perWorker": true,
       "input": [
@@ -337,11 +483,14 @@
       "nameOffsetY": 0,
       "progressBarOffsetY": 0,
       "workersOffsetY": 0
-    }
+    },
+    "tags": [
+      "lumber_mill"
+    ]
   },
   {
-    "id": "quarry",
-    "name": "采石场",
+    "id": "stope",
+    "name": "采场",
     "description": "采集石料的露天矿场，每个工人每轮产出固定数量的石头。仅能建造在裸露石头地形上。",
     "footprint": {
       "width": 2,
@@ -361,7 +510,7 @@
       }
     ],
     "buildTime": 3,
-    "upgradesTo": null,
+    "upgradesTo": "enhanced_stope",
     "production": {
       "perWorker": true,
       "output": [
@@ -376,7 +525,10 @@
       "nameOffsetY": 0,
       "progressBarOffsetY": 0,
       "workersOffsetY": 0
-    }
+    },
+    "tags": [
+      "stope"
+    ]
   },
   {
     "id": "logging_camp",
@@ -400,7 +552,7 @@
       }
     ],
     "buildTime": 1,
-    "upgradesTo": null,
+    "upgradesTo": "enhanced_logging_camp",
     "production": {
       "perWorker": true,
       "output": [
@@ -415,12 +567,15 @@
       "nameOffsetY": 0,
       "progressBarOffsetY": 0,
       "workersOffsetY": 0
-    }
+    },
+    "tags": [
+      "logging_camp"
+    ]
   },
   {
-    "id": "furnace",
-    "name": "熔炉",
-    "description": "高温冶炼炉，将铁矿和煤炭熔炼为铁锭。需要2名工人操作，产量与工人数成正比。",
+    "id": "forge",
+    "name": "锻造坊",
+    "description": "具有高温冶炼炉，将铁矿和煤炭熔炼为铁锭。需要2名工人操作，产量与工人数成正比。",
     "footprint": {
       "width": 2,
       "height": 2
@@ -441,11 +596,11 @@
     "unlockConditions": [
       {
         "type": "building",
-        "buildingId": "quarry"
+        "buildingId": "stope"
       }
     ],
     "buildTime": 3,
-    "upgradesTo": null,
+    "upgradesTo": "enhanced_forge",
     "production": {
       "perWorker": true,
       "input": [
@@ -454,7 +609,7 @@
           "amount": 1
         },
         {
-          "resourceId": "iron_ore",
+          "resourceId": "hematite",
           "amount": 8
         }
       ],
@@ -470,7 +625,10 @@
       "nameOffsetY": 0,
       "progressBarOffsetY": 0,
       "workersOffsetY": 0
-    }
+    },
+    "tags": [
+      "forge"
+    ]
   },
   {
     "id": "mine_support",
@@ -578,7 +736,10 @@
       "nameOffsetY": 0,
       "progressBarOffsetY": 0,
       "workersOffsetY": 0
-    }
+    },
+    "tags": [
+      "workshop"
+    ]
   },
   {
     "id": "advanced_workshop",
@@ -594,7 +755,7 @@
     "unlockConditions": [
       {
         "type": "building",
-        "buildingId": "furnace"
+        "buildingId": "forge"
       }
     ],
     "upgradeCost": [
@@ -633,7 +794,10 @@
       "nameOffsetY": 0,
       "progressBarOffsetY": 0,
       "workersOffsetY": 0
-    }
+    },
+    "tags": [
+      "workshop"
+    ]
   },
   {
     "id": "steel_furnace",
@@ -649,7 +813,7 @@
     "unlockConditions": [
       {
         "type": "building",
-        "buildingId": "furnace"
+        "buildingId": "forge"
       }
     ],
     "buildCost": [
@@ -708,7 +872,7 @@
     "unlockConditions": [
       {
         "type": "building",
-        "buildingId": "furnace"
+        "buildingId": "forge"
       }
     ],
     "buildCost": [
@@ -843,7 +1007,10 @@
       "nameOffsetY": 0,
       "progressBarOffsetY": 0,
       "workersOffsetY": 0
-    }
+    },
+    "tags": [
+      "dorm"
+    ]
   },
   {
     "id": "steel_warehouse",
@@ -853,7 +1020,7 @@
       "width": 3,
       "height": 3
     },
-    "maxCount": 1,
+    "maxCount": 0,
     "initialBuilding": false,
     "storageMultiplier": 3,
     "unlockConditions": [
@@ -885,12 +1052,16 @@
       "nameOffsetY": 0,
       "progressBarOffsetY": 0,
       "workersOffsetY": 0
-    }
+    },
+    "tags": [
+      "warehouse"
+    ]
   },
   {
     "id": "watchtower",
     "name": "瞭望塔",
     "description": "高耸的瞭望塔，能观察远方山巅的地形和天气，为登山探险提供安全保障。",
+    "isWatchtower": true,
     "footprint": {
       "width": 1,
       "height": 1
@@ -1093,7 +1264,10 @@
       "nameOffsetY": 0,
       "progressBarOffsetY": 0,
       "workersOffsetY": 0
-    }
+    },
+    "tags": [
+      "workshop"
+    ]
   },
   {
     "id": "eternal_torch",
@@ -1142,10 +1316,13 @@
     "coalBuffer": 0,
     "colorHint": "#ffaa33",
     "lightCost": [],
-    "draggable": false
+    "draggable": false,
+    "tags": [
+      "torch"
+    ]
   },
   {
-    "id": "normal_torch_l1",
+    "id": "torch",
     "name": "火把",
     "description": "基础火把，需要煤炭作为燃料维持燃烧，照亮周围 3 格范围。",
     "icon": "",
@@ -1166,7 +1343,7 @@
       }
     ],
     "buildTime": 1,
-    "upgradesTo": "normal_torch_l2",
+    "upgradesTo": "enhanced_torch",
     "upgradeCost": [],
     "unlockConditions": [],
     "production": null,
@@ -1202,10 +1379,13 @@
       }
     ],
     "draggable": false,
-    "upgradesFrom": ""
+    "upgradesFrom": "",
+    "tags": [
+      "torch"
+    ]
   },
   {
-    "id": "normal_torch_l2",
+    "id": "enhanced_torch",
     "name": "强化火把",
     "description": "强化过的火把，燃料效率更高。",
     "icon": "🕯️",
@@ -1221,8 +1401,8 @@
     "maxWorkers": 0,
     "buildCost": [],
     "buildTime": 1,
-    "upgradesFrom": "normal_torch_l1",
-    "upgradesTo": "normal_torch_l3",
+    "upgradesFrom": "torch",
+    "upgradesTo": "advanced_torch",
     "upgradeCost": [
       {
         "resourceId": "wood",
@@ -1262,10 +1442,13 @@
         "amount": 5
       }
     ],
-    "draggable": false
+    "draggable": false,
+    "tags": [
+      "torch"
+    ]
   },
   {
-    "id": "normal_torch_l3",
+    "id": "advanced_torch",
     "name": "超级火把",
     "description": "最强火把，照亮范围大且燃料效率极高。",
     "icon": "🕯️",
@@ -1279,7 +1462,7 @@
     "initialBuilding": false,
     "housingCapacity": 0,
     "maxWorkers": 0,
-    "upgradesFrom": "normal_torch_l2",
+    "upgradesFrom": "enhanced_torch",
     "buildCost": [],
     "buildTime": 1,
     "upgradesTo": null,
@@ -1289,7 +1472,7 @@
         "amount": 10
       },
       {
-        "resourceId": "iron_ore",
+        "resourceId": "iron_ingot",
         "amount": 5
       }
     ],
@@ -1326,6 +1509,1277 @@
         "amount": 5
       }
     ],
-    "draggable": false
+    "draggable": false,
+    "tags": [
+      "torch"
+    ]
+  },
+  {
+    "id": "enhanced_forge",
+    "name": "进阶锻造坊",
+    "description": "优化了生产工艺的锻造坊，得以降低铁矿的损耗率",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "maxWorkers": 2,
+    "buildCost": [],
+    "unlockConditions": [
+      {
+        "type": "building",
+        "buildingId": "stope"
+      }
+    ],
+    "buildTime": 4,
+    "upgradesTo": "advanced_forge",
+    "production": {
+      "perWorker": true,
+      "input": [
+        {
+          "resourceId": "coal",
+          "amount": 1
+        },
+        {
+          "resourceId": "hematite",
+          "amount": 8
+        }
+      ],
+      "output": [
+        {
+          "resourceId": "iron_ingot",
+          "amount": 6
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "upgradesFrom": "forge",
+    "upgradeCost": [
+      {
+        "resourceId": "stone",
+        "amount": 75
+      },
+      {
+        "resourceId": "hematite",
+        "amount": 50
+      }
+    ],
+    "tags": [
+      "forge"
+    ]
+  },
+  {
+    "id": "advanced_forge",
+    "name": "高阶锻造坊",
+    "description": "通过二次优化工艺与提高原料利用率后的锻造坊，使得铁矿的损耗可以忽略不计",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "maxWorkers": 2,
+    "buildCost": [],
+    "unlockConditions": [
+      {
+        "type": "building",
+        "buildingId": "stope"
+      }
+    ],
+    "buildTime": 5,
+    "upgradesTo": null,
+    "production": {
+      "perWorker": true,
+      "input": [
+        {
+          "resourceId": "coal",
+          "amount": 1
+        },
+        {
+          "resourceId": "hematite",
+          "amount": 8
+        }
+      ],
+      "output": [
+        {
+          "resourceId": "iron_ingot",
+          "amount": 8
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "upgradesFrom": "enhanced_forge",
+    "upgradeCost": [
+      {
+        "resourceId": "stone",
+        "amount": 50
+      },
+      {
+        "resourceId": "steel",
+        "amount": 25
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 25
+      }
+    ],
+    "tags": [
+      "forge"
+    ]
+  },
+  {
+    "id": "enhanced_logging_camp",
+    "name": "进阶伐木集散点",
+    "description": "优化了流程，使每个工人每轮产出的原木数有所提高。",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "allowedGrounds": [
+      "F"
+    ],
+    "unlockConditions": [],
+    "maxWorkers": 1,
+    "buildCost": [],
+    "buildTime": 2,
+    "upgradesTo": "advanced_logging_camp",
+    "production": {
+      "perWorker": true,
+      "output": [
+        {
+          "resourceId": "wood",
+          "amount": 4
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "upgradeCost": [
+      {
+        "resourceId": "plank",
+        "amount": 100
+      },
+      {
+        "resourceId": "stone",
+        "amount": 50
+      }
+    ],
+    "upgradesFrom": "logging_camp",
+    "tags": [
+      "logging_camp"
+    ]
+  },
+  {
+    "id": "advanced_logging_camp",
+    "name": "高阶伐木集散点 ",
+    "description": "使用了先进的伐木工具，使得每个工人每轮产出的原木数再次得以提高。",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "allowedGrounds": [
+      "F"
+    ],
+    "unlockConditions": [],
+    "maxWorkers": 1,
+    "buildCost": [],
+    "buildTime": 3,
+    "upgradesTo": null,
+    "production": {
+      "perWorker": true,
+      "output": [
+        {
+          "resourceId": "wood",
+          "amount": 6
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "upgradeCost": [
+      {
+        "resourceId": "plank",
+        "amount": 100
+      },
+      {
+        "resourceId": "stone",
+        "amount": 50
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 50
+      }
+    ],
+    "upgradesFrom": "enhanced_logging_camp",
+    "tags": [
+      "logging_camp"
+    ]
+  },
+  {
+    "id": "enhanced_lumber_mill",
+    "name": "进阶木材处理厂",
+    "description": "更换设备后可以实现对原木更为高效的处理，每个工人独立运作。最高2名工人。",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "mapIcon": "assets/buildings/anim_lumber_mill.png",
+    "animation": {
+      "spriteSheet": "assets/buildings/anim_lumber_mill.png",
+      "frameCount": 8,
+      "fps": 8,
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "pingpong": true
+    },
+    "mapIconLayout": {
+      "scaleX": 1,
+      "scaleY": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "unlockConditions": [
+      {
+        "type": "building",
+        "buildingId": "logging_camp"
+      }
+    ],
+    "maxWorkers": 2,
+    "buildCost": [],
+    "buildTime": 3,
+    "upgradesTo": "advanced_lumber_mill",
+    "production": {
+      "perWorker": true,
+      "input": [
+        {
+          "resourceId": "wood",
+          "amount": 4
+        }
+      ],
+      "output": [
+        {
+          "resourceId": "plank",
+          "amount": 4
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "upgradeCost": [
+      {
+        "resourceId": "stone",
+        "amount": 50
+      },
+      {
+        "resourceId": "wood",
+        "amount": 75
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 50
+      }
+    ],
+    "upgradesFrom": "lumber_mill",
+    "tags": [
+      "lumber_mill"
+    ]
+  },
+  {
+    "id": "advanced_lumber_mill",
+    "name": "高阶木材处理厂",
+    "description": "优化生产工艺后使原木的利用情况得到进一步开发，每个工人独立运作。最高2名工人。",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "mapIcon": "assets/buildings/anim_lumber_mill.png",
+    "animation": {
+      "spriteSheet": "assets/buildings/anim_lumber_mill.png",
+      "frameCount": 8,
+      "fps": 8,
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "pingpong": true
+    },
+    "mapIconLayout": {
+      "scaleX": 1,
+      "scaleY": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "unlockConditions": [
+      {
+        "type": "building",
+        "buildingId": "logging_camp"
+      }
+    ],
+    "maxWorkers": 2,
+    "buildCost": [],
+    "buildTime": 3,
+    "upgradesTo": null,
+    "production": {
+      "perWorker": true,
+      "input": [
+        {
+          "resourceId": "wood",
+          "amount": 4
+        }
+      ],
+      "output": [
+        {
+          "resourceId": "plank",
+          "amount": 8
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "upgradeCost": [
+      {
+        "resourceId": "stone",
+        "amount": 50
+      },
+      {
+        "resourceId": "wood",
+        "amount": 100
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 50
+      },
+      {
+        "resourceId": "steel",
+        "amount": 50
+      }
+    ],
+    "upgradesFrom": "enhanced_lumber_mill",
+    "detailAnimation": {
+      "pingpong": false
+    },
+    "tags": [
+      "lumber_mill"
+    ]
+  },
+  {
+    "id": "fishing_ground",
+    "name": "渔场",
+    "description": "养鱼捕鱼的地方，可以提供优质的食物",
+    "icon": "",
+    "mapIcon": "",
+    "imageDetail": "",
+    "mapIconLayout": {
+      "scaleX": 1,
+      "scaleY": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "animation": {
+      "spriteSheet": "",
+      "frameCount": 8,
+      "fps": 8,
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "pingpong": false
+    },
+    "footprint": {
+      "width": 1,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "housingCapacity": 0,
+    "maxWorkers": 2,
+    "buildCost": [
+      {
+        "resourceId": "fur",
+        "amount": 20
+      },
+      {
+        "resourceId": "wood",
+        "amount": 30
+      },
+      {
+        "resourceId": "stone",
+        "amount": 20
+      }
+    ],
+    "buildTime": 3,
+    "upgradesTo": "enhanced_fishing_ground",
+    "production": {
+      "perWorker": true,
+      "output": [
+        {
+          "resourceId": "food",
+          "amount": 2
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "detailAnimation": {
+      "frameHeight": 1024
+    },
+    "allowedGrounds": [
+      "W"
+    ],
+    "tags": [
+      "fishing_ground"
+    ]
+  },
+  {
+    "id": "hunting_ground",
+    "name": "狩猎场",
+    "description": "通过在森林中狩猎获得可靠的蛋白质与动物毛皮",
+    "icon": "",
+    "mapIcon": "",
+    "imageDetail": "",
+    "mapIconLayout": {
+      "scaleX": 1,
+      "scaleY": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "animation": {
+      "spriteSheet": "",
+      "frameCount": 8,
+      "fps": 8,
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "pingpong": false
+    },
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "housingCapacity": 0,
+    "maxWorkers": 2,
+    "buildCost": [
+      {
+        "resourceId": "wood",
+        "amount": 50
+      },
+      {
+        "resourceId": "stone",
+        "amount": 35
+      },
+      {
+        "resourceId": "coal",
+        "amount": 50
+      }
+    ],
+    "buildTime": 4,
+    "upgradesTo": "enhanced_hunting_ground",
+    "production": {
+      "perWorker": true,
+      "input": [
+        {
+          "resourceId": "food",
+          "amount": 2
+        }
+      ],
+      "output": [
+        {
+          "resourceId": "food",
+          "amount": 4
+        },
+        {
+          "resourceId": "fur",
+          "amount": 1
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "allowedGrounds": [
+      "F"
+    ],
+    "tags": [
+      "hunting_ground"
+    ]
+  },
+  {
+    "id": "enhanced_stope",
+    "name": "进阶采场",
+    "description": "通过升级设备得以挖掘更多的石头，并且能获得少量的煤炭",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "allowedGrounds": [
+      "R"
+    ],
+    "unlockConditions": [],
+    "maxWorkers": 3,
+    "buildCost": [],
+    "buildTime": 3,
+    "upgradesTo": "advanced_stope",
+    "production": {
+      "perWorker": true,
+      "output": [
+        {
+          "resourceId": "stone",
+          "amount": 5
+        },
+        {
+          "resourceId": "coal",
+          "amount": 1
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "mapIcon": "",
+    "upgradeCost": [
+      {
+        "resourceId": "stone",
+        "amount": 35
+      },
+      {
+        "resourceId": "plank",
+        "amount": 40
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 25
+      }
+    ],
+    "upgradesFrom": "stope",
+    "tags": [
+      "stope"
+    ]
+  },
+  {
+    "id": "advanced_stope",
+    "name": "高阶采场",
+    "description": "使用电子类设备得以挖掘更多的石头，并且能获得煤炭的同时获得部分的赤铁矿",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "allowedGrounds": [
+      "R"
+    ],
+    "unlockConditions": [],
+    "maxWorkers": 3,
+    "buildCost": [],
+    "buildTime": 3,
+    "upgradesTo": null,
+    "production": {
+      "perWorker": true,
+      "output": [
+        {
+          "resourceId": "stone",
+          "amount": 8
+        },
+        {
+          "resourceId": "coal",
+          "amount": 3
+        },
+        {
+          "resourceId": "hematite",
+          "amount": 2
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "mapIcon": "",
+    "upgradeCost": [
+      {
+        "resourceId": "stone",
+        "amount": 35
+      },
+      {
+        "resourceId": "plank",
+        "amount": 40
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 25
+      }
+    ],
+    "upgradesFrom": "enhanced_stope",
+    "tags": [
+      "stope"
+    ]
+  },
+  {
+    "id": "enhanced_hunting_ground",
+    "name": "进阶狩猎场",
+    "description": "优化流程，使得狩猎效率得到提高",
+    "icon": "",
+    "mapIcon": "",
+    "imageDetail": "",
+    "mapIconLayout": {
+      "scaleX": 1,
+      "scaleY": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "animation": {
+      "spriteSheet": "",
+      "frameCount": 8,
+      "fps": 8,
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "pingpong": false
+    },
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "housingCapacity": 0,
+    "maxWorkers": 3,
+    "buildCost": [],
+    "buildTime": 4,
+    "upgradesTo": "advanced_hunting_ground",
+    "production": {
+      "perWorker": true,
+      "input": [
+        {
+          "resourceId": "food",
+          "amount": 2
+        }
+      ],
+      "output": [
+        {
+          "resourceId": "food",
+          "amount": 6
+        },
+        {
+          "resourceId": "fur",
+          "amount": 2
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "allowedGrounds": [
+      "F"
+    ],
+    "upgradesFrom": "hunting_ground",
+    "upgradeCost": [
+      {
+        "resourceId": "stone",
+        "amount": 75
+      },
+      {
+        "resourceId": "wood",
+        "amount": 100
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 50
+      }
+    ],
+    "tags": [
+      "hunting_ground"
+    ]
+  },
+  {
+    "id": "advanced_hunting_ground",
+    "name": "高阶狩猎场",
+    "description": "升级设备，使得狩猎的引诱成本得到降低而汇报得到提高",
+    "icon": "",
+    "mapIcon": "",
+    "imageDetail": "",
+    "mapIconLayout": {
+      "scaleX": 1,
+      "scaleY": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "animation": {
+      "spriteSheet": "",
+      "frameCount": 8,
+      "fps": 8,
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "pingpong": false
+    },
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "housingCapacity": 0,
+    "maxWorkers": 3,
+    "buildCost": [],
+    "buildTime": 5,
+    "upgradesTo": null,
+    "production": {
+      "perWorker": true,
+      "input": [
+        {
+          "resourceId": "food",
+          "amount": 1
+        }
+      ],
+      "output": [
+        {
+          "resourceId": "food",
+          "amount": 8
+        },
+        {
+          "resourceId": "fur",
+          "amount": 2
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "allowedGrounds": [
+      "F"
+    ],
+    "upgradesFrom": "enhanced_hunting_ground",
+    "upgradeCost": [
+      {
+        "resourceId": "wood",
+        "amount": 75
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 30
+      },
+      {
+        "resourceId": "fur",
+        "amount": 40
+      },
+      {
+        "resourceId": "steel",
+        "amount": 30
+      },
+      {
+        "resourceId": "electronic_part",
+        "amount": 30
+      }
+    ],
+    "tags": [
+      "hunting_ground"
+    ]
+  },
+  {
+    "id": "enhanced_fishing_ground",
+    "name": "进阶渔场",
+    "description": "优化了流程，使得鱼类的获取得到增加",
+    "icon": "",
+    "mapIcon": "",
+    "imageDetail": "",
+    "mapIconLayout": {
+      "scaleX": 1,
+      "scaleY": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "animation": {
+      "spriteSheet": "",
+      "frameCount": 8,
+      "fps": 8,
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "pingpong": false
+    },
+    "footprint": {
+      "width": 1,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "housingCapacity": 0,
+    "maxWorkers": 2,
+    "buildCost": [],
+    "buildTime": 4,
+    "upgradesTo": "advanced_fishing_ground",
+    "production": {
+      "perWorker": true,
+      "output": [
+        {
+          "resourceId": "food",
+          "amount": 4
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "detailAnimation": {
+      "frameHeight": 1024
+    },
+    "allowedGrounds": [
+      "W"
+    ],
+    "upgradeCost": [
+      {
+        "resourceId": "fur",
+        "amount": 40
+      },
+      {
+        "resourceId": "food",
+        "amount": 20
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 20
+      },
+      {
+        "resourceId": "stone",
+        "amount": 40
+      },
+      {
+        "resourceId": "wood",
+        "amount": 60
+      }
+    ],
+    "upgradesFrom": "fishing_ground",
+    "tags": [
+      "fishing_ground"
+    ]
+  },
+  {
+    "id": "advanced_fishing_ground",
+    "name": "高阶渔场",
+    "description": "升级渔场设施的同时引入了高产品种，使得产量得到又进一步的提高",
+    "icon": "",
+    "mapIcon": "",
+    "imageDetail": "",
+    "mapIconLayout": {
+      "scaleX": 1,
+      "scaleY": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "animation": {
+      "spriteSheet": "",
+      "frameCount": 8,
+      "fps": 8,
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "pingpong": false
+    },
+    "footprint": {
+      "width": 1,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "housingCapacity": 0,
+    "maxWorkers": 3,
+    "buildCost": [],
+    "buildTime": 6,
+    "upgradesTo": null,
+    "production": {
+      "perWorker": true,
+      "output": [
+        {
+          "resourceId": "food",
+          "amount": 8
+        }
+      ]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "detailAnimation": {
+      "frameHeight": 1024
+    },
+    "allowedGrounds": [
+      "W"
+    ],
+    "upgradeCost": [
+      {
+        "resourceId": "fur",
+        "amount": 40
+      },
+      {
+        "resourceId": "food",
+        "amount": 40
+      },
+      {
+        "resourceId": "steel",
+        "amount": 20
+      },
+      {
+        "resourceId": "wood",
+        "amount": 60
+      },
+      {
+        "resourceId": "electronic_part",
+        "amount": 10
+      }
+    ],
+    "upgradesFrom": "enhanced_fishing_ground",
+    "tags": [
+      "fishing_ground"
+    ]
+  },
+  {
+    "id": "granary",
+    "name": "粮仓",
+    "description": "专门储存食物的建筑，可自由存入取出食物。妈妈再也不怕我断粮啦。",
+    "footprint": {
+      "width": 3,
+      "height": 3
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "unlockConditions": [
+      {
+        "type": "building",
+        "buildingId": "farm"
+      }
+    ],
+    "maxWorkers": 0,
+    "buildCost": [
+      {
+        "resourceId": "wood",
+        "amount": 80
+      },
+      {
+        "resourceId": "plank",
+        "amount": 30
+      },
+      {
+        "resourceId": "stone",
+        "amount": 40
+      }
+    ],
+    "buildTime": 4,
+    "upgradesTo": "enhanced_granary",
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "granary"
+    ],
+    "foodStorage": {
+      "capacity": 5000
+    }
+  },
+  {
+    "id": "enhanced_granary",
+    "name": "进阶粮仓",
+    "description": "扩容后的粮仓，可存储更多食物。",
+    "footprint": {
+      "width": 3,
+      "height": 3
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "unlockConditions": [
+      {
+        "type": "building",
+        "buildingId": "farm"
+      }
+    ],
+    "maxWorkers": 0,
+    "buildCost": [],
+    "buildTime": 5,
+    "upgradesFrom": "granary",
+    "upgradesTo": "advanced_granary",
+    "upgradeCost": [
+      {
+        "resourceId": "wood",
+        "amount": 100
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 30
+      },
+      {
+        "resourceId": "plank",
+        "amount": 50
+      },
+      {
+        "resourceId": "brick",
+        "amount": 30
+      }
+    ],
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "granary"
+    ],
+    "foodStorage": {
+      "capacity": 10000
+    }
+  },
+  {
+    "id": "advanced_granary",
+    "name": "高阶粮仓",
+    "description": "顶级粮仓，拥有最大的食物存储容量。",
+    "footprint": {
+      "width": 3,
+      "height": 3
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "unlockConditions": [
+      {
+        "type": "building",
+        "buildingId": "farm"
+      }
+    ],
+    "maxWorkers": 0,
+    "buildCost": [],
+    "buildTime": 7,
+    "upgradesFrom": "enhanced_granary",
+    "upgradesTo": null,
+    "upgradeCost": [
+      {
+        "resourceId": "steel",
+        "amount": 50
+      },
+      {
+        "resourceId": "brick",
+        "amount": 80
+      },
+      {
+        "resourceId": "plank",
+        "amount": 100
+      },
+      {
+        "resourceId": "machine_part",
+        "amount": 5
+      }
+    ],
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "granary"
+    ],
+    "foodStorage": {
+      "capacity": 15000
+    }
+  },
+  {
+    "id": "resource_expansion_room",
+    "name": "资源扩容室",
+    "description": "永久提高基础的资源容量上限。",
+    "footprint": {
+      "width": 3,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "unlockConditions": [
+      {
+        "type": "building",
+        "buildingId": "warehouse"
+      }
+    ],
+    "maxWorkers": 0,
+    "buildCost": [
+      {
+        "resourceId": "stone",
+        "amount": 100
+      },
+      {
+        "resourceId": "wood",
+        "amount": 80
+      },
+      {
+        "resourceId": "plank",
+        "amount": 40
+      }
+    ],
+    "buildTime": 4,
+    "upgradesTo": "enhanced_resource_expansion_room",
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "resource_expansion_room"
+    ],
+    "capacityBonus": 100
+  },
+  {
+    "id": "enhanced_resource_expansion_room",
+    "name": "进阶资源扩容室",
+    "description": "扩容效果进一步提升，永久提高基础资源容量上限。",
+    "footprint": {
+      "width": 3,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "unlockConditions": [
+      {
+        "type": "building",
+        "buildingId": "warehouse"
+      }
+    ],
+    "maxWorkers": 0,
+    "buildCost": [],
+    "buildTime": 5,
+    "upgradesFrom": "resource_expansion_room",
+    "upgradesTo": "advanced_resource_expansion_room",
+    "upgradeCost": [
+      {
+        "resourceId": "iron_ingot",
+        "amount": 50
+      },
+      {
+        "resourceId": "stone",
+        "amount": 80
+      },
+      {
+        "resourceId": "plank",
+        "amount": 60
+      }
+    ],
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "resource_expansion_room"
+    ],
+    "capacityBonus": 150
+  },
+  {
+    "id": "advanced_resource_expansion_room",
+    "name": "高阶资源扩容室",
+    "description": "最高级的资源扩容室，提供最大的容量提升。",
+    "footprint": {
+      "width": 3,
+      "height": 2
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "unlockConditions": [
+      {
+        "type": "building",
+        "buildingId": "warehouse"
+      }
+    ],
+    "maxWorkers": 0,
+    "buildCost": [],
+    "buildTime": 7,
+    "upgradesFrom": "enhanced_resource_expansion_room",
+    "upgradesTo": null,
+    "upgradeCost": [
+      {
+        "resourceId": "steel",
+        "amount": 80
+      },
+      {
+        "resourceId": "brick",
+        "amount": 100
+      },
+      {
+        "resourceId": "machine_part",
+        "amount": 10
+      },
+      {
+        "resourceId": "electronic_part",
+        "amount": 5
+      }
+    ],
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "resource_expansion_room"
+    ],
+    "capacityBonus": 200
   }
 ]

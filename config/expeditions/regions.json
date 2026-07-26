@@ -36,22 +36,22 @@
       "morning": {
         "stone": 12,
         "coal": 6,
-        "iron_ore": 3
+        "hematite": 3
       },
       "afternoon": {
         "stone": 10,
         "coal": 5,
-        "iron_ore": 2
+        "hematite": 2
       },
       "evening": {
         "stone": 8,
         "coal": 4,
-        "iron_ore": 2
+        "hematite": 2
       },
       "night": {
         "stone": 5,
         "coal": 3,
-        "iron_ore": 1
+        "hematite": 1
       }
     }
   },
@@ -74,19 +74,19 @@
     "baseYields": {
       "morning": {
         "coal": 13,
-        "iron_ore": 10
+        "hematite": 10
       },
       "afternoon": {
         "coal": 11,
-        "iron_ore": 8
+        "hematite": 8
       },
       "evening": {
         "coal": 8,
-        "iron_ore": 6
+        "hematite": 6
       },
       "night": {
         "coal": 6,
-        "iron_ore": 4
+        "hematite": 4
       }
     }
   },
@@ -109,22 +109,22 @@
     "baseYields": {
       "morning": {
         "coal": 9,
-        "iron_ore": 8,
+        "hematite": 8,
         "electronic_part": 3
       },
       "afternoon": {
         "coal": 7,
-        "iron_ore": 7,
+        "hematite": 7,
         "electronic_part": 2
       },
       "evening": {
         "coal": 6,
-        "iron_ore": 5,
+        "hematite": 5,
         "electronic_part": 2
       },
       "night": {
         "coal": 4,
-        "iron_ore": 3,
+        "hematite": 3,
         "electronic_part": 1
       }
     }
@@ -144,25 +144,25 @@
     "baseYields": {
       "morning": {
         "electronic_part": 6,
-        "iron_ore": 6,
+        "hematite": 6,
         "coal": 5,
         "steel": 3
       },
       "afternoon": {
         "electronic_part": 5,
-        "iron_ore": 5,
+        "hematite": 5,
         "coal": 4,
         "steel": 2
       },
       "evening": {
         "electronic_part": 4,
-        "iron_ore": 4,
+        "hematite": 4,
         "coal": 3,
         "steel": 2
       },
       "night": {
         "electronic_part": 3,
-        "iron_ore": 3,
+        "hematite": 3,
         "coal": 2,
         "steel": 1
       }
@@ -202,8 +202,8 @@
     "image": "region_iron_ridge.png",
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "furnace"
+        "type": "tag",
+        "tag": "forge"
       }
     ],
     "workerCost": 3,
@@ -211,22 +211,22 @@
       "morning": {
         "stone": 5,
         "coal": 4,
-        "iron_ore": 13
+        "hematite": 13
       },
       "afternoon": {
         "stone": 4,
         "coal": 3,
-        "iron_ore": 11
+        "hematite": 11
       },
       "evening": {
         "stone": 3,
         "coal": 3,
-        "iron_ore": 8
+        "hematite": 8
       },
       "night": {
         "stone": 2,
         "coal": 2,
-        "iron_ore": 6
+        "hematite": 6
       }
     }
   },
@@ -253,19 +253,19 @@
     "baseYields": {
       "morning": {
         "coal": 22,
-        "iron_ore": 3
+        "hematite": 3
       },
       "afternoon": {
         "coal": 18,
-        "iron_ore": 2
+        "hematite": 2
       },
       "evening": {
         "coal": 13,
-        "iron_ore": 2
+        "hematite": 2
       },
       "night": {
         "coal": 9,
-        "iron_ore": 1
+        "hematite": 1
       }
     }
   },

@@ -140,7 +140,7 @@
         "effects": [
           {
             "type": "add_resource",
-            "resourceId": "iron_ore",
+            "resourceId": "hematite",
             "amount": 20
           }
         ]
@@ -173,7 +173,7 @@
       ],
       "requiredItems": [],
       "requiredBuildings": [
-        "furnace"
+        "forge"
       ]
     },
     "invalidationConditions": {
@@ -321,5 +321,56 @@
         "effects": []
       }
     ]
+  },
+  {
+    "id": "story_scrapyard_reveal",
+    "name": "回收场浮现",
+    "description": "电子扫描器的屏幕上亮起密集的光点——信号源位于山脉背面的一片广阔废墟。技师兴奋地说：「这是个旧时代的废弃回收场！里面埋着成吨的电子设备残骸。清理出安全通道后，我们可以定期前往探索。」废弃回收场区域现已解锁。",
+    "image": "",
+    "priority": 10,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "组织探险队",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "new_base_event",
+    "name": "新基地事件",
+    "description": "",
+    "image": "",
+    "priority": 0,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": []
   }
 ]

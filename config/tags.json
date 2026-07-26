@@ -1,0 +1,52 @@
+[
+  {
+    "id": "dorm",
+    "name": "宿舍系",
+    "description": "宿舍系建筑"
+  },
+  {
+    "id": "warehouse",
+    "name": "仓库系",
+    "description": "仓库系建筑"
+  },
+  {
+    "id": "stope",
+    "name": "采场系",
+    "description": "采场系建筑"
+  },
+  {
+    "id": "logging_camp",
+    "name": "伐木集散点系",
+    "description": "伐木集散点系建筑"
+  },
+  {
+    "id": "forge",
+    "name": "锻造坊系",
+    "description": "锻造坊系建筑"
+  },
+  {
+    "id": "workshop",
+    "name": "工作站系",
+    "description": "工作站系"
+  },
+  {
+    "id": "torch",
+    "name": "火把系",
+    "description": "火把系"
+  },
+  {
+    "id": "fishing_ground",
+    "name": "渔场系",
+    "description": "渔场系建筑"
+  },
+  {
+    "id": "hunting_ground",
+    "name": "狩猎场系",
+    "description": "狩猎场系建筑"
+  },
+  {
+    "id": "lumber_mill",
+    "name": "木材厂系",
+    "description": "木材厂系建筑"
+  }
+]
