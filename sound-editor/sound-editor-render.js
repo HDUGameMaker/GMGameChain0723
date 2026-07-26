@@ -52,12 +52,11 @@ function renderBGMForm(item) {
   html += field('id', 'ID', item.id, { placeholder: 'bgm_main' });
   html += field('name', '名称', item.name, { placeholder: '主界面背景音乐' });
 
-  // 文件路径 + 预览按钮
+  // 文件路径 + 预览按钮（单击预览/暂停切换）
   html += '<div class="form-group"><label>文件路径</label>';
   html += '<div style="display:flex;gap:8px;">';
-  html += `<input type="text" id="field-file" data-field="file" value="${escapeHTML(item.file || '')}" placeholder="assets/audio/bgm/main.mp3" style="flex:1">`;
-  html += `<button class="btn-preview" onclick="event.preventDefault();previewAudio(document.getElementById('field-file').value);this.classList.add('playing');return false;" title="预览">▶</button>`;
-  html += `<button class="btn-secondary btn-sm" onclick="event.preventDefault();stopPreview();return false;" title="停止">⏹</button>`;
+  html += `<input type="text" id="field-file-${escapeHTML(item.id)}" data-field="file" value="${escapeHTML(item.file || '')}" placeholder="assets/audio/bgm/main.mp3" style="flex:1">`;
+  html += `<button class="btn-preview" onclick="event.preventDefault();togglePreviewAudio(document.getElementById('field-file-${escapeHTML(item.id)}').value, this);return false;" title="预览/暂停">▶</button>`;
   html += '</div>';
   html += `<span class="missing-badge" id="bgm-missing-${escapeHTML(item.id)}" style="display:none">⚠ 文件不存在</span>`;
   html += '</div>';
@@ -88,12 +87,11 @@ function renderSFXForm(item) {
   html += field('id', 'ID', item.id, { placeholder: 'sfx_build' });
   html += field('name', '名称', item.name, { placeholder: '建造音效' });
 
-  // 文件路径 + 预览
+  // 文件路径 + 预览（单击预览/暂停切换）
   html += '<div class="form-group"><label>文件路径</label>';
   html += '<div style="display:flex;gap:8px;">';
-  html += `<input type="text" id="field-file" data-field="file" value="${escapeHTML(item.file || '')}" placeholder="assets/audio/sfx/build.wav" style="flex:1">`;
-  html += `<button class="btn-preview" onclick="event.preventDefault();previewAudio(document.getElementById('field-file').value);this.classList.add('playing');return false;" title="预览">▶</button>`;
-  html += `<button class="btn-secondary btn-sm" onclick="event.preventDefault();stopPreview();return false;" title="停止">⏹</button>`;
+  html += `<input type="text" id="field-file-${escapeHTML(item.id)}" data-field="file" value="${escapeHTML(item.file || '')}" placeholder="assets/audio/sfx/build.wav" style="flex:1">`;
+  html += `<button class="btn-preview" onclick="event.preventDefault();togglePreviewAudio(document.getElementById('field-file-${escapeHTML(item.id)}').value, this);return false;" title="预览/暂停">▶</button>`;
   html += '</div>';
   html += `<span class="missing-badge" id="sfx-missing-${escapeHTML(item.id)}" style="display:none">⚠ 文件不存在</span>`;
   html += '</div>';
@@ -128,11 +126,17 @@ function renderBindingsForm() {
 
   let html = '<div style="max-width:700px">';
   html += '<h3 style="margin:0 0 16px;font-size:15px;font-weight:600;">🔗 游戏事件 → 音效绑定</h3>';
-  html += '<p style="font-size:12px;color:var(--muted);margin-bottom:16px;">选择每个游戏事件触发时播放的音效。设为"(无)"则不播放音效。</p>';
+  html += '<p style="font-size:12px;color:var(--muted);margin-bottom:16px;">选择每个游戏事件触发时播放的音效。设为"(无)"则不播放音效。建筑相关事件请在「建筑音效绑定」选项卡中设置，物品合成事件请在「物品合成音效」选项卡中设置。</p>';
 
-  html += '<table class="bindings-table"><thead><tr><th>游戏事件</th><th>说明</th><th>绑定音效</th></tr></thead><tbody>';
+  html += '<table class="bindings-table"><thead><tr><th>游戏事件</th><th>说明</th><th>绑定音效</th><th>预览</th></tr></thead><tbody>';
 
-  for (const evt of KNOWN_GAME_EVENTS) {
+  // 过滤掉建筑和合成相关事件（已移到专门的绑定选项卡）
+  const filteredEvents = KNOWN_GAME_EVENTS.filter(evt => 
+    !BUILDING_EVENTS_TO_EXCLUDE.includes(evt.event) && 
+    !SYNTHESIS_EVENTS_TO_EXCLUDE.includes(evt.event)
+  );
+
+  for (const evt of filteredEvents) {
     const binding = state.data.eventBindings.find(b => b.event === evt.event);
     const currentSound = binding ? (binding.sound || '') : '';
 
@@ -146,6 +150,10 @@ function renderBindingsForm() {
       html += `<option value="${escapeHTML(opt.value)}"${selected}>${escapeHTML(opt.label)}</option>`;
     }
     html += '</select>';
+    html += '</td>';
+    // 预览按钮（单击预览/暂停，动态获取当前选中音效）
+    html += '<td>';
+    html += `<button class="btn-preview" onclick="event.preventDefault();previewBindingSound('${escapeHTML(evt.event)}', this);return false;" title="预览/暂停">🔊</button>`;
     html += '</td>';
     html += '</tr>';
   }
@@ -220,6 +228,106 @@ function renderBGMBindingsForm(item) {
   return html;
 }
 
+// ==================== 建筑音效绑定表单 ====================
+function renderBuildingBindingsForm() {
+  const data = currentData();
+  const buildingId = state.selectedBuilding || 'default';
+  const buildingSounds = data[buildingId] || {};
+
+  // 构建 SFX 选项列表
+  const sfxOptions = [{ value: '', label: '(无)' }];
+  if (state.data && Array.isArray(state.data.sfx)) {
+    for (const sfx of state.data.sfx) {
+      sfxOptions.push({ value: sfx.id, label: sfx.name + ' (' + sfx.id + ')' });
+    }
+  }
+
+  let html = '<div style="max-width:700px">';
+  html += `<h3 style="margin:0 0 16px;font-size:15px;font-weight:600;">🏠 建筑音效绑定 — ${buildingId === 'default' ? '默认配置' : buildingId}</h3>`;
+  html += '<p style="font-size:12px;color:var(--muted);margin-bottom:16px;">为每个建筑动作设置特定音效。未设置的建筑将使用默认配置。点击喇叭图标可预览音效。</p>';
+
+  // 显示每个建筑音效事件
+  for (const evt of BUILDING_SOUND_EVENTS) {
+    const currentSound = buildingSounds[evt.key] || '';
+    
+    html += `<div class="form-row" style="align-items:center;">`;
+    html += `<div class="form-group" style="flex:0 0 80px;"><label>${escapeHTML(evt.name)}</label></div>`;
+    html += `<div class="form-group" style="flex:1;">`;
+    html += `<select data-building="${escapeHTML(buildingId)}" data-sound-key="${escapeHTML(evt.key)}" style="width:100%">`;
+    for (const opt of sfxOptions) {
+      const selected = opt.value === currentSound ? ' selected' : '';
+      html += `<option value="${escapeHTML(opt.value)}"${selected}>${escapeHTML(opt.label)}</option>`;
+    }
+    html += '</select>';
+    html += '</div>';
+    // 预览按钮（单击预览/暂停，动态获取当前选中音效）
+    html += `<div class="form-group" style="flex:0 0 40px;">`;
+    html += `<button class="btn-preview" onclick="event.preventDefault();previewBuildingSound('${escapeHTML(buildingId)}', '${escapeHTML(evt.key)}', this);return false;" title="预览/暂停">🔊</button>`;
+    html += '</div>';
+    html += '</div>';
+  }
+
+  // 还原为默认按钮
+  if (buildingId !== 'default') {
+    html += `<div style="margin-top:16px;">`;
+    html += `<button class="btn-danger btn-sm" onclick="restoreBuildingSoundToDefault('${escapeHTML(buildingId)}');return false;">🗑 还原为默认</button>`;
+    html += '</div>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
+// ==================== 物品合成音效绑定表单 ====================
+function renderItemBindingsForm() {
+  const data = currentData();
+  const itemId = state.selectedItem || 'default';
+  const itemSounds = data[itemId] || {};
+
+  // 构建 SFX 选项列表
+  const sfxOptions = [{ value: '', label: '(无)' }];
+  if (state.data && Array.isArray(state.data.sfx)) {
+    for (const sfx of state.data.sfx) {
+      sfxOptions.push({ value: sfx.id, label: sfx.name + ' (' + sfx.id + ')' });
+    }
+  }
+
+  let html = '<div style="max-width:700px">';
+  html += `<h3 style="margin:0 0 16px;font-size:15px;font-weight:600;">🎒 物品合成音效 — ${itemId === 'default' ? '默认配置' : itemId}</h3>`;
+  html += '<p style="font-size:12px;color:var(--muted);margin-bottom:16px;">为每个物品的合成动作设置特定音效。未设置的物品将使用默认配置。点击喇叭图标可预览音效。</p>';
+
+  // 显示每个物品合成音效事件
+  for (const evt of ITEM_SOUND_EVENTS) {
+    const currentSound = itemSounds[evt.key] || '';
+    
+    html += `<div class="form-row" style="align-items:center;">`;
+    html += `<div class="form-group" style="flex:0 0 100px;"><label>${escapeHTML(evt.name)}</label></div>`;
+    html += `<div class="form-group" style="flex:1;">`;
+    html += `<select data-item="${escapeHTML(itemId)}" data-sound-key="${escapeHTML(evt.key)}" style="width:100%">`;
+    for (const opt of sfxOptions) {
+      const selected = opt.value === currentSound ? ' selected' : '';
+      html += `<option value="${escapeHTML(opt.value)}"${selected}>${escapeHTML(opt.label)}</option>`;
+    }
+    html += '</select>';
+    html += '</div>';
+    // 预览按钮（单击预览/暂停，动态获取当前选中音效）
+    html += `<div class="form-group" style="flex:0 0 40px;">`;
+    html += `<button class="btn-preview" onclick="event.preventDefault();previewItemSound('${escapeHTML(itemId)}', '${escapeHTML(evt.key)}', this);return false;" title="预览/暂停">🔊</button>`;
+    html += '</div>';
+    html += '</div>';
+  }
+
+  // 还原为默认按钮
+  if (itemId !== 'default') {
+    html += `<div style="margin-top:16px;">`;
+    html += `<button class="btn-danger btn-sm" onclick="restoreItemSoundToDefault('${escapeHTML(itemId)}');return false;">🗑 还原为默认</button>`;
+    html += '</div>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
 // ==================== renderDetail 调度器 ====================
 function renderDetail() {
   const panel = document.getElementById('detailPanel');
@@ -233,6 +341,18 @@ function renderDetail() {
 
   if (state.tab === 'bindings') {
     panel.innerHTML = renderBindingsForm();
+    if (typeof bindFormEvents === 'function') bindFormEvents();
+    return;
+  }
+
+  if (state.tab === 'buildingBindings') {
+    panel.innerHTML = renderBuildingBindingsForm();
+    if (typeof bindFormEvents === 'function') bindFormEvents();
+    return;
+  }
+
+  if (state.tab === 'itemBindings') {
+    panel.innerHTML = renderItemBindingsForm();
     if (typeof bindFormEvents === 'function') bindFormEvents();
     return;
   }

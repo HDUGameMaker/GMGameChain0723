@@ -51,6 +51,8 @@ const tabTitles = {
   sfx: '音效',
   bindings: 'SFX 事件绑定',
   bgmbindings: 'BGM 事件绑定',
+  buildingBindings: '建筑音效绑定',
+  itemBindings: '物品合成音效',
   settings: '全局设置'
 };
 
@@ -59,8 +61,42 @@ const tabFiles = {
   sfx: 'config/sound.json → sfx[]',
   bindings: 'config/sound.json → eventBindings[]',
   bgmbindings: 'config/sound.json → bgmBindings[]',
+  buildingBindings: 'config/sound.json → buildingSoundBindings',
+  itemBindings: 'config/sound.json → itemSoundBindings',
   settings: 'config/sound.json (根级字段)'
 };
+
+// 建筑音效事件类型
+const BUILDING_SOUND_EVENTS = [
+  { key: 'click', name: '点击' },
+  { key: 'buildStart', name: '开始建造' },
+  { key: 'buildComplete', name: '建造完成' },
+  { key: 'demolish', name: '拆除' },
+  { key: 'upgrade', name: '升级' },
+  { key: 'move', name: '移动' }
+];
+
+// 物品合成音效事件类型
+const ITEM_SOUND_EVENTS = [
+  { key: 'synthesisStart', name: '开始合成' },
+  { key: 'synthesisComplete', name: '合成完成' }
+];
+
+// 从事件绑定中排除的建筑相关事件（已移到建筑音效绑定）
+const BUILDING_EVENTS_TO_EXCLUDE = [
+  'buildingPlaced',
+  'buildingComplete',
+  'buildingUpgraded',
+  'buildingClicked',
+  'buildingDemolished',
+  'buildingMoved'
+];
+
+// 从事件绑定中排除的合成相关事件（已移到物品合成音效绑定）
+const SYNTHESIS_EVENTS_TO_EXCLUDE = [
+  'synthesisStarted',
+  'synthesisComplete'
+];
 
 // ==================== File System Access API ====================
 let dirHandle = null;
@@ -111,7 +147,9 @@ async function restoreDirHandle() {
 
 // ==================== CONFIG_FILES 注册 ====================
 const CONFIG_FILES = {
-  sound: { path: 'sound.json', dir: '' }
+  sound: { path: 'sound.json', dir: '' },
+  buildings: { path: 'buildings.json', dir: '' },
+  items: { path: 'items.json', dir: '' }
 };
 
 // ==================== State ====================
@@ -119,7 +157,11 @@ const state = {
   tab: 'bgm',
   autoSave: true,
   data: null,
+  buildings: null,
+  items: null,
   selectedIdx: -1,
+  selectedBuilding: 'default',
+  selectedItem: 'default',
   dirtyFiles: new Set(),
   saveTimer: null
 };
@@ -159,7 +201,7 @@ async function readFile(fileKey) {
       return await file.text();
     } catch (e) { /* fall through to fetch */ }
   }
-  const url = cfg.dir ? `config/${cfg.dir}/${cfg.path}` : `config/${cfg.path}`;
+  const url = cfg.dir ? `../config/${cfg.dir}/${cfg.path}` : `../config/${cfg.path}`;
   const resp = await fetch(url);
   if (!resp.ok) throw new Error(`HTTP ${resp.status} loading ${url}`);
   return await resp.text();
@@ -184,6 +226,29 @@ async function loadAllData() {
   try {
     const soundText = await readFile('sound');
     state.data = JSON.parse(soundText);
+    
+    // 加载 buildings.json 获取所有建筑 ID
+    try {
+      const buildingsText = await readFile('buildings');
+      state.buildings = JSON.parse(buildingsText);
+      // 确保每个建筑都有音效绑定配置
+      ensureAllBuildingsHaveSoundBindings();
+    } catch (e) {
+      console.warn('[SoundEditor] Failed to load buildings.json:', e.message);
+      state.buildings = [];
+    }
+    
+    // 加载 items.json 获取所有物品 ID
+    try {
+      const itemsText = await readFile('items');
+      state.items = JSON.parse(itemsText);
+      // 确保每个物品都有合成音效绑定配置
+      ensureAllItemsHaveSoundBindings();
+    } catch (e) {
+      console.warn('[SoundEditor] Failed to load items.json:', e.message);
+      state.items = [];
+    }
+    
     state.dirtyFiles.clear();
     refreshList();
     updateSaveStatus();
@@ -191,6 +256,98 @@ async function loadAllData() {
   } catch (e) {
     showToast('数据加载失败: ' + e.message, 'error');
     console.error(e);
+  }
+}
+
+// 确保所有建筑都有音效绑定配置
+function ensureAllBuildingsHaveSoundBindings() {
+  if (!state.data.buildingSoundBindings) {
+    state.data.buildingSoundBindings = {};
+  }
+  
+  // 默认配置
+  const defaultConfig = {
+    click: 'sfx_click',
+    buildStart: 'sfx_build',
+    buildComplete: 'sfx_complete',
+    demolish: 'sfx_demolish',
+    upgrade: 'sfx_upgrade',
+    move: null
+  };
+  
+  if (!state.data.buildingSoundBindings.default) {
+    state.data.buildingSoundBindings.default = { ...defaultConfig };
+  } else {
+    // 补全默认配置中缺失的字段
+    for (const key of Object.keys(defaultConfig)) {
+      if (state.data.buildingSoundBindings.default[key] === undefined) {
+        state.data.buildingSoundBindings.default[key] = defaultConfig[key];
+      }
+    }
+  }
+  
+  // 为每个建筑添加配置（如果不存在）或补全缺失的字段
+  if (Array.isArray(state.buildings)) {
+    for (const building of state.buildings) {
+      const buildingId = building.id;
+      if (!buildingId) continue;
+      
+      if (!state.data.buildingSoundBindings[buildingId]) {
+        // 默认使用默认配置的拷贝
+        state.data.buildingSoundBindings[buildingId] = { ...state.data.buildingSoundBindings.default };
+      } else {
+        // 补全缺失的字段
+        for (const key of Object.keys(defaultConfig)) {
+          if (state.data.buildingSoundBindings[buildingId][key] === undefined) {
+            state.data.buildingSoundBindings[buildingId][key] = state.data.buildingSoundBindings.default[key];
+          }
+        }
+      }
+    }
+  }
+}
+
+// 确保所有物品都有合成音效绑定配置
+function ensureAllItemsHaveSoundBindings() {
+  if (!state.data.itemSoundBindings) {
+    state.data.itemSoundBindings = {};
+  }
+  
+  // 默认配置
+  const defaultConfig = {
+    synthesisStart: 'sfx_build',
+    synthesisComplete: 'sfx_complete'
+  };
+  
+  if (!state.data.itemSoundBindings.default) {
+    state.data.itemSoundBindings.default = { ...defaultConfig };
+  } else {
+    // 补全默认配置中缺失的字段
+    for (const key of Object.keys(defaultConfig)) {
+      if (state.data.itemSoundBindings.default[key] === undefined) {
+        state.data.itemSoundBindings.default[key] = defaultConfig[key];
+      }
+    }
+  }
+  
+  // 为每个物品添加配置（如果不存在）或补全缺失的字段
+  if (Array.isArray(state.items)) {
+    for (const item of state.items) {
+      const itemId = item.id;
+      if (!itemId) continue;
+      
+      if (!state.data.itemSoundBindings[itemId]) {
+        // 默认使用默认配置的拷贝
+        state.data.itemSoundBindings[itemId] = { ...state.data.itemSoundBindings.default };
+      } else {
+        // 补全缺失的字段
+        for (const key of Object.keys(defaultConfig)) {
+          if (state.data.itemSoundBindings[itemId][key] === undefined) {
+            state.data.itemSoundBindings[itemId][key] = state.data.itemSoundBindings.default[key];
+          }
+        }
+      }
+    }
   }
 }
 
@@ -204,6 +361,12 @@ function currentData() {
     case 'bgmbindings':
       if (!state.data.bgmBindings) state.data.bgmBindings = [];
       return state.data.bgmBindings;
+    case 'buildingBindings':
+      if (!state.data.buildingSoundBindings) state.data.buildingSoundBindings = { default: {} };
+      return state.data.buildingSoundBindings;
+    case 'itemBindings':
+      if (!state.data.itemSoundBindings) state.data.itemSoundBindings = { default: {} };
+      return state.data.itemSoundBindings;
     case 'settings': return null;
     default: return null;
   }
@@ -226,6 +389,8 @@ function refreshList() {
 
   const data = currentData();
   const tab = state.tab;
+  const sortField = document.getElementById('sortField')?.value || 'name';
+  const sortOrder = document.getElementById('sortOrder')?.value || 'asc';
 
   // 设置 tab 不在列表中显示
   const listPanel = document.getElementById('listPanel');
@@ -238,6 +403,86 @@ function refreshList() {
   listPanel.style.display = '';
   document.getElementById('detailPanel').style.flex = '';
 
+  // 建筑音效绑定是对象，需要特殊处理
+  if (tab === 'buildingBindings') {
+    let html = '';
+    
+    // 先显示默认配置
+    const defaultActiveClass = 'default' === state.selectedBuilding ? ' active' : '';
+    html += `<div class="list-item${defaultActiveClass}" data-building="default">
+      ⚙️ 默认配置
+    </div>`;
+    
+    // 显示所有建筑
+    let buildingCount = 0;
+    if (Array.isArray(state.buildings)) {
+      for (const building of state.buildings) {
+        const buildingId = building.id;
+        if (!buildingId) continue;
+        buildingCount++;
+        const buildingName = building.name || buildingId;
+        const activeClass = buildingId === state.selectedBuilding ? ' active' : '';
+        html += `<div class="list-item${activeClass}" data-building="${buildingId}">
+          🏠 ${escapeHTML(buildingName)}<span class="iid">(${buildingId})</span>
+        </div>`;
+      }
+    }
+    
+    body.innerHTML = html || '<div class="empty-state">📭 暂无数据</div>';
+    if (countEl) countEl.textContent = (buildingCount + 1) + ' 项';
+    
+    // 列表项点击事件
+    body.querySelectorAll('.list-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const buildingId = el.dataset.building;
+        state.selectedBuilding = buildingId;
+        refreshList();
+        renderDetail();
+      });
+    });
+    return;
+  }
+
+  // 物品合成音效绑定是对象，需要特殊处理
+  if (tab === 'itemBindings') {
+    let html = '';
+    
+    // 先显示默认配置
+    const defaultActiveClass = 'default' === state.selectedItem ? ' active' : '';
+    html += `<div class="list-item${defaultActiveClass}" data-item="default">
+      ⚙️ 默认配置
+    </div>`;
+    
+    // 显示所有物品
+    let itemCount = 0;
+    if (Array.isArray(state.items)) {
+      for (const item of state.items) {
+        const itemId = item.id;
+        if (!itemId) continue;
+        itemCount++;
+        const itemName = item.name || itemId;
+        const activeClass = itemId === state.selectedItem ? ' active' : '';
+        html += `<div class="list-item${activeClass}" data-item="${itemId}">
+          🎒 ${escapeHTML(itemName)}<span class="iid">(${itemId})</span>
+        </div>`;
+      }
+    }
+    
+    body.innerHTML = html || '<div class="empty-state">📭 暂无数据</div>';
+    if (countEl) countEl.textContent = (itemCount + 1) + ' 项';
+    
+    // 列表项点击事件
+    body.querySelectorAll('.list-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const itemId = el.dataset.item;
+        state.selectedItem = itemId;
+        refreshList();
+        renderDetail();
+      });
+    });
+    return;
+  }
+
   if (!data || !Array.isArray(data)) {
     body.innerHTML = '<div class="empty-state">📭 暂无数据</div>';
     if (countEl) countEl.textContent = '0 项';
@@ -245,6 +490,17 @@ function refreshList() {
   }
 
   if (countEl) countEl.textContent = data.length + ' 项';
+
+  // 排序数据（bindings 使用 KNOWN_GAME_EVENTS 顺序，不排序）
+  let sortedData = data;
+  if (sortField !== 'order' && tab !== 'bindings') {
+    sortedData = [...data].sort((a, b) => {
+      const va = a[sortField] || '';
+      const vb = b[sortField] || '';
+      const cmp = String(va).localeCompare(String(vb), 'zh-CN');
+      return sortOrder === 'asc' ? cmp : -cmp;
+    });
+  }
 
   let html = '';
   if (tab === 'bindings') {
@@ -261,23 +517,25 @@ function refreshList() {
     }
   } else if (tab === 'bgmbindings') {
     // BGM 绑定列表：常规 CRUD 列表
-    for (let i = 0; i < data.length; i++) {
-      const item = data[i];
-      const activeClass = i === state.selectedIdx ? ' active' : '';
+    for (let i = 0; i < sortedData.length; i++) {
+      const item = sortedData[i];
+      const origIdx = data.indexOf(item);
+      const activeClass = origIdx === state.selectedIdx ? ' active' : '';
       const bgmName = item.bgm ? (getBGMName(item.bgm) || item.bgm) : '(无)';
       const periodsStr = item.periods && item.periods.length ? ' [' + item.periods.join(',') + ']' : '';
-      html += `<div class="list-item${activeClass}" data-idx="${i}">
+      html += `<div class="list-item${activeClass}" data-idx="${origIdx}">
         🎵 ${escapeHTML(item.event)}${periodsStr}
         <span class="iid">→ ${escapeHTML(bgmName)}</span>
       </div>`;
     }
   } else {
     // BGM/SFX 普通列表
-    for (let i = 0; i < data.length; i++) {
-      const item = data[i];
-      const activeClass = i === state.selectedIdx ? ' active' : '';
+    for (let i = 0; i < sortedData.length; i++) {
+      const item = sortedData[i];
+      const origIdx = data.indexOf(item);
+      const activeClass = origIdx === state.selectedIdx ? ' active' : '';
       const icon = tab === 'bgm' ? '🎵' : '🔔';
-      html += `<div class="list-item${activeClass}" data-idx="${i}">
+      html += `<div class="list-item${activeClass}" data-idx="${origIdx}">
         ${icon} ${escapeHTML(itemDisplayName(item))}
         <span class="iid">${escapeHTML(item.id || '')}</span>
       </div>`;
@@ -285,7 +543,7 @@ function refreshList() {
   }
   body.innerHTML = html || '<div class="empty-state">📭 暂无数据</div>';
 
-  // 列表项点击事件
+  // 列表项点击事件（buildingBindings 在前面已单独处理）
   body.querySelectorAll('.list-item').forEach(el => {
     el.addEventListener('click', () => {
       if (tab === 'bindings') {
@@ -341,6 +599,9 @@ async function doSave() {
     await writeFile('sound', JSON.stringify(state.data, null, 2));
     state.dirtyFiles.clear();
     updateSaveStatus();
+    
+    // 通知游戏热更新（通过 localStorage）
+    notifyGameHotReload();
   } catch (e) {
     const statusEl = document.getElementById('saveStatus');
     if (statusEl) {
@@ -349,6 +610,18 @@ async function doSave() {
     }
     showToast('保存失败: ' + e.message, 'error');
   }
+}
+
+// 通知游戏热更新配置
+function notifyGameHotReload() {
+  // 使用 localStorage 发送热更新信号
+  localStorage.setItem('gmgame_sound_reload', Date.now().toString());
+  showToast('配置已保存，游戏将自动刷新', 'success');
+  
+  // 清理旧信号
+  setTimeout(() => {
+    localStorage.removeItem('gmgame_sound_reload');
+  }, 5000);
 }
 
 function updateSaveStatus() {
@@ -368,24 +641,41 @@ function updateSaveStatus() {
 
 // ==================== 音频预览 ====================
 let _previewAudio = null;
+let _previewButton = null;
+
+// 更新预览按钮图标状态
+function updatePreviewButtonIcon(button, isPlaying) {
+  if (!button) return;
+  if (isPlaying) {
+    button.textContent = '⏸';
+    button.classList.add('playing');
+  } else {
+    button.textContent = '▶';
+    button.classList.remove('playing');
+  }
+}
+
+// 重置所有预览按钮状态
+function resetAllPreviewButtons() {
+  document.querySelectorAll('.btn-preview').forEach(b => updatePreviewButtonIcon(b, false));
+}
 
 function previewAudio(filePath) {
   if (_previewAudio) {
     _previewAudio.pause();
     _previewAudio = null;
-    // 更新所有预览按钮状态
-    document.querySelectorAll('.btn-preview.playing').forEach(b => b.classList.remove('playing'));
+    resetAllPreviewButtons();
   }
 
   if (!filePath) return;
 
-  _previewAudio = new Audio(filePath);
+  _previewAudio = new Audio(resolveAssetPath(filePath));
   _previewAudio.volume = 0.5;
   _previewAudio.play().catch(() => showToast('无法预览音频文件', 'error'));
 
   _previewAudio.addEventListener('ended', () => {
     _previewAudio = null;
-    document.querySelectorAll('.btn-preview.playing').forEach(b => b.classList.remove('playing'));
+    resetAllPreviewButtons();
   });
 }
 
@@ -394,13 +684,67 @@ function stopPreview() {
     _previewAudio.pause();
     _previewAudio = null;
   }
-  document.querySelectorAll('.btn-preview.playing').forEach(b => b.classList.remove('playing'));
+  resetAllPreviewButtons();
+}
+
+// 单击预览/暂停切换
+function togglePreviewAudio(filePath, button) {
+  // 如果正在播放且是同一按钮，暂停
+  if (_previewAudio && _previewButton === button) {
+    _previewAudio.pause();
+    _previewAudio = null;
+    updatePreviewButtonIcon(button, false);
+    _previewButton = null;
+    return;
+  }
+
+  // 停止之前的预览
+  if (_previewButton) {
+    updatePreviewButtonIcon(_previewButton, false);
+  }
+
+  // 开始新预览
+  if (!filePath) return;
+
+  _previewAudio = new Audio(resolveAssetPath(filePath));
+  _previewAudio.volume = 0.5;
+  _previewAudio.play().catch(() => showToast('无法预览音频文件', 'error'));
+
+  _previewAudio.addEventListener('ended', () => {
+    _previewAudio = null;
+    updatePreviewButtonIcon(button, false);
+    _previewButton = null;
+  });
+
+  updatePreviewButtonIcon(button, true);
+  _previewButton = button;
+}
+
+// 还原建筑音效为默认
+function restoreBuildingSoundToDefault(buildingId) {
+  if (!confirm(`确定要将建筑 "${buildingId}" 的音效还原为默认配置吗？`)) return;
+  if (state.data.buildingSoundBindings && state.data.buildingSoundBindings.default) {
+    state.data.buildingSoundBindings[buildingId] = { ...state.data.buildingSoundBindings.default };
+    markDirty();
+    refreshList();
+    renderDetail();
+  }
+}
+
+// ==================== 路径规范化 ====================
+// 当前页面位于 editor/ 目录下，需要为 assets/ 开头的路径添加 ../ 前缀
+function resolveAssetPath(path) {
+  if (!path) return path;
+  if (path.startsWith('assets/') || path.startsWith('config/')) {
+    return '../' + path;
+  }
+  return path;
 }
 
 // ==================== 文件检测 ====================
 async function checkFileExists(path) {
   try {
-    const resp = await fetch(path, { method: 'HEAD', cache: 'no-cache' });
+    const resp = await fetch(resolveAssetPath(path), { method: 'HEAD', cache: 'no-cache' });
     return resp.ok;
   } catch (e) { return false; }
 }
