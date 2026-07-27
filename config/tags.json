@@ -48,5 +48,10 @@
     "id": "lumber_mill",
     "name": "木材厂系",
     "description": "木材厂系建筑"
+  },
+  {
+    "id": "combat",
+    "name": "战斗系",
+    "description": "战斗系建筑"
   }
 ]

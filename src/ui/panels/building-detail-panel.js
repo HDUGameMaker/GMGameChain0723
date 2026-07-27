@@ -162,8 +162,7 @@ export function renderBuildingDetailPanel(data, body, pm) {
         progressFill,
         () => {
           const b = buildingSystem.buildings[buildingIndex];
-          // 当建造完成时返回total，使进度条固定在100%
-          return (b && b.status === 'constructing') ? (b.buildProgress || 0) : config.buildTime;
+          return (b && b.status === 'constructing') ? (b.buildProgress || 0) : 0;
         },
         () => config.buildTime,
         {
@@ -216,6 +215,60 @@ export function renderBuildingDetailPanel(data, body, pm) {
     workerSection.appendChild(avail);
 
     container.appendChild(workerSection);
+  }
+
+  // ===== 水力/风力装置（工厂类建筑） =====
+  if (building.status === 'active' && config.maxWorkers && config.maxWorkers > 0 && config.production) {
+    const attachmentType = buildingSystem.getAttachmentType(buildingIndex);
+    const attachSection = section('装置', '⚙️');
+
+    if (attachmentType) {
+      const typeName = attachmentType === 'hydro' ? '水力' : '风力';
+      attachSection.innerHTML += `
+        <div style="font-size:13px;color:#4ecb71;margin-bottom:8px;text-align:center;">
+          ✅ 已安装${typeName}机械装置
+        </div>
+      `;
+      const uninstallBtn = actionButton('卸载装置', 'rgba(255,100,100,0.15)', () => {
+        buildingSystem.uninstallAttachment(buildingIndex);
+        pm.refresh({ buildingIndex });
+      });
+      uninstallBtn.style.color = '#ff6b6b';
+      attachSection.appendChild(uninstallBtn);
+    } else {
+      const infoText = document.createElement('div');
+      infoText.style.cssText = 'font-size:12px;color:#a0a0ba;margin-bottom:8px;text-align:center;';
+      infoText.textContent = '装置可完全替代工人进行生产';
+      attachSection.appendChild(infoText);
+
+      const installHydroBtn = actionButton('加装水力装置（齿轮×20 木板×50 电子元件×10 钢锭×40）', 'rgba(78, 140, 255, 0.25)', () => {
+        const result = buildingSystem.installAttachment(buildingIndex, 'hydro');
+        if (result) pm.refresh({ buildingIndex });
+      });
+      // 检查能否安装，不能则置灰
+      const hydroCheck = buildingSystem.canInstallAttachment(buildingIndex, 'hydro');
+      if (!hydroCheck.valid) {
+        installHydroBtn.style.opacity = '0.5';
+        installHydroBtn.style.cursor = 'default';
+        installHydroBtn.title = hydroCheck.reason;
+      }
+      attachSection.appendChild(installHydroBtn);
+
+      const installWindBtn = actionButton('加装风力装置（齿轮×15 木板×75 电子元件×10 钢锭×35 毛皮×30）', 'rgba(78, 203, 113, 0.25)', () => {
+        const result = buildingSystem.installAttachment(buildingIndex, 'wind');
+        if (result) pm.refresh({ buildingIndex });
+      });
+      const windCheck = buildingSystem.canInstallAttachment(buildingIndex, 'wind');
+      if (!windCheck.valid) {
+        installWindBtn.style.opacity = '0.5';
+        installWindBtn.style.cursor = 'default';
+        installWindBtn.title = windCheck.reason;
+      }
+      installWindBtn.style.marginTop = '6px';
+      attachSection.appendChild(installWindBtn);
+    }
+
+    container.appendChild(attachSection);
   }
 
   // ===== 生产信息 =====
@@ -330,8 +383,7 @@ export function renderBuildingDetailPanel(data, body, pm) {
           synthFill,
           () => {
             const b = buildingSystem.buildings[buildingIndex];
-            // 当合成完成时返回total，使进度条固定在100%
-            return (b && b.synthesisProgress) ? b.synthesisProgress.progress : sp.total;
+            return (b && b.synthesisProgress) ? b.synthesisProgress.progress : 0;
           },
           () => sp.total,
           {
@@ -347,155 +399,6 @@ export function renderBuildingDetailPanel(data, body, pm) {
     }
 
     container.appendChild(synthSection);
-  }
-
-  // ===== 粮仓存储 =====
-  if (config.foodStorage && building.status === 'active') {
-    const granarySection = section('粮仓存储', '🌾');
-    
-    const storedFood = building.storedFood || 0;
-    const capacity = config.foodStorage.capacity;
-    const foodInHUD = resourceSystem.getAmount('food');
-    
-    granarySection.innerHTML += `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
-        <div style="font-size:12px;color:#a0a0ba;">当前存储</div>
-        <div style="font-size:12px;color:#ececf0;font-weight:500;">${storedFood} / ${capacity}</div>
-      </div>
-      <div style="height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin:8px 0;">
-        <div style="height:100%;background:#ffd700;width:${(storedFood / capacity) * 100}%;border-radius:3px;"></div>
-      </div>
-      <div style="font-size:11px;color:#6a6a82;text-align:right;">HUD中食物: ${foodInHUD}</div>
-    `;
-    
-    // 存入区域
-    const depositDiv = document.createElement('div');
-    depositDiv.style.cssText = 'margin-top:12px;';
-    const maxDeposit = Math.min(foodInHUD, capacity - storedFood);
-    depositDiv.innerHTML = `
-      <div style="font-size:12px;color:#a0a0ba;margin-bottom:6px;">存入食物</div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <button class="btn-minus" style="width:36px;height:32px;border:1px solid rgba(78,203,113,0.3);border-radius:6px;background:rgba(78,203,113,0.1);color:#4ecb71;font-size:18px;cursor:pointer;font-family:inherit;">−</button>
-        <input type="number" class="deposit-input" value="${Math.min(100, maxDeposit)}" min="0" max="${maxDeposit}" style="flex:1;height:32px;text-align:center;border:1px solid rgba(255,255,255,0.1);border-radius:6px;background:rgba(255,255,255,0.03);color:#ececf0;font-size:14px;font-family:inherit;outline:none;" />
-        <button class="btn-plus" style="width:36px;height:32px;border:1px solid rgba(78,203,113,0.3);border-radius:6px;background:rgba(78,203,113,0.1);color:#4ecb71;font-size:18px;cursor:pointer;font-family:inherit;">+</button>
-        <button class="btn-deposit" style="padding:0 16px;height:32px;border:none;border-radius:6px;background:rgba(78,203,113,0.25);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">存入</button>
-      </div>
-    `;
-    
-    const depositInput = depositDiv.querySelector('.deposit-input');
-    const depositBtn = depositDiv.querySelector('.btn-deposit');
-    const minusBtn = depositDiv.querySelector('.btn-minus');
-    const plusBtn = depositDiv.querySelector('.btn-plus');
-    
-    if (maxDeposit <= 0) {
-      depositBtn.style.cursor = 'default';
-      depositBtn.style.background = 'rgba(255,255,255,0.05)';
-      depositBtn.style.color = '#666';
-      minusBtn.style.cursor = 'default';
-      plusBtn.style.cursor = 'default';
-      depositInput.disabled = true;
-    }
-    
-    // 输入校验：无效输入视为0，超出范围取边界
-    const validateDepositInput = () => {
-      let val = parseInt(depositInput.value);
-      if (isNaN(val) || val < 0) {
-        val = 0;
-      } else if (val > maxDeposit) {
-        val = maxDeposit;
-      }
-      depositInput.value = val;
-    };
-    
-    depositInput.addEventListener('blur', validateDepositInput);
-    depositInput.addEventListener('change', validateDepositInput);
-    
-    minusBtn.addEventListener('click', () => {
-      let val = parseInt(depositInput.value) || 0;
-      val = Math.max(0, val - 100);
-      depositInput.value = val;
-    });
-    
-    plusBtn.addEventListener('click', () => {
-      let val = parseInt(depositInput.value) || 0;
-      val = Math.min(maxDeposit, val + 100);
-      depositInput.value = val;
-    });
-    
-    depositBtn.addEventListener('click', () => {
-      validateDepositInput();
-      const amount = parseInt(depositInput.value) || 0;
-      if (amount > 0 && amount <= maxDeposit) {
-        buildingSystem.depositFoodToGranary(buildingIndex, amount);
-        pm.refresh({ buildingIndex });
-      }
-    });
-    
-    // 取出区域
-    const withdrawDiv = document.createElement('div');
-    withdrawDiv.style.cssText = 'margin-top:10px;';
-    withdrawDiv.innerHTML = `
-      <div style="font-size:12px;color:#a0a0ba;margin-bottom:6px;">取出食物</div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <button class="btn-minus-w" style="width:36px;height:32px;border:1px solid rgba(255,107,107,0.3);border-radius:6px;background:rgba(255,107,107,0.1);color:#ff6b6b;font-size:18px;cursor:pointer;font-family:inherit;">−</button>
-        <input type="number" class="withdraw-input" value="${Math.min(100, storedFood)}" min="0" max="${storedFood}" style="flex:1;height:32px;text-align:center;border:1px solid rgba(255,255,255,0.1);border-radius:6px;background:rgba(255,255,255,0.03);color:#ececf0;font-size:14px;font-family:inherit;outline:none;" />
-        <button class="btn-plus-w" style="width:36px;height:32px;border:1px solid rgba(255,107,107,0.3);border-radius:6px;background:rgba(255,107,107,0.1);color:#ff6b6b;font-size:18px;cursor:pointer;font-family:inherit;">+</button>
-        <button class="btn-withdraw" style="padding:0 16px;height:32px;border:none;border-radius:6px;background:rgba(255,107,107,0.25);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">取出</button>
-      </div>
-    `;
-    
-    const withdrawInput = withdrawDiv.querySelector('.withdraw-input');
-    const withdrawBtn = withdrawDiv.querySelector('.btn-withdraw');
-    const minusBtnW = withdrawDiv.querySelector('.btn-minus-w');
-    const plusBtnW = withdrawDiv.querySelector('.btn-plus-w');
-    
-    if (storedFood <= 0) {
-      withdrawBtn.style.cursor = 'default';
-      withdrawBtn.style.background = 'rgba(255,255,255,0.05)';
-      withdrawBtn.style.color = '#666';
-      minusBtnW.style.cursor = 'default';
-      plusBtnW.style.cursor = 'default';
-      withdrawInput.disabled = true;
-    }
-    
-    // 输入校验：无效输入视为0，超出范围取边界
-    const validateWithdrawInput = () => {
-      let val = parseInt(withdrawInput.value);
-      if (isNaN(val) || val < 0) {
-        val = 0;
-      } else if (val > storedFood) {
-        val = storedFood;
-      }
-      withdrawInput.value = val;
-    };
-    
-    withdrawInput.addEventListener('blur', validateWithdrawInput);
-    withdrawInput.addEventListener('change', validateWithdrawInput);
-    
-    minusBtnW.addEventListener('click', () => {
-      let val = parseInt(withdrawInput.value) || 0;
-      val = Math.max(0, val - 100);
-      withdrawInput.value = val;
-    });
-    
-    plusBtnW.addEventListener('click', () => {
-      let val = parseInt(withdrawInput.value) || 0;
-      val = Math.min(storedFood, val + 100);
-      withdrawInput.value = val;
-    });
-    
-    withdrawBtn.addEventListener('click', () => {
-      validateWithdrawInput();
-      const amount = parseInt(withdrawInput.value) || 0;
-      if (amount > 0 && amount <= storedFood) {
-        buildingSystem.withdrawFoodFromGranary(buildingIndex, amount);
-        pm.refresh({ buildingIndex });
-      }
-    });
-    
-    granarySection.appendChild(depositDiv);
-    granarySection.appendChild(withdrawDiv);
-    container.appendChild(granarySection);
   }
 
   // ===== 升级 =====
@@ -534,6 +437,48 @@ export function renderBuildingDetailPanel(data, body, pm) {
     }
     upgradeSection.appendChild(upgradeBtn);
     container.appendChild(upgradeSection);
+  }
+
+  // ===== 训练营：训练战士/弓箭手 =====
+  if ((config.id === 'training_ground' || config.id === 'advanced_training_ground') && building.status === 'active') {
+    const trainSection = section('训练', '⚔️');
+
+    const trainInfo = document.createElement('div');
+    trainInfo.style.cssText = 'font-size:12px;color:#a0a0ba;margin-bottom:10px;';
+    trainInfo.textContent = `可用工人: ${populationSystem.getAvailableWorkers()}`;
+    trainSection.appendChild(trainInfo);
+
+    // 训练营可训练战士
+    const trainWarriorBtn = actionButton('训练战士 (消耗1工人)', 'rgba(78, 203, 113, 0.25)', () => {
+      const game = window.__game;
+      if (!game || !game.systems.combat) return;
+      if (populationSystem.getAvailableWorkers() <= 0) return;
+      // 在地图上生成战士单位
+      const result = game.systems.combat.spawnUnit('warrior', building.gridX, building.gridY);
+      if (result) {
+        populationSystem.occupyForConstruction(1);
+        pm.refresh({ buildingIndex });
+      }
+    });
+    trainSection.appendChild(trainWarriorBtn);
+
+    // 高级训练营可额外训练弓箭手
+    if (config.id === 'advanced_training_ground') {
+      const trainArcherBtn = actionButton('训练弓箭手 (消耗1工人)', 'rgba(91, 141, 239, 0.25)', () => {
+        const game = window.__game;
+        if (!game || !game.systems.combat) return;
+        if (populationSystem.getAvailableWorkers() <= 0) return;
+        const result = game.systems.combat.spawnUnit('archer', building.gridX, building.gridY);
+        if (result) {
+          populationSystem.occupyForConstruction(1);
+          pm.refresh({ buildingIndex });
+        }
+      });
+      trainArcherBtn.style.marginTop = '6px';
+      trainSection.appendChild(trainArcherBtn);
+    }
+
+    container.appendChild(trainSection);
   }
 
   // ===== 拆除 =====

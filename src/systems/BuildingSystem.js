@@ -26,6 +26,9 @@ export class BuildingSystem {
   setPopulationSystem(ps) { this._populationSystem = ps; }
   setItemSystem(is) { this._itemSystem = is; }
   setTorchSystem(ts) { this._torchSystem = ts; }
+  setRoadSystem(rs) { this._roadSystem = rs; }
+  setTechSystem(ts) { this._techSystem = ts; }
+  setWeatherSystem(ws) { this._weatherSystem = ws; }
 
   init() {
     this._mapConfig = configRegistry.get('map');
@@ -113,11 +116,28 @@ export class BuildingSystem {
       }
     }
 
+    // 重叠检查（活跃的事件标记）
+    const removedIds = new Set(store.getState('removedEventMarkers') || []);
+    const eventMarkers = map.eventMarkers || [];
+    for (const marker of eventMarkers) {
+      if (removedIds.has(marker.id)) continue;
+      if (isAreaOverlap(gridX, gridY, w, h, marker.gridX, marker.gridY, 1, 1)) {
+        return { valid: false, reason: '与事件标记重叠' };
+      }
+    }
+
     // maxCount 检查
     if (config.maxCount !== null && config.maxCount !== undefined) {
       const count = this.buildings.filter(b => b.buildingId === buildingId).length;
       if (count >= config.maxCount) {
         return { valid: false, reason: '已达最大数量' };
+      }
+    }
+
+    // 道路邻接检查（非火把建筑必须邻接道路或仓库）
+    if (this._roadSystem) {
+      if (!this._roadSystem.canPlaceBuildingAt(gridX, gridY, w, h, buildingId)) {
+        return { valid: false, reason: '建筑必须邻接道路或仓库' };
       }
     }
 
@@ -139,16 +159,20 @@ export class BuildingSystem {
       if (!this._resourceSystem.consumeAll(config.buildCost)) return false;
     }
 
-    // 创建建筑实例
+    // 获取当前时间状态
+    const state = store.getState();
+    const currentTick = state.timeTick ?? 0;
+    const currentT = state.timeProgress ?? 0;
     const building = {
       buildingId,
       gridX,
       gridY,
       status: 'constructing',
       buildProgress: 0,
+      startTick: currentTick,
+      startTimeProgress: currentT,
       currentWorkers: 0,
-      synthesisProgress: null, // { recipeId, progress }
-      storedFood: 0 // 粮仓存储的食物量
+      synthesisProgress: null // { recipeId, progress }
     };
 
     this.buildings.push(building);
@@ -169,8 +193,7 @@ export class BuildingSystem {
       status: 'active',
       buildProgress: null,
       currentWorkers: 0,
-      synthesisProgress: null,
-      storedFood: 0
+      synthesisProgress: null
     };
     this.buildings.push(building);
     this._updateStore();
@@ -192,6 +215,11 @@ export class BuildingSystem {
     const upgradeCost = targetConfig.upgradeCost || [];
     if (!this._resourceSystem.canAfford(upgradeCost)) {
       return { valid: false, reason: '资源不足' };
+    }
+
+    // 检查目标建筑是否已解锁（科技限制）
+    if (!this.isUnlocked(config.upgradesTo)) {
+      return { valid: false, reason: '目标建筑尚未解锁' };
     }
 
     return { valid: true, targetId: config.upgradesTo, cost: upgradeCost };
@@ -232,10 +260,6 @@ export class BuildingSystem {
     building.currentWorkers++;
     this._updateStore();
     this._populationSystem.refresh();
-    
-    // 追踪工人名字
-    this._populationSystem.assignWorkerToBuilding(buildingIndex);
-    
     eventBus.emit('workerChanged', { buildingIndex });
     return true;
   }
@@ -247,10 +271,6 @@ export class BuildingSystem {
     building.currentWorkers--;
     this._updateStore();
     this._populationSystem.refresh();
-    
-    // 追踪工人名字
-    this._populationSystem.removeWorkerFromBuilding(buildingIndex);
-    
     eventBus.emit('workerChanged', { buildingIndex });
     return true;
   }
@@ -305,13 +325,151 @@ export class BuildingSystem {
 
   // ===== 拆除 =====
 
-  demolishBuilding(buildingIndex) {
+  // ===== 水力/风力装置 =====
+
+  /** 可加装装置的工厂类建筑ID集合（有maxWorkers的生产建筑） */
+  _getAttachmentBuildings() {
+    return this.buildings.filter(b => {
+      if (b.status !== 'active') return false;
+      const cfg = configRegistry.getBuilding(b.buildingId);
+      return cfg && cfg.maxWorkers && cfg.maxWorkers > 0 && cfg.production;
+    });
+  }
+
+  /** 获取建筑当前装置类型 */
+  getAttachmentType(buildingIndex) {
+    const b = this.buildings[buildingIndex];
+    if (!b) return null;
+    return b._attachmentType || null; // 'hydro' | 'wind' | null
+  }
+
+  /** 检查能否装装置 */
+  canInstallAttachment(buildingIndex, type) {
+    const b = this.buildings[buildingIndex];
+    if (!b || b.status !== 'active') return { valid: false, reason: '建筑不可用' };
+    if (b._attachmentType) return { valid: false, reason: `已安装${b._attachmentType === 'hydro' ? '水力' : '风力'}装置` };
+    if (!this._resourceSystem) return { valid: false, reason: '资源系统未就绪' };
+
+    // 科技解锁检查
+    if (this._techSystem) {
+      if (type === 'hydro' && !this._techSystem.isResearched('waterwheel')) {
+        return { valid: false, reason: '需要先研究「水车」科技' };
+      }
+      if (type === 'wind' && !this._techSystem.isResearched('sail')) {
+        return { valid: false, reason: '需要先研究「风帆」科技' };
+      }
+    }
+
+    const cfg = configRegistry.getBuilding(b.buildingId);
+    if (!cfg || !cfg.maxWorkers || cfg.maxWorkers <= 0 || !cfg.production) {
+      return { valid: false, reason: '该建筑不能加装装置' };
+    }
+
+    const costs = this._getAttachmentCost(type);
+    if (!this._resourceSystem.canAfford(costs)) return { valid: false, reason: '资源不足' };
+
+    // 水力：附近至少2格水
+    if (type === 'hydro') {
+      const map = this._mapConfig;
+      if (!map) return { valid: false, reason: '地图未就绪' };
+      let waterCount = 0;
+      for (let dx = -3; dx <= 3; dx++) {
+        for (let dy = -3; dy <= 3; dy++) {
+          const cx = b.gridX + dx;
+          const cy = b.gridY + dy;
+          if (cx < 0 || cy < 0 || cx >= map.gridWidth || cy >= map.gridHeight) continue;
+          if (map.grid[cy][cx] === 'W') waterCount++;
+          if (waterCount >= 2) break;
+        }
+        if (waterCount >= 2) break;
+      }
+      if (waterCount < 2) return { valid: false, reason: '附近水源不足（需要至少2格水）' };
+    }
+
+    return { valid: true };
+  }
+
+  _getAttachmentCost(type) {
+    if (type === 'hydro') {
+      return [
+        { resourceId: 'gear', amount: 20 },
+        { resourceId: 'plank', amount: 50 },
+        { resourceId: 'electronic_part', amount: 10 },
+        { resourceId: 'steel', amount: 40 }
+      ];
+    }
+    // wind
+    return [
+      { resourceId: 'gear', amount: 15 },
+      { resourceId: 'plank', amount: 75 },
+      { resourceId: 'electronic_part', amount: 10 },
+      { resourceId: 'steel', amount: 35 },
+      { resourceId: 'fur', amount: 30 }
+    ];
+  }
+
+  /** 安装装置 */
+  installAttachment(buildingIndex, type) {
+    const check = this.canInstallAttachment(buildingIndex, type);
+    if (!check.valid) return false;
+
+    const b = this.buildings[buildingIndex];
+    const costs = this._getAttachmentCost(type);
+    this._resourceSystem.consumeAll(costs);
+    b._attachmentType = type;
+    // 装置替代工人：清空工人
+    b.currentWorkers = 0;
+
+    this._updateStore();
+    eventBus.emit('workerChanged', { buildingIndex });
+    eventBus.emit('attachmentChanged', { buildingIndex, type });
+    return true;
+  }
+
+  /** 卸载装置 */
+  uninstallAttachment(buildingIndex) {
+    const b = this.buildings[buildingIndex];
+    if (!b || !b._attachmentType) return false;
+
+    const oldType = b._attachmentType;
+    b._attachmentType = null;
+
+    this._updateStore();
+    eventBus.emit('attachmentChanged', { buildingIndex, type: null, oldType });
+    return true;
+  }
+
+  demolishBuilding(buildingIndex, forced = false) {
     if (buildingIndex < 0 || buildingIndex >= this.buildings.length) return false;
     const building = this.buildings[buildingIndex];
     const config = configRegistry.getBuilding(building.buildingId);
 
-    // demolishable 明确设为 false 的建筑不可拆除（如仓库）
-    if (config && config.demolishable === false) return false;
+    // demolishable 明确设为 false 的建筑不可拆除（如仓库），但敌人摧毁时忽略
+    if (!forced && config && config.demolishable === false) return false;
+
+    // 建筑被摧毁时处理
+    const bConfig = configRegistry.getBuilding(building.buildingId);
+    if (bConfig && building.status === 'active') {
+      // 宿舍建筑：住在里面的人全部死亡
+      if (bConfig.housingCapacity && bConfig.housingCapacity > 0) {
+        const capacity = bConfig.housingCapacity;
+        const killed = Math.min(capacity, Math.max(0, this._populationSystem.current - 1));
+        if (killed > 0 && this._populationSystem) {
+          this._populationSystem.current = Math.max(1, this._populationSystem.current - killed);
+          this._populationSystem._updateStore();
+          eventBus.emit('populationChanged', { current: this._populationSystem.current, direction: 'enemy' });
+        }
+      }
+      // 仓库类建筑：物资丢失50%
+      if (bConfig.storageMultiplier && this._resourceSystem) {
+        for (const res of this._resourceSystem._resources) {
+          const loss = Math.floor(res.amount * 0.5);
+          if (loss > 0) {
+            this._resourceSystem.tryConsume(res.id, loss);
+          }
+        }
+      }
+    }
 
     this.buildings.splice(buildingIndex, 1);
     this._updateStore();
@@ -394,6 +552,16 @@ export class BuildingSystem {
       }
     }
 
+    // 重叠检查（活跃的事件标记）
+    const removedIds = new Set(store.getState('removedEventMarkers') || []);
+    const eventMarkers = map.eventMarkers || [];
+    for (const marker of eventMarkers) {
+      if (removedIds.has(marker.id)) continue;
+      if (isAreaOverlap(newGridX, newGridY, w, h, marker.gridX, marker.gridY, 1, 1)) {
+        return { valid: false, reason: '与事件标记重叠' };
+      }
+    }
+
     return { valid: true };
   }
 
@@ -438,6 +606,21 @@ export class BuildingSystem {
       } else if (building.status === 'active' && isWorkPeriod) {
         this._processProduction(building);
         this._processSynthesis(building);
+      } else if (building.status === 'active' && !isWorkPeriod && building._attachmentType) {
+        // 有装置的建筑不受时段限制，全天24小时工作
+        this._processProduction(building);
+        this._processSynthesis(building);
+      }
+
+      // 装置天气损坏检测（每tick）
+      if (building._attachmentType && this._weatherSystem) {
+        const mod = this._weatherSystem.getAttachmentModifier();
+        if (mod.damageChance > 0 && Math.random() < mod.damageChance) {
+          const typeName = building._attachmentType === 'hydro' ? '水力' : '风力';
+          building._attachmentType = null;
+          eventBus.emit('combatBroadcast', { message: `💥 ${typeName}装置被暴风摧毁！` });
+          eventBus.emit('attachmentChanged', { buildingIndex: this.buildings.indexOf(building), type: null });
+        }
       }
     }
 
@@ -471,9 +654,25 @@ export class BuildingSystem {
   _processProduction(building) {
     const config = configRegistry.getBuilding(building.buildingId);
     if (!config || !config.production) return;
-    if (building.currentWorkers <= 0 && config.production.perWorker) return;
+    if (building.currentWorkers <= 0 && config.production.perWorker) {
+      // 没有工人但有装置？装置替代工人
+      if (!building._attachmentType) return;
+    }
 
     const prod = config.production;
+    let effectiveWorkers = building.currentWorkers || 0;
+
+    // 装置逻辑：替代工人
+    if (building._attachmentType && effectiveWorkers <= 0 && prod.perWorker) {
+      effectiveWorkers = 1; // 装置算1个"工人"
+      // 应用天气效率加成
+      if (this._weatherSystem) {
+        const mod = this._weatherSystem.getAttachmentModifier();
+        if (mod.efficiency > 1) {
+          effectiveWorkers = Math.ceil(effectiveWorkers * mod.efficiency);
+        }
+      }
+    }
 
     // 获取相邻加成
     const bIndex = this.buildings.indexOf(building);
@@ -481,7 +680,7 @@ export class BuildingSystem {
 
     // 检查输入资源
     if (prod.input) {
-      const inputAmount = prod.perWorker ? building.currentWorkers : 1;
+      const inputAmount = prod.perWorker ? effectiveWorkers : 1;
       for (const inp of prod.input) {
         const needed = inp.amount * inputAmount;
         if (!this._resourceSystem.hasEnough(inp.resourceId, needed)) return; // 原料不足跳过
@@ -494,7 +693,7 @@ export class BuildingSystem {
 
     // 产出（应用相邻加成）
     if (prod.output) {
-      const outputMultiplier = prod.perWorker ? building.currentWorkers : 1;
+      const outputMultiplier = prod.perWorker ? effectiveWorkers : 1;
       for (const out of prod.output) {
         const baseAmount = out.amount * outputMultiplier;
         const adjusted = this.applyAdjacencyToProduction(
@@ -539,45 +738,18 @@ export class BuildingSystem {
    */
   getTotalFoodProduction() {
     let total = 0;
-
     for (let i = 0; i < this.buildings.length; i++) {
       const b = this.buildings[i];
       if (b.status !== 'active') continue;
-
+      if (b.currentWorkers <= 0) continue;
       const config = configRegistry.getBuilding(b.buildingId);
-      if (!config) continue;
-
-      // 1. foodCapacity 类型建筑（狩猎小屋）- 每日一次性产出
-      if (config.foodCapacity) {
-        if (b.currentWorkers <= 0) continue;
+      if (config && config.foodCapacity) {
         const baseAmount = config.foodCapacity * b.currentWorkers;
         const bonuses = this.getAdjacencyBonuses(i);
         const adjusted = this.applyAdjacencyToProduction(
           b.buildingId, 'food', baseAmount, 'foodCapacity', bonuses
         );
         total += Math.round(adjusted);
-      }
-
-      // 2. production 类型建筑（农田、渔场、狩猎场）- per-tick 产出
-      // 工作时段每天有 2 个时段 × 3 ticks/时段 = 6 ticks
-      if (config.production) {
-        const prod = config.production;
-        const multiplier = prod.perWorker ? (b.currentWorkers || 0) : 1;
-        if (multiplier <= 0) continue;
-
-        const bonuses = this.getAdjacencyBonuses(i);
-        if (prod.output) {
-          for (const out of prod.output) {
-            if (out.resourceId === 'food') {
-              const ticksPerDay = 6; // 2 work periods × 3 ticks/period
-              const baseAmount = out.amount * multiplier * ticksPerDay;
-              const adjusted = this.applyAdjacencyToProduction(
-                b.buildingId, out.resourceId, baseAmount, 'production', bonuses
-              );
-              total += Math.round(adjusted);
-            }
-          }
-        }
       }
     }
     return total;
@@ -647,37 +819,7 @@ export class BuildingSystem {
   }
 
   /**
-   * 获取建筑的完整升级链（包括自身和所有升级后代）
-   * @returns {Array} 升级链中所有建筑ID
-   */
-  _getUpgradeChain(buildingId) {
-    const chain = [];
-    let current = buildingId;
-    
-    // 向上遍历找到升级链的根节点
-    while (current) {
-      const config = configRegistry.getBuilding(current);
-      if (!config) break;
-      chain.unshift(current); // 插入到开头
-      current = config.upgradesFrom;
-    }
-    
-    // 向下遍历找到所有升级后代
-    current = buildingId;
-    while (current) {
-      const config = configRegistry.getBuilding(current);
-      if (!config) break;
-      if (!chain.includes(current)) {
-        chain.push(current);
-      }
-      current = config.upgradesTo;
-    }
-    
-    return [...new Set(chain)];
-  }
-
-  /**
-   * 检查建筑是否已解锁（前置建筑已建造，支持升级链）
+   * 检查建筑是否已解锁（前置建筑已建造或科技已研究）
    */
   isUnlocked(buildingId) {
     const config = configRegistry.getBuilding(buildingId);
@@ -688,14 +830,67 @@ export class BuildingSystem {
 
     return conditions.every(cond => {
       switch (cond.type) {
-        case 'building': {
-          // 获取目标建筑的完整升级链
-          const upgradeChain = this._getUpgradeChain(cond.buildingId);
-          // 检查升级链中是否有任意一个建筑已建造
-          return upgradeChain.some(bid => this.hasBuilding(bid));
-        }
+        case 'building':
+          return this.hasBuilding(cond.buildingId);
+        case 'tech':
+          return this._techSystem ? this._techSystem.isResearched(cond.techId) : false;
         default:
           return false;
+      }
+    });
+  }
+
+  /**
+   * 获取建筑的解锁条件（用于UI展示）
+   */
+  getUnlockConditions(buildingId) {
+    const config = configRegistry.getBuilding(buildingId);
+    if (!config) return [];
+    const conditions = config.unlockConditions;
+    if (!conditions || conditions.length === 0) return [{ type: 'always', desc: '初始可用', met: true }];
+
+    return conditions.map(cond => {
+      switch (cond.type) {
+        case 'building': {
+          const bCfg = configRegistry.getBuilding(cond.buildingId);
+          const name = bCfg ? bCfg.name : cond.buildingId;
+          const met = this.hasBuilding(cond.buildingId);
+          return { type: 'building', desc: `建造: ${name}`, met };
+        }
+        case 'tech': {
+          const techConfig = configRegistry.get('techs') || [];
+          const t = techConfig.find(t => t.id === cond.techId);
+          const name = t ? t.name : cond.techId;
+          const met = this._techSystem ? this._techSystem.isResearched(cond.techId) : false;
+          return { type: 'tech', desc: `科技: ${name}`, met };
+        }
+        default:
+          return { type: 'unknown', desc: `条件: ${cond.type}`, met: false };
+      }
+    });
+  }
+
+  /**
+   * 获取建筑的解锁条件（用于UI展示）
+   * @param {string} buildingId
+   * @returns {Array<{type: string, desc: string, met: boolean}>}
+   */
+  getUnlockConditions(buildingId) {
+    const config = configRegistry.getBuilding(buildingId);
+    if (!config) return [];
+    const conditions = config.unlockConditions;
+    if (!conditions || conditions.length === 0) return [{ type: 'always', desc: '初始可用', met: true }];
+
+    return conditions.map(cond => {
+      switch (cond.type) {
+        case 'building': {
+          const bCfg = configRegistry.getBuilding(cond.buildingId);
+          const name = bCfg ? bCfg.name : cond.buildingId;
+          const met = this.hasBuilding(cond.buildingId);
+          return { type: 'building', desc: `建造: ${name}`, met };
+        }
+        default:
+          return { type: 'unknown', desc: `条件: ${cond.type}`, met: false };
       }
     });
   }
@@ -705,112 +900,6 @@ export class BuildingSystem {
    */
   getNewlyUnlocked() {
     return [...this._newlyUnlocked];
-  }
-
-  // ===== 粮仓系统 =====
-
-  /**
-   * 获取粮仓的存储容量
-   */
-  getGranaryCapacity(buildingIndex) {
-    const building = this.buildings[buildingIndex];
-    if (!building) return 0;
-    const config = configRegistry.getBuilding(building.buildingId);
-    if (!config || !config.foodStorage) return 0;
-    return config.foodStorage.capacity;
-  }
-
-  /**
-   * 获取粮仓当前存储的食物量
-   */
-  getGranaryStoredFood(buildingIndex) {
-    const building = this.buildings[buildingIndex];
-    if (!building) return 0;
-    return building.storedFood || 0;
-  }
-
-  /**
-   * 向粮仓存入食物
-   * @returns {number} 实际存入的数量
-   */
-  depositFoodToGranary(buildingIndex, amount) {
-    const building = this.buildings[buildingIndex];
-    if (!building || building.status !== 'active') return 0;
-    if (amount <= 0) return 0;
-
-    const config = configRegistry.getBuilding(building.buildingId);
-    if (!config || !config.foodStorage) return 0;
-
-    const capacity = config.foodStorage.capacity;
-    const currentStored = building.storedFood || 0;
-    const availableSpace = capacity - currentStored;
-    const actualDeposit = Math.min(amount, availableSpace);
-
-    if (actualDeposit > 0 && this._resourceSystem) {
-      const consumed = this._resourceSystem.tryConsume('food', actualDeposit);
-      if (consumed) {
-        building.storedFood = currentStored + actualDeposit;
-        this._updateStore();
-        eventBus.emit('granaryChanged', { buildingIndex, storedFood: building.storedFood });
-        return actualDeposit;
-      }
-    }
-    return 0;
-  }
-
-  /**
-   * 从粮仓取出食物
-   * @returns {number} 实际取出的数量
-   */
-  withdrawFoodFromGranary(buildingIndex, amount) {
-    const building = this.buildings[buildingIndex];
-    if (!building || building.status !== 'active') return 0;
-    if (amount <= 0) return 0;
-
-    const config = configRegistry.getBuilding(building.buildingId);
-    if (!config || !config.foodStorage) return 0;
-
-    const currentStored = building.storedFood || 0;
-    const actualWithdraw = Math.min(amount, currentStored);
-
-    if (actualWithdraw > 0 && this._resourceSystem) {
-      building.storedFood = currentStored - actualWithdraw;
-      this._resourceSystem.addClamped('food', actualWithdraw);
-      this._updateStore();
-      eventBus.emit('granaryChanged', { buildingIndex, storedFood: building.storedFood });
-      return actualWithdraw;
-    }
-    return 0;
-  }
-
-  /**
-   * 获取所有粮仓存储的总食物量
-   */
-  getTotalGranaryFood() {
-    let total = 0;
-    for (const building of this.buildings) {
-      if (building.status !== 'active') continue;
-      const config = configRegistry.getBuilding(building.buildingId);
-      if (config && config.foodStorage) {
-        total += building.storedFood || 0;
-      }
-    }
-    return total;
-  }
-
-  /**
-   * 获取所有资源扩容室的总容量加成
-   */
-  getTotalCapacityBonus() {
-    let total = 0;
-    for (const building of this.buildings) {
-      if (building.status !== 'active') continue;
-      const config = configRegistry.getBuilding(building.buildingId);
-      if (config && config.capacityBonus) {
-        total += config.capacityBonus;
-      }
-    }
-    return total;
   }
 
   /**
@@ -842,31 +931,17 @@ export class BuildingSystem {
   }
 
   _updateStorageMultiplier() {
-    // 计算所有 warehouse 系建筑的倍率之和，最小值为 0.5
-    let warehouseMultiplier = 0;
-    let capacityBonus = 0;
+    // 查找仓库类建筑的最大倍率
+    let maxMultiplier = 1;
     for (const b of this.buildings) {
       if (b.status !== 'active') continue;
       const config = configRegistry.getBuilding(b.buildingId);
-      if (!config) continue;
-      
-      // 仓库倍率
-      if (config.storageMultiplier) {
-        const tags = config.tags || [];
-        if (tags.includes('warehouse')) {
-          warehouseMultiplier += config.storageMultiplier;
-        }
-      }
-      
-      // 资源扩容室容量加成
-      if (config.capacityBonus) {
-        capacityBonus += config.capacityBonus;
+      if (config && config.storageMultiplier) {
+        maxMultiplier = Math.max(maxMultiplier, config.storageMultiplier);
       }
     }
-    const finalMultiplier = Math.max(warehouseMultiplier, 0.5);
     if (this._resourceSystem) {
-      this._resourceSystem.setStorageMultiplier(finalMultiplier);
-      this._resourceSystem.setCapacityBonus(capacityBonus);
+      this._resourceSystem.setStorageMultiplier(maxMultiplier);
     }
   }
 
@@ -1100,7 +1175,7 @@ export class BuildingSystem {
       currentWorkers: b.currentWorkers,
       buildProgress: b.buildProgress,
       synthesisProgress: b.synthesisProgress,
-      storedFood: b.storedFood || 0
+      _attachmentType: b._attachmentType
     }));
   }
 
@@ -1114,7 +1189,7 @@ export class BuildingSystem {
       currentWorkers: s.currentWorkers || 0,
       buildProgress: s.buildProgress || null,
       synthesisProgress: s.synthesisProgress || null,
-      storedFood: s.storedFood || 0
+      _attachmentType: s._attachmentType || null
     }));
     this._updateStorageMultiplier();
     this._updateStore();

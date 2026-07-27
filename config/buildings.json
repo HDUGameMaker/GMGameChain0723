@@ -62,8 +62,8 @@
     "upgradesFrom": "work_shed",
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "lumber_mill"
+        "type": "tech",
+        "techId": "woodworking"
       }
     ],
     "upgradeCost": [
@@ -109,8 +109,8 @@
     "initialBuilding": false,
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "forge"
+        "type": "tech",
+        "techId": "tile_housing"
       }
     ],
     "housingCapacity": 12,
@@ -185,8 +185,8 @@
     ],
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "hunting_hut"
+        "type": "tech",
+        "techId": "farming"
       }
     ],
     "foodCapacity": 0,
@@ -231,12 +231,7 @@
     "allowedGrounds": [
       "G"
     ],
-    "unlockConditions": [
-      {
-        "type": "building",
-        "buildingId": "hunting_hut"
-      }
-    ],
+    "unlockConditions": [],
     "foodCapacity": 0,
     "maxWorkers": 5,
     "buildCost": [],
@@ -289,12 +284,7 @@
     "allowedGrounds": [
       "G"
     ],
-    "unlockConditions": [
-      {
-        "type": "building",
-        "buildingId": "hunting_hut"
-      }
-    ],
+    "unlockConditions": [],
     "foodCapacity": 0,
     "maxWorkers": 6,
     "buildCost": [],
@@ -387,8 +377,8 @@
     "storageMultiplier": 2,
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "forge"
+        "type": "tech",
+        "techId": "storage_tech"
       }
     ],
     "upgradesFrom": "warehouse",
@@ -446,8 +436,8 @@
     "initialBuilding": false,
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "logging_camp"
+        "type": "tech",
+        "techId": "wood_processing"
       }
     ],
     "maxWorkers": 2,
@@ -490,7 +480,7 @@
   },
   {
     "id": "stope",
-    "name": "采场",
+    "name": "采石场",
     "description": "采集石料的露天矿场，每个工人每轮产出固定数量的石头。仅能建造在裸露石头地形上。",
     "footprint": {
       "width": 2,
@@ -501,7 +491,12 @@
     "allowedGrounds": [
       "R"
     ],
-    "unlockConditions": [],
+    "unlockConditions": [
+      {
+        "type": "tech",
+        "techId": "mining"
+      }
+    ],
     "maxWorkers": 3,
     "buildCost": [
       {
@@ -595,8 +590,8 @@
     ],
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "stope"
+        "type": "tech",
+        "techId": "smelting"
       }
     ],
     "buildTime": 3,
@@ -642,8 +637,8 @@
     "initialBuilding": false,
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "lumber_mill"
+        "type": "tech",
+        "techId": "mine_support_tech"
       }
     ],
     "maxWorkers": 0,
@@ -675,8 +670,8 @@
     "initialBuilding": false,
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "lumber_mill"
+        "type": "tech",
+        "techId": "basic_crafting"
       }
     ],
     "buildCost": [
@@ -754,8 +749,8 @@
     "upgradesFrom": "basic_workshop",
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "forge"
+        "type": "tech",
+        "techId": "precision_crafting"
       }
     ],
     "upgradeCost": [
@@ -812,8 +807,8 @@
     "maxWorkers": 2,
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "forge"
+        "type": "tech",
+        "techId": "steelmaking"
       }
     ],
     "buildCost": [
@@ -871,8 +866,8 @@
     "maxWorkers": 1,
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "forge"
+        "type": "tech",
+        "techId": "brickmaking"
       }
     ],
     "buildCost": [
@@ -926,8 +921,8 @@
     "maxWorkers": 2,
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "steel_furnace"
+        "type": "tech",
+        "techId": "mechanical_engineering"
       }
     ],
     "buildCost": [
@@ -980,8 +975,8 @@
     "initialBuilding": false,
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "brick_kiln"
+        "type": "tech",
+        "techId": "brick_architecture"
       }
     ],
     "housingCapacity": 20,
@@ -1025,8 +1020,8 @@
     "storageMultiplier": 3,
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "machine_shop"
+        "type": "tech",
+        "techId": "brick_architecture"
       }
     ],
     "upgradesFrom": "industrial_warehouse",
@@ -1084,8 +1079,8 @@
     ],
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "brick_kiln"
+        "type": "tech",
+        "techId": "brick_architecture"
       }
     ],
     "buildTime": 4,
@@ -1111,8 +1106,8 @@
     "upgradesFrom": "advanced_workshop",
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "machine_shop"
+        "type": "tech",
+        "techId": "precision_manufacturing"
       }
     ],
     "upgradeCost": [
@@ -1526,12 +1521,7 @@
     "initialBuilding": false,
     "maxWorkers": 2,
     "buildCost": [],
-    "unlockConditions": [
-      {
-        "type": "building",
-        "buildingId": "stope"
-      }
-    ],
+    "unlockConditions": [],
     "buildTime": 4,
     "upgradesTo": "advanced_forge",
     "production": {
@@ -1586,12 +1576,7 @@
     "initialBuilding": false,
     "maxWorkers": 2,
     "buildCost": [],
-    "unlockConditions": [
-      {
-        "type": "building",
-        "buildingId": "stope"
-      }
-    ],
+    "unlockConditions": [],
     "buildTime": 5,
     "upgradesTo": null,
     "production": {
@@ -1763,12 +1748,7 @@
     },
     "maxCount": null,
     "initialBuilding": false,
-    "unlockConditions": [
-      {
-        "type": "building",
-        "buildingId": "logging_camp"
-      }
-    ],
+    "unlockConditions": [],
     "maxWorkers": 2,
     "buildCost": [],
     "buildTime": 3,
@@ -1838,12 +1818,7 @@
     },
     "maxCount": null,
     "initialBuilding": false,
-    "unlockConditions": [
-      {
-        "type": "building",
-        "buildingId": "logging_camp"
-      }
-    ],
+    "unlockConditions": [],
     "maxWorkers": 2,
     "buildCost": [],
     "buildTime": 3,
@@ -1963,6 +1938,12 @@
     ],
     "tags": [
       "fishing_ground"
+    ],
+    "unlockConditions": [
+      {
+        "type": "tech",
+        "techId": "fishing"
+      }
     ]
   },
   {
@@ -2040,6 +2021,12 @@
     ],
     "tags": [
       "hunting_ground"
+    ],
+    "unlockConditions": [
+      {
+        "type": "tech",
+        "techId": "hunting"
+      }
     ]
   },
   {
@@ -2237,7 +2224,8 @@
     ],
     "tags": [
       "hunting_ground"
-    ]
+    ],
+    "unlockConditions": []
   },
   {
     "id": "advanced_hunting_ground",
@@ -2324,7 +2312,8 @@
     ],
     "tags": [
       "hunting_ground"
-    ]
+    ],
+    "unlockConditions": []
   },
   {
     "id": "enhanced_fishing_ground",
@@ -2404,7 +2393,8 @@
     "upgradesFrom": "fishing_ground",
     "tags": [
       "fishing_ground"
-    ]
+    ],
+    "unlockConditions": []
   },
   {
     "id": "advanced_fishing_ground",
@@ -2484,7 +2474,8 @@
     "upgradesFrom": "enhanced_fishing_ground",
     "tags": [
       "fishing_ground"
-    ]
+    ],
+    "unlockConditions": []
   },
   {
     "id": "granary",
@@ -2498,8 +2489,8 @@
     "initialBuilding": false,
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "farm"
+        "type": "tech",
+        "techId": "grain_storage"
       }
     ],
     "maxWorkers": 0,
@@ -2543,12 +2534,7 @@
     },
     "maxCount": null,
     "initialBuilding": false,
-    "unlockConditions": [
-      {
-        "type": "building",
-        "buildingId": "farm"
-      }
-    ],
+    "unlockConditions": [],
     "maxWorkers": 0,
     "buildCost": [],
     "buildTime": 5,
@@ -2596,12 +2582,7 @@
     },
     "maxCount": null,
     "initialBuilding": false,
-    "unlockConditions": [
-      {
-        "type": "building",
-        "buildingId": "farm"
-      }
-    ],
+    "unlockConditions": [],
     "maxWorkers": 0,
     "buildCost": [],
     "buildTime": 7,
@@ -2651,8 +2632,8 @@
     "initialBuilding": false,
     "unlockConditions": [
       {
-        "type": "building",
-        "buildingId": "warehouse"
+        "type": "tech",
+        "techId": "resource_expansion"
       }
     ],
     "maxWorkers": 0,
@@ -2694,12 +2675,7 @@
     },
     "maxCount": null,
     "initialBuilding": false,
-    "unlockConditions": [
-      {
-        "type": "building",
-        "buildingId": "warehouse"
-      }
-    ],
+    "unlockConditions": [],
     "maxWorkers": 0,
     "buildCost": [],
     "buildTime": 5,
@@ -2741,12 +2717,7 @@
     },
     "maxCount": null,
     "initialBuilding": false,
-    "unlockConditions": [
-      {
-        "type": "building",
-        "buildingId": "warehouse"
-      }
-    ],
+    "unlockConditions": [],
     "maxWorkers": 0,
     "buildCost": [],
     "buildTime": 7,
@@ -2781,5 +2752,94 @@
       "resource_expansion_room"
     ],
     "capacityBonus": 200
+  },
+  {
+    "id": "training_ground",
+    "name": "训练营",
+    "description": "训练战士的场所，将普通工人转化为战士。",
+    "footprint": {"width": 2, "height": 2},
+    "maxCount": 1,
+    "initialBuilding": false,
+    "unlockConditions": [{"type": "tech", "techId": "military_training"}],
+    "buildCost": [{"resourceId": "wood", "amount": 100}, {"resourceId": "stone", "amount": 80}],
+    "buildTime": 4,
+    "upgradesTo": "advanced_training_ground",
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {"nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0},
+    "tags": ["combat"]
+  },
+  {
+    "id": "advanced_training_ground",
+    "name": "高级训练营",
+    "description": "升级后的训练营，可以训练更强大的弓箭手。",
+    "footprint": {"width": 2, "height": 2},
+    "maxCount": 1,
+    "initialBuilding": false,
+    "upgradesFrom": "training_ground",
+    "unlockConditions": [{"type": "tech", "techId": "advanced_military"}],
+    "buildCost": [],
+    "buildTime": 5,
+    "upgradeCost": [{"resourceId": "plank", "amount": 150}, {"resourceId": "iron_ingot", "amount": 100}],
+    "upgradesTo": null,
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {"nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0},
+    "tags": ["combat"]
+  },
+  {
+    "id": "medical_station",
+    "name": "医疗站",
+    "description": "为受伤士兵提供医疗救治，每tick治疗附近士兵1点血量。",
+    "footprint": {"width": 1, "height": 1},
+    "maxCount": null,
+    "initialBuilding": false,
+    "unlockConditions": [{"type": "tech", "techId": "military_medicine"}],
+    "maxWorkers": 2,
+    "buildCost": [{"resourceId": "wood", "amount": 50}, {"resourceId": "stone", "amount": 30}],
+    "buildTime": 3,
+    "upgradesTo": null,
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {"nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0},
+    "tags": ["combat"]
+  },
+  {
+    "id": "repair_station",
+    "name": "维修站",
+    "description": "维修受损建筑的场所，每tick给附近1格内的建筑回复1点耐久。",
+    "footprint": {"width": 1, "height": 1},
+    "maxCount": null,
+    "initialBuilding": false,
+    "unlockConditions": [{"type": "tech", "techId": "building_repair"}],
+    "maxWorkers": 2,
+    "buildCost": [{"resourceId": "steel", "amount": 60}, {"resourceId": "machine_part", "amount": 15}],
+    "buildTime": 3,
+    "upgradesTo": null,
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {"nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0},
+    "tags": ["combat"]
+  },
+  {
+    "id": "gear_factory",
+    "name": "齿轮厂",
+    "description": "生产精密齿轮的工厂，为装置提供核心部件。",
+    "footprint": {"width": 2, "height": 2},
+    "maxCount": null,
+    "initialBuilding": false,
+    "unlockConditions": [{"type": "tech", "techId": "precision_molding"}],
+    "maxWorkers": 2,
+    "buildCost": [{"resourceId": "plank", "amount": 60}, {"resourceId": "stone", "amount": 40}, {"resourceId": "iron_ingot", "amount": 30}],
+    "buildTime": 4,
+    "upgradesTo": null,
+    "production": {
+      "perWorker": true,
+      "input": [{"resourceId": "iron_ingot", "amount": 1}],
+      "output": [{"resourceId": "gear", "amount": 1}]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {"nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0},
+    "tags": ["forge"]
   }
 ]

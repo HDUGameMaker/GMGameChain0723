@@ -100,20 +100,15 @@ function switchTab(tab) {
   const isSingleton = (tab === 'settings');
   const isBindings = (tab === 'bindings');
   const isBGMBindings = (tab === 'bgmbindings');
-  const isBuildingBindings = (tab === 'buildingBindings');
   ['btnAdd', 'btnDup', 'btnDel'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
-      el.style.display = (isSingleton || isBindings || isBuildingBindings) ? 'none' : '';
+      el.style.display = (isSingleton || isBindings) ? 'none' : '';
     }
   });
 
-  // 设置 tab 和 buildingBindings 隐藏列表
+  // 设置 tab 隐藏列表
   const listPanel = document.getElementById('listPanel');
-  if (tab === 'buildingBindings') {
-    listPanel.style.display = '';
-    document.getElementById('detailPanel').style.flex = '';
-  }
 
   refreshList();
   renderDetail();
@@ -182,67 +177,6 @@ function bindFormEvents() {
       refreshList();
     });
   });
-
-  // 绑定建筑音效绑定的下拉框
-  panel.querySelectorAll('select[data-building]').forEach(el => {
-    const clone = el.cloneNode(true);
-    el.parentNode.replaceChild(clone, el);
-    clone.addEventListener('change', () => {
-      const buildingId = clone.dataset.building;
-      const soundKey = clone.dataset.soundKey;
-      const soundId = clone.value || null;
-
-      if (!state.data.buildingSoundBindings) state.data.buildingSoundBindings = { default: {} };
-      if (!state.data.buildingSoundBindings[buildingId]) {
-        state.data.buildingSoundBindings[buildingId] = {};
-      }
-
-      state.data.buildingSoundBindings[buildingId][soundKey] = soundId;
-      markDirty();
-    });
-  });
-
-  // 绑定物品合成音效绑定的下拉框
-  panel.querySelectorAll('select[data-item]').forEach(el => {
-    const clone = el.cloneNode(true);
-    el.parentNode.replaceChild(clone, el);
-    clone.addEventListener('change', () => {
-      const itemId = clone.dataset.item;
-      const soundKey = clone.dataset.soundKey;
-      const soundId = clone.value || null;
-
-      if (!state.data.itemSoundBindings) state.data.itemSoundBindings = { default: {} };
-      if (!state.data.itemSoundBindings[itemId]) {
-        state.data.itemSoundBindings[itemId] = {};
-      }
-
-      state.data.itemSoundBindings[itemId][soundKey] = soundId;
-      markDirty();
-    });
-  });
-}
-
-// 删除建筑音效绑定
-function removeBuildingSoundBinding(buildingId) {
-  if (!confirm(`确定要删除建筑 "${buildingId}" 的自定义音效吗？`)) return;
-  if (state.data.buildingSoundBindings && state.data.buildingSoundBindings[buildingId]) {
-    delete state.data.buildingSoundBindings[buildingId];
-    state.selectedBuilding = 'default';
-    markDirty();
-    refreshList();
-    renderDetail();
-  }
-}
-
-// 还原物品合成音效为默认
-function restoreItemSoundToDefault(itemId) {
-  if (!confirm(`确定要将物品 "${itemId}" 的合成音效还原为默认配置吗？`)) return;
-  if (state.data.itemSoundBindings && state.data.itemSoundBindings.default) {
-    state.data.itemSoundBindings[itemId] = { ...state.data.itemSoundBindings.default };
-    markDirty();
-    refreshList();
-    renderDetail();
-  }
 }
 
 function applyFieldChange(el) {
@@ -294,95 +228,4 @@ function applyFieldChange(el) {
   }
 
   markDirty();
-}
-
-// ==================== 动态预览函数 ====================
-
-/**
- * 预览建筑音效（动态获取当前选中的音效）
- * @param {string} buildingId - 建筑 ID
- * @param {string} soundKey - 音效键（click, buildStart, buildComplete, demolish, upgrade, move）
- * @param {HTMLElement} btn - 预览按钮元素
- */
-function previewBuildingSound(buildingId, soundKey, btn) {
-  // 从 select 元素获取当前选中的音效 ID
-  const selectEl = document.querySelector(`select[data-building="${buildingId}"][data-sound-key="${soundKey}"]`);
-  if (!selectEl) {
-    showToast('未找到音效选择器', 'error');
-    return;
-  }
-
-  const soundId = selectEl.value;
-  if (!soundId) {
-    showToast('请先选择一个音效', 'warn');
-    return;
-  }
-
-  // 根据音效 ID 查找文件路径
-  const sfxConfig = state.data && state.data.sfx ? state.data.sfx.find(s => s.id === soundId) : null;
-  if (!sfxConfig || !sfxConfig.file) {
-    showToast('音效文件路径不存在', 'error');
-    return;
-  }
-
-  togglePreviewAudio(sfxConfig.file, btn);
-}
-
-/**
- * 预览事件绑定音效（动态获取当前选中的音效）
- * @param {string} eventName - 事件名称
- * @param {HTMLElement} btn - 预览按钮元素
- */
-function previewBindingSound(eventName, btn) {
-  // 从 select 元素获取当前选中的音效 ID
-  const selectEl = document.querySelector(`select[data-field="binding"][data-event="${eventName}"]`);
-  if (!selectEl) {
-    showToast('未找到音效选择器', 'error');
-    return;
-  }
-
-  const soundId = selectEl.value;
-  if (!soundId) {
-    showToast('请先选择一个音效', 'warn');
-    return;
-  }
-
-  // 根据音效 ID 查找文件路径
-  const sfxConfig = state.data && state.data.sfx ? state.data.sfx.find(s => s.id === soundId) : null;
-  if (!sfxConfig || !sfxConfig.file) {
-    showToast('音效文件路径不存在', 'error');
-    return;
-  }
-
-  togglePreviewAudio(sfxConfig.file, btn);
-}
-
-/**
- * 预览物品合成音效（动态获取当前选中的音效）
- * @param {string} itemId - 物品 ID
- * @param {string} soundKey - 音效键（synthesisStart, synthesisComplete）
- * @param {HTMLElement} btn - 预览按钮元素
- */
-function previewItemSound(itemId, soundKey, btn) {
-  // 从 select 元素获取当前选中的音效 ID
-  const selectEl = document.querySelector(`select[data-item="${itemId}"][data-sound-key="${soundKey}"]`);
-  if (!selectEl) {
-    showToast('未找到音效选择器', 'error');
-    return;
-  }
-
-  const soundId = selectEl.value;
-  if (!soundId) {
-    showToast('请先选择一个音效', 'warn');
-    return;
-  }
-
-  // 根据音效 ID 查找文件路径
-  const sfxConfig = state.data && state.data.sfx ? state.data.sfx.find(s => s.id === soundId) : null;
-  if (!sfxConfig || !sfxConfig.file) {
-    showToast('音效文件路径不存在', 'error');
-    return;
-  }
-
-  togglePreviewAudio(sfxConfig.file, btn);
 }

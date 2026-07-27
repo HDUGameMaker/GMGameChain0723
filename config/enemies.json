@@ -1,0 +1,68 @@
+{
+  "enemies": [
+    {
+      "id": "wild_animal",
+      "name": "野生动物",
+      "description": "饥饿的野兽，在夜晚出没攻击人口。",
+      "maxHp": 5,
+      "attack": 1,
+      "attackTarget": "population",
+      "spawnConditions": {
+        "timePeriods": [
+          "night"
+        ],
+        "minDay": 1
+      }
+    },
+    {
+      "id": "robot_scout",
+      "name": "侦察机器人",
+      "description": "旧时代遗留的自动机械，敌我不分。",
+      "maxHp": 5,
+      "attack": 1,
+      "attackTarget": "both",
+      "spawnConditions": {
+        "timePeriods": [
+          "night"
+        ],
+        "minDay": 5
+      }
+    },
+    {
+      "id": "robot_raider",
+      "name": "袭击者机器人",
+      "description": "配备武器的战斗机器人，对基地有系统性破坏能力。",
+      "maxHp": 5,
+      "attack": 1,
+      "attackTarget": "both",
+      "spawnConditions": {
+        "timePeriods": [
+          "night"
+        ],
+        "minDay": 10
+      }
+    }
+  ],
+  "units": [
+    {
+      "id": "warrior",
+      "name": "战士",
+      "hp": 5,
+      "attack": 2,
+      "attackRange": 1,
+      "attackCooldown": 2
+    },
+    {
+      "id": "archer",
+      "name": "弓箭手",
+      "hp": 5,
+      "attack": 2,
+      "attackRange": 2,
+      "attackCooldown": 1
+    }
+  ],
+  "global": {
+    "humanHp": 2,
+    "clickAttack": 1
+  }
+}

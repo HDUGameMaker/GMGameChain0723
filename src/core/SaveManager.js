@@ -95,31 +95,6 @@ export class SaveManager {
   }
 
   /**
-   * 检查是否有存档
-   * @returns {Promise<boolean>}
-   */
-  static async hasSave() {
-    try {
-      // 检查 localStorage 紧急存档
-      const emergency = localStorage.getItem('gmgc_emergency_save');
-      if (emergency) return true;
-
-      // 检查 IndexedDB
-      const db = await SaveManager._getDB();
-      const saved = await new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, 'readonly');
-        const store = tx.objectStore(STORE_NAME);
-        const request = store.get(SAVE_KEY);
-        request.onsuccess = () => resolve(request.result || null);
-        request.onerror = () => resolve(null);
-      });
-      return !!saved;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  /**
    * 重置存档
    */
   static async reset() {

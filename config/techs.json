@@ -1,0 +1,733 @@
+[
+  {
+    "id": "logging",
+    "name": "伐木技术",
+    "tier": 0,
+    "cost": [],
+    "researchTime": 0,
+    "prerequisites": [],
+    "pos": {
+      "x": 0
+    },
+    "unlocks": {
+      "buildings": [
+        "logging_camp"
+      ]
+    }
+  },
+  {
+    "id": "mining",
+    "name": "采矿技术",
+    "tier": 0,
+    "cost": [],
+    "researchTime": 0,
+    "prerequisites": [],
+    "pos": {
+      "x": 2
+    },
+    "unlocks": {
+      "buildings": [
+        "stope"
+      ]
+    }
+  },
+  {
+    "id": "farming",
+    "name": "农耕技术",
+    "tier": 1,
+    "cost": [
+      {
+        "resourceId": "wood",
+        "amount": 30
+      }
+    ],
+    "researchTime": 12,
+    "prerequisites": [],
+    "pos": {
+      "x": 6
+    },
+    "unlocks": {
+      "buildings": [
+        "farm"
+      ]
+    }
+  },
+  {
+    "id": "basic_crafting",
+    "name": "基础制作",
+    "tier": 1,
+    "cost": [
+      {
+        "resourceId": "wood",
+        "amount": 20
+      }
+    ],
+    "researchTime": 12,
+    "prerequisites": [
+      "logging"
+    ],
+    "pos": {
+      "x": 1
+    },
+    "unlocks": {
+      "buildings": [
+        "basic_workshop"
+      ]
+    }
+  },
+  {
+    "id": "wood_processing",
+    "name": "木材加工",
+    "tier": 1,
+    "cost": [
+      {
+        "resourceId": "wood",
+        "amount": 50
+      }
+    ],
+    "researchTime": 12,
+    "prerequisites": [
+      "logging"
+    ],
+    "pos": {
+      "x": 0
+    },
+    "unlocks": {
+      "buildings": [
+        "lumber_mill"
+      ]
+    }
+  },
+  {
+    "id": "smelting",
+    "name": "冶炼技术",
+    "tier": 1,
+    "cost": [
+      {
+        "resourceId": "stone",
+        "amount": 100
+      },
+      {
+        "resourceId": "wood",
+        "amount": 200
+      }
+    ],
+    "researchTime": 12,
+    "prerequisites": [
+      "mining"
+    ],
+    "pos": {
+      "x": 2
+    },
+    "unlocks": {
+      "buildings": [
+        "forge"
+      ],
+      "regions": [
+        "mine_periphery"
+      ]
+    }
+  },
+  {
+    "id": "woodworking",
+    "name": "木工工艺",
+    "tier": 2,
+    "cost": [
+      {
+        "resourceId": "plank",
+        "amount": 30
+      }
+    ],
+    "researchTime": 24,
+    "prerequisites": [
+      "wood_processing"
+    ],
+    "pos": {
+      "x": 0
+    },
+    "unlocks": {
+      "buildings": [
+        "plank_house"
+      ]
+    }
+  },
+  {
+    "id": "steelmaking",
+    "name": "炼钢技术",
+    "tier": 2,
+    "cost": [
+      {
+        "resourceId": "iron_ingot",
+        "amount": 100
+      }
+    ],
+    "researchTime": 24,
+    "prerequisites": [
+      "smelting"
+    ],
+    "pos": {
+      "x": 1
+    },
+    "unlocks": {
+      "buildings": [
+        "steel_furnace"
+      ],
+      "items": [
+        "steel_tool_set"
+      ]
+    }
+  },
+  {
+    "id": "precision_crafting",
+    "name": "精密加工",
+    "tier": 2,
+    "cost": [
+      {
+        "resourceId": "plank",
+        "amount": 50
+      }
+    ],
+    "researchTime": 24,
+    "prerequisites": [
+      "smelting",
+      "basic_crafting"
+    ],
+    "pos": {
+      "x": 2
+    },
+    "unlocks": {
+      "buildings": [
+        "advanced_workshop"
+      ],
+      "items": [
+        "iron_tool_set"
+      ]
+    }
+  },
+  {
+    "id": "brickmaking",
+    "name": "制砖工艺",
+    "tier": 2,
+    "cost": [
+      {
+        "resourceId": "stone",
+        "amount": 80
+      }
+    ],
+    "researchTime": 24,
+    "prerequisites": [
+      "smelting"
+    ],
+    "pos": {
+      "x": 3
+    },
+    "unlocks": {
+      "buildings": [
+        "brick_kiln"
+      ]
+    }
+  },
+  {
+    "id": "storage_tech",
+    "name": "仓储技术",
+    "tier": 2,
+    "cost": [
+      {
+        "resourceId": "plank",
+        "amount": 40
+      }
+    ],
+    "researchTime": 24,
+    "prerequisites": [
+      "smelting"
+    ],
+    "pos": {
+      "x": 4
+    },
+    "unlocks": {
+      "buildings": [
+        "industrial_warehouse"
+      ]
+    }
+  },
+  {
+    "id": "fishing",
+    "name": "渔业技术",
+    "tier": 2,
+    "cost": [
+      {
+        "resourceId": "wood",
+        "amount": 30
+      }
+    ],
+    "researchTime": 24,
+    "prerequisites": [
+      "farming"
+    ],
+    "pos": {
+      "x": 5
+    },
+    "unlocks": {
+      "buildings": [
+        "fishing_ground"
+      ]
+    }
+  },
+  {
+    "id": "hunting",
+    "name": "狩猎技术",
+    "tier": 2,
+    "cost": [
+      {
+        "resourceId": "wood",
+        "amount": 40
+      }
+    ],
+    "researchTime": 24,
+    "prerequisites": [
+      "farming"
+    ],
+    "pos": {
+      "x": 6
+    },
+    "unlocks": {
+      "buildings": [
+        "hunting_ground"
+      ]
+    }
+  },
+  {
+    "id": "mine_support_tech",
+    "name": "矿井支撑",
+    "tier": 3,
+    "cost": [
+      {
+        "resourceId": "plank",
+        "amount": 100
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "wood_processing"
+    ],
+    "pos": {
+      "x": 0
+    },
+    "unlocks": {
+      "buildings": [
+        "mine_support"
+      ]
+    }
+  },
+  {
+    "id": "mechanical_engineering",
+    "name": "机械工程",
+    "tier": 3,
+    "cost": [
+      {
+        "resourceId": "steel",
+        "amount": 30
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "steelmaking"
+    ],
+    "pos": {
+      "x": 1
+    },
+    "unlocks": {
+      "buildings": [
+        "machine_shop"
+      ],
+      "items": [
+        "heavy_cart"
+      ]
+    }
+  },
+  {
+    "id": "brick_architecture",
+    "name": "砖石建筑",
+    "tier": 3,
+    "cost": [
+      {
+        "resourceId": "brick",
+        "amount": 50
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "brickmaking"
+    ],
+    "pos": {
+      "x": 3
+    },
+    "unlocks": {
+      "buildings": [
+        "brick_house",
+        "watchtower",
+        "steel_warehouse"
+      ]
+    }
+  },
+  {
+    "id": "tile_housing",
+    "name": "砖瓦住宅",
+    "tier": 3,
+    "cost": [
+      {
+        "resourceId": "brick",
+        "amount": 30
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "brickmaking"
+    ],
+    "pos": {
+      "x": 4
+    },
+    "unlocks": {
+      "buildings": [
+        "tile_house"
+      ]
+    }
+  },
+  {
+    "id": "military_training",
+    "name": "军事训练",
+    "tier": 4,
+    "cost": [
+      {
+        "resourceId": "wood",
+        "amount": 100
+      },
+      {
+        "resourceId": "stone",
+        "amount": 50
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "hunting"
+    ],
+    "pos": {
+      "x": 6
+    },
+    "unlocks": {
+      "buildings": [
+        "training_ground"
+      ]
+    }
+  },
+  {
+    "id": "advanced_military",
+    "name": "高级军事训练",
+    "tier": 5,
+    "cost": [
+      {
+        "resourceId": "iron_ingot",
+        "amount": 100
+      },
+      {
+        "resourceId": "plank",
+        "amount": 80
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "military_training",
+      "mechanical_engineering"
+    ],
+    "pos": {
+      "x": 6
+    },
+    "unlocks": {
+      "buildings": [
+        "advanced_training_ground"
+      ]
+    }
+  },
+  {
+    "id": "military_medicine",
+    "name": "军事医疗",
+    "tier": 5,
+    "cost": [
+      {
+        "resourceId": "wood",
+        "amount": 60
+      },
+      {
+        "resourceId": "stone",
+        "amount": 40
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "military_training"
+    ],
+    "pos": {
+      "x": 7
+    },
+    "unlocks": {
+      "buildings": [
+        "medical_station"
+      ]
+    }
+  },
+  {
+    "id": "building_repair",
+    "name": "建筑维修",
+    "tier": 4,
+    "cost": [
+      {
+        "resourceId": "steel",
+        "amount": 40
+      },
+      {
+        "resourceId": "machine_part",
+        "amount": 10
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "mechanical_engineering"
+    ],
+    "pos": {
+      "x": 1
+    },
+    "unlocks": {
+      "buildings": [
+        "repair_station"
+      ]
+    }
+  },
+  {
+    "id": "exploration_tech",
+    "name": "勘探技术",
+    "tier": 4,
+    "cost": [
+      {
+        "resourceId": "machine_part",
+        "amount": 15
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "mechanical_engineering"
+    ],
+    "pos": {
+      "x": 0
+    },
+    "unlocks": {
+      "regions": [
+        "coal_seam",
+        "iron_ridge"
+      ]
+    }
+  },
+  {
+    "id": "precision_manufacturing",
+    "name": "精密制造",
+    "tier": 4,
+    "cost": [
+      {
+        "resourceId": "machine_part",
+        "amount": 20
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "mechanical_engineering",
+      "precision_crafting"
+    ],
+    "pos": {
+      "x": 2
+    },
+    "unlocks": {
+      "buildings": [
+        "precision_workshop"
+      ],
+      "items": [
+        "steel_transport_truck"
+      ]
+    }
+  },
+  {
+    "id": "resource_expansion",
+    "name": "物资扩容",
+    "tier": 4,
+    "cost": [
+      {
+        "resourceId": "machine_part",
+        "amount": 5
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "storage_tech"
+    ],
+    "pos": {
+      "x": 4
+    },
+    "unlocks": {
+      "buildings": [
+        "resource_expansion_room"
+      ]
+    }
+  },
+  {
+    "id": "grain_storage",
+    "name": "粮食储备",
+    "tier": 2,
+    "cost": [
+      {
+        "resourceId": "plank",
+        "amount": 50
+      }
+    ],
+    "researchTime": 24,
+    "prerequisites": [
+      "farming"
+    ],
+    "pos": {
+      "x": 7
+    },
+    "unlocks": {
+      "buildings": [
+        "granary"
+      ]
+    }
+  },
+  {
+    "id": "electronic_engineering",
+    "name": "电子工程",
+    "tier": 5,
+    "cost": [
+      {
+        "resourceId": "electronic_part",
+        "amount": 20
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "precision_manufacturing"
+    ],
+    "pos": {
+      "x": 2
+    },
+    "unlocks": {
+      "items": [
+        "electronic_scanner"
+      ],
+      "regions": [
+        "summit_ruins"
+      ]
+    }
+  },
+  {
+    "id": "deep_exploration",
+    "name": "深度勘探",
+    "tier": 6,
+    "cost": [
+      {
+        "resourceId": "electronic_part",
+        "amount": 30
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "exploration_tech",
+      "electronic_engineering"
+    ],
+    "pos": {
+      "x": 1
+    },
+    "unlocks": {
+      "regions": [
+        "scrapyard_core"
+      ]
+    }
+  },
+  {
+    "id": "precision_molding",
+    "name": "精密成形",
+    "tier": 4,
+    "cost": [
+      {
+        "resourceId": "plank",
+        "amount": 30
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 20
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "precision_crafting"
+    ],
+    "pos": {
+      "x": 3
+    },
+    "unlocks": {
+      "buildings": [
+        "gear_factory"
+      ]
+    }
+  },
+  {
+    "id": "waterwheel",
+    "name": "水车",
+    "tier": 5,
+    "cost": [
+      {
+        "resourceId": "plank",
+        "amount": 80
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 30
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "precision_molding"
+    ],
+    "pos": {
+      "x": 3
+    },
+    "unlocks": {
+      "buildings": []
+    }
+  },
+  {
+    "id": "sail",
+    "name": "风帆",
+    "tier": 6,
+    "cost": [
+      {
+        "resourceId": "plank",
+        "amount": 100
+      },
+      {
+        "resourceId": "fur",
+        "amount": 30
+      },
+      {
+        "resourceId": "steel",
+        "amount": 20
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "waterwheel"
+    ],
+    "pos": {
+      "x": 3
+    },
+    "unlocks": {
+      "buildings": []
+    }
+  }
+]

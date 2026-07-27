@@ -1,7 +1,7 @@
 {
-  "generated": "2026-07-25T11:25:49.284Z",
+  "generated": "2026-07-26T12:40:29.669Z",
   "basePath": "assets/",
-  "totalFiles": 10,
+  "totalFiles": 25,
   "categories": {
     "buildings/anim_plank_house": [
       "buildings/anim_plank_house/building_plank_house_0.png",
@@ -16,6 +16,27 @@
       "buildings/icon-metal_1784486384.png",
       "buildings/icon-stone_1784486357.png",
       "buildings/icon-wood_1784486194.png"
+    ],
+    "gui": [
+      "gui/logo.png"
+    ],
+    "icon": [
+      "icon/icon_brick.png",
+      "icon/icon_coal.png",
+      "icon/icon_electric.png",
+      "icon/icon_food.png",
+      "icon/icon_gear.png",
+      "icon/icon_hematite.png",
+      "icon/icon_iron.png",
+      "icon/icon_koishi.png",
+      "icon/icon_plank.png",
+      "icon/icon_steel.png",
+      "icon/icon_wood.png"
+    ],
+    "map": [
+      "map/generated_map_preview.png",
+      "map/map.png",
+      "map/map_original.png"
     ]
   },
   "files": [
@@ -28,6 +49,21 @@
     "buildings/building_work_shed_1784771193.png",
     "buildings/icon-metal_1784486384.png",
     "buildings/icon-stone_1784486357.png",
-    "buildings/icon-wood_1784486194.png"
+    "buildings/icon-wood_1784486194.png",
+    "gui/logo.png",
+    "icon/icon_brick.png",
+    "icon/icon_coal.png",
+    "icon/icon_electric.png",
+    "icon/icon_food.png",
+    "icon/icon_gear.png",
+    "icon/icon_hematite.png",
+    "icon/icon_iron.png",
+    "icon/icon_koishi.png",
+    "icon/icon_plank.png",
+    "icon/icon_steel.png",
+    "icon/icon_wood.png",
+    "map/generated_map_preview.png",
+    "map/map.png",
+    "map/map_original.png"
   ]
 }

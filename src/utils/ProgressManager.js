@@ -101,8 +101,7 @@ class ProgressManager {
       try {
         const base = Math.max(0, Math.min(1, bar.getBase()));
         const next = Math.max(0, Math.min(1, bar.getNext()));
-        // 当进度已完成时（base >= 1），固定为100%，避免反复伸缩
-        const smooth = base >= 1 ? 1 : (base + (next - base) * t);
+        const smooth = base + (next - base) * t;
         const pct = Math.min(smooth * 100, 100);
 
         if (bar.isCallback) {

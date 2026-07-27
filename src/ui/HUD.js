@@ -20,6 +20,7 @@ export class HUD {
     this._bindButtons();
     this._subscribeStore();
     this._subscribeEvents();
+    this._subscribeWeather();
     this.refresh();
   }
 
@@ -27,13 +28,16 @@ export class HUD {
     this.resourceBar = document.getElementById('resource-bar');
     this.populationDisplay = document.getElementById('population-display');
     this.timeDisplay = document.getElementById('time-display');
-    this.viewportCenterDisplay = document.getElementById('viewport-center-display');
     this.btnBuild = document.getElementById('btn-build');
+    this.btnTech = document.getElementById('btn-tech');
+    this.btnCulture = document.getElementById('btn-culture');
+    this.btnRoad = document.getElementById('btn-road');
     this.btnCancelPlace = document.getElementById('btn-cancel-place');
     this.btnFullscreen = document.getElementById('btn-fullscreen');
     this.btnSettings = document.getElementById('btn-settings');
     this.btnSpeed = document.getElementById('btn-speed');
     this.btnPause = document.getElementById('btn-pause');
+    this.weatherDisplay = document.getElementById('weather-display');
     this.expeditionStatus = document.getElementById('expedition-status');
     // 进度条元素（懒初始化）
     this._tickProgressFill = null;
@@ -41,6 +45,23 @@ export class HUD {
   }
 
   _bindButtons() {
+    // 科技树
+    this.btnTech.addEventListener('click', () => {
+      this.popupManager.open('tech_tree', {});
+    });
+
+    // 人文树
+    this.btnCulture.addEventListener('click', () => {
+      this.popupManager.open('culture_tree', {});
+    });
+
+    // 道路编辑
+    this.btnRoad.addEventListener('click', () => {
+      if (this.systems.road) {
+        this.systems.road.toggleEditMode();
+      }
+    });
+
     // 建设按钮
     this.btnBuild.addEventListener('click', () => {
       this.popupManager.open('building_select', {});
@@ -96,11 +117,31 @@ export class HUD {
     store.subscribe('timeSpeed', () => this._refreshSpeedBtn());
     store.subscribe('timeUserPaused', () => this._refreshPauseBtn());
     store.subscribe('placingState', (state) => this._refreshPlacingMode(state));
+    store.subscribe('roadEditMode', (enabled) => this._refreshRoadEditMode(enabled));
     store.subscribe('expeditionState', (state) => this._refreshExpeditionStatus(state));
     store.subscribe('buildingVersion', () => {
       this._refreshPopulation();
       this._refreshResources();
     });
+  }
+
+  _subscribeWeather() {
+    store.subscribe('weatherLabel', () => this._refreshWeather());
+    store.subscribe('seasonLabel', () => this._refreshWeather());
+    store.subscribe('weatherStrength', () => this._refreshWeather());
+  }
+
+  _refreshWeather() {
+    if (!this.weatherDisplay) return;
+    const weatherLabel = store.getState('weatherLabel') || '☀️ 晴天';
+    const seasonLabel = store.getState('seasonLabel') || '🌸 春';
+    const strength = store.getState('weatherStrength') ?? 0;
+    // 强度 >= 5 显示警告色
+    let color = '';
+    if (strength >= 5) color = 'color:#ff6b6b;';
+    else if (strength >= 3) color = 'color:#f0a040;';
+    this.weatherDisplay.innerHTML = `<span style="${color}">${seasonLabel} · ${weatherLabel}</span>`;
+    this.weatherDisplay.title = `强度: ${strength >= 0 ? '+' : ''}${strength} 级`;
   }
 
   _subscribeEvents() {
@@ -109,8 +150,6 @@ export class HUD {
     eventBus.on('expeditionComplete', (result) => {
       this._showExpeditionResult(result);
     });
-    // 视角中心坐标：相机移动时刷新显示（RAF 节流避免拖拽时频繁更新 DOM）
-    eventBus.on('cameraMoved', () => this._scheduleViewportCenterRefresh());
   }
 
   refresh() {
@@ -119,53 +158,24 @@ export class HUD {
     this._refreshTime();
     this._refreshSpeedBtn();
     this._refreshPauseBtn();
-    this._refreshViewportCenter();
-  }
-
-  /**
-   * 调度视角中心坐标刷新（使用 RAF 合并同一帧内的多次 cameraMoved 事件）
-   */
-  _scheduleViewportCenterRefresh() {
-    if (this._vcRafPending) return;
-    this._vcRafPending = true;
-    requestAnimationFrame(() => {
-      this._vcRafPending = false;
-      this._refreshViewportCenter();
-    });
-  }
-
-  /**
-   * 刷新视角中心坐标显示
-   * 通过 MapRenderer.getViewportCenterCell() 获取屏幕中心对应的网格坐标
-   */
-  _refreshViewportCenter() {
-    if (!this.viewportCenterDisplay) return;
-    const game = window.__game;
-    const mapRenderer = game?.mapRenderer;
-    if (!mapRenderer || typeof mapRenderer.getViewportCenterCell !== 'function') {
-      this.viewportCenterDisplay.innerHTML = '';
-      return;
-    }
-    const { col, row } = mapRenderer.getViewportCenterCell();
-    this.viewportCenterDisplay.innerHTML =
-      `<span class="vc-label">📍</span>` +
-      `<span class="vc-coord">X:${col}</span>` +
-      `<span class="vc-coord">Y:${row}</span>`;
+    this._refreshWeather();
   }
 
   _refreshResources() {
     const resources = this.systems.resource.getHUDResources();
     const rates = this.systems.building.getProductionRates();
 
-    // 计算食物日产出（仅显示产出，消耗在深夜时段统一结算播报）
+    // 计算食物每日净变化（产出 - 消耗）
     const foodProduction = this.systems.building.getTotalFoodProduction();
+    const foodConsumption = this.systems.population.current;
+    const foodDailyRate = foodProduction - foodConsumption;
 
     this.resourceBar.innerHTML = '';
 
     for (const res of resources) {
+      // 食物使用每日速率，其他资源使用 per-tick 速率
       const isFood = res.id === 'food';
-      // 食物只显示产出（不显示消耗和净变化），其他资源使用 per-tick 速率
-      let rate = isFood ? foodProduction : (rates[res.id] || 0);
+      let rate = isFood ? foodDailyRate : (rates[res.id] || 0);
       const rateUnit = isFood ? '天' : 'Tick';
 
       const isFull = res.current >= res.max;
@@ -185,14 +195,9 @@ export class HUD {
       item.innerHTML = innerHTML;
 
       // 点击弹窗：含产量速率信息
-      let rateText;
-      if (isFood && rate !== 0) {
-        rateText = `\n日产出: +${foodProduction}`;
-      } else if (rate !== 0) {
-        rateText = `\n每${rateUnit}: ${rate > 0 ? '+' : ''}${rate}`;
-      } else {
-        rateText = '';
-      }
+      const rateText = rate !== 0
+        ? `\n每${rateUnit}: ${rate > 0 ? '+' : ''}${rate}`
+        : '';
       item.addEventListener('click', (e) => {
         this._showPopover(e.target, `${res.name}: ${res.current} / ${res.max}${rateText}`);
       });
@@ -212,20 +217,18 @@ export class HUD {
   }
 
   _getResourceEmoji(id) {
-    const emojis = { wood: '🪵', plank: '📐', stone: '🪨', hematite: '⛏️', coal: '⚫', iron_ingot: '🔩', food: '🍞' };
+    const emojis = { wood: '🪵', plank: '📐', stone: '🪨', iron_ore: '⛏️', coal: '⚫', iron_ingot: '🔩', food: '🍞', gear: '⚙️', fur: '🧶' };
     return emojis[id] || '📦';
   }
 
   _refreshPopulation() {
     const current = this.systems.population.current;
     const housing = this.systems.population.getHousingCapacity();
-    const availableWorkers = this.systems.population.getAvailableWorkers();
 
     const housingClass = current >= housing ? ' class="bottleneck"' : '';
 
-    // 人口显示改为：人口数/住宅数/可用工人数
     this.populationDisplay.innerHTML =
-      `👥 ${current} / <span${housingClass}>${housing}</span> / ${availableWorkers}`;
+      `👥 ${current} / <span${housingClass}>${housing}</span>`;
 
     // 人口变化弹跳动画
     if (this._prevPopulation !== 0 && this._prevPopulation !== current && window.gsap) {
@@ -239,10 +242,16 @@ export class HUD {
     this.populationDisplay.onclick = (e) => {
       const available = this.systems.population.getAvailableWorkers();
       const assigned = this.systems.population.getAssignedWorkers();
-      const maxWorkers = this.systems.population.getMaxWorkerCapacity();
       const foodAmount = this.systems.resource ? this.systems.resource.getAmount('food') : 0;
+      // 获取战士/弓箭手数量
+      let warriorCount = 0, archerCount = 0;
+      if (this.systems.combat) {
+        const units = this.systems.combat.getAllUnits();
+        warriorCount = units.filter(u => u.type === 'warrior').length;
+        archerCount = units.filter(u => u.type === 'archer').length;
+      }
       this._showPopover(e.target,
-        `当前人口: ${current}\n住宅上限: ${housing}\n可用工人: ${available}\n已分配: ${assigned}\n最大工人: ${maxWorkers}\n食物储备: ${foodAmount}`
+        `当前人口: ${current}\n住宅上限: ${housing}\n可用工人: ${available}\n已分配: ${assigned}\n战士: ${warriorCount}\n弓箭手: ${archerCount}\n食物储备: ${foodAmount}`
       );
     };
   }
@@ -297,6 +306,7 @@ export class HUD {
     if (state === 'PLACING') {
       this.btnBuild.style.display = 'none';
       this.btnCancelPlace.style.display = 'flex';
+      this.btnRoad.classList.add('disabled');
       this.btnFullscreen.classList.add('disabled');
       this.btnSettings.classList.add('disabled');
       this.btnSpeed.classList.add('disabled');
@@ -304,6 +314,29 @@ export class HUD {
     } else {
       this.btnBuild.style.display = 'flex';
       this.btnCancelPlace.style.display = 'none';
+      if (!store.getState('roadEditMode')) {
+        this.btnRoad.classList.remove('disabled');
+        this.btnFullscreen.classList.remove('disabled');
+        this.btnSettings.classList.remove('disabled');
+        this.btnSpeed.classList.remove('disabled');
+        this.btnPause.classList.remove('disabled');
+      }
+    }
+  }
+
+  _refreshRoadEditMode(enabled) {
+    if (enabled) {
+      this.btnRoad.style.background = 'rgba(91, 141, 239, 0.3)';
+      this.btnRoad.style.borderColor = 'var(--accent-blue)';
+      this.btnBuild.classList.add('disabled');
+      this.btnFullscreen.classList.add('disabled');
+      this.btnSettings.classList.add('disabled');
+      this.btnSpeed.classList.add('disabled');
+      this.btnPause.classList.add('disabled');
+    } else {
+      this.btnRoad.style.background = '';
+      this.btnRoad.style.borderColor = '';
+      this.btnBuild.classList.remove('disabled');
       this.btnFullscreen.classList.remove('disabled');
       this.btnSettings.classList.remove('disabled');
       this.btnSpeed.classList.remove('disabled');

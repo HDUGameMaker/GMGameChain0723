@@ -229,6 +229,23 @@
       -webkit-backdrop-filter: blur(4px);
     }
 
+    #weather-display {
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: var(--radius-xl);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      cursor: default;
+    }
+
     #viewport-center-display {
       color: var(--text-primary);
       font-size: 12px;
@@ -332,8 +349,8 @@
       background: var(--bg-surface);
       border-radius: var(--radius-xl);
       border: 1px solid var(--border-normal);
-      width: 90vw;
-      max-width: 500px;
+      width: 95vw;
+      max-width: 1400px;
       max-height: 85vh;
       display: flex;
       flex-direction: column;
@@ -655,6 +672,7 @@
       <div id="resource-bar"></div>
       <div id="hud-info">
         <div id="population-display"></div>
+        <div id="weather-display"></div>
         <div id="time-display"></div>
         <div id="viewport-center-display" title="当前视角中心所在的网格坐标"></div>
       </div>
@@ -669,6 +687,9 @@
     <div id="expedition-status"></div>
 
     <div id="hud-bottom">
+      <button class="hud-btn" id="btn-tech" title="科技">🔬</button>
+      <button class="hud-btn" id="btn-culture" title="人文">📜</button>
+      <button class="hud-btn" id="btn-road" title="道路">🛤️</button>
       <button class="hud-btn" id="btn-build" title="建设">🏗️</button>
       <button class="hud-btn" id="btn-cancel-place" title="取消放置" style="display:none">✕</button>
       <button class="hud-btn" id="btn-fullscreen" title="全屏">⛶</button>

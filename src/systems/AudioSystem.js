@@ -376,57 +376,8 @@ export class AudioSystem {
   // ==================== 内部方法 ====================
 
   /**
-   * 获取建筑音效配置
-   * @param {string} buildingId - 建筑 ID
-   * @param {string} soundKey - 音效键（buildStart, buildComplete, demolish, upgrade, move）
-   * @returns {string|null} SFX ID
-   */
-  _getBuildingSound(buildingId, soundKey) {
-    if (!this._config || !this._config.buildingSoundBindings) return null;
-    
-    // 优先使用建筑特定音效
-    if (this._config.buildingSoundBindings[buildingId] && 
-        this._config.buildingSoundBindings[buildingId][soundKey] !== undefined) {
-      return this._config.buildingSoundBindings[buildingId][soundKey];
-    }
-    
-    // 否则使用默认音效
-    if (this._config.buildingSoundBindings.default && 
-        this._config.buildingSoundBindings.default[soundKey] !== undefined) {
-      return this._config.buildingSoundBindings.default[soundKey];
-    }
-    
-    return null;
-  }
-
-  /**
-   * 获取物品合成音效配置
-   * @param {string} itemId - 物品 ID
-   * @param {string} soundKey - 音效键（synthesisStart, synthesisComplete）
-   * @returns {string|null} SFX ID
-   */
-  _getItemSound(itemId, soundKey) {
-    if (!this._config || !this._config.itemSoundBindings) return null;
-    
-    // 优先使用物品特定音效
-    if (this._config.itemSoundBindings[itemId] && 
-        this._config.itemSoundBindings[itemId][soundKey] !== undefined) {
-      return this._config.itemSoundBindings[itemId][soundKey];
-    }
-    
-    // 否则使用默认音效
-    if (this._config.itemSoundBindings.default && 
-        this._config.itemSoundBindings.default[soundKey] !== undefined) {
-      return this._config.itemSoundBindings.default[soundKey];
-    }
-    
-    return null;
-  }
-
-  /**
    * 绑定游戏事件 → SFX（基于 config/sound.json eventBindings）
    * + BGM 自动切换（基于时段）
-   * + 建筑音效绑定
    */
   _bindGameEvents() {
     // ── SFX 事件绑定 ──
@@ -446,56 +397,6 @@ export class AudioSystem {
           this.playSFX(binding.sound);
         });
       }
-    }
-
-    // ── 建筑音效绑定 ──
-    const buildingEvents = [
-      { event: 'buildingClicked', soundKey: 'click' },
-      { event: 'buildingPlaced', soundKey: 'buildStart' },   // 放置建筑 = 开始建造
-      { event: 'buildingComplete', soundKey: 'buildComplete' }, // 建造完成
-      { event: 'buildingDemolished', soundKey: 'demolish' },
-      { event: 'buildingUpgraded', soundKey: 'upgrade' },
-      { event: 'buildingMoved', soundKey: 'move' },
-    ];
-
-    for (const { event, soundKey } of buildingEvents) {
-      eventBus.on(event, (payload) => {
-        if (gameLoop.isPaused()) return;
-        if (!gameLoop.isPageVisible()) return;
-        if (!payload) return;
-
-        // 从事件数据中提取 buildingId（不同事件格式不同）
-        const buildingId = payload.buildingId || (payload.building && payload.building.buildingId);
-        if (!buildingId) return;
-
-        const soundId = this._getBuildingSound(buildingId, soundKey);
-        if (soundId) {
-          this.playSFX(soundId);
-        }
-      });
-    }
-
-    // ── 物品合成音效绑定 ──
-    const itemEvents = [
-      { event: 'synthesisStarted', soundKey: 'synthesisStart' },
-      { event: 'synthesisComplete', soundKey: 'synthesisComplete' },
-    ];
-
-    for (const { event, soundKey } of itemEvents) {
-      eventBus.on(event, (payload) => {
-        if (gameLoop.isPaused()) return;
-        if (!gameLoop.isPageVisible()) return;
-        if (!payload) return;
-
-        // 从事件数据中提取 itemId
-        const itemId = payload.itemId || (payload.item && payload.item.id);
-        if (!itemId) return;
-
-        const soundId = this._getItemSound(itemId, soundKey);
-        if (soundId) {
-          this.playSFX(soundId);
-        }
-      });
     }
 
     // ── BGM 事件绑定（由 sound.json 的 bgmBindings 配置）──
@@ -762,53 +663,6 @@ export class AudioSystem {
       muted: this._muted
     });
     store.setState({ audioVersion: Date.now() });
-  }
-
-  /**
-   * 热重载配置（从 configRegistry 重新加载 sound.json）
-   * 用于编辑器修改配置后实时生效
-   */
-  async reloadConfig() {
-    try {
-      const newConfig = configRegistry.get('sound');
-      if (!newConfig) {
-        console.warn('[AudioSystem] No sound config found for reload');
-        return;
-      }
-
-      this._config = newConfig;
-
-      // 更新音量设置
-      if (newConfig.masterVolume !== undefined) {
-        this._masterVolume = newConfig.masterVolume;
-      }
-      if (newConfig.bgmVolume !== undefined) {
-        this._bgmVolume = newConfig.bgmVolume;
-        if (this._currentBGM) {
-          this._applyBGMVolume(this._currentBGM.element, this._getEffectiveBGMVolume());
-        }
-      }
-      if (newConfig.sfxVolume !== undefined) {
-        this._sfxVolume = newConfig.sfxVolume;
-      }
-
-      // 重新预加载 SFX buffers（如果有新增或修改的音效）
-      if (Array.isArray(newConfig.sfx)) {
-        await this._preloadSFXBuffers(newConfig.sfx);
-      }
-
-      // 重新预创建 BGM 元素
-      if (Array.isArray(newConfig.bgm)) {
-        for (const bgm of newConfig.bgm) {
-          this._createBGMElement(bgm);
-        }
-      }
-
-      console.log('[AudioSystem] Config reloaded successfully');
-      this._notifyChange();
-    } catch (e) {
-      console.warn('[AudioSystem] Failed to reload config:', e.message);
-    }
   }
 }
 
