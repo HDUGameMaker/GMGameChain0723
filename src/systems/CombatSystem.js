@@ -12,9 +12,14 @@ export class CombatSystem {
     this.enemies = [];
     /** @type {Array<{id: string, type: 'warrior'|'archer', gridX: number, gridY: number, hp: number, maxHp: number, attack: number, attackRange: number}>} */
     this.units = [];
+    /** @type {Array<{id: string, enemyId: string, name: string, icon: string, hp: number, maxHp: number, attack: number, attackRange: number, attackCooldown: number}>} */
+    this.tamed = [];
+    this._deployMode = null;
     this._buildingSystem = null;
     this._populationSystem = null;
     this._resourceSystem = null;
+    this._cultureSystem = null;
+    this._alchemySystem = null;
     this._mapConfig = null;
     this._editMode = null;
 
@@ -33,13 +38,72 @@ export class CombatSystem {
   setBuildingSystem(bs) { this._buildingSystem = bs; }
   setPopulationSystem(ps) { this._populationSystem = ps; }
   setResourceSystem(rs) { this._resourceSystem = rs; }
+  setCultureSystem(cs) { this._cultureSystem = cs; }
+  setAlchemySystem(as) { this._alchemySystem = as; }
 
   init() { this._mapConfig = configRegistry.get('map'); }
 
-  enterPlaceEnemyMode(enemyId) { this._editMode = enemyId; store.setState({ combatPlaceMode: enemyId }); eventBus.emit('combatPlaceModeChanged', { enabled: true, enemyId }); }
+  enterPlaceEnemyMode(enemyId) { this._editMode = enemyId; this._deployMode = null; store.setState({ combatPlaceMode: enemyId, deployTamedMode: false }); eventBus.emit('combatPlaceModeChanged', { enabled: true, enemyId }); }
   exitPlaceEnemyMode() { this._editMode = null; store.setState({ combatPlaceMode: false }); eventBus.emit('combatPlaceModeChanged', { enabled: false }); }
   isPlaceEnemyMode() { return this._editMode !== null; }
   getPlaceEnemyId() { return this._editMode; }
+
+  // ===== 驯化单位部署模式 =====
+  enterDeployTamedMode(tamedId) { this._deployMode = tamedId; this._editMode = null; store.setState({ deployTamedMode: tamedId, combatPlaceMode: false }); eventBus.emit('deployTamedModeChanged', { enabled: true, tamedId }); }
+  exitDeployTamedMode() { this._deployMode = null; store.setState({ deployTamedMode: false }); eventBus.emit('deployTamedModeChanged', { enabled: false }); }
+  isDeployTamedMode() { return this._deployMode !== null; }
+  getDeployTamedId() { return this._deployMode; }
+  getTamedPool() { return [...this.tamed]; }
+
+  /** 检查某格是否可以部署驯化单位 */
+  canDeployTamedAt(gridX, gridY) {
+    if (!this._mapConfig) return false;
+    if (gridX < 0 || gridY < 0 || gridX >= this._mapConfig.gridWidth || gridY >= this._mapConfig.gridHeight) return false;
+    if (this.getEnemyAt(gridX, gridY) || this.getUnitAt(gridX, gridY)) return false;
+    if (this._isBlocked(gridX, gridY)) return false;
+    // 必须在火把照明范围（营地）内
+    const torch = this._buildingSystem?._torchSystem;
+    if (torch) {
+      const visible = torch.getVisibilityMatrix();
+      if (visible && !visible[gridY]?.[gridX]) return false;
+    }
+    return true;
+  }
+
+  /** 部署驯化单位到地图上 */
+  deployTamed(gridX, gridY) {
+    if (!this._deployMode) return false;
+    const idx = this.tamed.findIndex(t => t.id === this._deployMode);
+    if (idx === -1) return false;
+
+    if (!this.canDeployTamedAt(gridX, gridY)) {
+      this._broadcast('⛔ 只能在营地范围内部署驯化单位');
+      return false;
+    }
+
+    const creature = this.tamed[idx];
+    this.tamed.splice(idx, 1);
+
+    // 作为友方单位加入地图
+    this.units.push({
+      id: 'tamed_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      type: 'tamed',
+      gridX, gridY,
+      hp: creature.hp,
+      maxHp: creature.maxHp,
+      attack: creature.attack,
+      attackRange: creature.attackRange,
+      attackCooldown: creature.attackCooldown || 2,
+      _cooldownTicks: 0,
+      source: 'tamed',
+      tamedInfo: { enemyId: creature.enemyId, name: creature.name, icon: creature.icon }
+    });
+
+    this._broadcast(`🐾 部署 ${creature.name}！`);
+    this._notify();
+    eventBus.emit('unitSpawned', { type: 'tamed', gridX, gridY });
+    return true;
+  }
 
   getEnemyConfig(enemyId) { return this._enemyConfigs.find(e => e.id === enemyId) || null; }
   _getUnitConfig(type) { return this._unitConfigs.find(u => u.id === type) || null; }
@@ -61,6 +125,13 @@ export class CombatSystem {
     const unitConfig = this._getUnitConfig(type);
     if (!unitConfig) return false;
 
+    // 人文政策 + 炼金药效：单位属性乘性修饰
+    const eff = this._cultureSystem ? this._cultureSystem.getEffects() : null;
+    const aEff = this._alchemySystem ? this._alchemySystem.getEffects() : {};
+    const aCombat = aEff.combat || {};
+    const dmgMul = (type === 'archer' ? (eff?.archerDamageMul || 1) : (eff?.warriorDamageMul || 1)) * (aCombat.warriorDamageMul || 1) * (type === 'archer' ? (aCombat.archerDamageMul || 1) : 1);
+    const hpMul = (eff?.unitHpMul || 1) * (aCombat.unitHpMul || 1) * (aCombat.unitDamageTakenMul || 1);
+
     // 在建筑附近找空地
     for (let dx = -1; dx <= 1; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
@@ -78,8 +149,9 @@ export class CombatSystem {
         this.units.push({
           id: 'unit_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
           type, gridX: x, gridY: y,
-          hp: unitConfig.hp, maxHp: unitConfig.hp,
-          attack: unitConfig.attack,
+          hp: Math.round(unitConfig.hp * hpMul),
+          maxHp: Math.round(unitConfig.hp * hpMul),
+          attack: Math.round(unitConfig.attack * dmgMul),
           attackRange: unitConfig.attackRange,
           attackCooldown: unitConfig.attackCooldown || 1,
           _cooldownTicks: 0
@@ -125,21 +197,100 @@ export class CombatSystem {
 
   _findSpawnPosition() {
     if (!this._mapConfig) return null;
+    // 优先：在已照明区外缘 3~8 格环带内刷新，保证玩家迟早遇到且不贴脸
+    const ringPos = this._findSpawnOnVisibilityRing();
+    if (ringPos) return ringPos;
+    // 回退：在所有已建成建筑外缘环带刷新
+    const bldRingPos = this._findSpawnOnBuildingRing();
+    if (bldRingPos) return bldRingPos;
+    // 最后回退：全图随机（仅排除建筑/已占格）
     for (let i = 0; i < 100; i++) {
       const x = Math.floor(Math.random() * this._mapConfig.gridWidth);
       const y = Math.floor(Math.random() * this._mapConfig.gridHeight);
       if (!this._mapConfig.grid[y]?.[x]) continue;
-      let blocked = false;
-      for (const b of this._buildingSystem.buildings) {
-        const c = configRegistry.getBuilding(b.buildingId);
-        if (!c) continue;
-        if (x >= b.gridX && x < b.gridX + c.footprint.width && y >= b.gridY && y < b.gridY + c.footprint.height) { blocked = true; break; }
-      }
-      if (blocked) continue;
+      if (this._isBlocked(x, y)) continue;
       if (this.getEnemyAt(x, y) || this.getUnitAt(x, y)) continue;
       return { x, y };
     }
     return null;
+  }
+
+  /** 在已照明区外缘向外 3~8 格的环带里找可刷新空地 */
+  _findSpawnOnVisibilityRing() {
+    const torch = this._buildingSystem?._torchSystem;
+    if (!torch) return null;
+    const visible = torch.getVisibilityMatrix();
+    if (!visible || visible.length === 0) return null;
+    const gh = this._mapConfig.gridHeight;
+    const gw = this._mapConfig.gridWidth;
+    const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+
+    // 收集照明区边界格（可见且至少有一个不可见邻居）
+    const edge = [];
+    for (let y = 0; y < gh; y++) {
+      for (let x = 0; x < gw; x++) {
+        if (!visible[y][x]) continue;
+        for (const [dx, dy] of dirs) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= gw || ny >= gh) continue;
+          if (!visible[ny][nx]) { edge.push({ x, y }); break; }
+        }
+      }
+    }
+    if (edge.length === 0) return null;
+
+    // 从边界向外扩 3~8 格随机尝试
+    for (let attempt = 0; attempt < 60; attempt++) {
+      const e = edge[Math.floor(Math.random() * edge.length)];
+      const dist = 3 + Math.floor(Math.random() * 6); // 3~8
+      const ang = Math.random() * Math.PI * 2;
+      const x = Math.round(e.x + Math.cos(ang) * dist);
+      const y = Math.round(e.y + Math.sin(ang) * dist);
+      if (x < 0 || y < 0 || x >= gw || y >= gh) continue;
+      if (!this._mapConfig.grid[y]?.[x]) continue;
+      if (this._isBlocked(x, y)) continue;
+      if (this.getEnemyAt(x, y) || this.getUnitAt(x, y)) continue;
+      return { x, y };
+    }
+    return null;
+  }
+
+  /** 在已建成建筑外缘向外 2~6 格环带刷新（无照明时回退方案） */
+  _findSpawnOnBuildingRing() {
+    if (!this._buildingSystem || this._buildingSystem.buildings.length === 0) return null;
+    const gw = this._mapConfig.gridWidth;
+    const gh = this._mapConfig.gridHeight;
+    for (let attempt = 0; attempt < 60; attempt++) {
+      const b = this._buildingSystem.buildings[
+        Math.floor(Math.random() * this._buildingSystem.buildings.length)
+      ];
+      const c = configRegistry.getBuilding(b.buildingId);
+      if (!c) continue;
+      const cx = b.gridX + Math.floor(c.footprint.width / 2);
+      const cy = b.gridY + Math.floor(c.footprint.height / 2);
+      const dist = 2 + Math.floor(Math.random() * 5); // 2~6
+      const ang = Math.random() * Math.PI * 2;
+      const x = Math.round(cx + Math.cos(ang) * dist);
+      const y = Math.round(cy + Math.sin(ang) * dist);
+      if (x < 0 || y < 0 || x >= gw || y >= gh) continue;
+      if (!this._mapConfig.grid[y]?.[x]) continue;
+      if (this._isBlocked(x, y)) continue;
+      if (this.getEnemyAt(x, y) || this.getUnitAt(x, y)) continue;
+      return { x, y };
+    }
+    return null;
+  }
+
+  /** 某格是否被建筑占用 */
+  _isBlocked(x, y) {
+    if (!this._buildingSystem) return false;
+    for (const b of this._buildingSystem.buildings) {
+      const c = configRegistry.getBuilding(b.buildingId);
+      if (!c) continue;
+      if (x >= b.gridX && x < b.gridX + c.footprint.width &&
+          y >= b.gridY && y < b.gridY + c.footprint.height) return true;
+    }
+    return false;
   }
 
   // ===== 每tick AI：敌人+友方 =====
@@ -159,7 +310,8 @@ export class CombatSystem {
 
       if (dist <= unit.attackRange) {
         nearestEnemy.hp -= unit.attack;
-        this._broadcast(`⚔️ ${unit.type === 'archer' ? '弓箭手' : '战士'} 攻击！${nearestEnemy.hp <= 0 ? '击杀敌人' : `敌人HP ${nearestEnemy.hp}`}`);
+        const unitLabel = unit.source === 'tamed' ? (unit.tamedInfo?.name || '驯化单位') : (unit.type === 'archer' ? '弓箭手' : '战士');
+        this._broadcast(`⚔️ ${unitLabel} 攻击！${nearestEnemy.hp <= 0 ? '击杀敌人' : `敌人HP ${nearestEnemy.hp}`}`);
         if (nearestEnemy.hp <= 0) {
           const idx = this.enemies.indexOf(nearestEnemy);
           if (idx >= 0) this.enemies.splice(idx, 1);
@@ -185,7 +337,8 @@ export class CombatSystem {
       if (nearestUnit && nearDist <= 1) {
         // 攻击友方单位
         nearestUnit.hp -= cfg.attack || 1;
-        this._broadcast(`💥 ${cfg.name} 攻击${nearestUnit.type === 'archer' ? '弓箭手' : '战士'}！`);
+        const unitLabel = nearestUnit.source === 'tamed' ? (nearestUnit.tamedInfo?.name || '驯化单位') : (nearestUnit.type === 'archer' ? '弓箭手' : '战士');
+        this._broadcast(`💥 ${cfg.name} 攻击${unitLabel}！`);
         if (nearestUnit.hp <= 0) {
           const idx = this.units.indexOf(nearestUnit);
           if (idx >= 0) this.units.splice(idx, 1);
@@ -385,13 +538,37 @@ export class CombatSystem {
       this.enemies.splice(idx, 1);
       this._notify();
       this._broadcast(`⚔️ 成功击杀 ${cfg.name}！`);
+      // 掉落处理
       if (cfg.drops) {
+        const resources = configRegistry.get('resources') || [];
         for (const drop of cfg.drops) {
           if (Math.random() < (drop.chance || 1)) {
             this._resourceSystem?.add(drop.resourceId, drop.amount);
-            this._broadcast(`📦 获得 ${drop.resourceId} ×${drop.amount}`);
+            const resCfg = resources.find(r => r.id === drop.resourceId);
+            const resName = resCfg?.name || drop.resourceId;
+            this._broadcast(`📦 从 ${cfg.name} 获得 ${resName} ×${drop.amount}`);
           }
         }
+      }
+      // 驯化判定
+      const tameChance = cfg.tameChance || 0;
+      if (tameChance > 0 && Math.random() < tameChance) {
+        const tu = cfg.tamedUnit || {};
+        const tamedName = tu.name || cfg.name;
+        const tamedIcon = tu.icon || (enemy.enemyId.startsWith('robot') ? '🤖' : '🐺');
+        this.tamed.push({
+          id: 'tamed_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          enemyId: enemy.enemyId,
+          name: tamedName,
+          icon: tamedIcon,
+          hp: tu.maxHp || cfg.maxHp || 5,
+          maxHp: tu.maxHp || cfg.maxHp || 5,
+          attack: tu.attack || cfg.attack || 1,
+          attackRange: tu.attackRange || 1,
+          attackCooldown: tu.attackCooldown || 2
+        });
+        this._broadcast(`🐾 成功驯服 ${tamedName}！已加入驯化池`);
+        eventBus.emit('tamedCreatureGained', { enemyId: enemy.enemyId, name: tamedName });
       }
       eventBus.emit('enemyKilled', { enemyId: enemy.enemyId, gridX, gridY });
       return { killed: true, enemyId: enemy.enemyId };
@@ -408,10 +585,11 @@ export class CombatSystem {
   _onPeriodChange(data) {}
 
   // ===== 存档 =====
-  getState() { return { enemies: this.enemies.map(e => ({ ...e })), units: this.units.map(u => ({ ...u })) }; }
+  getState() { return { enemies: this.enemies.map(e => ({ ...e })), units: this.units.map(u => ({ ...u })), tamed: this.tamed.map(t => ({ ...t })) }; }
   restoreState(state) {
     if (!state?.enemies) { this.enemies = []; } else { this.enemies = state.enemies.map(e => ({ ...e })); }
     if (!state?.units) { this.units = []; } else { this.units = state.units.map(u => ({ ...u })); }
+    if (!state?.tamed) { this.tamed = []; } else { this.tamed = state.tamed.map(t => ({ ...t })); }
     this._notify();
   }
 }

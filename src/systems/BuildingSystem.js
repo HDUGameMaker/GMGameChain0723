@@ -29,6 +29,8 @@ export class BuildingSystem {
   setRoadSystem(rs) { this._roadSystem = rs; }
   setTechSystem(ts) { this._techSystem = ts; }
   setWeatherSystem(ws) { this._weatherSystem = ws; }
+  setCultureSystem(cs) { this._cultureSystem = cs; }
+  setAlchemySystem(as) { this._alchemySystem = as; }
 
   init() {
     this._mapConfig = configRegistry.get('map');
@@ -154,9 +156,11 @@ export class BuildingSystem {
     const check = this.canPlaceAt(gridX, gridY, buildingId);
     if (!check.valid) return false;
 
-    // 消耗资源
+    // 消耗资源（应用人文政策建造成本倍率）
+    const buildCostMul = (this._cultureSystem ? (this._cultureSystem.getEffects().buildCostMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).buildCostMul || 1) : 1);
     if (config.buildCost && config.buildCost.length > 0) {
-      if (!this._resourceSystem.consumeAll(config.buildCost)) return false;
+      const scaledCost = config.buildCost.map(c => ({ ...c, amount: Math.max(1, Math.round(c.amount * buildCostMul)) }));
+      if (!this._resourceSystem.consumeAll(scaledCost)) return false;
     }
 
     // 获取当前时间状态
@@ -232,8 +236,10 @@ export class BuildingSystem {
     const building = this.buildings[buildingIndex];
     const targetConfig = configRegistry.getBuilding(check.targetId);
 
-    // 消耗资源
-    this._resourceSystem.consumeAll(check.cost);
+    // 消耗资源（升级也应用人文政策建造成本倍率）
+    const buildCostMul = (this._cultureSystem ? (this._cultureSystem.getEffects().buildCostMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).buildCostMul || 1) : 1);
+    const scaledUpgradeCost = check.cost.map(c => ({ ...c, amount: Math.max(1, Math.round(c.amount * buildCostMul)) }));
+    this._resourceSystem.consumeAll(scaledUpgradeCost);
 
     // 变为目标建筑，进入建造状态
     building.buildingId = check.targetId;
@@ -691,11 +697,12 @@ export class BuildingSystem {
       }
     }
 
-    // 产出（应用相邻加成）
+    // 产出（应用相邻加成 + 人文政策产出倍率）
     if (prod.output) {
       const outputMultiplier = prod.perWorker ? effectiveWorkers : 1;
+      const cultureProdMul = (this._cultureSystem ? (this._cultureSystem.getEffects().productionMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).productionMul || 1) : 1);
       for (const out of prod.output) {
-        const baseAmount = out.amount * outputMultiplier;
+        const baseAmount = out.amount * outputMultiplier * cultureProdMul;
         const adjusted = this.applyAdjacencyToProduction(
           building.buildingId, out.resourceId, baseAmount, 'production', bonuses
         );

@@ -3,20 +3,54 @@
  * 左侧：资源类、建造类消息（获得XX资源，已建成XXX建筑）
  * 右侧：人口类、灾祸类消息（XXX加入了避难所，XXX因为食物短缺而死）
  * 每条消息保留3秒，两侧最多同时显示5条消息
+ *
+ * 广播开关：战斗广播(combat)控制右侧灾祸/战斗消息，资源广播(resource)控制左侧资源/建造消息。
+ * 持久化于 localStorage('gmgc_broadcast')。
  */
 import { eventBus } from '../core/EventBus.js';
 import { configRegistry } from '../core/ConfigRegistry.js';
 
+const BROADCAST_KEY = 'gmgc_broadcast';
+
 export class MessageLog {
   constructor() {
     this.leftMessages = []; // 左侧：资源、建造
-    this.rightMessages = []; // 右侧：人口、灾祸
+    this.rightMessages = []; // 右侧：人口、灾祸、战斗
     this.maxMessages = 5;
     this.messageDuration = 3000; // 3秒
     this._leftContainer = null;
     this._rightContainer = null;
     this._prevResourceValues = {}; // 追踪资源变化前的值
+    // 广播开关：{combat, resource}
+    this._settings = this._loadSettings();
   }
+
+  /** 加载广播开关 */
+  _loadSettings() {
+    try {
+      const raw = localStorage.getItem(BROADCAST_KEY);
+      if (raw) {
+        const obj = JSON.parse(raw);
+        return {
+          combat: obj.combat !== undefined ? !!obj.combat : true,
+          resource: obj.resource !== undefined ? !!obj.resource : true
+        };
+      }
+    } catch (e) { /* ignore */ }
+    return { combat: true, resource: true };
+  }
+
+  /** 持久化广播开关 */
+  saveSettings(settings) {
+    this._settings = { ...this._settings, ...settings };
+    try {
+      localStorage.setItem(BROADCAST_KEY, JSON.stringify(this._settings));
+    } catch (e) { /* ignore */ }
+  }
+
+  getSettings() { return { ...this._settings }; }
+  isCombatEnabled() { return this._settings.combat; }
+  isResourceEnabled() { return this._settings.resource; }
 
   init() {
     this._leftContainer = document.getElementById('msg-log-left');
@@ -97,6 +131,11 @@ export class MessageLog {
         this.addRight(data.message || '居民意外死亡');
       }
     });
+
+    // 战斗/灾祸广播（敌人刷新、攻击、击杀、装置损坏等）
+    eventBus.on('combatBroadcast', (data) => {
+      this.addRight(data.message || '');
+    });
   }
 
   /**
@@ -118,6 +157,10 @@ export class MessageLog {
     const messages = side === 'left' ? this.leftMessages : this.rightMessages;
 
     if (!container) return;
+
+    // 广播开关过滤：左侧(资源/建造)受 resource 开关，右侧(人口/灾祸/战斗)受 combat 开关
+    if (side === 'left' && !this._settings.resource) return;
+    if (side === 'right' && !this._settings.combat) return;
 
     // 创建消息元素
     const msgEl = document.createElement('div');

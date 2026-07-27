@@ -26,7 +26,9 @@ class ConfigRegistry {
       'adjacency_bonuses': 'config/adjacency-bonuses.json',
       'roads': 'config/roads.json',
       'techs': 'config/techs.json',
-      'enemies': 'config/enemies.json'
+      'enemies': 'config/enemies.json',
+      'culture': 'config/culture.json',
+      'alchemy': 'config/alchemy.json'
     };
 
     const loadPromises = Object.entries(configFiles).map(async ([key, path]) => {
@@ -127,6 +129,42 @@ class ConfigRegistry {
   getTorch(id) {
     const buildings = this._configs['buildings'] || [];
     return buildings.find(b => b.isTorch && b.id === id) || null;
+  }
+
+  /**
+   * 获取完整炼金配置
+   * @returns {object}
+   */
+  getAlchemy() { return this._configs['alchemy'] || {}; }
+
+  /**
+   * 根据ID获取炼金材料配置
+   * @param {string} id
+   * @returns {object|null}
+   */
+  getAlchemyMaterial(id) {
+    const alchemy = this.getAlchemy();
+    return (alchemy.materials || []).find(m => m.id === id) || null;
+  }
+
+  /**
+   * 根据ID获取炼金配方
+   * @param {string} id
+   * @returns {object|null}
+   */
+  getAlchemyRecipe(id) {
+    const alchemy = this.getAlchemy();
+    return (alchemy.recipes || []).find(r => r.id === id) || null;
+  }
+
+  /**
+   * 根据ID获取药剂效果配置
+   * @param {string} id
+   * @returns {object|null}
+   */
+  getAlchemyEffect(id) {
+    const alchemy = this.getAlchemy();
+    return (alchemy.effects || []).find(e => e.id === id) || null;
   }
 
   /**

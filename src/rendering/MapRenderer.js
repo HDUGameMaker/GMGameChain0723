@@ -366,7 +366,6 @@ export class MapRenderer {
    */
   _updateRoadBuildBars() {
     const t = store.getState('timeProgress') || 0;
-    const timeTick = store.getState('timeTick') || 0;
     for (const ref of this._roadBuildFills) {
       const road = this._roadSystem.getRoadAt(ref.gridX, ref.gridY);
       if (!road || road.buildProgress === null) {
@@ -374,13 +373,12 @@ export class MapRenderer {
         continue;
       }
       const bt = road.buildTime || 1;
-      const startTick = road.startTick ?? timeTick;
-      const startT = road.startTimeProgress ?? 0;
-
-      // 和建筑同一套公式
-      let elapsed = (timeTick - startTick) + (t - startT);
-      elapsed = Math.max(0, Math.min(elapsed, bt));
-      const smooth = elapsed / bt;
+      const cur = road.buildProgress ?? 0;
+      // base/next 插值模型（与建筑/合成条一致），消除 tick 边界跳变
+      const base = cur / bt;
+      const next = (cur + 1) / bt;
+      let smooth = base + (next - base) * t;
+      smooth = Math.max(0, Math.min(1, smooth));
 
       ref.fill.clear();
       ref.fill.rect(ref.barX, ref.barY, ref.barWidth * smooth, ref.barHeight);
@@ -461,25 +459,46 @@ export class MapRenderer {
       const y = unit.gridY * ts;
       const container = new PIXI.Container();
 
-      // 底色
-      const bg = new PIXI.Graphics();
+      const isTamed = unit.source === 'tamed';
       const isArcher = unit.type === 'archer';
-      const color = isArcher ? 0x4488cc : 0x44cc88;
+
+      // 底色：驯化单位紫色，战士绿色，弓箭手蓝色
+      const bg = new PIXI.Graphics();
+      const color = isTamed ? 0xcc88cc : (isArcher ? 0x4488cc : 0x44cc88);
+      const strokeColor = isTamed ? 0xff88ff : 0x44ffaa;
       bg.rect(x + 2, y + 2, ts - 4, ts - 4);
       bg.fill({ color, alpha: 0.8 });
       bg.rect(x + 2, y + 2, ts - 4, ts - 4);
-      bg.stroke({ color: 0x44ffaa, alpha: 0.5, width: 2 });
+      bg.stroke({ color: strokeColor, alpha: 0.5, width: 2 });
       container.addChild(bg);
 
       // 图标
+      let iconText;
+      if (isTamed) {
+        iconText = unit.tamedInfo?.icon || '🐾';
+      } else {
+        iconText = isArcher ? '🏹' : '⚔️';
+      }
       const icon = new PIXI.Text({
-        text: isArcher ? '🏹' : '⚔️',
+        text: iconText,
         style: { fontSize: 22 }
       });
       icon.anchor.set(0.5);
       icon.x = x + ts / 2;
       icon.y = y + ts / 2;
       container.addChild(icon);
+
+      // 驯化单位显示名称标签
+      if (isTamed && unit.tamedInfo?.name) {
+        const label = new PIXI.Text({
+          text: unit.tamedInfo.name,
+          style: { fontSize: 9, fill: 0xddccff }
+        });
+        label.anchor.set(0.5, 0);
+        label.x = x + ts / 2;
+        label.y = y + ts / 2 + 10;
+        container.addChild(label);
+      }
 
       // 血量条
       const hpPct = unit.hp / unit.maxHp;
@@ -581,8 +600,25 @@ export class MapRenderer {
   }
 
   /**
+   * 根据当前时段返回迷雾底色的不透明度（0=完全透明=白天，1=全黑=深夜）
+   * 白天几乎无暗化；傍晚渐暗；深夜最暗。火把光照区域由 destination-out 擦除，
+   * 始终保持明亮，因此"夜晚整体暗化但火把光照范围除外"天然成立。
+   */
+  _getFogBaseAlpha() {
+    const period = store.getState('timePeriod') || 'morning';
+    switch (period) {
+      case 'morning':   return 0.05;  // 清晨：基本无暗化
+      case 'afternoon': return 0.00;  // 下午：完全明亮
+      case 'evening':   return 0.45;  // 傍晚：明显变暗
+      case 'night':     return 0.82;  // 深夜：接近全黑（火把范围除外）
+      default:          return 0.05;
+    }
+  }
+
+  /**
    * 在 Canvas 2D 上重新绘制迷雾纹理
    * 迷雾覆盖整个屏幕，火把世界坐标转视口本地坐标（减去 camX/camY）
+   * 底色不透明度随时段变化（昼夜亮暗），火把光照区域用 destination-out 擦除保持明亮
    */
   _updateFogTexture() {
     if (!this._fogCanvas) return;
@@ -592,10 +628,14 @@ export class MapRenderer {
     const w = this._fogCanvas.width;
     const h = this._fogCanvas.height;
 
-    // 1. 全屏填充迷雾色（完全不透明）
+    // 1. 全屏填充迷雾色（不透明度随时段变化 → 昼夜亮暗）
     ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = '#08081a';
-    ctx.fillRect(0, 0, w, h);
+    ctx.clearRect(0, 0, w, h);
+    const baseAlpha = this._getFogBaseAlpha();
+    if (baseAlpha > 0) {
+      ctx.fillStyle = `rgba(8, 8, 26, ${baseAlpha})`;
+      ctx.fillRect(0, 0, w, h);
+    }
 
     // 2. 用 destination-out 清除每个点燃火把的照亮区域（世界坐标 → 视口本地坐标）
     if (this._torchSystem) {
@@ -750,10 +790,10 @@ export class MapRenderer {
   }
 
   _centerView() {
-    // 优先使用配置的初始相机位置（以网格坐标指定）
+    const ts = this.tileSize;
+    // 优先级1：配置的初始相机位置（以网格坐标指定，新游戏开局居中于永恒火把等关键建筑）
     const initCam = this.mapConfig.initialCamera;
     if (initCam && initCam.gridX != null && initCam.gridY != null) {
-      const ts = this.tileSize;
       // 将网格坐标居中到屏幕中心
       this.camX = (initCam.gridX + 0.5) * ts - this.screenW / 2;
       this.camY = (initCam.gridY + 0.5) * ts - this.screenH / 2;
@@ -761,7 +801,19 @@ export class MapRenderer {
         this.zoom = Math.max(this.MIN_ZOOM, Math.min(this.MAX_ZOOM, initCam.zoom));
         this.gameView.scale.set(this.zoom);
       }
+    } else if (this.mapConfig.viewportCenter &&
+               this.mapConfig.viewportCenter.defaultGridX != null &&
+               this.mapConfig.viewportCenter.defaultGridY != null) {
+      // 优先级2：viewportCenter.defaultGridX/Y（配置中标记的"世界中心"，通常对应永恒火把）
+      const vc = this.mapConfig.viewportCenter;
+      this.camX = (vc.defaultGridX + 0.5) * ts - this.screenW / 2;
+      this.camY = (vc.defaultGridY + 0.5) * ts - this.screenH / 2;
+      if (vc.defaultZoom != null) {
+        this.zoom = Math.max(this.MIN_ZOOM, Math.min(this.MAX_ZOOM, vc.defaultZoom));
+        this.gameView.scale.set(this.zoom);
+      }
     } else {
+      // 优先级3：回退到地图几何中心
       const { gridWidth, gridHeight, tileSize } = this.mapConfig;
       const mapW = gridWidth * tileSize;
       const mapH = gridHeight * tileSize;
@@ -872,6 +924,11 @@ export class MapRenderer {
       if (this.buildingSystem.placingState === 'PLACING') {
         this._updateGhost(e.clientX, e.clientY);
       }
+
+      // 驯化单位部署模式下更新虚影
+      if (this._combatSystem && this._combatSystem.isDeployTamedMode()) {
+        this._updateDeployGhost(e.clientX, e.clientY);
+      }
     });
 
     canvas.addEventListener('pointerup', (e) => {
@@ -957,6 +1014,11 @@ export class MapRenderer {
       if (e.key === 'Escape' && this._combatSystem && this._combatSystem.isPlaceEnemyMode()) {
         this._combatSystem.exitPlaceEnemyMode();
       }
+      // Esc 退出驯化单位部署模式
+      if (e.key === 'Escape' && this._combatSystem && this._combatSystem.isDeployTamedMode()) {
+        this._combatSystem.exitDeployTamedMode();
+        this._clearGhost();
+      }
     });
 
     // 滚轮缩放（以鼠标为中心，参考 planner 的 zoom-toward-cursor）
@@ -1001,6 +1063,19 @@ export class MapRenderer {
       return;
     }
 
+    // 驯化单位部署模式
+    if (this._combatSystem && this._combatSystem.isDeployTamedMode()) {
+      if (this._isTileRevealed(gridPos.col, gridPos.row)) {
+        const success = this._combatSystem.deployTamed(gridPos.col, gridPos.row);
+        if (success) {
+          this._combatSystem.exitDeployTamedMode();
+          this._clearGhost();
+        }
+        this._drawEnemies();
+      }
+      return;
+    }
+
     // 道路编辑模式
     if (this._roadSystem && this._roadSystem.isEditMode()) {
       if (!this._isTileRevealed(gridPos.col, gridPos.row)) return;
@@ -1011,6 +1086,12 @@ export class MapRenderer {
         this._drawRoads();
       } else {
         // 点击空地 → 铺路
+        const check = this._roadSystem.canBuildRoad(gridPos.col, gridPos.row);
+        if (!check.valid) {
+          // 铺路失败给出可见反馈，避免"吞材料"错觉（实际未消耗）
+          eventBus.emit('combatBroadcast', { message: `🛑 无法在此铺路：${check.reason}` });
+          return;
+        }
         const success = this._roadSystem.buildRoad(gridPos.col, gridPos.row);
         if (success) {
           this._drawRoads();
@@ -1081,7 +1162,7 @@ export class MapRenderer {
       if (this._combatSystem) {
         const unit = this._combatSystem.getUnitAt(gridPos.col, gridPos.row);
         if (unit) {
-          const unitName = unit.type === 'archer' ? '弓箭手' : '战士';
+          const unitName = unit.source === 'tamed' ? (unit.tamedInfo?.name || '驯化单位') : (unit.type === 'archer' ? '弓箭手' : '战士');
           const hpText = `💙 ${unitName} HP ${unit.hp}/${unit.maxHp}`;
           eventBus.emit('combatBroadcast', { message: hpText });
           return;
@@ -1237,11 +1318,68 @@ export class MapRenderer {
     this._updateAdjacencyHints(gridPos.col, gridPos.row, buildingId, this.ghostValid);
   }
 
+  // ===== 驯化单位部署虚影 =====
+
+  _updateDeployGhost(clientX, clientY) {
+    const gridPos = this._clientToGrid(clientX, clientY);
+    if (!gridPos || !this._combatSystem) {
+      this._clearGhost();
+      return;
+    }
+
+    const valid = this._combatSystem.canDeployTamedAt(gridPos.col, gridPos.row);
+    this.ghostValid = valid;
+
+    this._clearGhost();
+
+    const ts = this.tileSize;
+    const graphics = new PIXI.Graphics();
+    const x = gridPos.col * ts;
+    const y = gridPos.row * ts;
+    const color = valid ? 0x44ff44 : 0xff4444;
+
+    graphics.rect(x + 2, y + 2, ts - 4, ts - 4);
+    graphics.fill({ color, alpha: 0.35 });
+    graphics.rect(x + 2, y + 2, ts - 4, ts - 4);
+    graphics.stroke({ color, alpha: 0.8, width: 2 });
+
+    // 显示生物图标预览
+    const tamedId = this._combatSystem.getDeployTamedId();
+    if (tamedId) {
+      const pool = this._combatSystem.getTamedPool();
+      const creature = pool.find(t => t.id === tamedId);
+      if (creature) {
+        const icon = new PIXI.Text({
+          text: creature.icon || '🐾',
+          style: { fontSize: 22 }
+        });
+        icon.anchor.set(0.5);
+        icon.x = x + ts / 2;
+        icon.y = y + ts / 2;
+        icon.alpha = 0.6;
+        this.ghostLayer.addChild(icon);
+        // Store separately for cleanup
+        if (!this._ghostExtras) this._ghostExtras = [];
+        this._ghostExtras.push(icon);
+      }
+    }
+
+    this.ghostLayer.addChild(graphics);
+    this.ghostGraphic = graphics;
+  }
+
   _clearGhost() {
     if (this.ghostGraphic) {
       this.ghostLayer.removeChild(this.ghostGraphic);
       this.ghostGraphic.destroy();
       this.ghostGraphic = null;
+    }
+    if (this._ghostExtras) {
+      for (const extra of this._ghostExtras) {
+        this.ghostLayer.removeChild(extra);
+        extra.destroy();
+      }
+      this._ghostExtras = [];
     }
     this._clearAdjacencyHints();
   }
@@ -1950,20 +2088,18 @@ export class MapRenderer {
    */
   _updateMapBuildBars() {
     const t = store.getState('timeProgress') || 0;
-    const timeTick = store.getState('timeTick') || 0;
     for (const ref of this._mapBuildFills) {
       const b = this.buildingSystem.buildings[ref.buildingIndex];
       if (!b || b.status !== 'constructing') continue;
       const config = configRegistry.getBuilding(b.buildingId);
       if (!config) continue;
       const bt = config.buildTime || 1;
-      const startTick = b.startTick ?? timeTick;
-      const startT = b.startTimeProgress ?? 0;
-
-      // elapsed = 已过的完整tick数 + 当前tick内的进度偏移 - 放下时的进度偏移
-      let elapsed = (timeTick - startTick) + (t - startT);
-      elapsed = Math.max(0, Math.min(elapsed, bt));
-      const smooth = elapsed / bt;
+      const cur = b.buildProgress ?? 0;
+      // base/next 插值模型（与合成条一致）：消除 tick 边界 +1 又复原的跳变
+      const base = cur / bt;
+      const next = (cur + 1) / bt;
+      let smooth = base + (next - base) * t;
+      smooth = Math.max(0, Math.min(1, smooth));
 
       ref.fill.clear();
       ref.fill.rect(ref.barX, ref.barY, ref.barWidth * smooth, ref.barHeight);
@@ -2175,6 +2311,8 @@ export class MapRenderer {
   _subscribeEvents() {
     eventBus.on('periodChange', (data) => {
       this.applyPeriodTint(data.period);
+      // 时段变化 → 昼夜亮暗变化，刷新迷雾底色
+      this._updateFogTexture();
     });
 
     eventBus.on('buildingPlaced', () => this.refreshBuildings());
@@ -2206,6 +2344,7 @@ export class MapRenderer {
     eventBus.on('enemySpawned', () => this._drawEnemies());
     eventBus.on('enemyKilled', () => this._drawEnemies());
     eventBus.on('unitSpawned', () => this._drawEnemies());
+    eventBus.on('tamedCreatureGained', () => this._drawEnemies());
     store.subscribe('combatVersion', () => this._drawEnemies());
 
     // 火把状态变化：重绘火把和迷雾

@@ -7,6 +7,7 @@
 > （分析项目 → 梳理前几棒成果 → 确定本棒任务 → 生成 `第N棒开发者身份信息.md` → 加入 `.gitignore`），
 > **之后再执行用户请求**。完整流程见 `CLAUDE.md` 与 `AGENTS.md` 顶部的「🔰 接力棒开发工作流」章节。
 > ⚡ **初始化判定**：若项目根目录已存在 `第N棒开发者身份信息.md`，表明初始化已完成，后续对话无需重复此流程，直接响应请求即可。
+> 🏁 **当前棒次 / 开发结束判定**：当前棒次 = 已存在的最高棒次身份信息文件 N。只有当当前开发者明确要求"为下一位（第 N+1 棒）生成交接文档"且 `给第N+1棒的.md` 已生成，才视为第 N 棒结束、推进到第 N+1 棒。仅有身份信息而无交接文档 → 仍属当前棒次（如只有第五棒身份信息、无 `给第六棒的.md` → 当前仍在第5棒）。
 
 ## 项目概述
 
@@ -78,6 +79,14 @@ Layer 4: Data              → src/core/（EventBus, ConfigRegistry, Store, Save
 | `pageVisibilityChange` | 页面可见性变化（切换标签页） | `{hidden: boolean}` |
 | `popupClosed` | 弹窗关闭 | `{type}` |
 | `audioSettingsChanged` | 音频设置变更 | `{ musicVolume, sfxVolume, muted }` |
+| `alchemyBrewStarted` | 炼金酿造开始 | `{ recipeId?, baseId, materialIds, processType }` |
+| `alchemyBrewComplete` | 炼金酿造成功 | `{ recipeId, effectId, quality, itemInstanceId }` |
+| `alchemyBrewFailed` | 炼金酿造失败 | `{ reason, wastedMaterials }` |
+| `alchemyRecipeDiscovered` | 实验发现新配方 | `{ recipeId, recipeName }` |
+| `alchemyLevelUp` | 炼金等级提升 | `{ oldLevel, newLevel, unlockedRecipes[], unlockedBases[] }` |
+| `alchemyMagnumOpusProgress` | 伟大工作阶段推进 | `{ stage, outputItemId }` |
+| `potionUsed` | 药剂被使用 | `{ instanceId, itemId, effectId, quality }` |
+| `potionEffectExpired` | 药剂效果过期 | `{ effectId, quality }` |
 
 ### Store 状态键
 
@@ -97,6 +106,12 @@ Layer 4: Data              → src/core/（EventBus, ConfigRegistry, Store, Save
 | `expeditionState` | object/null | 当前探险状态 |
 | `torchVersion` | number | 火把状态变化时间戳（触发迷雾重绘） |
 | `audioVersion` | number | 音频设置变化时间戳 |
+| `alchemyVersion` | number | 炼金状态变化时间戳（触发UI刷新） |
+| `alchemyBrewing` | object/null | 当前酿造状态 `{ recipeId?, baseId, materialIds, processType, ticksRemaining, successChance, qualityTier }` |
+| `alchemyLevel` | number | 炼金等级（1-10） |
+| `alchemyXP` | number | 炼金经验值 |
+| `alchemyBrewStartTime` | number | 酿造开始现实时间戳（供ProgressManager使用） |
+| `alchemyActiveEffects` | array | 当前激活的药效 `[{ effectId, quality, ticksRemaining }]` |
 
 ## 系统 API 速查
 
@@ -226,6 +241,51 @@ executeOptionEffects(effects) → boolean  // 返回是否含 trigger_event
 registerEffect(type, handler)            // 注册新效果类型
 ```
 
+### AlchemySystem
+```js
+// 核心酿造
+experiment(baseId, materialIds, processType?, grindLevels?) → {valid, reason} | {success, recipeId?, effectId, quality, discovered?} | {failed, reason}
+craftRecipe(recipeId) → {valid, reason?} | {started}                                  // 按已知配方酿造
+cancelBrewing() → {valid, reason?} | {cancelled}
+
+// 酿造状态
+getBrewingState() → { active: boolean, recipeId?, baseId, processType, ticksRemaining, totalTicks, successChance, qualityTier } | null
+isBrewing() → boolean
+
+// 药剂使用
+usePotion(instanceId) → {valid, reason?}    // 使用药剂，激活效果
+getActiveEffects() → [{effectId, quality, ticksRemaining}]
+getEffects() → {combat: {...}, building: {...}, population: {...}}  // 聚合修饰符，供其他系统读取
+
+// 伟大工作
+canPerformMagnumOpus(stage) → {valid, reason?}
+performMagnumOpus(stage) → {valid, reason?} | {success, stage, outputItemId}
+getMagnumOpusStage() → 'none'|'nigredo'|'albedo'|'citrinitas'|'rubedo'|'stone'
+
+// 盐系统
+getSalts() → {void, moon, sun, life, philosopher}                 // 返回各盐数量
+addSalt(saltType, amount) → void
+useSalt(saltType) → {valid, reason?} | {success}
+
+// 信息查询
+getLevel() → number
+getXP() → number
+getXPToNextLevel() → number | null (满级)
+getDiscoveredRecipes() → string[]
+getAvailableRecipes() → [{id, name, baseId, materials, effects, requiredLevel}]  // 已解锁+已发现
+getMaterials() → [{id, name, element, potency, rarity, category, stock}]
+
+// 存档
+getState() → {level, xp, discoveredRecipes, materialStock, brewing, salts, magnumOpusStage, activeEffects}
+restoreState(state) → void
+```
+- 酿造基于tick推进：每tick `ticksRemaining--`，归零时结算成功/失败/品质
+- 实验引擎：材料元素×效力×基底偏向→加权评分→取top-3→加权随机选一效果→成功率判定品质(I:>0.45, II:>0.70, III:>0.90)
+- 品质受研磨加成（grindLevel越接近材料optimalGrind，成功率越高）和加工方式（加热/搅拌/静置）影响
+- 药剂效果激活后持续固定tick数，过期自动清理
+- 五盐：void盐取消酿造、moon盐提升治疗/水品质、sun盐提升嬗变/火品质、life盐提升成功率、philosopher盐减少酿造tick
+- 伟大工作五阶段（Nigredo→Albedo→Citrinitas→Rubedo→Philosopher's Stone）每阶段消耗前一阶段产物作为输入
+
 ## 添加新功能的模式
 
 ### 添加新面板
@@ -244,6 +304,14 @@ registerEffect(type, handler)            // 注册新效果类型
 
 ### 添加新资源
 在 `config/resources.json` 中添加，ResourceSystem 自动识别。
+
+### 添加新炼金材料/配方/效果
+在 `config/alchemy.json` 中添加 materials/recipes/effects，无需改代码。炼金系统通过 ConfigRegistry 自动读取。
+
+### 添加新炼金面板
+1. 创建 `src/ui/panels/xxx-alchemy-panel.js`，导出渲染函数
+2. 在 `PopupManager._registerBuiltinPanels()` 中注册
+3. 面板渲染数据中需传入 `alchemySystem` 引用
 
 ## 地图坐标系
 
@@ -274,6 +342,8 @@ WORK_PERIODS = [morning, afternoon]（仅此时段建筑生产）
 | torch_detail | 否 |
 | settings | 否 |
 | expedition_detail | 否 |
+| alchemy_lab | 否 |
+| potion_inventory | 否 |
 
 ## 存档结构
 
@@ -289,7 +359,17 @@ WORK_PERIODS = [morning, afternoon]（仅此时段建筑生产）
   "expedition": null | ExpeditionState,
   "events": { "triggerCounts": {}, "cooldowns": {} },
   "torches": [{ "torchId", "gridX", "gridY", "lit", "fuel", "upgrading", "upgradeProgress" }],
-  "audio": { "musicVolume": 0.7, "sfxVolume": 0.8, "muted": false }
+  "audio": { "musicVolume": 0.7, "sfxVolume": 0.8, "muted": false },
+  "alchemy": {
+    "level": 1,
+    "xp": 0,
+    "discoveredRecipes": ["healing_potion_I"],
+    "materialStock": { "blood_thorn": 5, "frost_leaf": 3 },
+    "brewing": null,
+    "salts": { "void": 0, "moon": 0, "sun": 0, "life": 0, "philosopher": 0 },
+    "magnumOpusStage": "none",
+    "activeEffects": [{ "effectId": "healing", "quality": "II", "ticksRemaining": 45 }]
+  }
 }
 ```
 
@@ -307,6 +387,10 @@ WORK_PERIODS = [morning, afternoon]（仅此时段建筑生产）
 10. **火把存档**：`fuel` 字段中 `Infinity`（永恒火把）序列化时存为 `-1`，读档时还原。旧存档无 `torches` 字段则调用 `initFromConfig()` 重新初始化
 11. **音频系统初始化**：AudioSystem 构造时注册暂停/恢复/可见性事件，init() 中加载 sound.json 配置并预解码 SFX buffer。BGM 用 HTMLAudioElement（流式循环），SFX 用 AudioContext + buffer pool（低延迟重叠）。音量默认值 → 存档覆盖 → 用户滑块调整。
 12. **音频文件缺失**：SFX 加载失败时静默降级（不崩溃），BGM 播放被浏览器阻止时 catch 处理。AudioContext 首次需用户手势解锁，已通过 click/keydown/touchstart 自动 resume。
+13. **炼金材料来源**：炼金材料通过建筑生产（alchemy_lab 产出 water_pure/essence_oil/spirit_distilled）或事件/探险获取（alchemy_herb/alchemy_mineral），不由 ResourceSystem 直接初始化。
+14. **炼金效果分发**：AlchemySystem.getEffects() 返回聚合修饰符对象，CombatSystem（单位伤害/血量倍率）、BuildingSystem（建造成本/产出倍率）、PopulationSystem（人口上限/食物消耗/增长倍率）分别读取对应子对象。模式与 CultureSystem 效果分发一致。
+15. **炼金药剂物品**：药剂在 `config/items.json` 中以 `potionEffect: { id: "effectId" }` 字段标记，consumable: true。使用时 AlchemySystem.usePotion() → ItemSystem.lose()，效果写入内部激活表。
+16. **炼金存档兼容**：旧存档无 `alchemy` 字段时，restoreState 会跳过（不崩溃），新游戏调用 `alchemy.init()` 初始化等级1。新增 alchemy 字段不影响旧存档加载。
 
 ## 配置编辑器文件结构
 
@@ -350,3 +434,4 @@ WORK_PERIODS = [morning, afternoon]（仅此时段建筑生产）
 - 存档系统 → `docs/save-system-design.md`
 - 相邻加成系统 → `config/adjacency-bonuses.json` + `docs/map-and-building-revision.md` §相邻加成
 - 火把/迷雾系统 → `config/buildings.json`（火把参数配置，`isTorch: true` 条目） + `src/systems/TorchSystem.js`（火把逻辑） + `src/rendering/MapRenderer.js`（迷雾渲染，搜索 `_createFogCanvas`/`_updateFogTexture`）
+- 炼金系统 → `docs/炼金的三重镜像——翠玉录·Noita·药剂工艺完全整理.md`（设计研究） + `config/alchemy.json`（配置参考） + `src/systems/AlchemySystem.js`（核心逻辑） + `src/ui/panels/alchemy-panel.js`（主面板） + `src/ui/panels/potion-inventory-panel.js`（库存面板）

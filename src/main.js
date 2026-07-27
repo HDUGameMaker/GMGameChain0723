@@ -17,6 +17,8 @@ import { TorchSystem } from './systems/TorchSystem.js';
 import { AudioSystem } from './systems/AudioSystem.js';
 import { RoadSystem } from './systems/RoadSystem.js';
 import { TechSystem } from './systems/TechSystem.js';
+import { CultureSystem } from './systems/CultureSystem.js';
+import { AlchemySystem } from './systems/AlchemySystem.js';
 import { CombatSystem } from './systems/CombatSystem.js';
 import { WeatherSystem } from './systems/WeatherSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
@@ -24,6 +26,8 @@ import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
 import { SaveManager } from './core/SaveManager.js';
 import { cheatManager } from './utils/CheatManager.js';
+import { messageLog } from './ui/MessageLog.js';
+import { DebugPanel } from './ui/panels/debug-panel.js';
 
 class Game {
   constructor() {
@@ -58,6 +62,12 @@ class Game {
     // 科技树系统
     this.systems.tech = new TechSystem();
 
+    // 人文政策树系统
+    this.systems.culture = new CultureSystem();
+
+    // 炼金系统
+    this.systems.alchemy = new AlchemySystem();
+
     // 战斗系统
     this.systems.combat = new CombatSystem();
 
@@ -67,8 +77,8 @@ class Game {
     // 音效系统
     this.systems.audio = new AudioSystem();
 
-    // 3.05 初始化弹窗管理器（需要先有 tech 系统）
-    this.popupManager = new PopupManager(gameLoop, this.systems.tech);
+    // 3.05 初始化弹窗管理器（需要先有 tech / culture / alchemy 系统）
+    this.popupManager = new PopupManager(gameLoop, this.systems.tech, this.systems.culture, this.systems.alchemy, this.systems.combat);
 
     // 3.1 事件系统需要 popupManager
     this.systems.event = new EventSystem();
@@ -82,6 +92,8 @@ class Game {
     this.systems.building.setRoadSystem(this.systems.road);
     this.systems.building.setTechSystem(this.systems.tech);
     this.systems.building.setWeatherSystem(this.systems.weather);
+    this.systems.building.setCultureSystem(this.systems.culture);
+    this.systems.building.setAlchemySystem(this.systems.alchemy);
     this.systems.building.init();
     this.systems.torch.setResourceSystem(this.systems.resource);
     this.systems.torch.setBuildingSystem(this.systems.building);
@@ -89,7 +101,18 @@ class Game {
     this.systems.tech.setResourceSystem(this.systems.resource);
     this.systems.tech.setBuildingSystem(this.systems.building);
     this.systems.tech.setItemSystem(this.systems.item);
+    this.systems.tech.setCultureSystem(this.systems.culture);
     this.systems.tech.init();
+    this.systems.culture.setResourceSystem(this.systems.resource);
+    this.systems.culture.setBuildingSystem(this.systems.building);
+    this.systems.culture.setPopulationSystem(this.systems.population);
+    this.systems.culture.setTimeSystem(this.systems.time);
+    this.systems.culture.init();
+    this.systems.alchemy.setResourceSystem(this.systems.resource);
+    this.systems.alchemy.setItemSystem(this.systems.item);
+    this.systems.alchemy.setBuildingSystem(this.systems.building);
+    this.systems.alchemy.setTimeSystem(this.systems.time);
+    this.systems.alchemy.init();
     this.systems.road.setBuildingSystem(this.systems.building);
     this.systems.road.setResourceSystem(this.systems.resource);
     this.systems.road.setPopulationSystem(this.systems.population);
@@ -97,6 +120,8 @@ class Game {
     this.systems.combat.setBuildingSystem(this.systems.building);
     this.systems.combat.setPopulationSystem(this.systems.population);
     this.systems.combat.setResourceSystem(this.systems.resource);
+    this.systems.combat.setCultureSystem(this.systems.culture);
+    this.systems.combat.setAlchemySystem(this.systems.alchemy);
     this.systems.combat.init();
 
     // 天气系统引用
@@ -108,6 +133,8 @@ class Game {
     this.systems.population.setBuildingSystem(this.systems.building);
     this.systems.population.setResourceSystem(this.systems.resource);
     this.systems.population.setWeatherSystem(this.systems.weather);
+    this.systems.population.setCultureSystem(this.systems.culture);
+    this.systems.population.setAlchemySystem(this.systems.alchemy);
     this.systems.event.setSystems({
       resource: this.systems.resource,
       item: this.systems.item,
@@ -243,6 +270,12 @@ class Game {
     // 7. 初始化 HUD
     this.hud = new HUD(this.systems, this.popupManager);
 
+    // 7.05 初始化调试面板（按 ~ 键切换）
+    this.debugPanel = new DebugPanel(this.systems, gameLoop);
+
+    // 7.1 初始化消息播报系统（监听 combatBroadcast / 资源 / 建造 / 人口事件）
+    messageLog.init();
+
     // 8. 设置主循环更新函数
     gameLoop.setUpdateFunction((delta) => this.update(delta));
 
@@ -305,6 +338,9 @@ class Game {
     // 初始化天气
     this.systems.weather.initNew();
 
+    // 初始化炼金系统
+    this.systems.alchemy.init();
+
     // 初始化事件标记状态（新游戏 = 无已移除标记）
     store.setState({ removedEventMarkers: [] });
   }
@@ -322,13 +358,19 @@ class Game {
     if (saveData.torches) {
       this.systems.torch.restoreState(saveData.torches);
     }
-    // 道路存档总是调用（无数据则从建筑生成）
+    // 道路存档：必须在建筑恢复之后调用（无数据时从建筑生成初始道路，依赖 buildingSystem.buildings）
     this.systems.road.restoreState(saveData?.roads);
     if (saveData.audio) {
       this.systems.audio.restoreState(saveData.audio);
     }
     if (saveData.tech) {
       this.systems.tech.restoreState(saveData.tech);
+    }
+    if (saveData.culture) {
+      this.systems.culture.restoreState(saveData.culture);
+    }
+    if (saveData.alchemy) {
+      this.systems.alchemy.restoreState(saveData.alchemy);
     }
     if (saveData.combat) {
       this.systems.combat.restoreState(saveData.combat);
@@ -372,6 +414,8 @@ class Game {
       torches: this.systems.torch.getAllStates(),
       roads: this.systems.road.getAllStates(),
       tech: this.systems.tech.getState(),
+      culture: this.systems.culture.getState(),
+      alchemy: this.systems.alchemy.getState(),
       combat: this.systems.combat.getState(),
       weather: this.systems.weather.getState(),
       audio: this.systems.audio.getAllStates(),
@@ -400,6 +444,8 @@ class Game {
       audio: this.systems.audio.getAllStates(),
       weather: this.systems.weather.getState(),
       tech: this.systems.tech.getState(),
+      culture: this.systems.culture.getState(),
+      alchemy: this.systems.alchemy.getState(),
       combat: this.systems.combat.getState(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
       removedEventMarkers: this.mapRenderer ? this.mapRenderer.getMarkerState() : []
@@ -430,3 +476,8 @@ game.init().catch(err => {
 // 导出到全局（调试用）
 window.__game = game;
 window.__cheatManager = cheatManager;
+// debugPanel 在 init() 完成后才可用，通过 getter 懒访问
+Object.defineProperty(window, '__debugPanel', {
+  get() { return game.debugPanel; },
+  configurable: true
+});

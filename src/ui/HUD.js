@@ -31,6 +31,8 @@ export class HUD {
     this.btnBuild = document.getElementById('btn-build');
     this.btnTech = document.getElementById('btn-tech');
     this.btnCulture = document.getElementById('btn-culture');
+    this.btnAlchemy = document.getElementById('btn-alchemy');
+    this.btnTame = document.getElementById('btn-tame');
     this.btnRoad = document.getElementById('btn-road');
     this.btnCancelPlace = document.getElementById('btn-cancel-place');
     this.btnFullscreen = document.getElementById('btn-fullscreen');
@@ -55,6 +57,16 @@ export class HUD {
       this.popupManager.open('culture_tree', {});
     });
 
+    // 炼金
+    this.btnAlchemy.addEventListener('click', () => {
+      this.popupManager.open('alchemy_lab', {});
+    });
+
+    // 驯养
+    this.btnTame.addEventListener('click', () => {
+      this.popupManager.open('tamed_pool', {});
+    });
+
     // 道路编辑
     this.btnRoad.addEventListener('click', () => {
       if (this.systems.road) {
@@ -69,7 +81,13 @@ export class HUD {
 
     // 取消放置
     this.btnCancelPlace.addEventListener('click', () => {
-      this.systems.building.exitPlacingMode();
+      if (this.systems.combat?.isDeployTamedMode()) {
+        this.systems.combat.exitDeployTamedMode();
+      } else if (this.systems.combat?.isPlaceEnemyMode()) {
+        this.systems.combat.exitPlaceEnemyMode();
+      } else {
+        this.systems.building.exitPlacingMode();
+      }
     });
 
     // 全屏
@@ -118,6 +136,7 @@ export class HUD {
     store.subscribe('timeUserPaused', () => this._refreshPauseBtn());
     store.subscribe('placingState', (state) => this._refreshPlacingMode(state));
     store.subscribe('roadEditMode', (enabled) => this._refreshRoadEditMode(enabled));
+    store.subscribe('deployTamedMode', (mode) => this._refreshDeployTamedMode(mode));
     store.subscribe('expeditionState', (state) => this._refreshExpeditionStatus(state));
     store.subscribe('buildingVersion', () => {
       this._refreshPopulation();
@@ -341,6 +360,22 @@ export class HUD {
       this.btnSettings.classList.remove('disabled');
       this.btnSpeed.classList.remove('disabled');
       this.btnPause.classList.remove('disabled');
+    }
+  }
+
+  _refreshDeployTamedMode(mode) {
+    if (mode) {
+      this.btnCancelPlace.style.display = 'inline-block';
+      this.btnTame.classList.add('active');
+      this.btnBuild.classList.add('disabled');
+      this.btnFullscreen.classList.add('disabled');
+      this.btnSettings.classList.add('disabled');
+    } else {
+      this.btnCancelPlace.style.display = 'none';
+      this.btnTame.classList.remove('active');
+      this.btnBuild.classList.remove('disabled');
+      this.btnFullscreen.classList.remove('disabled');
+      this.btnSettings.classList.remove('disabled');
     }
   }
 

@@ -91,6 +91,9 @@ export class AudioSystem {
         for (const bgm of this._config.bgm) {
           this._createBGMElement(bgm);
         }
+        // 预加载 BGM 音频数据（fetch + 缓存到 blob URL），
+        // 避免游戏启动后首次播放 BGM 因网络/解码延迟而"没有及时播放"。
+        await this._preloadBGMFiles(this._config.bgm);
       }
 
       // 预解码 SFX buffer
@@ -151,11 +154,19 @@ export class AudioSystem {
 
     // 播放（从 0 音量开始淡入）
     this._applyBGMVolume(element, 0);
-    element.currentTime = 0;
-    element.play().catch(e => {
-      // 浏览器可能阻止自动播放，静默处理
-      console.debug('[AudioSystem] BGM play blocked:', e.message);
-    });
+    try { element.currentTime = 0; } catch (e) { /* 元素未就绪时忽略 */ }
+
+    // 直接调用 play() —— 预加载已确保 readyState >= 3（数据就绪），
+    // 且当从用户手势同步链中调用时（_setupUserGestureResume → kickstart），
+    // 浏览器自动播放策略允许此次播放。
+    // 若从 periodChange 等事件触发，由于此前已通过用户手势"解锁"了该 tab，
+    // 浏览器同样允许后续播放。
+    const playPromise = element.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(e => {
+        console.debug('[AudioSystem] BGM play blocked:', e.message);
+      });
+    }
 
     this._fadeIn(element, 500);
 
@@ -480,23 +491,31 @@ export class AudioSystem {
    * 因此不在 init() 中直接播放，而是等待用户首次点击/按键/触摸。
    */
   _setupUserGestureResume() {
+    let _fired = false;
     const kickstart = () => {
+      if (_fired) return;
+      _fired = true;
+
       // 恢复 AudioContext（首次交互后浏览器允许）
       if (this._audioContext && this._audioContext.state === 'suspended') {
         this._audioContext.resume().catch(() => {});
       }
 
-      // 在用户手势的同步调用链中启动 BGM（浏览器允许此次播放）
+      // 在用户手势的同步调用链中启动 BGM —— playBGM() 内部直接调用
+      // element.play()，无异步回调，确保 play() 在用户手势同步上下文中执行，
+      // 满足浏览器自动播放策略要求。
+      // 优先按当前时段选择对应 BGM（白天 bgm_main / 夜晚 bgm_night）。
       if (this._initialized && !this._currentBGM && !this._muted) {
-        this.playBGM('bgm_main');
+        const period = store.getState('timePeriod') || 'morning';
+        const isNight = period === 'evening' || period === 'night';
+        const targetId = this._getBGMConfig('bgm_night') && isNight ? 'bgm_night' : 'bgm_main';
+        this.playBGM(targetId);
       }
 
-      // BGM 已启动，清理监听器
-      if (this._currentBGM) {
-        document.removeEventListener('click', kickstart);
-        document.removeEventListener('keydown', kickstart);
-        document.removeEventListener('touchstart', kickstart);
-      }
+      // 无论 BGM 是否启动成功，首次交互后都清理监听器
+      document.removeEventListener('click', kickstart);
+      document.removeEventListener('keydown', kickstart);
+      document.removeEventListener('touchstart', kickstart);
     };
     document.addEventListener('click', kickstart);
     document.addEventListener('keydown', kickstart);
@@ -535,6 +554,63 @@ export class AudioSystem {
     element.volume = 0; // 从 0 开始，播放时淡入
     this._bgmElements[bgmConfig.id] = element;
     return element;
+  }
+
+  /**
+   * 预加载 BGM 音频文件：fetch 拉取并转为 blob URL，
+   * 然后把对应 HTMLAudioElement 的 src 替换为 blob URL。
+   * 等待音频数据就绪（canplay 事件），确保首次 playBGM() 调用时
+   * readyState >= 3，这样 play() 可以在用户手势同步调用链中执行，
+   * 避免浏览器自动播放策略阻止。
+   * 任何一首加载失败都不影响其它（回退到原始 file 路径）。
+   * @param {Array} bgmList
+   */
+  async _preloadBGMFiles(bgmList) {
+    const tasks = bgmList.map(async (bgm) => {
+      try {
+        const response = await fetch(bgm.file);
+        if (!response.ok) {
+          console.warn(`[AudioSystem] BGM file not found: ${bgm.file} (${response.status})`);
+          return null;
+        }
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const element = this._bgmElements[bgm.id];
+        if (element) {
+          element.src = blobUrl;
+          // 触发浏览器解码/缓冲
+          element.load();
+          // 等待音频数据就绪，确保后续 play() 调用时 readyState >= 3
+          // 这样在用户手势同步链中 play() 不会因等待数据而丢失用户手势上下文
+          if (element.readyState < 3) {
+            await new Promise((resolve) => {
+              const onReady = () => {
+                element.removeEventListener('canplay', onReady);
+                element.removeEventListener('loadeddata', onReady);
+                resolve();
+              };
+              element.addEventListener('canplay', onReady, { once: true });
+              element.addEventListener('loadeddata', onReady, { once: true });
+              // 10 秒超时兜底，避免永久卡住 init()
+              setTimeout(() => {
+                element.removeEventListener('canplay', onReady);
+                element.removeEventListener('loadeddata', onReady);
+                resolve();
+              }, 10000);
+            });
+          }
+        }
+        return bgm.id;
+      } catch (e) {
+        console.warn(`[AudioSystem] Failed to preload BGM: ${bgm.id} (${e.message})`);
+        return null;
+      }
+    });
+    const results = await Promise.all(tasks);
+    const loaded = results.filter(Boolean);
+    if (loaded.length > 0) {
+      console.log(`[AudioSystem] Preloaded ${loaded.length} BGM files (readyState >= 3)`);
+    }
   }
 
   /**

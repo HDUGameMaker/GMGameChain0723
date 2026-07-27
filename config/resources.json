@@ -115,5 +115,50 @@
     "max": 500,
     "rare": true,
     "showInHUD": true
+  },
+  {
+    "id": "water_pure",
+    "name": "纯净水",
+    "icon": "",
+    "initial": 20,
+    "max": 200,
+    "rare": false,
+    "showInHUD": false
+  },
+  {
+    "id": "essence_oil",
+    "name": "精油",
+    "icon": "",
+    "initial": 0,
+    "max": 100,
+    "rare": false,
+    "showInHUD": false
+  },
+  {
+    "id": "spirit_distilled",
+    "name": "蒸馏烈酒",
+    "icon": "",
+    "initial": 0,
+    "max": 100,
+    "rare": false,
+    "showInHUD": false
+  },
+  {
+    "id": "alchemy_herb",
+    "name": "炼金草药",
+    "icon": "",
+    "initial": 5,
+    "max": 200,
+    "rare": false,
+    "showInHUD": false
+  },
+  {
+    "id": "alchemy_mineral",
+    "name": "炼金矿石",
+    "icon": "",
+    "initial": 0,
+    "max": 200,
+    "rare": false,
+    "showInHUD": false
   }
 ]

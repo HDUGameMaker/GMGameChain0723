@@ -486,12 +486,17 @@ export class RoadSystem {
       this.initFromBuildings();
       return;
     }
+    // 读档时为建造中道路补 startTick/startTimeProgress，避免进度条公式失真
+    const state = store.getState();
+    const currentTick = state.timeTick ?? 0;
     this.roads = states.map(s => ({
       gridX: s.gridX,
       gridY: s.gridY,
       roadId: s.roadId || this._getDefaultRoadId(),
       buildProgress: s.buildProgress !== undefined ? s.buildProgress : null,
-      buildTime: s.buildTime || 1
+      buildTime: s.buildTime || 1,
+      startTick: s.buildProgress != null ? (s.startTick ?? currentTick) : undefined,
+      startTimeProgress: s.buildProgress != null ? (s.startTimeProgress ?? 0) : undefined
     }));
     this._notifyChange();
   }
