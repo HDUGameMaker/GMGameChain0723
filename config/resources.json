@@ -105,6 +105,15 @@
     "initial": 0,
     "max": 1000,
     "rare": false,
-    "showInHUD": false
+    "showInHUD": true
+  },
+  {
+    "id": "gear",
+    "name": "齿轮",
+    "icon": "",
+    "initial": 0,
+    "max": 500,
+    "rare": true,
+    "showInHUD": true
   }
 ]

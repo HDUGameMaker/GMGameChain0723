@@ -1,0 +1,16 @@
+[
+  {
+    "id": "dirt_path",
+    "name": "道路",
+    "description": "夯实过的土路。",
+    "buildCost": [
+      {
+        "resourceId": "stone",
+        "amount": 5
+      }
+    ],
+    "buildTime": 1,
+    "color": "#8B7355",
+    "alpha": 0.8
+  }
+]
