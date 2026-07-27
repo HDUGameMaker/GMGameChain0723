@@ -10,7 +10,6 @@ export class ResourceSystem {
   constructor() {
     this._resources = {}; // { id: { current, max } }
     this._storageMultiplier = 1; // 仓库倍率
-    this._capacityBonus = 0; // 资源扩容室的容量加成
   }
 
   /**
@@ -18,22 +17,10 @@ export class ResourceSystem {
    */
   initFromConfig() {
     const configs = configRegistry.get('resources') || [];
-    const initialConfig = configRegistry.get('initial') || {};
-    const initialResources = initialConfig.resources || [];
-    
-    // 将初始资源转换为 Map 方便查找
-    const initialMap = new Map();
-    for (const r of initialResources) {
-      initialMap.set(r.resourceId, r.amount);
-    }
-    
     this._resources = {};
     for (const cfg of configs) {
-      // 使用 initial.json 中的初始值，如果没有则使用 resources.json 中的初始值
-      const initialAmount = initialMap.has(cfg.id) ? initialMap.get(cfg.id) : cfg.initial;
-      
       this._resources[cfg.id] = {
-        current: initialAmount,
+        current: cfg.initial,
         max: cfg.max
       };
     }
@@ -42,12 +29,12 @@ export class ResourceSystem {
   }
 
   /**
-   * 获取资源有效上限（配置max × 仓库倍率 + 容量加成）
+   * 获取资源有效上限（配置max × 仓库倍率）
    */
   getMaxResourceCapacity(id) {
     const res = this._resources[id];
     if (!res) return 0;
-    return Math.floor(res.max * this._storageMultiplier) + this._capacityBonus;
+    return Math.floor(res.max * this._storageMultiplier);
   }
 
   /**
@@ -60,18 +47,6 @@ export class ResourceSystem {
 
   getStorageMultiplier() {
     return this._storageMultiplier;
-  }
-
-  /**
-   * 设置资源扩容室的容量加成
-   */
-  setCapacityBonus(bonus) {
-    this._capacityBonus = bonus;
-    this._notifyChange();
-  }
-
-  getCapacityBonus() {
-    return this._capacityBonus;
   }
 
   // ===== 修改类 API =====

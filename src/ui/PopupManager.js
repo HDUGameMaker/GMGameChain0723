@@ -8,9 +8,11 @@ import { eventBus } from '../core/EventBus.js';
 const BLOCKING_TYPES = ['event', 'expedition_prep', 'game_over'];
 
 export class PopupManager {
-  constructor(gameLoop) {
+  constructor(gameLoop, techSystem) {
     this._gameLoop = gameLoop;
-    this._stack = []; // 导航栈
+    this._techSystem = techSystem || null;
+    this._stack = [];
+    this._panels = {}; // 注册的面板渲染函数
     this._panels = {}; // 注册的面板渲染函数
     this._isOpen = false;
     this._currentType = null;
@@ -183,7 +185,9 @@ export class PopupManager {
       'expedition_detail': '探险详情',
       'item_detail': '物品详情',
       'torch_detail': '火把详情',
-      'game_over': '游戏结束'
+      'game_over': '游戏结束',
+      'tech_tree': '科技树',
+      'culture_tree': '人文树'
     };
     return titles[type] || '';
   }
@@ -225,6 +229,12 @@ export class PopupManager {
     });
     import('./panels/gameover-panel.js').then(m => {
       this.register('game_over', m.renderGameOverPanel);
+    });
+    import('./panels/tech-tree-panel.js').then(m => {
+      this.register('tech_tree', m.renderTechTreePanel);
+    });
+    import('./panels/culture-tree-panel.js').then(m => {
+      this.register('culture_tree', m.renderCultureTreePanel);
     });
   }
 }

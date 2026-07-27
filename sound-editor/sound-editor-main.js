@@ -33,8 +33,6 @@ document.getElementById('btnSave').addEventListener('click', () => doSave());
 document.getElementById('btnAdd').addEventListener('click', addItem);
 document.getElementById('btnDup').addEventListener('click', duplicateItem);
 document.getElementById('btnDel').addEventListener('click', deleteItem);
-document.getElementById('sortField').addEventListener('change', () => { state.selectedIdx = -1; refreshList(); });
-document.getElementById('sortOrder').addEventListener('change', () => { state.selectedIdx = -1; refreshList(); });
 
 // ==================== 键盘快捷键 ====================
 document.addEventListener('keydown', (e) => {

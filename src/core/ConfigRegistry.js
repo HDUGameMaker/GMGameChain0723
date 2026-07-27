@@ -16,22 +16,22 @@ class ConfigRegistry {
       'buildings': 'config/buildings.json',
       'resources': 'config/resources.json',
       'items': 'config/items.json',
-      'initial': 'config/initial.json',
       'map': 'config/maps/base_map.json',
       'regions': 'config/expeditions/regions.json',
       'expeditionGlobal': 'config/expeditions/expedition_global.json',
       'eventsBase': 'config/events/events_base.json',
       'eventsExpedition': 'config/events/events_expedition.json',
+      'eventsMap': 'config/events/events_map.json',
       'sound': 'config/sound.json',
       'adjacency_bonuses': 'config/adjacency-bonuses.json',
-      'ui_main_menu': 'config/ui_main_menu.json',
-      'tags': 'config/tags.json'
+      'roads': 'config/roads.json',
+      'techs': 'config/techs.json',
+      'enemies': 'config/enemies.json'
     };
 
     const loadPromises = Object.entries(configFiles).map(async ([key, path]) => {
       try {
-        // 使用 cache: 'no-cache' 强制浏览器验证最新配置，避免修改后需要两次刷新
-        const response = await fetch(path, { cache: 'no-cache' });
+        const response = await fetch(path);
         if (!response.ok) {
           console.warn(`[ConfigRegistry] Failed to load ${path}: ${response.status}`);
           this._configs[key] = key.startsWith('events') ? [] : null;
@@ -62,54 +62,6 @@ class ConfigRegistry {
   }
 
   /**
-   * 单独加载某个配置文件（用于热更新）
-   * @param {string} key - 配置键名
-   * @returns {Promise<void>}
-   */
-  async loadConfig(key) {
-    const configFiles = {
-      'global': 'config/global.json',
-      'buildings': 'config/buildings.json',
-      'resources': 'config/resources.json',
-      'items': 'config/items.json',
-      'initial': 'config/initial.json',
-      'map': 'config/maps/base_map.json',
-      'regions': 'config/expeditions/regions.json',
-      'expeditionGlobal': 'config/expeditions/expedition_global.json',
-      'eventsBase': 'config/events/events_base.json',
-      'eventsExpedition': 'config/events/events_expedition.json',
-      'sound': 'config/sound.json',
-      'adjacency_bonuses': 'config/adjacency-bonuses.json',
-      'ui_main_menu': 'config/ui_main_menu.json',
-      'tags': 'config/tags.json'
-    };
-
-    const path = configFiles[key];
-    if (!path) {
-      console.warn(`[ConfigRegistry] Unknown config key: ${key}`);
-      return;
-    }
-
-    try {
-      // 使用 cache: 'no-cache' 强制浏览器验证最新配置
-      const response = await fetch(path, { cache: 'no-cache' });
-      if (!response.ok) {
-        console.warn(`[ConfigRegistry] Failed to load ${path}: ${response.status}`);
-        return;
-      }
-      this._configs[key] = await response.json();
-      console.log(`[ConfigRegistry] Config reloaded: ${key}`);
-
-      // 如果是 sound 配置，不需要配方继承
-      if (key === 'buildings') {
-        this._inheritSynthesisRecipes();
-      }
-    } catch (e) {
-      console.warn(`[ConfigRegistry] Error loading ${path}:`, e.message);
-    }
-  }
-
-  /**
    * 获取所有事件配置（合并所有事件文件）
    * @returns {Array} 所有事件配置
    */
@@ -120,6 +72,9 @@ class ConfigRegistry {
     }
     if (Array.isArray(this._configs['eventsExpedition'])) {
       events.push(...this._configs['eventsExpedition']);
+    }
+    if (Array.isArray(this._configs['eventsMap'])) {
+      events.push(...this._configs['eventsMap']);
     }
     return events;
   }

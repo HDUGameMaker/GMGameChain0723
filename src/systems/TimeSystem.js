@@ -55,9 +55,9 @@ export class TimeSystem {
       this._onTick();
     }
 
-    // 更新进度到 store（用于 HUD 进度条）
+    // 同步更新 timeTick 和 timeProgress，避免渲染回调读到不一致的值
     const progress = this.elapsedInTick / this.TICK_INTERVAL;
-    store.setState({ timeProgress: progress });
+    store.setState({ timeTick: this.currentTick, timeProgress: progress });
   }
 
   _onTick() {
@@ -115,7 +115,6 @@ export class TimeSystem {
   setSpeed(speed) {
     this.speed = speed;
     store.setState({ timeSpeed: speed });
-    try { localStorage.setItem('gmgc_game_speed', String(speed)); } catch (e) { /* ignore */ }
   }
 
   cycleSpeed() {
@@ -124,7 +123,6 @@ export class TimeSystem {
     const idx = speeds.indexOf(this.speed);
     this.speed = speeds[(idx + 1) % speeds.length];
     store.setState({ timeSpeed: this.speed });
-    try { localStorage.setItem('gmgc_game_speed', String(this.speed)); } catch (e) { /* ignore */ }
     return this.speed;
   }
 

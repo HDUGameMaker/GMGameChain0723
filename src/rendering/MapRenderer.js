@@ -10,10 +10,12 @@ import { gridToScreenTopLeft, screenToGrid } from '../utils/gridUtils.js';
 import { AnimatedSpriteHelper } from './AnimatedSpriteHelper.js';
 
 export class MapRenderer {
-  constructor(app, buildingSystem, torchSystem) {
+  constructor(app, buildingSystem, torchSystem, roadSystem, combatSystem) {
     this.app = app;
     this.buildingSystem = buildingSystem;
     this._torchSystem = torchSystem || null;
+    this._roadSystem = roadSystem || null;
+    this._combatSystem = combatSystem || null;
     this.mapConfig = configRegistry.get('map');
     this.tileSize = this.mapConfig.tileSize;
 
@@ -41,10 +43,12 @@ export class MapRenderer {
 
     // 2. 移动世界层（建筑/火把/虚影，世界坐标，容器位移 = -cam）
     this.worldContainer = new PIXI.Container();
+    this.roadLayer = new PIXI.Container();
     this.torchLayer = new PIXI.Container();
     this.buildingLayer = new PIXI.Container();
     this.ghostLayer = new PIXI.Container();
     this.gameView.addChild(this.worldContainer);
+    this.worldContainer.addChild(this.roadLayer);
     this.worldContainer.addChild(this.buildingLayer);
     this.worldContainer.addChild(this.torchLayer);
     this.worldContainer.addChild(this.ghostLayer);
@@ -81,6 +85,9 @@ export class MapRenderer {
     this._mapBuildFills = [];
     this._unregisterMapBars = null;
 
+    // 道路建造进度条引用
+    this._roadBuildFills = [];
+
     // 地图上合成进度条的 PIXI 填充对象引用
     this._mapSynthFills = [];
     this._unregisterSynthBars = null;
@@ -99,7 +106,10 @@ export class MapRenderer {
     this._unregisterMapBars = progressManager.registerCallback(
       () => 0,
       () => 1,
-      () => this._updateMapBuildBars()
+      () => {
+        this._updateMapBuildBars();
+        this._updateRoadBuildBars();
+      }
     );
 
     // 注册地图合成进度回调
@@ -113,6 +123,9 @@ export class MapRenderer {
     this._centerView();
     this._drawTerrainChunk();
     this._drawExpeditionEntrances();
+    this._drawEventMarkers();
+    this._drawRoads();
+    this._drawEnemies();
     this._drawTorches();
     this._createFogCanvas();
     this._setupInteraction();
@@ -182,6 +195,311 @@ export class MapRenderer {
       entranceContainer.addChild(labelText);
 
       this.worldContainer.addChild(entranceContainer);
+    }
+  }
+
+  // ===== 地图事件标记渲染 =====
+
+  /**
+   * 绘制地图上的事件标记（"?"）
+   * 从 base_map.json 的 eventMarkers 数组读取
+   * 已移除的标记（通过 Store 的 removedEventMarkers 记录）不渲染
+   */
+  _drawEventMarkers() {
+    this._eventMarkerSprites = [];
+    this._eventMarkerData = [];
+    const markers = this.mapConfig.eventMarkers;
+    if (!markers || markers.length === 0) return;
+
+    const removedIds = store.getState('removedEventMarkers') || [];
+    const removedSet = new Set(removedIds);
+    const ts = this.tileSize;
+
+    for (const marker of markers) {
+      if (removedSet.has(marker.id)) continue;
+
+      const { gridX, gridY } = marker;
+      const x = gridX * ts;
+      const y = gridY * ts;
+      const w = ts;
+      const h = ts;
+
+      const container = new PIXI.Container();
+
+      // 底色
+      const bg = new PIXI.Graphics();
+      bg.rect(x, y, w, h);
+      bg.fill({ color: 0x8B6914, alpha: 0.7 });
+      bg.rect(x, y, w, h);
+      bg.stroke({ color: 0xFFD700, alpha: 0.9, width: 2 });
+      container.addChild(bg);
+
+      // "?" 图标
+      const iconText = new PIXI.Text({
+        text: '?',
+        style: { fontSize: 28, fontWeight: 'bold', fill: 0xFFD700, align: 'center' }
+      });
+      iconText.anchor.set(0.5);
+      iconText.x = x + w / 2;
+      iconText.y = y + h / 2;
+      container.addChild(iconText);
+
+      // 添加到世界容器
+      this.worldContainer.addChild(container);
+
+      this._eventMarkerSprites.push(container);
+      this._eventMarkerData.push(marker);
+    }
+  }
+
+  /**
+   * 移除指定的事件标记（点击后调用）
+   */
+  _removeEventMarkerSprite(markerId) {
+    const idx = this._eventMarkerData.findIndex(m => m.id === markerId);
+    if (idx < 0) return;
+
+    // 从世界容器移除
+    if (this._eventMarkerSprites[idx]) {
+      this.worldContainer.removeChild(this._eventMarkerSprites[idx]);
+      this._eventMarkerSprites[idx].destroy({ children: true });
+    }
+
+    this._eventMarkerSprites.splice(idx, 1);
+    this._eventMarkerData.splice(idx, 1);
+
+    // 更新 Store，持久化已移除标记
+    const removed = store.getState('removedEventMarkers') || [];
+    if (!removed.includes(markerId)) {
+      store.setState({ removedEventMarkers: [...removed, markerId] });
+    }
+  }
+
+  /**
+   * 刷新事件标记（当 Store 中 removedEventMarkers 变化时调用）
+   */
+  _refreshEventMarkers() {
+    // 清理旧标记
+    for (const sprite of this._eventMarkerSprites) {
+      this.worldContainer.removeChild(sprite);
+      sprite.destroy({ children: true });
+    }
+    this._eventMarkerSprites = [];
+    this._eventMarkerData = [];
+    // 重新绘制
+    this._drawEventMarkers();
+  }
+
+  // ===== 道路渲染 =====
+
+  /**
+   * 绘制所有道路
+   */
+  _drawRoads() {
+    this.roadLayer.removeChildren();
+    this._roadBuildFills = [];
+    if (!this._roadSystem) {
+      console.log('[RoadDraw] _roadSystem is null');
+      return;
+    }
+
+    const ts = this.tileSize;
+    const roads = this._roadSystem.getAllStates();
+    console.log('[RoadDraw] roads count:', roads ? roads.length : 0, 'roadSystem:', !!this._roadSystem);
+    if (!roads || roads.length === 0) return;
+
+    const roadConfig = this._roadSystem.getDefaultRoadConfig();
+    const baseColor = roadConfig ? parseInt(roadConfig.color.replace('#', ''), 16) : 0x8B7355;
+    const baseAlpha = roadConfig ? roadConfig.alpha : 0.8;
+
+    for (const r of roads) {
+      const x = r.gridX * ts;
+      const y = r.gridY * ts;
+
+      // 判断是否在建造中（buildProgress !== null）
+      const constructing = r.buildProgress !== null;
+      const color = constructing ? 0x666666 : baseColor;
+      const alpha = constructing ? 0.4 : baseAlpha;
+
+      const g = new PIXI.Graphics();
+      // 道路底色
+      g.rect(x + 4, y + 4, ts - 8, ts - 8);
+      g.fill({ color, alpha });
+
+      // 道路边框（轻微加深）
+      g.rect(x + 4, y + 4, ts - 8, ts - 8);
+      g.stroke({ color: 0x6B5330, alpha: constructing ? 0.2 : 0.4, width: 1 });
+
+      this.roadLayer.addChild(g);
+
+      // 建造中的道路：叠加进度条
+      if (constructing) {
+        const barWidth = ts - 12;
+        const barHeight = 4;
+        const barX = x + 6;
+        const barY = y + ts - 10;
+
+        // 背景条
+        const bg = new PIXI.Graphics();
+        bg.rect(barX, barY, barWidth, barHeight);
+        bg.fill({ color: 0x333333, alpha: 0.6 });
+        this.roadLayer.addChild(bg);
+
+        // 填充条（进度由 _updateRoadBuildBars 每帧更新）
+        const fill = new PIXI.Graphics();
+        fill.rect(barX, barY, 0, barHeight);
+        fill.fill({ color: 0xffaa00, alpha: 0.9 });
+        this.roadLayer.addChild(fill);
+
+        this._roadBuildFills.push({
+          fill,
+          gridX: r.gridX,
+          gridY: r.gridY,
+          barX, barY, barWidth, barHeight
+        });
+      }
+    }
+  }
+
+  /**
+   * 每帧更新道路建造进度条
+   */
+  _updateRoadBuildBars() {
+    const t = store.getState('timeProgress') || 0;
+    const timeTick = store.getState('timeTick') || 0;
+    for (const ref of this._roadBuildFills) {
+      const road = this._roadSystem.getRoadAt(ref.gridX, ref.gridY);
+      if (!road || road.buildProgress === null) {
+        ref.fill.clear();
+        continue;
+      }
+      const bt = road.buildTime || 1;
+      const startTick = road.startTick ?? timeTick;
+      const startT = road.startTimeProgress ?? 0;
+
+      // 和建筑同一套公式
+      let elapsed = (timeTick - startTick) + (t - startT);
+      elapsed = Math.max(0, Math.min(elapsed, bt));
+      const smooth = elapsed / bt;
+
+      ref.fill.clear();
+      ref.fill.rect(ref.barX, ref.barY, ref.barWidth * smooth, ref.barHeight);
+      ref.fill.fill({ color: 0xffaa00, alpha: 0.9 });
+    }
+  }
+
+  // ===== 敌人渲染 =====
+
+  _drawEnemies() {
+    if (!this._combatSystem) return;
+    const ts = this.tileSize;
+    const enemies = this._combatSystem.getAllEnemies();
+    // 清理旧敌人精灵
+    if (this._enemyContainer) {
+      this.worldContainer.removeChild(this._enemyContainer);
+      this._enemyContainer.destroy({ children: true });
+    }
+    this._enemyContainer = new PIXI.Container();
+    this.worldContainer.addChild(this._enemyContainer);
+
+    for (const enemy of enemies) {
+      const cfg = this._combatSystem.getEnemyConfig(enemy.enemyId);
+      if (!cfg) continue;
+
+      const x = enemy.gridX * ts;
+      const y = enemy.gridY * ts;
+
+      const container = new PIXI.Container();
+
+      // 敌人底色（红色/灰色）
+      const bg = new PIXI.Graphics();
+      const isRobot = enemy.enemyId.startsWith('robot');
+      const color = isRobot ? 0xcc4444 : 0xcc8844;
+      bg.rect(x + 2, y + 2, ts - 4, ts - 4);
+      bg.fill({ color, alpha: 0.7 });
+      bg.rect(x + 2, y + 2, ts - 4, ts - 4);
+      bg.stroke({ color: 0xff0000, alpha: 0.6, width: 2 });
+      container.addChild(bg);
+
+      // 敌人图标
+      const icon = new PIXI.Text({
+        text: isRobot ? '🤖' : '🐺',
+        style: { fontSize: 24 }
+      });
+      icon.anchor.set(0.5);
+      icon.x = x + ts / 2;
+      icon.y = y + ts / 2;
+      container.addChild(icon);
+
+      // 血量条
+      const hpPct = enemy.hp / enemy.maxHp;
+      const barW = ts - 8;
+      const barH = 4;
+      const barX = x + 4;
+      const barY = y + ts - 8;
+
+      // 背景
+      const barBg = new PIXI.Graphics();
+      barBg.rect(barX, barY, barW, barH);
+      barBg.fill({ color: 0x333333, alpha: 0.8 });
+      container.addChild(barBg);
+
+      // 填充
+      const barFill = new PIXI.Graphics();
+      const hpColor = hpPct > 0.5 ? 0x4ecb71 : (hpPct > 0.25 ? 0xf0a040 : 0xff4444);
+      barFill.rect(barX, barY, barW * hpPct, barH);
+      barFill.fill({ color: hpColor, alpha: 0.9 });
+      container.addChild(barFill);
+
+      this._enemyContainer.addChild(container);
+    }
+
+    // 渲染友方单位
+    const units = this._combatSystem.getAllUnits();
+    for (const unit of units) {
+      const x = unit.gridX * ts;
+      const y = unit.gridY * ts;
+      const container = new PIXI.Container();
+
+      // 底色
+      const bg = new PIXI.Graphics();
+      const isArcher = unit.type === 'archer';
+      const color = isArcher ? 0x4488cc : 0x44cc88;
+      bg.rect(x + 2, y + 2, ts - 4, ts - 4);
+      bg.fill({ color, alpha: 0.8 });
+      bg.rect(x + 2, y + 2, ts - 4, ts - 4);
+      bg.stroke({ color: 0x44ffaa, alpha: 0.5, width: 2 });
+      container.addChild(bg);
+
+      // 图标
+      const icon = new PIXI.Text({
+        text: isArcher ? '🏹' : '⚔️',
+        style: { fontSize: 22 }
+      });
+      icon.anchor.set(0.5);
+      icon.x = x + ts / 2;
+      icon.y = y + ts / 2;
+      container.addChild(icon);
+
+      // 血量条
+      const hpPct = unit.hp / unit.maxHp;
+      const barW = ts - 8;
+      const barH = 4;
+      const barX = x + 4;
+      const barY = y + ts - 8;
+
+      const barBg = new PIXI.Graphics();
+      barBg.rect(barX, barY, barW, barH);
+      barBg.fill({ color: 0x333333, alpha: 0.8 });
+      container.addChild(barBg);
+
+      const barFill = new PIXI.Graphics();
+      const hpColor = hpPct > 0.5 ? 0x4ecb71 : (hpPct > 0.25 ? 0xf0a040 : 0xff4444);
+      barFill.rect(barX, barY, barW * hpPct, barH);
+      barFill.fill({ color: hpColor, alpha: 0.9 });
+      container.addChild(barFill);
+
+      this._enemyContainer.addChild(container);
     }
   }
 
@@ -283,17 +601,12 @@ export class MapRenderer {
     if (this._torchSystem) {
       ctx.globalCompositeOperation = 'destination-out';
 
-      // 获取当前时段的照明加成倍率（考虑过渡动画）
-      const lightMultiplier = this._torchSystem._getCurrentLightMultiplier();
-
-      // 处理火把照明
       const litTorches = this._torchSystem.getLitTorches();
       for (const t of litTorches) {
         const cfg = this._torchSystem.getTorchConfig(t.torchId);
         if (!cfg) continue;
 
-        // 应用时段加成
-        const maxR = cfg.radius * lightMultiplier * ts;
+        const maxR = cfg.radius * ts;
 
         // 火把世界坐标 → 视口本地坐标（不受 zoom 影响，仅在 gameView 本地空间）
         const worldCx = (t.gridX + 0.5) * ts;
@@ -315,37 +628,6 @@ export class MapRenderer {
 
         ctx.fillStyle = gradient;
         ctx.fillRect(cx - maxR, cy - maxR, maxR * 2, maxR * 2);
-      }
-
-      // 处理瞭望塔照明
-      const watchtowerRadius = this._torchSystem._getCurrentWatchtowerRadius();
-      if (watchtowerRadius > 0 && this.buildingSystem) {
-        const buildings = this.buildingSystem.buildings;
-        for (const b of buildings) {
-          if (b.status !== 'active') continue;
-          const cfg = configRegistry.getBuilding(b.buildingId);
-          if (!cfg || !cfg.isWatchtower) continue;
-
-          const maxR = watchtowerRadius * ts;
-          const worldCx = (b.gridX + (b.width || 1) / 2) * ts;
-          const worldCy = (b.gridY + (b.height || 1) / 2) * ts;
-          const cx = worldCx - this.camX;
-          const cy = worldCy - this.camY;
-
-          if (cx + maxR < -ts || cx - maxR > w + ts ||
-              cy + maxR < -ts || cy - maxR > h + ts) continue;
-
-          // 瞭望塔照明也使用径向渐变
-          const gradient = ctx.createRadialGradient(cx, cy, maxR * 0.2, cx, cy, maxR);
-          gradient.addColorStop(0, 'rgba(0,0,0,1)');
-          gradient.addColorStop(0.4, 'rgba(0,0,0,0.95)');
-          gradient.addColorStop(0.65, 'rgba(0,0,0,0.7)');
-          gradient.addColorStop(0.85, 'rgba(0,0,0,0.2)');
-          gradient.addColorStop(1, 'rgba(0,0,0,0)');
-
-          ctx.fillStyle = gradient;
-          ctx.fillRect(cx - maxR, cy - maxR, maxR * 2, maxR * 2);
-        }
       }
     }
 
@@ -440,33 +722,10 @@ export class MapRenderer {
 
   /**
    * 更新世界层容器位置（建筑/火把/虚影跟随相机平移）
-   * 同时发射 cameraMoved 事件，供 HUD 等订阅者更新视角中心坐标显示
    */
   _updateWorldContainerPosition() {
     this.worldContainer.x = -this.camX;
     this.worldContainer.y = -this.camY;
-    // 通知 HUD/其他系统相机已移动
-    if (eventBus) {
-      eventBus.emit('cameraMoved', {
-        camX: this.camX,
-        camY: this.camY,
-        zoom: this.zoom
-      });
-    }
-  }
-
-  /**
-   * 获取当前视口中心对应的网格坐标 {col, row}
-   * 3D 透视模式下，屏幕中心点无透视畸变，等价于 2D 中心计算
-   * @returns {{col:number, row:number}}
-   */
-  getViewportCenterCell() {
-    const zoom = this.zoom || 1;
-    const worldX = (this.screenW / 2) / zoom + this.camX;
-    const worldY = (this.screenH / 2) / zoom + this.camY;
-    const col = Math.floor(worldX / this.tileSize);
-    const row = Math.floor(worldY / this.tileSize);
-    return { col, row };
   }
 
   /**
@@ -491,32 +750,23 @@ export class MapRenderer {
   }
 
   _centerView() {
-    // 优先使用 viewportCenter 配置（编辑器中可见的"视角中心坐标"）
-    const vc = this.mapConfig.viewportCenter;
-    if (vc && (vc.defaultGridX != null || vc.defaultGridY != null)) {
+    // 优先使用配置的初始相机位置（以网格坐标指定）
+    const initCam = this.mapConfig.initialCamera;
+    if (initCam && initCam.gridX != null && initCam.gridY != null) {
       const ts = this.tileSize;
-      const gx = vc.defaultGridX != null ? vc.defaultGridX : Math.floor(this.mapConfig.gridWidth / 2);
-      const gy = vc.defaultGridY != null ? vc.defaultGridY : Math.floor(this.mapConfig.gridHeight / 2);
-      this.camX = (gx + 0.5) * ts - this.screenW / 2;
-      this.camY = (gy + 0.5) * ts - this.screenH / 2;
-    } else {
-      // 兼容旧配置：initialCamera（含 zoom 字段）
-      const initCam = this.mapConfig.initialCamera;
-      if (initCam && initCam.gridX != null && initCam.gridY != null) {
-        const ts = this.tileSize;
-        this.camX = (initCam.gridX + 0.5) * ts - this.screenW / 2;
-        this.camY = (initCam.gridY + 0.5) * ts - this.screenH / 2;
-        if (initCam.zoom != null) {
-          this.zoom = Math.max(this.MIN_ZOOM, Math.min(this.MAX_ZOOM, initCam.zoom));
-          this.gameView.scale.set(this.zoom);
-        }
-      } else {
-        const { gridWidth, gridHeight, tileSize } = this.mapConfig;
-        const mapW = gridWidth * tileSize;
-        const mapH = gridHeight * tileSize;
-        this.camX = (mapW - this.screenW) / 2;
-        this.camY = (mapH - this.screenH) / 2;
+      // 将网格坐标居中到屏幕中心
+      this.camX = (initCam.gridX + 0.5) * ts - this.screenW / 2;
+      this.camY = (initCam.gridY + 0.5) * ts - this.screenH / 2;
+      if (initCam.zoom != null) {
+        this.zoom = Math.max(this.MIN_ZOOM, Math.min(this.MAX_ZOOM, initCam.zoom));
+        this.gameView.scale.set(this.zoom);
       }
+    } else {
+      const { gridWidth, gridHeight, tileSize } = this.mapConfig;
+      const mapW = gridWidth * tileSize;
+      const mapH = gridHeight * tileSize;
+      this.camX = (mapW - this.screenW) / 2;
+      this.camY = (mapH - this.screenH) / 2;
     }
     this._clampCamera();
     this._updateWorldContainerPosition();
@@ -542,6 +792,19 @@ export class MapRenderer {
       }
 
       const gridPos = this._clientToGrid(e.clientX, e.clientY);
+
+      // 检查是否点击了单位 → 单位拖动优先级高于建筑和地图平移
+      if (gridPos && this._combatSystem && this._isTileRevealed(gridPos.col, gridPos.row)) {
+        const unitIdx = this._combatSystem.units.findIndex(u => u.gridX === gridPos.col && u.gridY === gridPos.row);
+        if (unitIdx >= 0) {
+          this._dragUnitIndex = unitIdx;
+          this.isDragging = false;
+          this.hasMoved = false;
+          this.dragStartX = e.clientX;
+          this.dragStartY = e.clientY;
+          return;
+        }
+      }
 
       // 检查是否点击了建筑 → 启动建筑拖动（迷雾门控）
       if (gridPos && this._isTileRevealed(gridPos.col, gridPos.row)) {
@@ -573,6 +836,15 @@ export class MapRenderer {
     });
 
     canvas.addEventListener('pointermove', (e) => {
+      // 单位拖动
+      if (this._dragUnitIndex !== null) {
+        const dx = e.clientX - this.dragStartX;
+        const dy = e.clientY - this.dragStartY;
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) this.hasMoved = true;
+        this._updateUnitDragGhost(e.clientX, e.clientY);
+        return;
+      }
+
       // 建筑拖动模式
       if (this._dragBuildingIndex !== null) {
         const dx = e.clientX - this.dragStartX;
@@ -603,6 +875,28 @@ export class MapRenderer {
     });
 
     canvas.addEventListener('pointerup', (e) => {
+      // 单位拖动结束
+      if (this._dragUnitIndex !== null) {
+        const unitIdx = this._dragUnitIndex;
+        this._dragUnitIndex = null;
+        this._clearUnitDragGhost();
+
+        if (this.hasMoved) {
+          const gridPos = this._clientToGrid(e.clientX, e.clientY);
+          if (gridPos && this._combatSystem) {
+            const unit = this._combatSystem.units[unitIdx];
+            if (unit) {
+              unit.gridX = gridPos.col;
+              unit.gridY = gridPos.row;
+              this._drawEnemies();
+            }
+          }
+        }
+        this.isDragging = false;
+        this.hasMoved = false;
+        return;
+      }
+
       // 建筑拖动结束
       if (this._dragBuildingIndex !== null) {
         const buildingIndex = this._dragBuildingIndex;
@@ -634,6 +928,11 @@ export class MapRenderer {
     });
 
     canvas.addEventListener('pointerleave', () => {
+      // 清理单位拖动
+      if (this._dragUnitIndex !== null) {
+        this._clearUnitDragGhost();
+        this._dragUnitIndex = null;
+      }
       // 清理建筑拖动
       if (this._dragBuildingIndex !== null) {
         this._clearBuildingDragGhost();
@@ -649,6 +948,14 @@ export class MapRenderer {
       if (e.key === 'Escape' && this.buildingSystem.placingState === 'PLACING') {
         this.buildingSystem.exitPlacingMode();
         this._clearGhost();
+      }
+      // Esc 退出道路编辑模式
+      if (e.key === 'Escape' && this._roadSystem && this._roadSystem.isEditMode()) {
+        this._roadSystem.exitEditMode();
+      }
+      // Esc 退出放置敌人模式
+      if (e.key === 'Escape' && this._combatSystem && this._combatSystem.isPlaceEnemyMode()) {
+        this._combatSystem.exitPlaceEnemyMode();
       }
     });
 
@@ -683,19 +990,42 @@ export class MapRenderer {
     const gridPos = this._clientToGrid(clientX, clientY);
     if (!gridPos) return;
 
+    // 放置敌人模式
+    if (this._combatSystem && this._combatSystem.isPlaceEnemyMode()) {
+      if (!this._isTileRevealed(gridPos.col, gridPos.row)) return;
+      const enemyId = this._combatSystem.getPlaceEnemyId();
+      if (enemyId) {
+        this._combatSystem._spawnEnemyAt(enemyId, gridPos.col, gridPos.row);
+        this._drawEnemies();
+      }
+      return;
+    }
+
+    // 道路编辑模式
+    if (this._roadSystem && this._roadSystem.isEditMode()) {
+      if (!this._isTileRevealed(gridPos.col, gridPos.row)) return;
+      const existing = this._roadSystem.getRoadAt(gridPos.col, gridPos.row);
+      if (existing) {
+        // 点击已有道路 → 拆除
+        this._roadSystem.removeRoad(gridPos.col, gridPos.row);
+        this._drawRoads();
+      } else {
+        // 点击空地 → 铺路
+        const success = this._roadSystem.buildRoad(gridPos.col, gridPos.row);
+        if (success) {
+          this._drawRoads();
+        }
+      }
+      return;
+    }
+
     if (this.buildingSystem.placingState === 'PLACING') {
+      // 放置模式：先检查迷雾
+      if (!this._isTileRevealed(gridPos.col, gridPos.row)) return;
+
       const buildingId = this.buildingSystem.placingBuildingId;
       const config = configRegistry.getBuilding(buildingId);
       if (!config) return;
-
-      const w = config.footprint.width;
-      const h = config.footprint.height;
-
-      // 放置模式：检查整个建筑区域是否都可见（与 _updateGhost 的 canPlaceAt 检查一致）
-      if (this._torchSystem) {
-        const canBuild = this._torchSystem.canBuild(gridPos.col, gridPos.row, w, h);
-        if (!canBuild) return;
-      }
 
       // 以点击位置为左上角
       const success = this.buildingSystem.placeBuilding(gridPos.col, gridPos.row, buildingId);
@@ -706,6 +1036,13 @@ export class MapRenderer {
     } else {
       // 检查迷雾门控
       if (!this._isTileRevealed(gridPos.col, gridPos.row)) return;
+
+      // 检查是否点击了事件标记（"?"）
+      const clickedMarker = this._isClickOnEventMarker(gridPos.col, gridPos.row);
+      if (clickedMarker) {
+        eventBus.emit('eventMarkerClicked', clickedMarker);
+        return;
+      }
 
       // 检查是否点击了探险出发口
       const clickedEntrance = this._isClickOnExpeditionEntrance(gridPos.col, gridPos.row);
@@ -723,10 +1060,32 @@ export class MapRenderer {
         }
       }
 
-      // 再检查是否点击了建筑
+      // 检查是否点击了建筑
       const buildingIndex = this._getBuildingAt(gridPos.col, gridPos.row);
       if (buildingIndex >= 0) {
         eventBus.emit('buildingClicked', { buildingIndex });
+        return;
+      }
+
+      // 检查是否点击了敌人（反击）
+      if (this._combatSystem) {
+        const enemy = this._combatSystem.getEnemyAt(gridPos.col, gridPos.row);
+        if (enemy) {
+          this._combatSystem.playerAttack(gridPos.col, gridPos.row);
+          this._drawEnemies();
+          return;
+        }
+      }
+
+      // 检查是否点击了友方单位（查看血量）
+      if (this._combatSystem) {
+        const unit = this._combatSystem.getUnitAt(gridPos.col, gridPos.row);
+        if (unit) {
+          const unitName = unit.type === 'archer' ? '弓箭手' : '战士';
+          const hpText = `💙 ${unitName} HP ${unit.hp}/${unit.maxHp}`;
+          eventBus.emit('combatBroadcast', { message: hpText });
+          return;
+        }
       }
     }
   }
@@ -743,6 +1102,37 @@ export class MapRenderer {
       }
     }
     return null;
+  }
+
+  /**
+   * 检查点击是否在某个事件标记范围内，返回标记对象或 null
+   */
+  _isClickOnEventMarker(col, row) {
+    const data = this._eventMarkerData;
+    if (!data || data.length === 0) return null;
+    const removedSet = new Set(store.getState('removedEventMarkers') || []);
+    for (const marker of data) {
+      if (removedSet.has(marker.id)) continue;
+      if (col === marker.gridX && row === marker.gridY) {
+        return marker;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 获取已移除标记 ID 列表（用于存档）
+   */
+  getMarkerState() {
+    return store.getState('removedEventMarkers') || [];
+  }
+
+  /**
+   * 从存档恢复已移除标记状态
+   */
+  restoreMarkerState(removedIds) {
+    store.setState({ removedEventMarkers: removedIds || [] });
+    this._refreshEventMarkers();
   }
 
   /**
@@ -825,21 +1215,14 @@ export class MapRenderer {
 
     const w = config.footprint.width;
     const h = config.footprint.height;
-    
-    // 将鼠标位置映射到建筑的左上角位置
-    // 这样当鼠标悬停在建筑范围内的任何格子上时，都能显示正确的虚影
-    const map = configRegistry.get('map');
-    const adjustedCol = Math.max(0, Math.min(gridPos.col, map.gridWidth - w));
-    const adjustedRow = Math.max(0, Math.min(gridPos.row, map.gridHeight - h));
-    
-    const check = this.buildingSystem.canPlaceAt(adjustedCol, adjustedRow, buildingId);
+    const check = this.buildingSystem.canPlaceAt(gridPos.col, gridPos.row, buildingId);
     this.ghostValid = check.valid;
 
     this._clearGhost();
 
     const graphics = new PIXI.Graphics();
-    const x = adjustedCol * this.tileSize;
-    const y = adjustedRow * this.tileSize;
+    const x = gridPos.col * this.tileSize;
+    const y = gridPos.row * this.tileSize;
     const color = this.ghostValid ? 0x44ff44 : 0xff4444;
 
     graphics.rect(x, y, w * this.tileSize, h * this.tileSize);
@@ -851,7 +1234,7 @@ export class MapRenderer {
     this.ghostGraphic = graphics;
 
     // 显示相邻加成提示（即使位置无效也显示交互信息）
-    this._updateAdjacencyHints(adjustedCol, adjustedRow, buildingId, this.ghostValid);
+    this._updateAdjacencyHints(gridPos.col, gridPos.row, buildingId, this.ghostValid);
   }
 
   _clearGhost() {
@@ -868,6 +1251,33 @@ export class MapRenderer {
   /**
    * 更新建筑拖动时的目标位置虚影
    */
+  _updateUnitDragGhost(clientX, clientY) {
+    const gridPos = this._clientToGrid(clientX, clientY);
+    this._clearUnitDragGhost();
+    if (!gridPos) return;
+
+    const ts = this.tileSize;
+    const x = gridPos.col * ts;
+    const y = gridPos.row * ts;
+
+    const graphics = new PIXI.Graphics();
+    graphics.rect(x + 2, y + 2, ts - 4, ts - 4);
+    graphics.fill({ color: 0x44ffaa, alpha: 0.25 });
+    graphics.rect(x + 2, y + 2, ts - 4, ts - 4);
+    graphics.stroke({ color: 0x44ffaa, alpha: 0.5, width: 2 });
+
+    this.ghostLayer.addChild(graphics);
+    this._dragGhostGraphic = graphics;
+  }
+
+  _clearUnitDragGhost() {
+    if (this._dragGhostGraphic) {
+      this.ghostLayer.removeChild(this._dragGhostGraphic);
+      this._dragGhostGraphic.destroy();
+      this._dragGhostGraphic = null;
+    }
+  }
+
   _updateBuildingDragGhost(clientX, clientY) {
     const gridPos = this._clientToGrid(clientX, clientY);
     const config = this._dragBuildingConfig;
@@ -1390,6 +1800,27 @@ export class MapRenderer {
         container.addChild(workerText);
       }
 
+      // ===== 建筑血量条（受战斗系统影响）=====
+      if (this._combatSystem && building._damage && building._damage > 0) {
+        const maxHp = this._combatSystem._getBuildingHp(building.buildingId);
+        const hpPct = Math.max(0, 1 - building._damage / maxHp);
+        const bw = w * this.tileSize - 8;
+        const bh = 4;
+        const bxx = x + 4;
+        const byy = y + h * this.tileSize - 4;
+
+        const barBg = new PIXI.Graphics();
+        barBg.rect(bxx, byy, bw, bh);
+        barBg.fill({ color: 0x333333, alpha: 0.8 });
+        container.addChild(barBg);
+
+        const barFill = new PIXI.Graphics();
+        const hpColor = hpPct > 0.5 ? 0x4ecb71 : (hpPct > 0.25 ? 0xf0a040 : 0xff4444);
+        barFill.rect(bxx, byy, bw * hpPct, bh);
+        barFill.fill({ color: hpColor, alpha: 0.9 });
+        container.addChild(barFill);
+      }
+
       this.buildingLayer.addChild(container);
       this._buildingSprites.push(container);
     }
@@ -1503,7 +1934,6 @@ export class MapRenderer {
       'industrial_warehouse': 0x2F4F8F,
       'lumber_mill': 0x8B6914,
       'quarry': 0x696969,
-      'stope': 0x696969,
       'logging_camp': 0x228B22,
       'furnace': 0xB22222,
       'mine_support': 0x4A4A4A,
@@ -1520,14 +1950,21 @@ export class MapRenderer {
    */
   _updateMapBuildBars() {
     const t = store.getState('timeProgress') || 0;
+    const timeTick = store.getState('timeTick') || 0;
     for (const ref of this._mapBuildFills) {
       const b = this.buildingSystem.buildings[ref.buildingIndex];
       if (!b || b.status !== 'constructing') continue;
       const config = configRegistry.getBuilding(b.buildingId);
       if (!config) continue;
-      const base = (b.buildProgress || 0) / (config.buildTime || 1);
-      const next = ((b.buildProgress || 0) + 1) / (config.buildTime || 1);
-      const smooth = Math.min(base + (next - base) * t, 1);
+      const bt = config.buildTime || 1;
+      const startTick = b.startTick ?? timeTick;
+      const startT = b.startTimeProgress ?? 0;
+
+      // elapsed = 已过的完整tick数 + 当前tick内的进度偏移 - 放下时的进度偏移
+      let elapsed = (timeTick - startTick) + (t - startT);
+      elapsed = Math.max(0, Math.min(elapsed, bt));
+      const smooth = elapsed / bt;
+
       ref.fill.clear();
       ref.fill.rect(ref.barX, ref.barY, ref.barWidth * smooth, ref.barHeight);
       ref.fill.fill({ color: 0xffaa00, alpha: 0.9 });
@@ -1545,12 +1982,21 @@ export class MapRenderer {
       const b = this.buildingSystem.buildings[ref.buildingIndex];
       if (!b || !b.synthesisProgress) continue;
       const sp = b.synthesisProgress;
-      const base = (sp.progress || 0) / (sp.total || 1);
-      // 非工作时段合成不推进，next 保持与 base 一致，避免进度条"回退"
-      const next = isWorkPeriod
-        ? ((sp.progress || 0) + 1) / (sp.total || 1)
-        : base;
-      const smooth = Math.min(base + (next - base) * t, 1);
+      const total = sp.total || 1;
+      const base = (sp.progress || 0) / total;
+
+      let smooth;
+      if (sp.progress <= 0 && total > 1) {
+        // 刚放入合成（第0个tick内）：从0开始
+        smooth = Math.min(t * (1 / total), 1 / total);
+      } else {
+        // 非工作时段合成不推进，next 保持与 base 一致，避免进度条"回退"
+        const next = isWorkPeriod
+          ? ((sp.progress || 0) + 1) / total
+          : base;
+        smooth = Math.min(base + (next - base) * t, 1);
+      }
+
       ref.fill.clear();
       ref.fill.rect(ref.barX, ref.barY, ref.barWidth * smooth, ref.barHeight);
       ref.fill.fill({ color: 0xf0a040, alpha: 0.9 });
@@ -1750,35 +2196,42 @@ export class MapRenderer {
     // tick 时刷新建筑（建造进度）
     eventBus.on('tick', () => this.refreshBuildings());
 
+    // 道路变化重绘
+    eventBus.on('roadBuilt', () => this._drawRoads());
+    eventBus.on('roadRemoved', () => this._drawRoads());
+    store.subscribe('roadEditMode', () => this._drawRoads());
+    store.subscribe('roadVersion', () => this._drawRoads());
+
+    // 敌人重绘
+    eventBus.on('enemySpawned', () => this._drawEnemies());
+    eventBus.on('enemyKilled', () => this._drawEnemies());
+    eventBus.on('unitSpawned', () => this._drawEnemies());
+    store.subscribe('combatVersion', () => this._drawEnemies());
+
     // 火把状态变化：重绘火把和迷雾
     eventBus.on('torchStateChanged', () => {
       this._drawTorches();
       this._updateFogTexture();
+    });
+
+    // 监听已移除事件标记的变化（来自存档恢复等）
+    store.subscribe('removedEventMarkers', () => {
+      this._refreshEventMarkers();
     });
   }
 
   /**
    * 切换 3D 透视模式
    * @param {boolean} enabled
-   * @param {boolean} [animate=true] - 是否播放过渡动画（初始化时设为 false）
    */
-  setPerspective(enabled, animate = true) {
+  setPerspective(enabled) {
     this._perspectiveEnabled = enabled;
     const canvasDiv = document.getElementById('game-canvas');
     if (canvasDiv) {
-      if (!animate) {
-        // 临时禁用过渡动画（用于初始化时避免 2D→3D 动画）
-        canvasDiv.style.transition = 'none';
-      }
       if (enabled) {
         canvasDiv.classList.add('perspective-3d');
       } else {
         canvasDiv.classList.remove('perspective-3d');
-      }
-      if (!animate) {
-        // 强制浏览器重绘后恢复 transition
-        void canvasDiv.offsetWidth;
-        canvasDiv.style.transition = '';
       }
     }
     // 持久化偏好
