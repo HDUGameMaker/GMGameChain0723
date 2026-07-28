@@ -246,18 +246,19 @@ export function renderAlchemyPanel(data, body, pm) {
   const procDiv = document.createElement('div');
   procDiv.className = 'alchemy-process-options';
   for (const [pid, pcfg] of Object.entries(procTypes)) {
-    const compatible = currentBase && (currentBase.compatibleProcessTypes || currentBase.processTypes) && (currentBase.compatibleProcessTypes || currentBase.processTypes).includes(pid);
+    const baseProcessTypes = currentBase && (currentBase.compatibleProcessTypes || currentBase.processTypes);
+    const compatible = !!(baseProcessTypes && baseProcessTypes.includes(pid));
     const btn = document.createElement('button');
     btn.className = 'alchemy-process-btn' + (body._alchemyProcessType === pid ? ' selected' : '');
-    btn.textContent = pcfg.name + (compatible !== false ? '' : ' (不兼容)');
+    btn.textContent = pcfg.name + (compatible ? '' : ' (不兼容)');
     btn.title = pcfg.description;
-    if (!isBrewing && compatible !== false) {
+    if (!isBrewing && compatible) {
       btn.addEventListener('click', () => {
         body._alchemyProcessType = pid;
         pm.refresh(data);
       });
     }
-    if (compatible === false) btn.style.opacity = '0.4';
+    if (!compatible) btn.style.opacity = '0.4';
     procDiv.appendChild(btn);
   }
   processSection.appendChild(procDiv);

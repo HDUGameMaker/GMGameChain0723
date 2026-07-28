@@ -71,7 +71,10 @@ export class AlchemySystem {
   getLevel() { return this._level; }
   getXP() { return this._xp; }
   getXPToNext() {
-    const table = this._getGlobal().levelXPTable || [];
+    const global = this._getGlobal();
+    const maxLevel = global.maxLevel || 10;
+    if (this._level >= maxLevel) return 0; // 已满级
+    const table = global.levelXPTable || [];
     return table[this._level] || 9999;
   }
   getMagnumOpusStage() { return this._magnumOpusStage; }
@@ -152,6 +155,9 @@ export class AlchemySystem {
    * @returns {{ valid: boolean, reason?: string }}
    */
   experiment(baseId, materialIds, processType, grindLevels) {
+    // 研磨度归一化：UI 传入 0~100，系统内统一按 0~1 处理
+    grindLevels = this._normalizeGrindLevels(grindLevels);
+
     // 验证基底
     const base = this._getBases().find(b => b.id === baseId);
     if (!base) return { valid: false, reason: '未知基底' };
@@ -228,6 +234,9 @@ export class AlchemySystem {
    * @returns {{ valid: boolean, reason?: string }}
    */
   craftRecipe(recipeId, grindLevels) {
+    // 研磨度归一化：UI 传入 0~100，系统内统一按 0~1 处理
+    grindLevels = this._normalizeGrindLevels(grindLevels);
+
     const recipe = configRegistry.getAlchemyRecipe(recipeId);
     if (!recipe) return { valid: false, reason: '未知配方' };
     if (!this._isRecipeAvailable(recipe)) return { valid: false, reason: '配方未解锁' };
@@ -285,14 +294,27 @@ export class AlchemySystem {
   cancelBrewing() {
     if (!this._brewingState) return { valid: false, reason: '没有正在进行的酿造' };
 
+    const state = this._brewingState;
+
     // 虚空盐：拥有时返还 80% 材料（无盐时 50%），并消耗 100 粒
     const refundRate = this._salts.void > 0 ? 0.8 : 0.5;
     if (this._salts.void > 0) {
       this._salts.void = Math.max(0, this._salts.void - 100);
     }
 
-    for (const id of this._brewingState.materialIds) {
+    // 返还材料
+    for (const id of state.materialIds) {
       this.addMaterial(id, Math.ceil(1 * refundRate));
+    }
+
+    // 返还基底资源（按相同返还率）
+    if (state.baseId && this._resourceSystem) {
+      const base = this._getBases().find(b => b.id === state.baseId);
+      if (base && base.cost && base.cost.length > 0) {
+        for (const c of base.cost) {
+          this._resourceSystem.addClamped(c.resourceId, Math.ceil(c.amount * refundRate));
+        }
+      }
     }
 
     this._brewingState = null;
@@ -301,6 +323,23 @@ export class AlchemySystem {
   }
 
   // ===== 实验计算引擎 =====
+
+  /**
+   * 研磨度归一化：UI 滑块传入 0~100 整数，系统内统一按 0~1 小数处理。
+   * 对超过 1 的值视为百分比并除以 100；非数值或缺省视为 0。
+   */
+  _normalizeGrindLevels(grindLevels) {
+    const normalized = {};
+    if (!grindLevels || typeof grindLevels !== 'object') return normalized;
+    for (const [id, val] of Object.entries(grindLevels)) {
+      let v = Number(val);
+      if (!isFinite(v) || v < 0) v = 0;
+      if (v > 1) v = v / 100; // 0~100 → 0~1
+      normalized[id] = v;
+    }
+    return normalized;
+  }
+
   _calculateExperimentResult(base, materialIds, processType, grindLevels) {
     const materials = materialIds.map(id => configRegistry.getAlchemyMaterial(id)).filter(Boolean);
     const global = this._getGlobal();
@@ -401,9 +440,9 @@ export class AlchemySystem {
     if (this._brewingState) {
       this._brewingState.ticksElapsed++;
 
-      // 应用贤者之盐加速
+      // 应用贤者之盐加速：每 tick 多抵扣 1 tick（约提速 50%），保持整数累计
       if (this._salts.philosopher > 0) {
-        this._brewingState.ticksElapsed += 0.5;
+        this._brewingState.ticksElapsed += 1;
       }
 
       if (this._brewingState.ticksElapsed >= this._brewingState.totalTicks) {
@@ -500,8 +539,12 @@ export class AlchemySystem {
       this._itemSystem.obtain(outputItemId, { quality });
     }
 
-    // 如果是实验且发现了新配方
-    if (state.isExperiment && state.recipeId && !this._discoveredRecipes.has(state.recipeId)) {
+    // 如果是实验且发现了新配方（仅可发现配方 discoverable:true 才计入发现）
+    const discoveredRecipe = state.isExperiment && state.recipeId
+      ? configRegistry.getAlchemyRecipe(state.recipeId)
+      : null;
+    if (discoveredRecipe && discoveredRecipe.discoverable !== false
+        && !this._discoveredRecipes.has(state.recipeId)) {
       this._discoveredRecipes.add(state.recipeId);
       this._addXP(global.xpPerDiscover || 25);
       eventBus.emit('alchemyRecipeDiscovered', { recipeId: state.recipeId });
@@ -589,10 +632,12 @@ export class AlchemySystem {
       this._activeEffects = this._activeEffects.filter(e => e.effectId !== effectId);
     }
 
+    // 瞬时效果（durationTicks=1）：立即生效并过期，不进入持续激活表。
+    // 通过 _tickActiveEffects 下一 tick 自然清除（ticksRemaining=1 → 递减为 0 → 过期）。
     this._activeEffects.push({
       effectId,
       quality,
-      ticksRemaining: Math.round(durationTicks * durationMul),
+      ticksRemaining: Math.max(1, Math.round(durationTicks * durationMul)),
       modifiers
     });
 
