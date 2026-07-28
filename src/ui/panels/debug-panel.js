@@ -77,6 +77,7 @@ export class DebugPanel {
             <button class="debug-btn" data-action="instant-build">🏗️ 立即完成所有建造</button>
             <button class="debug-btn" data-action="skip-day">⏭️ 跳过一天</button>
             <button class="debug-btn" data-action="toggle-pause">⏯️ 切换暂停</button>
+            <button class="debug-btn" data-action="toggle-terrain-labels">🏷️ 标注地块地形</button>
           </div>
         </div>
       </div>
@@ -317,6 +318,9 @@ export class DebugPanel {
       case 'toggle-pause':
         this._systems.time.togglePause();
         break;
+      case 'toggle-terrain-labels':
+        this._toggleTerrainLabels();
+        break;
     }
     // 操作完立即刷新面板
     setTimeout(() => this.refresh(), 100);
@@ -367,5 +371,23 @@ export class DebugPanel {
     }
     time.elapsedInTick = 0;
     time._updateStore();
+  }
+
+  /**
+   * 开关地块地形标注：在每格中央显示地形代码（R/G/D/F/M/W/B）
+   * 用于排查"伐木集散点无法安放"等建造/地形问题
+   */
+  _toggleTerrainLabels() {
+    const game = window.__game;
+    if (!game || !game.mapRenderer) return;
+    const mr = game.mapRenderer;
+    const next = !mr.isTerrainLabelsEnabled();
+    mr.setTerrainLabelsEnabled(next);
+    // 同步按钮文案
+    const btn = this._container.querySelector('.debug-btn[data-action="toggle-terrain-labels"]');
+    if (btn) {
+      btn.textContent = next ? '🏷️ 隐藏地块标注' : '🏷️ 标注地块地形';
+      btn.style.background = next ? 'rgba(91, 141, 239, 0.25)' : '';
+    }
   }
 }

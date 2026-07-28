@@ -452,8 +452,13 @@ export class RoadSystem {
    */
   canPlaceBuildingAt(gridX, gridY, w, h, buildingId) {
     const config = configRegistry.getBuilding(buildingId);
-    const isTorch = config && config.isTorch;
-    if (isTorch) return true;
+    if (!config) return true;
+    // 火把不需要邻接道路
+    if (config.isTorch) return true;
+    // 受限地形采集建筑（伐木集散点→林地、采石场→裸石、渔场→水边、农田→草地等）
+    // 按设计须建在远端资源点，而道路无法铺入山脉/林地/水域，强制邻接道路会让这类
+    // 建筑永远无法放置。故对带 allowedGrounds 限制的采集建筑豁免道路/仓库邻接要求。
+    if (config.allowedGrounds && config.allowedGrounds.length > 0) return true;
 
     if (this.hasAdjacentRoad(gridX, gridY, w, h)) return true;
     if (this.hasAdjacentWarehouse(gridX, gridY, w, h)) return true;

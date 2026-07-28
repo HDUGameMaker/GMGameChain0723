@@ -97,6 +97,13 @@ export class MapRenderer {
     // 色调过渡动画状态
     this._tintTransition = null;       // { startMatrix, targetMatrix, elapsed, duration, ticker }
 
+    // 调试地块标注层（作弊/调试模式下显示每格地形代码）
+    this._terrainLabelLayer = new PIXI.Container();
+    this._terrainLabelLayer.visible = false;
+    this.worldContainer.addChild(this._terrainLabelLayer);
+    this._terrainLabels = [];          // PIXI.Text 缓存
+    this._terrainLabelTileSize = 0;    // 上次绘制时的 tileSize（用于判断是否需重建）
+
     // CSS 3D 透视参数（需与 index.html 中 #game-canvas 的 transform 保持一致）
     this._perspectivePx = 1200;        // perspective 距离
     this._perspectiveAngleDeg = 50;    // rotateX 角度
@@ -758,6 +765,74 @@ export class MapRenderer {
 
     this.terrainContainer.addChildAt(graphics, 0);
     this._terrainGraphics = graphics;
+
+    // 调试地块标注：随视口重绘（可见时才实际绘制文本）
+    if (this._terrainLabelLayer.visible) {
+      this._drawTerrainLabels();
+    }
+  }
+
+  /**
+   * 绘制当前视口范围内每格的地形代码标注（调试用）
+   * 仅在 _terrainLabelLayer.visible 时调用
+   */
+  _drawTerrainLabels() {
+    // 清理旧文本
+    for (const t of this._terrainLabels) {
+      this._terrainLabelLayer.removeChild(t);
+      t.destroy();
+    }
+    this._terrainLabels = [];
+
+    const { gridWidth, gridHeight, tileSize, grid, groundTypes } = this.mapConfig;
+    const ts = tileSize;
+    const viewW = this.screenW / this.zoom;
+    const viewH = this.screenH / this.zoom;
+    const startCol = Math.max(0, Math.floor(this.camX / ts));
+    const endCol = Math.min(gridWidth - 1, Math.ceil((this.camX + viewW) / ts));
+    const startRow = Math.max(0, Math.floor(this.camY / ts));
+    const endRow = Math.min(gridHeight - 1, Math.ceil((this.camY + viewH) / ts));
+
+    // 字号随缩放调整，保证缩放后视觉大小稳定（worldContainer 整体被 zoom 缩放）
+    const fontSize = Math.max(8, Math.round(14 / this.zoom));
+
+    for (let row = startRow; row <= endRow; row++) {
+      for (let col = startCol; col <= endCol; col++) {
+        const char = grid[row][col];
+        const gt = groundTypes[char];
+        // 屏障/边界等不标注，避免噪声
+        if (!gt) continue;
+
+        const label = new PIXI.Text({
+          text: char,
+          style: { fontSize, fill: 0xffffff, align: 'center', fontWeight: 'bold' }
+        });
+        label.anchor.set(0.5);
+        label.x = col * ts + ts / 2;
+        label.y = row * ts + ts / 2;
+        // 半透明黑底提高对比度
+        label.alpha = 0.85;
+        this._terrainLabelLayer.addChild(label);
+        this._terrainLabels.push(label);
+      }
+    }
+  }
+
+  /**
+   * 开关地块标注（调试用）
+   * 开启时在每格中央绘制地形代码（R/G/D/F/M/W/B），便于排查建造/地形问题
+   */
+  setTerrainLabelsEnabled(enabled) {
+    const next = !!enabled;
+    if (next === this._terrainLabelLayer.visible) return;
+    this._terrainLabelLayer.visible = next;
+    if (next) {
+      this._drawTerrainLabels();
+    }
+  }
+
+  isTerrainLabelsEnabled() {
+    return this._terrainLabelLayer.visible;
   }
 
   /**

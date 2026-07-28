@@ -136,12 +136,7 @@ export class BuildingSystem {
       }
     }
 
-    // 道路邻接检查（非火把建筑必须邻接道路或仓库）
-    if (this._roadSystem) {
-      if (!this._roadSystem.canPlaceBuildingAt(gridX, gridY, w, h, buildingId)) {
-        return { valid: false, reason: '建筑必须邻接道路或仓库' };
-      }
-    }
+    // 道路邻接检查已移除：建筑不再强制要求邻接道路或仓库
 
     return { valid: true };
   }
