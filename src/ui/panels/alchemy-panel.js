@@ -2,6 +2,7 @@
  * alchemy-panel.js - 炼金主界面面板
  * 渲染函数签名: renderAlchemyPanel(data, bodyElement, popupManager)
  */
+import { configRegistry } from '../../core/ConfigRegistry.js';
 
 // CSS 通过 body 中的 <style> 注入一次
 let _styleInjected = false;
@@ -245,7 +246,7 @@ export function renderAlchemyPanel(data, body, pm) {
   const procDiv = document.createElement('div');
   procDiv.className = 'alchemy-process-options';
   for (const [pid, pcfg] of Object.entries(procTypes)) {
-    const compatible = currentBase && currentBase.compatibleProcessTypes && currentBase.compatibleProcessTypes.includes(pid);
+    const compatible = currentBase && (currentBase.compatibleProcessTypes || currentBase.processTypes) && (currentBase.compatibleProcessTypes || currentBase.processTypes).includes(pid);
     const btn = document.createElement('button');
     btn.className = 'alchemy-process-btn' + (body._alchemyProcessType === pid ? ' selected' : '');
     btn.textContent = pcfg.name + (compatible !== false ? '' : ' (不兼容)');

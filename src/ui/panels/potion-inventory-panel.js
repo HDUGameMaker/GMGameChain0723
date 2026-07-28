@@ -73,6 +73,8 @@ export function renderPotionInventoryPanel(data, body, pm) {
       const effectCfg = cfg && cfg.potionEffect
         ? (sys._getEffects().find(e => e.id === cfg.potionEffect.id))
         : null;
+      // 实例品质优先，其次模板品质
+      const quality = (inst.metadata && inst.metadata.quality) || (cfg && cfg.potionEffect && cfg.potionEffect.quality) || 'I';
 
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px;border:1px solid rgba(255,255,255,0.08);border-radius:6px;margin-bottom:4px;transition:all 0.2s;';
@@ -80,8 +82,8 @@ export function renderPotionInventoryPanel(data, body, pm) {
         <div style="flex:1;">
           <div style="font-weight:bold;font-size:12px;">${cfg ? cfg.name : inst.itemId}</div>
           <div style="font-size:10px;color:#888;">${effectCfg ? effectCfg.description : ''}</div>
-          <div style="font-size:10px;color:${cfg && cfg.potionEffect && cfg.potionEffect.quality === 'III' ? '#f1c40f' : '#999'};">
-            品质: ${cfg && cfg.potionEffect ? cfg.potionEffect.quality || 'I' : 'I'} 级
+          <div style="font-size:10px;color:${quality === 'III' ? '#f1c40f' : quality === 'II' ? '#2ecc71' : '#999'};">
+            品质: ${quality} 级
             | 效果: ${effectCfg ? effectCfg.name : (cfg && cfg.potionEffect ? cfg.potionEffect.id : '?')}
           </div>
         </div>

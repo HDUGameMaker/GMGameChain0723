@@ -164,8 +164,9 @@ export class AlchemySystem {
       return { valid: false, reason: '最多' + (global.maxMaterialsPerBrew || 5) + '种材料' };
     }
 
-    // 验证加工方式
-    if (!base.compatibleProcessTypes || !base.compatibleProcessTypes.includes(processType)) {
+    // 验证加工方式（配置字段为 processTypes）
+    const baseProcessTypes = base.compatibleProcessTypes || base.processTypes;
+    if (!baseProcessTypes || !baseProcessTypes.includes(processType)) {
       return { valid: false, reason: '该基底不支持此加工方式' };
     }
 
@@ -284,8 +285,8 @@ export class AlchemySystem {
   cancelBrewing() {
     if (!this._brewingState) return { valid: false, reason: '没有正在进行的酿造' };
 
-    // 使用虚空盐或直接取消（返还50%材料）
-    const refundRate = this._salts.void > 0 ? 0.5 : 0.5;
+    // 虚空盐：拥有时返还 80% 材料（无盐时 50%），并消耗 100 粒
+    const refundRate = this._salts.void > 0 ? 0.8 : 0.5;
     if (this._salts.void > 0) {
       this._salts.void = Math.max(0, this._salts.void - 100);
     }
@@ -361,6 +362,39 @@ export class AlchemySystem {
     };
   }
 
+  /**
+   * 为实验产物按 effectId 匹配输出物品。
+   * 同一 effectId 可能对应多个配方（普通/强效），按材料最高稀有度选择：
+   * - 若材料含 legendary/rare 且存在强效配方（minQuality=III），优先强效
+   * - 否则取第一个产出该 effectId 的普通配方
+   * @returns {{ itemId: string, effectId: string } | null}
+   */
+  _findExperimentOutput(effectId, materialIds) {
+    const recipes = this._getRecipes();
+    const candidates = recipes.filter(r => r.output.effectId === effectId);
+    if (candidates.length === 0) return null;
+
+    // 评估材料最高稀有度
+    const rarityOrder = { common: 0, uncommon: 1, rare: 2, legendary: 3 };
+    let maxRarity = 0;
+    for (const mid of materialIds) {
+      const mat = configRegistry.getAlchemyMaterial(mid);
+      if (mat) maxRarity = Math.max(maxRarity, rarityOrder[mat.rarity] || 0);
+    }
+
+    // 高稀有度材料 + 存在强效配方 → 产出强效药剂
+    if (maxRarity >= 2) {
+      const advanced = candidates.find(r => r.output.minQuality === 'III');
+      if (advanced) {
+        return { itemId: advanced.output.itemId, effectId: advanced.output.effectId };
+      }
+    }
+
+    // 否则取第一个普通配方
+    const normal = candidates.find(r => !r.output.minQuality) || candidates[0];
+    return { itemId: normal.output.itemId, effectId: normal.output.effectId };
+  }
+
   // ===== Tick 处理 =====
   _onTick(data) {
     // 推进酿造进度
@@ -392,7 +426,11 @@ export class AlchemySystem {
     const qualityThresholds = global.qualityThresholds || { I: 0.45, II: 0.70, III: 0.90 };
     const roll = Math.random();
 
-    if (roll > state.successChance) {
+    // 生命之盐：boost_success —— 成功率 +0.15
+    const lifeSaltBonus = this._salts.life > 0 ? 0.15 : 0;
+    const effectiveSuccessChance = Math.min(0.99, state.successChance + lifeSaltBonus);
+
+    if (roll > effectiveSuccessChance) {
       // 酿造失败
       this._addXP(Math.floor((global.xpPerBrew || 10) * 0.3));
       this._updateStore();
@@ -403,10 +441,12 @@ export class AlchemySystem {
       return;
     }
 
-    // 确定品质
+    // 确定品质：roll 越小品质越高。
+    // 配置中 qualityThresholds 为 0~1 小数（I/II/III），直接比较，不再除以 100。
+    // III 门槛最低（roll < III 阈值即最高品质），II 次之，否则 I。
     let quality = 'I';
-    if (roll < qualityThresholds['III'] / 100) quality = 'III';
-    else if (roll < qualityThresholds['II'] / 100) quality = 'II';
+    if (roll < (qualityThresholds['III'] || 0.90)) quality = 'III';
+    else if (roll < (qualityThresholds['II'] || 0.70)) quality = 'II';
 
     // 应用盐加成
     if (this._salts.moon > 0) {
@@ -417,30 +457,32 @@ export class AlchemySystem {
       quality = this._upgradeQuality(quality);
       this._salts.sun = Math.max(0, this._salts.sun - 100);
     }
+    // 生命之盐：boost_success —— 提升 15% 成功率（对本次 roll 补偿判定）
     if (this._salts.life > 0) {
-      quality = this._upgradeQuality(quality);
+      // life 盐已在成败判定阶段提供额外成功区间，这里仅消耗
       this._salts.life = Math.max(0, this._salts.life - 100);
     }
 
     // 找到输出物品
     let outputItemId = null;
     let effectId = null;
+    let minQuality = null;
 
     if (state.recipeId) {
       const recipe = configRegistry.getAlchemyRecipe(state.recipeId);
       if (recipe) {
         outputItemId = recipe.output.itemId;
         effectId = recipe.output.effectId;
+        minQuality = recipe.output.minQuality || null;
       }
     }
 
     if (!outputItemId && state.matchedEffectId) {
-      // 实验产物 —— 找到对应效果的基础药剂
-      const recipes = this._getRecipes();
-      const matchingRecipe = recipes.find(r => r.output.effectId === state.matchedEffectId);
-      if (matchingRecipe) {
-        outputItemId = matchingRecipe.output.itemId;
-        effectId = matchingRecipe.output.effectId;
+      // 实验产物 —— 按材料最高稀有度匹配对应品质的药剂
+      const matchResult = this._findExperimentOutput(state.matchedEffectId, state.materialIds);
+      if (matchResult) {
+        outputItemId = matchResult.itemId;
+        effectId = matchResult.effectId;
       }
     }
 
@@ -450,9 +492,12 @@ export class AlchemySystem {
       effectId = 'healing';
     }
 
-    // 产出药剂
+    // 强效配方（minQuality=III）固定产出 III 级；否则使用酿造判定的 quality
+    if (minQuality === 'III') quality = 'III';
+
+    // 产出药剂（携带品质元数据）
     if (this._itemSystem) {
-      this._itemSystem.obtain(outputItemId);
+      this._itemSystem.obtain(outputItemId, { quality });
     }
 
     // 如果是实验且发现了新配方
@@ -519,8 +564,9 @@ export class AlchemySystem {
     // 消耗药剂
     this._itemSystem.lose(instanceId);
 
-    // 激活效果
-    const quality = itemConfig.potionEffect.quality || 'I';
+    // 激活效果：实例品质优先，其次物品模板品质，默认 I
+    const instanceQuality = inst.metadata && inst.metadata.quality;
+    const quality = instanceQuality || itemConfig.potionEffect.quality || 'I';
     const durationTicks = effectConfig.durationTicks || 8;
 
     // 品质加成
@@ -561,14 +607,20 @@ export class AlchemySystem {
 
   _tickActiveEffects() {
     let changed = false;
+    const expired = [];
     this._activeEffects = this._activeEffects.filter(e => {
       e.ticksRemaining--;
       if (e.ticksRemaining <= 0) {
         changed = true;
+        expired.push({ effectId: e.effectId, quality: e.quality });
         return false;
       }
       return true;
     });
+    // 通知过期（与 AGENT.md 中 potionEffectExpired 事件契约一致）
+    for (const e of expired) {
+      eventBus.emit('potionEffectExpired', { effectId: e.effectId, quality: e.quality });
+    }
     if (changed) this._updateStore();
   }
 
@@ -657,6 +709,9 @@ export class AlchemySystem {
     const global = this._getGlobal();
     this._addXP(stage.xpReward || (global.xpPerMagnumOpus || 100));
 
+    // 完成伟大工作阶段时奖励对应炼金盐
+    this._rewardSaltForStage(stage);
+
     this._updateStore();
     eventBus.emit('alchemyMagnumOpusProgress', { stage: stage.stage, name: stage.name });
     eventBus.emit('combatBroadcast', {
@@ -664,6 +719,21 @@ export class AlchemySystem {
     });
 
     return { valid: true };
+  }
+
+  /**
+   * 完成伟大工作阶段时奖励对应解锁的炼金盐。
+   * 盐配置 unlockStage 与阶段 stage 对应；奖励量按配置描述（每瓶含 500/1000 粒）。
+   */
+  _rewardSaltForStage(stage) {
+    const saltConfigs = this._getSalts();
+    for (const sc of saltConfigs) {
+      if (sc.unlockStage === stage.stage) {
+        const key = sc.id.replace('_salt', '');
+        const amount = (sc.id === 'void_salt' || sc.id === 'philosopher_salt') ? 500 : 1000;
+        this.addSalt(key, amount);
+      }
+    }
   }
 
   // ===== Store 更新 =====

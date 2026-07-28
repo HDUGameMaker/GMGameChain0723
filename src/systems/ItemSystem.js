@@ -30,9 +30,11 @@ export class ItemSystem {
 
   /**
    * 获得物品
+   * @param {string} id - 物品ID
+   * @param {Object} [metadata] - 可选实例元数据（如药剂品质 quality）
    * @returns {string|false} instanceId 或 false
    */
-  obtain(id) {
+  obtain(id, metadata) {
     const config = configRegistry.getItem(id);
     if (!config) return false;
 
@@ -53,7 +55,8 @@ export class ItemSystem {
     this._items[id].instances.push({
       instanceId,
       equipped: false,
-      inExpedition: false
+      inExpedition: false,
+      metadata: metadata || {}
     });
 
     this._notifyChange();
@@ -171,7 +174,8 @@ export class ItemSystem {
           capacityCost: config ? config.capacityCost : 0,
           unique: config ? config.unique : false,
           consumable: config ? config.consumable : false,
-          expeditionEffects: config ? config.expeditionEffects : []
+          expeditionEffects: config ? config.expeditionEffects : [],
+          metadata: inst.metadata || {}
         });
       }
     }
@@ -208,7 +212,8 @@ export class ItemSystem {
         instances: data.instances.map(i => ({
           instanceId: i.instanceId,
           equipped: i.equipped,
-          inExpedition: i.inExpedition
+          inExpedition: i.inExpedition,
+          metadata: i.metadata || {}
         }))
       };
     }
@@ -225,7 +230,8 @@ export class ItemSystem {
         instances: data.instances.map(i => ({
           instanceId: i.instanceId,
           equipped: i.equipped || false,
-          inExpedition: i.inExpedition || false
+          inExpedition: i.inExpedition || false,
+          metadata: i.metadata || {}
         }))
       };
       // 恢复序号计数器
