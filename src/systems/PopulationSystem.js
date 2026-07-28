@@ -33,6 +33,14 @@ export class PopulationSystem {
     this._weatherSystem = weatherSystem;
   }
 
+  setCultureSystem(cultureSystem) {
+    this._cultureSystem = cultureSystem;
+  }
+
+  setAlchemySystem(alchemySystem) {
+    this._alchemySystem = alchemySystem;
+  }
+
   initNew() {
     this.current = 2; // 初始人口
     this.declineCountdown = 0;
@@ -44,7 +52,10 @@ export class PopulationSystem {
    */
   getHousingCapacity() {
     if (!this._buildingSystem) return 0;
-    return this._buildingSystem.getTotalHousingCapacity();
+    // 人文政策最大人口加成
+    const aEffPop = this._alchemySystem ? (this._alchemySystem.getEffects().population || {}) : {};
+    const popBonus = (this._cultureSystem ? (this._cultureSystem.getEffects().maxPopBonus || 0) : 0) + (aEffPop.maxPopBonus || 0);
+    return this._buildingSystem.getTotalHousingCapacity() + popBonus;
   }
 
   /**
@@ -134,15 +145,17 @@ export class PopulationSystem {
       this._resourceSystem.addClamped('food', foodProduction);
     }
 
-    // ===== 2. 食物消耗 =====
+    // ===== 2. 食物消耗（受人文政策影响） =====
+    const aEffPop = this._alchemySystem ? (this._alchemySystem.getEffects().population || {}) : {};
+    const foodConsumeMul = (this._cultureSystem ? (this._cultureSystem.getEffects().foodConsumeMul || 1) : 1) * (aEffPop.foodConsumeMul || 1);
     const foodAvailable = this._resourceSystem.getAmount('food');
-    const consumeAmount = Math.min(foodAvailable, this.current);
+    const consumeAmount = Math.min(foodAvailable, Math.ceil(this.current * foodConsumeMul));
     if (consumeAmount > 0) {
       this._resourceSystem.tryConsume('food', consumeAmount);
     }
 
     // ===== 3. 饥饿死亡 =====
-    const deficit = this.current - consumeAmount;
+    const deficit = Math.ceil(this.current * foodConsumeMul) - consumeAmount;
     if (deficit > 0) {
       const starvedBefore = this.current;
       this.current -= deficit;
@@ -168,9 +181,11 @@ export class PopulationSystem {
     const housing = this.getHousingCapacity();
 
     if (this.current < housing) {
-      // 增长
+      // 增长（受人文政策影响）
       this.declineCountdown = 0;
-      const growth = this._randomInt(this.popConfig.growthPerDay.min, this.popConfig.growthPerDay.max);
+      const aEffPop = this._alchemySystem ? (this._alchemySystem.getEffects().population || {}) : {};
+      const growthMul = (this._cultureSystem ? (this._cultureSystem.getEffects().growthMul || 1) : 1) * (aEffPop.growthMul || 1);
+      const growth = Math.max(1, Math.round(this._randomInt(this.popConfig.growthPerDay.min, this.popConfig.growthPerDay.max) * growthMul));
       this.current = Math.min(this.current + growth, housing);
       eventBus.emit('populationChanged', { current: this.current, direction: 'grow' });
     } else if (this.current > housing) {

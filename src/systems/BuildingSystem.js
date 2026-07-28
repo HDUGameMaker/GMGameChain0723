@@ -29,6 +29,8 @@ export class BuildingSystem {
   setRoadSystem(rs) { this._roadSystem = rs; }
   setTechSystem(ts) { this._techSystem = ts; }
   setWeatherSystem(ws) { this._weatherSystem = ws; }
+  setCultureSystem(cs) { this._cultureSystem = cs; }
+  setAlchemySystem(as) { this._alchemySystem = as; }
 
   init() {
     this._mapConfig = configRegistry.get('map');
@@ -60,9 +62,10 @@ export class BuildingSystem {
     const h = config.footprint.height;
     const map = this._mapConfig;
 
-    // 迷雾检查：区域必须全部可见
-    if (this._torchSystem && !this._torchSystem.canBuild(gridX, gridY, w, h)) {
-      return { valid: false, reason: '该区域尚未探索' };
+    // 迷雾检查：仅在"永夜迷雾模式"下要求建筑占地全部在火把可见范围内
+    if (this._torchSystem && this._torchSystem.isDarknessMode() &&
+        !this._torchSystem.canBuild(gridX, gridY, w, h)) {
+      return { valid: false, reason: '该区域尚未探索（永夜迷雾模式）' };
     }
 
     // 边界检查
@@ -134,12 +137,7 @@ export class BuildingSystem {
       }
     }
 
-    // 道路邻接检查（非火把建筑必须邻接道路或仓库）
-    if (this._roadSystem) {
-      if (!this._roadSystem.canPlaceBuildingAt(gridX, gridY, w, h, buildingId)) {
-        return { valid: false, reason: '建筑必须邻接道路或仓库' };
-      }
-    }
+    // 道路邻接检查已移除：建筑不再强制要求邻接道路或仓库
 
     return { valid: true };
   }
@@ -154,9 +152,11 @@ export class BuildingSystem {
     const check = this.canPlaceAt(gridX, gridY, buildingId);
     if (!check.valid) return false;
 
-    // 消耗资源
+    // 消耗资源（应用人文政策建造成本倍率）
+    const buildCostMul = (this._cultureSystem ? (this._cultureSystem.getEffects().buildCostMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).buildCostMul || 1) : 1);
     if (config.buildCost && config.buildCost.length > 0) {
-      if (!this._resourceSystem.consumeAll(config.buildCost)) return false;
+      const scaledCost = config.buildCost.map(c => ({ ...c, amount: Math.max(1, Math.round(c.amount * buildCostMul)) }));
+      if (!this._resourceSystem.consumeAll(scaledCost)) return false;
     }
 
     // 获取当前时间状态
@@ -211,6 +211,9 @@ export class BuildingSystem {
     const targetConfig = configRegistry.getBuilding(config.upgradesTo);
     if (!targetConfig) return { valid: false, reason: '目标建筑不存在' };
 
+    // 合成中不可升级（避免合成产物与升级冲突）
+    if (building.synthesisProgress) return { valid: false, reason: '正在合成中' };
+
     // 检查升级消耗
     const upgradeCost = targetConfig.upgradeCost || [];
     if (!this._resourceSystem.canAfford(upgradeCost)) {
@@ -232,14 +235,18 @@ export class BuildingSystem {
     const building = this.buildings[buildingIndex];
     const targetConfig = configRegistry.getBuilding(check.targetId);
 
-    // 消耗资源
-    this._resourceSystem.consumeAll(check.cost);
+    // 消耗资源（升级也应用人文政策建造成本倍率）
+    const buildCostMul = (this._cultureSystem ? (this._cultureSystem.getEffects().buildCostMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).buildCostMul || 1) : 1);
+    const scaledUpgradeCost = check.cost.map(c => ({ ...c, amount: Math.max(1, Math.round(c.amount * buildCostMul)) }));
+    this._resourceSystem.consumeAll(scaledUpgradeCost);
 
     // 变为目标建筑，进入建造状态
     building.buildingId = check.targetId;
     building.status = 'constructing';
     building.buildProgress = 0;
     building.currentWorkers = 0; // 工人遣返
+    // 清除遗留的合成进度（升级后建筑变体可能无对应合成配方，残留进度会导致 UI/逻辑异常）
+    building.synthesisProgress = null;
 
     this._updateStore();
     eventBus.emit('buildingUpgraded', { building });
@@ -462,16 +469,19 @@ export class BuildingSystem {
       }
       // 仓库类建筑：物资丢失50%
       if (bConfig.storageMultiplier && this._resourceSystem) {
-        for (const res of this._resourceSystem._resources) {
-          const loss = Math.floor(res.amount * 0.5);
+        for (const [resId, res] of Object.entries(this._resourceSystem._resources)) {
+          const current = res.current;
+          const loss = Math.floor(current * 0.5);
           if (loss > 0) {
-            this._resourceSystem.tryConsume(res.id, loss);
+            this._resourceSystem.tryConsume(resId, loss);
           }
         }
       }
     }
 
     this.buildings.splice(buildingIndex, 1);
+    // 拆除仓库类建筑后需重算存储倍率（否则上限保持旧虚高值）
+    this._updateStorageMultiplier();
     this._updateStore();
     eventBus.emit('buildingDemolished', { buildingId: building.buildingId });
     return true;
@@ -494,9 +504,10 @@ export class BuildingSystem {
     const h = config.footprint.height;
     const map = this._mapConfig;
 
-    // 迷雾检查：目标区域必须全部可见
-    if (this._torchSystem && !this._torchSystem.canBuild(newGridX, newGridY, w, h)) {
-      return { valid: false, reason: '目标区域尚未探索' };
+    // 迷雾检查：仅在"永夜迷雾模式"下要求目标区域在火把可见范围内
+    if (this._torchSystem && this._torchSystem.isDarknessMode() &&
+        !this._torchSystem.canBuild(newGridX, newGridY, w, h)) {
+      return { valid: false, reason: '目标区域尚未探索（永夜迷雾模式）' };
     }
 
     // 边界检查
@@ -691,15 +702,28 @@ export class BuildingSystem {
       }
     }
 
-    // 产出（应用相邻加成）
+    // 产出（应用相邻加成 + 人文政策产出倍率）
     if (prod.output) {
       const outputMultiplier = prod.perWorker ? effectiveWorkers : 1;
+      const cultureProdMul = (this._cultureSystem ? (this._cultureSystem.getEffects().productionMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).productionMul || 1) : 1);
       for (const out of prod.output) {
-        const baseAmount = out.amount * outputMultiplier;
+        const baseAmount = out.amount * outputMultiplier * cultureProdMul;
         const adjusted = this.applyAdjacencyToProduction(
           building.buildingId, out.resourceId, baseAmount, 'production', bonuses
         );
         this._resourceSystem.addClamped(out.resourceId, Math.round(adjusted));
+      }
+    }
+
+    // 炼金材料副产品（概率×数量模型）
+    if (prod.alchemyYields && this._alchemySystem) {
+      for (const drop of prod.alchemyYields) {
+        if (Math.random() > (drop.chance || 0)) continue;
+        const min = drop.min || 1;
+        const max = drop.max || min;
+        const amount = min + Math.floor(Math.random() * (max - min + 1));
+        if (amount <= 0) continue;
+        this._alchemySystem.addMaterial(drop.materialId, amount);
       }
     }
   }
@@ -842,6 +866,8 @@ export class BuildingSystem {
 
   /**
    * 获取建筑的解锁条件（用于UI展示）
+   * @param {string} buildingId
+   * @returns {Array<{type: string, desc: string, met: boolean}>}
    */
   getUnlockConditions(buildingId) {
     const config = configRegistry.getBuilding(buildingId);
@@ -863,31 +889,6 @@ export class BuildingSystem {
           const name = t ? t.name : cond.techId;
           const met = this._techSystem ? this._techSystem.isResearched(cond.techId) : false;
           return { type: 'tech', desc: `科技: ${name}`, met };
-        }
-        default:
-          return { type: 'unknown', desc: `条件: ${cond.type}`, met: false };
-      }
-    });
-  }
-
-  /**
-   * 获取建筑的解锁条件（用于UI展示）
-   * @param {string} buildingId
-   * @returns {Array<{type: string, desc: string, met: boolean}>}
-   */
-  getUnlockConditions(buildingId) {
-    const config = configRegistry.getBuilding(buildingId);
-    if (!config) return [];
-    const conditions = config.unlockConditions;
-    if (!conditions || conditions.length === 0) return [{ type: 'always', desc: '初始可用', met: true }];
-
-    return conditions.map(cond => {
-      switch (cond.type) {
-        case 'building': {
-          const bCfg = configRegistry.getBuilding(cond.buildingId);
-          const name = bCfg ? bCfg.name : cond.buildingId;
-          const met = this.hasBuilding(cond.buildingId);
-          return { type: 'building', desc: `建造: ${name}`, met };
         }
         default:
           return { type: 'unknown', desc: `条件: ${cond.type}`, met: false };

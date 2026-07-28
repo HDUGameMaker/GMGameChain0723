@@ -206,6 +206,10 @@
           "resourceId": "food",
           "amount": 5
         }
+      ],
+      "alchemyYields": [
+        { "materialId": "life_leaf", "chance": 0.25, "min": 1, "max": 1 },
+        { "materialId": "frost_leaf", "chance": 0.15, "min": 1, "max": 1 }
       ]
     },
     "synthesisRecipes": [],
@@ -259,6 +263,11 @@
           "resourceId": "food",
           "amount": 8
         }
+      ],
+      "alchemyYields": [
+        { "materialId": "life_leaf", "chance": 0.30, "min": 1, "max": 2 },
+        { "materialId": "frost_leaf", "chance": 0.20, "min": 1, "max": 1 },
+        { "materialId": "wind_flower", "chance": 0.15, "min": 1, "max": 1 }
       ]
     },
     "synthesisRecipes": [],
@@ -316,6 +325,11 @@
           "resourceId": "food",
           "amount": 12
         }
+      ],
+      "alchemyYields": [
+        { "materialId": "life_leaf", "chance": 0.35, "min": 2, "max": 3 },
+        { "materialId": "frost_leaf", "chance": 0.25, "min": 1, "max": 2 },
+        { "materialId": "wind_flower", "chance": 0.20, "min": 1, "max": 2 }
       ]
     },
     "synthesisRecipes": [],
@@ -513,6 +527,12 @@
           "resourceId": "stone",
           "amount": 3
         }
+      ],
+      "alchemyYields": [
+        { "materialId": "cinnabar", "chance": 0.20, "min": 1, "max": 1 },
+        { "materialId": "sulfur", "chance": 0.18, "min": 1, "max": 1 },
+        { "materialId": "niter", "chance": 0.15, "min": 1, "max": 1 },
+        { "materialId": "mica", "chance": 0.15, "min": 1, "max": 1 }
       ]
     },
     "synthesisRecipes": [],
@@ -2058,6 +2078,13 @@
           "resourceId": "coal",
           "amount": 1
         }
+      ],
+      "alchemyYields": [
+        { "materialId": "cinnabar", "chance": 0.25, "min": 1, "max": 2 },
+        { "materialId": "sulfur", "chance": 0.22, "min": 1, "max": 1 },
+        { "materialId": "niter", "chance": 0.20, "min": 1, "max": 1 },
+        { "materialId": "mica", "chance": 0.18, "min": 1, "max": 1 },
+        { "materialId": "obsidian_shard", "chance": 0.08, "min": 1, "max": 1 }
       ]
     },
     "synthesisRecipes": [],
@@ -2119,6 +2146,14 @@
           "resourceId": "hematite",
           "amount": 2
         }
+      ],
+      "alchemyYields": [
+        { "materialId": "cinnabar", "chance": 0.30, "min": 1, "max": 2 },
+        { "materialId": "sulfur", "chance": 0.25, "min": 1, "max": 2 },
+        { "materialId": "niter", "chance": 0.22, "min": 1, "max": 2 },
+        { "materialId": "mica", "chance": 0.20, "min": 1, "max": 2 },
+        { "materialId": "obsidian_shard", "chance": 0.12, "min": 1, "max": 1 },
+        { "materialId": "moonstone", "chance": 0.06, "min": 1, "max": 1 }
       ]
     },
     "synthesisRecipes": [],
@@ -2841,5 +2876,70 @@
     "synthesisRecipes": [],
     "labelLayout": {"nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0},
     "tags": ["forge"]
+  },
+  {
+    "id": "alchemy_lab",
+    "name": "炼金实验室",
+    "description": "基础的炼金工作台，可以炼制水系药剂。解锁炼金系统。",
+    "footprint": {"width": 2, "height": 2},
+    "maxCount": 1,
+    "initialBuilding": false,
+    "unlockConditions": [{"type": "tech", "techId": "precision_molding"}],
+    "maxWorkers": 1,
+    "buildCost": [{"resourceId": "stone", "amount": 30}, {"resourceId": "plank", "amount": 20}, {"resourceId": "iron_ingot", "amount": 10}],
+    "buildTime": 3,
+    "upgradesTo": "advanced_alchemy_lab",
+    "production": {
+      "perWorker": false,
+      "output": [{"resourceId": "water_pure", "amount": 1}]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {"nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0},
+    "detailLayout": {"scale": 1, "offsetX": 0, "offsetY": 0},
+    "tags": ["alchemy"]
+  },
+  {
+    "id": "advanced_alchemy_lab",
+    "name": "高级炼金实验室",
+    "description": "配备蒸馏装置与矿物研磨机的进阶炼金工坊，可使用精油基底。",
+    "footprint": {"width": 2, "height": 2},
+    "maxCount": 1,
+    "initialBuilding": false,
+    "upgradesFrom": "alchemy_lab",
+    "unlockConditions": [{"type": "tech", "techId": "precision_molding"}],
+    "maxWorkers": 2,
+    "upgradeCost": [{"resourceId": "steel", "amount": 15}, {"resourceId": "brick", "amount": 20}, {"resourceId": "machine_part", "amount": 5}],
+    "buildTime": 4,
+    "upgradesTo": "grand_alchemy_lab",
+    "production": {
+      "perWorker": true,
+      "output": [{"resourceId": "essence_oil", "amount": 1}, {"resourceId": "water_pure", "amount": 2}]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {"nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0},
+    "detailLayout": {"scale": 1, "offsetX": 0, "offsetY": 0},
+    "tags": ["alchemy"]
+  },
+  {
+    "id": "grand_alchemy_lab",
+    "name": "大炼金工坊",
+    "description": "传说中的炼金圣殿，配备全套发酵蒸馏设备，解锁烈酒基底与伟大工作终局。",
+    "footprint": {"width": 3, "height": 3},
+    "maxCount": 1,
+    "initialBuilding": false,
+    "upgradesFrom": "advanced_alchemy_lab",
+    "unlockConditions": [{"type": "tech", "techId": "precision_molding"}],
+    "maxWorkers": 3,
+    "upgradeCost": [{"resourceId": "steel", "amount": 30}, {"resourceId": "electronic_part", "amount": 10}, {"resourceId": "machine_part", "amount": 10}],
+    "buildTime": 5,
+    "upgradesTo": null,
+    "production": {
+      "perWorker": true,
+      "output": [{"resourceId": "spirit_distilled", "amount": 1}, {"resourceId": "essence_oil", "amount": 2}, {"resourceId": "water_pure", "amount": 3}]
+    },
+    "synthesisRecipes": [],
+    "labelLayout": {"nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0},
+    "detailLayout": {"scale": 1, "offsetX": 0, "offsetY": 0},
+    "tags": ["alchemy"]
   }
 ]

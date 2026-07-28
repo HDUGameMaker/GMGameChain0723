@@ -154,6 +154,16 @@
             "amount": 30
           }
         ]
+      },
+      {
+        "text": "收下他从矿洞带回的暗影蕈（+2）",
+        "effects": [
+          {
+            "type": "add_material",
+            "materialId": "shadow_mycena",
+            "amount": 2
+          }
+        ]
       }
     ]
   },
@@ -372,5 +382,62 @@
     "probability": 1,
     "effects": [],
     "options": []
+  },
+  {
+    "id": "gather_herb_patch",
+    "name": "野生药草丛",
+    "description": "一名外出采集的工人发现了一片长势喜人的野生药草丛，血棘与雷蓟交错生长，深处还藏着几株暗影蕈。",
+    "image": "",
+    "priority": 3,
+    "mutexGroup": null,
+    "cooldownTicks": 20,
+    "maxTriggers": -1,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning",
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 0.6,
+    "effects": [],
+    "options": [
+      {
+        "text": "集中采集血棘（+3）",
+        "effects": [
+          {
+            "type": "add_material",
+            "materialId": "blood_thorn",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "text": "集中采集雷蓟（+3）",
+        "effects": [
+          {
+            "type": "add_material",
+            "materialId": "thunder_thistle",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "text": "冒险深入，搜寻暗影蕈（+1）",
+        "effects": [
+          {
+            "type": "add_material",
+            "materialId": "shadow_mycena",
+            "amount": 1
+          }
+        ]
+      }
+    ]
   }
 ]

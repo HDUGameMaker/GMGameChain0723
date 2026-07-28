@@ -3,6 +3,7 @@
  * 使用统一设计系统
  */
 import { SaveManager } from '../../core/SaveManager.js';
+import { messageLog } from '../MessageLog.js';
 
 export function renderSettingsPanel(data, body, pm) {
   const container = document.createElement('div');
@@ -52,6 +53,90 @@ export function renderSettingsPanel(data, body, pm) {
   toggleRow.appendChild(toggleBtn);
   displaySection.appendChild(displayTitle);
   displaySection.appendChild(toggleRow);
+
+  // ===== 永夜迷雾模式开关 =====
+  const torchSys = window.__game?.systems?.torch;
+  const darknessRow = document.createElement('div');
+  darknessRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-top:10px;';
+  const darknessLabel = document.createElement('span');
+  darknessLabel.style.cssText = 'font-size:13px;color:#a0a0ba;';
+  darknessLabel.textContent = '永夜迷雾模式';
+  const darknessHint = document.createElement('div');
+  darknessHint.style.cssText = 'font-size:11px;color:#6a6a7a;margin-top:4px;line-height:1.4;';
+  darknessHint.textContent = '开启后建筑只能建造在火把照亮范围内';
+
+  const darknessBtn = document.createElement('button');
+  const isDark = torchSys ? torchSys.isDarknessMode() : false;
+  const updateDarkness = (enabled) => {
+    darknessBtn.textContent = enabled ? '已开启' : '已关闭';
+    darknessBtn.style.cssText = `
+      padding:6px 16px;border-radius:20px;border:1px solid ${enabled ? 'rgba(91,141,239,0.3)' : 'rgba(255,255,255,0.1)'};
+      background:${enabled ? 'rgba(91,141,239,0.15)' : 'rgba(255,255,255,0.06)'};
+      color:${enabled ? '#5b8def' : '#888'};font-size:13px;font-weight:500;cursor:pointer;
+      font-family:inherit;transition:all 0.3s;min-width:72px;
+    `;
+  };
+  updateDarkness(isDark);
+
+  darknessBtn.addEventListener('click', () => {
+    const ts = window.__game?.systems?.torch;
+    if (!ts) return;
+    const next = !ts.isDarknessMode();
+    ts.setDarknessMode(next);
+    updateDarkness(next);
+  });
+
+  darknessRow.appendChild(darknessLabel);
+  darknessRow.appendChild(darknessBtn);
+  const darknessWrapper = document.createElement('div');
+  darknessWrapper.appendChild(darknessRow);
+  darknessWrapper.appendChild(darknessHint);
+  displaySection.appendChild(darknessWrapper);
+
+  // ===== 广播播报开关 =====
+  const broadcastTitle = document.createElement('div');
+  broadcastTitle.style.cssText = 'font-size:13px;font-weight:600;color:#ececf0;margin:14px 0 8px;letter-spacing:0.01em;';
+  broadcastTitle.textContent = '📢 广播播报';
+
+  const makeBroadcastToggle = (labelText, getter, setter) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;';
+    const label = document.createElement('span');
+    label.style.cssText = 'font-size:13px;color:#a0a0ba;';
+    label.textContent = labelText;
+    const btn = document.createElement('button');
+    const update = () => {
+      const on = getter();
+      btn.textContent = on ? '已开启' : '已关闭';
+      btn.style.cssText = `
+        padding:6px 16px;border-radius:20px;border:1px solid ${on ? 'rgba(78,203,113,0.3)' : 'rgba(255,255,255,0.1)'};
+        background:${on ? 'rgba(78,203,113,0.15)' : 'rgba(255,255,255,0.06)'};
+        color:${on ? '#4ecb71' : '#888'};font-size:13px;font-weight:500;cursor:pointer;
+        font-family:inherit;transition:all 0.3s;min-width:72px;
+      `;
+    };
+    update();
+    btn.addEventListener('click', () => {
+      setter(!getter());
+      update();
+    });
+    row.appendChild(label);
+    row.appendChild(btn);
+    return row;
+  };
+
+  displaySection.appendChild(broadcastTitle);
+  displaySection.appendChild(makeBroadcastToggle(
+    '战斗/灾祸广播',
+    () => messageLog.isCombatEnabled(),
+    (v) => messageLog.saveSettings({ combat: v })
+  ));
+  displaySection.appendChild(makeBroadcastToggle(
+    '资源/建造广播',
+    () => messageLog.isResourceEnabled(),
+    (v) => messageLog.saveSettings({ resource: v })
+  ));
+
   container.appendChild(displaySection);
 
   // ===== 音频设置 =====
@@ -155,9 +240,9 @@ export function renderSettingsPanel(data, body, pm) {
   helpSection.innerHTML = `
     <div style="font-size:14px;font-weight:600;color:#ececf0;margin-bottom:8px;letter-spacing:0.01em;">📖 快捷操作</div>
     <div style="font-size:12px;color:#a0a0ba;line-height:1.8;">
-      <div>🏗️ <b style="color:#ececf0;">科技</b> — 在这里研究科技，解锁新的建筑</div>
-      <div>🏗️ <b style="color:#ececf0;">人文</b> — 这里研究政策</div>
-      <div>🏗️ <b style="color:#ececf0;">道路</b> — 要致富先修路，建筑只能沿道路建</div>
+      <div>🔬 <b style="color:#ececf0;">科技</b> — 在这里研究科技，解锁新的建筑</div>
+      <div>📜 <b style="color:#ececf0;">人文</b> — 研究政策与政体，影响战斗/经济/人口</div>
+      <div>🛤️ <b style="color:#ececf0;">道路</b> — 要致富先修路，建筑只能沿道路建</div>
       <div>🏗️ <b style="color:#ececf0;">建造</b> — 选择建筑后点击地图放置</div>
       <div>🖱️ <b style="color:#ececf0;">移动建筑</b> — 按住左键拖动已建成的建筑到新位置</div>
       <div>⏩ <b style="color:#ececf0;">加速</b> — 切换 1× / 2× / 4× 速度</div>

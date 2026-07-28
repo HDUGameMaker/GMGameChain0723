@@ -477,7 +477,6 @@ export function renderBuildingDetailPanel(data, body, pm) {
       trainArcherBtn.style.marginTop = '6px';
       trainSection.appendChild(trainArcherBtn);
     }
-
     container.appendChild(trainSection);
   }
 

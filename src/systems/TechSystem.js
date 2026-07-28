@@ -22,6 +22,7 @@ export class TechSystem {
   setResourceSystem(rs) { this._resourceSystem = rs; }
   setBuildingSystem(bs) { this._buildingSystem = bs; }
   setItemSystem(is) { this._itemSystem = is; }
+  setCultureSystem(cs) { this._cultureSystem = cs; }
 
   init() {
     // Tier 0 科技自动完成
@@ -127,7 +128,7 @@ export class TechSystem {
       return;
     }
 
-    this._currentResearch.progressTicks++;
+    this._currentResearch.progressTicks += (this._cultureSystem ? (this._cultureSystem.getEffects().researchSpeedMul || 1) : 1);
     if (this._currentResearch.progressTicks >= tech.researchTime) {
       // 研究完成
       const completedId = this._currentResearch.techId;

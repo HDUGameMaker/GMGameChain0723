@@ -8,11 +8,13 @@ import { eventBus } from '../core/EventBus.js';
 const BLOCKING_TYPES = ['event', 'expedition_prep', 'game_over'];
 
 export class PopupManager {
-  constructor(gameLoop, techSystem) {
+  constructor(gameLoop, techSystem, cultureSystem, alchemySystem, combatSystem) {
     this._gameLoop = gameLoop;
     this._techSystem = techSystem || null;
+    this._cultureSystem = cultureSystem || null;
+    this._alchemySystem = alchemySystem || null;
+    this._combatSystem = combatSystem || null;
     this._stack = [];
-    this._panels = {}; // 注册的面板渲染函数
     this._panels = {}; // 注册的面板渲染函数
     this._isOpen = false;
     this._currentType = null;
@@ -187,7 +189,10 @@ export class PopupManager {
       'torch_detail': '火把详情',
       'game_over': '游戏结束',
       'tech_tree': '科技树',
-      'culture_tree': '人文树'
+      'culture_tree': '人文树',
+      'alchemy_lab': '炼金实验室',
+      'potion_inventory': '药剂库存',
+      'tamed_pool': '驯养管理'
     };
     return titles[type] || '';
   }
@@ -235,6 +240,21 @@ export class PopupManager {
     });
     import('./panels/culture-tree-panel.js').then(m => {
       this.register('culture_tree', m.renderCultureTreePanel);
+    });
+    import('./panels/alchemy-panel.js').then(m => {
+      this.register('alchemy_lab', (data, body, pm) => {
+        m.renderAlchemyPanel({ ...data, alchemySystem: this._alchemySystem }, body, pm);
+      });
+    });
+    import('./panels/potion-inventory-panel.js').then(m => {
+      this.register('potion_inventory', (data, body, pm) => {
+        m.renderPotionInventoryPanel({ ...data, alchemySystem: this._alchemySystem }, body, pm);
+      });
+    });
+    import('./panels/tamed-pool-panel.js').then(m => {
+      this.register('tamed_pool', (data, body, pm) => {
+        m.renderTamedPoolPanel({ ...data, combatSystem: this._combatSystem }, body, pm);
+      });
     });
   }
 }

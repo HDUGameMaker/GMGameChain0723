@@ -12,3 +12,6 @@ $RECYCLE.BIN/
 *.lnk
 diag.log
 debug.log
+
+# 第五棒开发者本地身份信息文件（仅本地参考，不入库）
+第五棒开发者身份信息.md

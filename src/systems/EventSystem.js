@@ -31,6 +31,7 @@ export class EventSystem {
     this._buildingSystem = null;
     this._timeSystem = null;
     this._gameLoop = null;
+    this._alchemySystem = null;
 
     // === 全局概率参数 ===
     this._eventTriggerChance = 0.25;  // 每 tick 触发事件的全局概率
@@ -55,12 +56,13 @@ export class EventSystem {
     eventBus.on('popupClosed', () => this._onPopupClosed());
   }
 
-  setSystems({ resource, item, building, time, gameLoop }) {
+  setSystems({ resource, item, building, time, gameLoop, alchemy }) {
     this._resourceSystem = resource;
     this._itemSystem = item;
     this._buildingSystem = building;
     this._timeSystem = time;
     this._gameLoop = gameLoop;
+    this._alchemySystem = alchemy || null;
 
     // 从全局配置读取事件参数
     const globalConfig = configRegistry.get('global');
@@ -104,6 +106,12 @@ export class EventSystem {
     this.registerEffect('obtain_item', (params) => {
       if (this._itemSystem) {
         this._itemSystem.obtain(params.itemId);
+      }
+    });
+
+    this.registerEffect('add_material', (params) => {
+      if (this._alchemySystem) {
+        this._alchemySystem.addMaterial(params.materialId, params.amount || 1);
       }
     });
 

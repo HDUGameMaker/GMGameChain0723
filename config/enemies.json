@@ -12,6 +12,19 @@
           "night"
         ],
         "minDay": 1
+      },
+      "drops": [
+        { "resourceId": "fur", "amount": 2, "chance": 0.8 },
+        { "resourceId": "food", "amount": 1, "chance": 0.4 }
+      ],
+      "tameChance": 0.25,
+      "tamedUnit": {
+        "name": "驯服野兽",
+        "icon": "🐺",
+        "maxHp": 5,
+        "attack": 1,
+        "attackRange": 1,
+        "attackCooldown": 2
       }
     },
     {
@@ -26,6 +39,19 @@
           "night"
         ],
         "minDay": 5
+      },
+      "drops": [
+        { "resourceId": "gear", "amount": 1, "chance": 0.6 },
+        { "resourceId": "machine_part", "amount": 1, "chance": 0.3 }
+      ],
+      "tameChance": 0.15,
+      "tamedUnit": {
+        "name": "驯服机器人",
+        "icon": "🤖",
+        "maxHp": 5,
+        "attack": 1,
+        "attackRange": 1,
+        "attackCooldown": 2
       }
     },
     {
@@ -40,6 +66,20 @@
           "night"
         ],
         "minDay": 10
+      },
+      "drops": [
+        { "resourceId": "gear", "amount": 2, "chance": 0.8 },
+        { "resourceId": "machine_part", "amount": 1, "chance": 0.5 },
+        { "resourceId": "hematite", "amount": 1, "chance": 0.2 }
+      ],
+      "tameChance": 0.10,
+      "tamedUnit": {
+        "name": "驯服袭击者",
+        "icon": "🤖",
+        "maxHp": 5,
+        "attack": 2,
+        "attackRange": 1,
+        "attackCooldown": 2
       }
     }
   ],

@@ -12,16 +12,18 @@ export class ExpeditionSystem {
     this._resourceSystem = null;
     this._itemSystem = null;
     this._buildingSystem = null;
+    this._alchemySystem = null;
 
     // 订阅 tick 推进探险
     eventBus.on('tick', (data) => this.onTick(data));
   }
 
-  setSystems({ resource, item, building, population }) {
+  setSystems({ resource, item, building, population, alchemy }) {
     this._resourceSystem = resource;
     this._itemSystem = item;
     this._buildingSystem = building;
     this._populationSystem = population;
+    this._alchemySystem = alchemy || null;
   }
 
   /**
@@ -225,6 +227,7 @@ export class ExpeditionSystem {
       ticksInCurrentPeriod: 0,
       items: [...instanceIds],
       resourcePool: {},
+      materialPool: {},
       totalDiscarded: {},
       triggeredEvents: [],
       yieldMultipliers,
@@ -313,6 +316,19 @@ export class ExpeditionSystem {
         exp.totalDiscarded[resourceId] = (exp.totalDiscarded[resourceId] || 0) + discarded;
       }
     }
+
+    // 炼金材料掉落（概率×数量模型，不受资源池容量限制）
+    const materialDrops = region.materialDrops;
+    if (materialDrops && materialDrops.length > 0) {
+      for (const drop of materialDrops) {
+        if (Math.random() > (drop.chance || 0)) continue;
+        const min = drop.min || 1;
+        const max = drop.max || min;
+        const amount = min + Math.floor(Math.random() * (max - min + 1));
+        if (amount <= 0) continue;
+        exp.materialPool[drop.materialId] = (exp.materialPool[drop.materialId] || 0) + amount;
+      }
+    }
   }
 
   // ===== 完成探险 =====
@@ -325,6 +341,14 @@ export class ExpeditionSystem {
     if (this._resourceSystem) {
       for (const [resourceId, amount] of Object.entries(exp.resourcePool)) {
         this._resourceSystem.addClamped(resourceId, amount);
+      }
+    }
+
+    // 炼金材料入库
+    const materialYielded = { ...(exp.materialPool || {}) };
+    if (this._alchemySystem) {
+      for (const [materialId, amount] of Object.entries(materialYielded)) {
+        this._alchemySystem.addMaterial(materialId, amount);
       }
     }
 
@@ -342,6 +366,7 @@ export class ExpeditionSystem {
       regions: exp.regions,
       totalYielded: { ...exp.resourcePool },
       totalDiscarded: { ...exp.totalDiscarded },
+      materialYielded,
       triggeredEvents: [...exp.triggeredEvents],
       returnedItems: exp.items
     };
@@ -419,6 +444,10 @@ export class ExpeditionSystem {
     // 兼容旧存档：没有 occupiedWorkers 字段时默认 0
     if (state.occupiedWorkers === undefined) {
       state.occupiedWorkers = 0;
+    }
+    // 兼容旧存档：没有 materialPool 字段时空对象
+    if (!state.materialPool) {
+      state.materialPool = {};
     }
     this._expedition = state;
     this._updateStore();
