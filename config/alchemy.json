@@ -9,7 +9,8 @@
     "qualityThresholds": { "I": 0.45, "II": 0.70, "III": 0.90 },
     "maxMaterialsPerBrew": 5,
     "grindExtraPotency": 0.5,
-    "grindExtraTicks": 1
+    "grindExtraTicks": 1,
+    "essenceRefineCost": 5
   },
 
   "bases": [

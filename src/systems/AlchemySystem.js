@@ -144,6 +144,72 @@ export class AlchemySystem {
     return true;
   }
 
+  // ===== 元素精华提炼 =====
+
+  /** 元素→精华ID映射（硬编码元数据） */
+  static ELEMENT_TO_ESSENCE = {
+    fire: 'fire_essence',
+    water: 'water_essence',
+    earth: 'earth_essence',
+    wind: 'wind_essence',
+    void: 'void_essence'
+  };
+
+  /**
+   * 用同元素材料提炼元素精华
+   * @param {string} element - 元素名 (fire/water/earth/wind/void)
+   * @returns {{ success: boolean, reason?: string, essenceId?: string, cost?: number, sourceMaterialId?: string }}
+   */
+  refineToEssence(element) {
+    const essenceId = AlchemySystem.ELEMENT_TO_ESSENCE[element];
+    if (!essenceId) return { success: false, reason: '未知元素: ' + element };
+
+    const global = this._getGlobal();
+    const cost = global.essenceRefineCost || 5;
+
+    // 找到库存最多的同元素材料（优先 common/uncommon，排除 essence 和 special 类别）
+    const materials = this._getMaterials();
+    const candidates = materials.filter(m =>
+      m.element === element &&
+      m.category !== 'essence' &&
+      m.category !== 'special' &&
+      (this._materialStock[m.id] || 0) >= cost
+    );
+    if (candidates.length === 0) {
+      return { success: false, reason: `没有足够的${element}元素材料（需要${cost}个）` };
+    }
+    // 选库存最少的先消耗（保留稀有材料），优先非 legendary
+    candidates.sort((a, b) => {
+      const aIsLegend = a.rarity === 'legendary';
+      const bIsLegend = b.rarity === 'legendary';
+      if (aIsLegend !== bIsLegend) return aIsLegend ? 1 : -1;
+      return (this._materialStock[a.id] || 0) - (this._materialStock[b.id] || 0);
+    });
+    const sourceMat = candidates[0];
+
+    // 消耗材料 → 产出精华
+    if (!this.consumeMaterial(sourceMat.id, cost)) {
+      return { success: false, reason: '库存不足（内部错误）' };
+    }
+    this.addMaterial(essenceId, 1);
+    return { success: true, essenceId, cost, sourceMaterialId: sourceMat.id };
+  }
+
+  /** 查询某元素是否可提炼 */
+  canRefineEssence(element) {
+    const essenceId = AlchemySystem.ELEMENT_TO_ESSENCE[element];
+    if (!essenceId) return false;
+    const global = this._getGlobal();
+    const cost = global.essenceRefineCost || 5;
+    const materials = this._getMaterials();
+    return materials.some(m =>
+      m.element === element &&
+      m.category !== 'essence' &&
+      m.category !== 'special' &&
+      (this._materialStock[m.id] || 0) >= cost
+    );
+  }
+
   // ===== 酿造流程 =====
 
   /**

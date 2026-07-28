@@ -62,9 +62,10 @@ export class BuildingSystem {
     const h = config.footprint.height;
     const map = this._mapConfig;
 
-    // 迷雾检查：区域必须全部可见
-    if (this._torchSystem && !this._torchSystem.canBuild(gridX, gridY, w, h)) {
-      return { valid: false, reason: '该区域尚未探索' };
+    // 迷雾检查：仅在"永夜迷雾模式"下要求建筑占地全部在火把可见范围内
+    if (this._torchSystem && this._torchSystem.isDarknessMode() &&
+        !this._torchSystem.canBuild(gridX, gridY, w, h)) {
+      return { valid: false, reason: '该区域尚未探索（永夜迷雾模式）' };
     }
 
     // 边界检查
@@ -503,9 +504,10 @@ export class BuildingSystem {
     const h = config.footprint.height;
     const map = this._mapConfig;
 
-    // 迷雾检查：目标区域必须全部可见
-    if (this._torchSystem && !this._torchSystem.canBuild(newGridX, newGridY, w, h)) {
-      return { valid: false, reason: '目标区域尚未探索' };
+    // 迷雾检查：仅在"永夜迷雾模式"下要求目标区域在火把可见范围内
+    if (this._torchSystem && this._torchSystem.isDarknessMode() &&
+        !this._torchSystem.canBuild(newGridX, newGridY, w, h)) {
+      return { valid: false, reason: '目标区域尚未探索（永夜迷雾模式）' };
     }
 
     // 边界检查
@@ -710,6 +712,18 @@ export class BuildingSystem {
           building.buildingId, out.resourceId, baseAmount, 'production', bonuses
         );
         this._resourceSystem.addClamped(out.resourceId, Math.round(adjusted));
+      }
+    }
+
+    // 炼金材料副产品（概率×数量模型）
+    if (prod.alchemyYields && this._alchemySystem) {
+      for (const drop of prod.alchemyYields) {
+        if (Math.random() > (drop.chance || 0)) continue;
+        const min = drop.min || 1;
+        const max = drop.max || min;
+        const amount = min + Math.floor(Math.random() * (max - min + 1));
+        if (amount <= 0) continue;
+        this._alchemySystem.addMaterial(drop.materialId, amount);
       }
     }
   }

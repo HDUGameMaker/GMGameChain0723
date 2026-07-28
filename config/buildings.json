@@ -206,6 +206,10 @@
           "resourceId": "food",
           "amount": 5
         }
+      ],
+      "alchemyYields": [
+        { "materialId": "life_leaf", "chance": 0.25, "min": 1, "max": 1 },
+        { "materialId": "frost_leaf", "chance": 0.15, "min": 1, "max": 1 }
       ]
     },
     "synthesisRecipes": [],
@@ -259,6 +263,11 @@
           "resourceId": "food",
           "amount": 8
         }
+      ],
+      "alchemyYields": [
+        { "materialId": "life_leaf", "chance": 0.30, "min": 1, "max": 2 },
+        { "materialId": "frost_leaf", "chance": 0.20, "min": 1, "max": 1 },
+        { "materialId": "wind_flower", "chance": 0.15, "min": 1, "max": 1 }
       ]
     },
     "synthesisRecipes": [],
@@ -316,6 +325,11 @@
           "resourceId": "food",
           "amount": 12
         }
+      ],
+      "alchemyYields": [
+        { "materialId": "life_leaf", "chance": 0.35, "min": 2, "max": 3 },
+        { "materialId": "frost_leaf", "chance": 0.25, "min": 1, "max": 2 },
+        { "materialId": "wind_flower", "chance": 0.20, "min": 1, "max": 2 }
       ]
     },
     "synthesisRecipes": [],
@@ -513,6 +527,12 @@
           "resourceId": "stone",
           "amount": 3
         }
+      ],
+      "alchemyYields": [
+        { "materialId": "cinnabar", "chance": 0.20, "min": 1, "max": 1 },
+        { "materialId": "sulfur", "chance": 0.18, "min": 1, "max": 1 },
+        { "materialId": "niter", "chance": 0.15, "min": 1, "max": 1 },
+        { "materialId": "mica", "chance": 0.15, "min": 1, "max": 1 }
       ]
     },
     "synthesisRecipes": [],
@@ -2058,6 +2078,13 @@
           "resourceId": "coal",
           "amount": 1
         }
+      ],
+      "alchemyYields": [
+        { "materialId": "cinnabar", "chance": 0.25, "min": 1, "max": 2 },
+        { "materialId": "sulfur", "chance": 0.22, "min": 1, "max": 1 },
+        { "materialId": "niter", "chance": 0.20, "min": 1, "max": 1 },
+        { "materialId": "mica", "chance": 0.18, "min": 1, "max": 1 },
+        { "materialId": "obsidian_shard", "chance": 0.08, "min": 1, "max": 1 }
       ]
     },
     "synthesisRecipes": [],
@@ -2119,6 +2146,14 @@
           "resourceId": "hematite",
           "amount": 2
         }
+      ],
+      "alchemyYields": [
+        { "materialId": "cinnabar", "chance": 0.30, "min": 1, "max": 2 },
+        { "materialId": "sulfur", "chance": 0.25, "min": 1, "max": 2 },
+        { "materialId": "niter", "chance": 0.22, "min": 1, "max": 2 },
+        { "materialId": "mica", "chance": 0.20, "min": 1, "max": 2 },
+        { "materialId": "obsidian_shard", "chance": 0.12, "min": 1, "max": 1 },
+        { "materialId": "moonstone", "chance": 0.06, "min": 1, "max": 1 }
       ]
     },
     "synthesisRecipes": [],

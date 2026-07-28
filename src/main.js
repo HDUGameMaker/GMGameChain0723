@@ -140,13 +140,15 @@ class Game {
       item: this.systems.item,
       building: this.systems.building,
       time: this.systems.time,
-      gameLoop: gameLoop
+      gameLoop: gameLoop,
+      alchemy: this.systems.alchemy
     });
     this.systems.expedition.setSystems({
       resource: this.systems.resource,
       item: this.systems.item,
       building: this.systems.building,
-      population: this.systems.population
+      population: this.systems.population,
+      alchemy: this.systems.alchemy
     });
 
     // 注册人口每日结算

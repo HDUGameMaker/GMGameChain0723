@@ -17,6 +17,12 @@ export class TorchSystem {
     /** @type {Map<string, object>} torchId → config cache */
     this._torchConfigMap = new Map();
 
+    // 永夜迷雾模式：开启后建筑放置/移动必须在火把可见范围内（localStorage 持久化）
+    this._darknessMode = false;
+    try {
+      this._darknessMode = localStorage.getItem('gmgc_darkness_mode') === '1';
+    } catch (e) { /* ignore */ }
+
     // 监听 tick 和 periodEnd 事件
     eventBus.on('tick', (data) => this.onTick(data));
     eventBus.on('periodEnd', (data) => this.onPeriodEnd(data));
@@ -293,12 +299,30 @@ export class TorchSystem {
    * @returns {boolean}
    */
   canBuild(gridX, gridY, w, h) {
+    // 非永夜迷雾模式下，火把系统不限制建造（全图可建）
+    if (!this._darknessMode) return true;
     for (let r = gridY; r < gridY + h; r++) {
       for (let c = gridX; c < gridX + w; c++) {
         if (!this.canInteract(c, r)) return false;
       }
     }
     return true;
+  }
+
+  // ===== 永夜迷雾模式 =====
+
+  /** 是否开启永夜迷雾模式 */
+  isDarknessMode() {
+    return this._darknessMode;
+  }
+
+  /** 设置永夜迷雾模式（开启后建筑放置/移动必须在火把可见范围内） */
+  setDarknessMode(enabled) {
+    const next = !!enabled;
+    if (next === this._darknessMode) return;
+    this._darknessMode = next;
+    try { localStorage.setItem('gmgc_darkness_mode', next ? '1' : '0'); } catch (e) { /* ignore */ }
+    eventBus.emit('darknessModeToggled', { enabled: next });
   }
 
   // ===== 与 BuildingSystem 升级桥接 =====

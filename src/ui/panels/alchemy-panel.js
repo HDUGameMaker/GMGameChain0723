@@ -366,6 +366,46 @@ export function renderAlchemyPanel(data, body, pm) {
   }
   right.appendChild(saltSection);
 
+  // ===== 元素精华提炼 =====
+  const refineSection = document.createElement('div');
+  refineSection.className = 'alchemy-section';
+  refineSection.style.maxHeight = '150px';
+  refineSection.innerHTML = '<h3>🔥 元素精华提炼</h3>';
+  const cost = sys._getGlobal().essenceRefineCost || 5;
+  const refineHint = document.createElement('div');
+  refineHint.style.cssText = 'font-size:10px;color:#888;margin-bottom:6px;';
+  refineHint.textContent = `消耗 ${cost} 个同元素材料 → 1 个元素精华`;
+  refineSection.appendChild(refineHint);
+
+  const elementList = ['fire', 'water', 'earth', 'wind', 'void'];
+  const elNames = { fire: '🔥火', water: '💧水', earth: '🌍土', wind: '💨风', void: '🌑虚空' };
+  for (const el of elementList) {
+    const essenceId = sys.constructor.ELEMENT_TO_ESSENCE[el];
+    const canRefine = sys.canRefineEssence(el);
+    const essenceStock = essenceId ? (sys._materialStock[essenceId] || 0) : 0;
+    const refineBtn = document.createElement('button');
+    refineBtn.style.cssText = `
+      display:block; width:100%; margin-bottom:3px; padding:3px 8px;
+      border:1px solid ${canRefine ? 'rgba(155,89,182,0.4)' : 'rgba(255,255,255,0.08)'};
+      border-radius:4px; background:${canRefine ? 'rgba(155,89,182,0.08)' : 'transparent'};
+      color:${canRefine ? '#ccc' : '#666'}; cursor:${canRefine ? 'pointer' : 'default'}; font-size:11px;
+      display:flex; justify-content:space-between; transition:all 0.2s;
+    `;
+    refineBtn.innerHTML = `<span>${elNames[el]} → 精华</span><span style="color:#999;font-size:10px;">库存:${essenceStock} | ${canRefine ? '可提炼' : '材料不足'}</span>`;
+    if (canRefine && !isBrewing) {
+      refineBtn.addEventListener('click', () => {
+        const result = sys.refineToEssence(el);
+        if (result.success) {
+          pm.refresh(data);
+        } else {
+          alert('提炼失败: ' + result.reason);
+        }
+      });
+    }
+    refineSection.appendChild(refineBtn);
+  }
+  right.appendChild(refineSection);
+
   // 操作按钮
   const actionBar = document.createElement('div');
   actionBar.className = 'alchemy-action-bar';

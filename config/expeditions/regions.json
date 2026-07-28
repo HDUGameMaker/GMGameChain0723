@@ -88,7 +88,10 @@
         "coal": 6,
         "hematite": 4
       }
-    }
+    },
+    "materialDrops": [
+      { "materialId": "grave_truffle", "chance": 0.20, "min": 1, "max": 2 }
+    ]
   },
   {
     "id": "mountain_summit",
@@ -127,7 +130,10 @@
         "hematite": 3,
         "electronic_part": 1
       }
-    }
+    },
+    "materialDrops": [
+      { "materialId": "diamond_dust", "chance": 0.12, "min": 1, "max": 1 }
+    ]
   },
   {
     "id": "scrapyard",
@@ -193,7 +199,10 @@
       "night": {
         "wood": 11
       }
-    }
+    },
+    "materialDrops": [
+      { "materialId": "rainbow_cap", "chance": 0.06, "min": 1, "max": 1 }
+    ]
   },
   {
     "id": "iron_ridge",
@@ -294,7 +303,11 @@
       "night": {
         "electronic_part": 2
       }
-    }
+    },
+    "materialDrops": [
+      { "materialId": "diamond_dust", "chance": 0.10, "min": 1, "max": 1 },
+      { "materialId": "philosopher_ore", "chance": 0.04, "min": 1, "max": 1 }
+    ]
   },
   {
     "id": "scrapyard_core",

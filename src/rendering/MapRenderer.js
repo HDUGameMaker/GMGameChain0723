@@ -612,6 +612,10 @@ export class MapRenderer {
    * 始终保持明亮，因此"夜晚整体暗化但火把光照范围除外"天然成立。
    */
   _getFogBaseAlpha() {
+    // 永夜迷雾模式：无视时段，全图恒定近全黑（仅火把照亮范围由 destination-out 擦除保持明亮）
+    if (this._torchSystem && this._torchSystem.isDarknessMode()) {
+      return 0.97;
+    }
     const period = store.getState('timePeriod') || 'morning';
     switch (period) {
       case 'morning':   return 0.05;  // 清晨：基本无暗化
@@ -1176,8 +1180,9 @@ export class MapRenderer {
     }
 
     if (this.buildingSystem.placingState === 'PLACING') {
-      // 放置模式：先检查迷雾
-      if (!this._isTileRevealed(gridPos.col, gridPos.row)) return;
+      // 放置模式：永夜迷雾模式下要求点击地块在火把可见范围内
+      const ts = this._torchSystem;
+      if (ts && ts.isDarknessMode() && !this._isTileRevealed(gridPos.col, gridPos.row)) return;
 
       const buildingId = this.buildingSystem.placingBuildingId;
       const config = configRegistry.getBuilding(buildingId);
@@ -2387,6 +2392,11 @@ export class MapRenderer {
     eventBus.on('periodChange', (data) => {
       this.applyPeriodTint(data.period);
       // 时段变化 → 昼夜亮暗变化，刷新迷雾底色
+      this._updateFogTexture();
+    });
+
+    // 永夜迷雾模式切换 → 立即重绘迷雾底色（全黑↔按时段）
+    eventBus.on('darknessModeToggled', () => {
       this._updateFogTexture();
     });
 
