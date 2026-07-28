@@ -402,6 +402,8 @@ export class AudioSystem {
           continue;
         }
 
+        // 若该 SFX 在预加载阶段未能加载（文件 404 等），仍绑定监听，
+        // 但 playSFX 内部会静默跳过未加载的 buffer，不影响游戏运行。
         eventBus.on(binding.event, () => {
           if (gameLoop.isPaused()) return;
           if (!gameLoop.isPageVisible()) return;
@@ -577,28 +579,35 @@ export class AudioSystem {
         const blobUrl = URL.createObjectURL(blob);
         const element = this._bgmElements[bgm.id];
         if (element) {
-          element.src = blobUrl;
-          // 触发浏览器解码/缓冲
-          element.load();
-          // 等待音频数据就绪，确保后续 play() 调用时 readyState >= 3
-          // 这样在用户手势同步链中 play() 不会因等待数据而丢失用户手势上下文
-          if (element.readyState < 3) {
-            await new Promise((resolve) => {
-              const onReady = () => {
-                element.removeEventListener('canplay', onReady);
-                element.removeEventListener('loadeddata', onReady);
-                resolve();
-              };
-              element.addEventListener('canplay', onReady, { once: true });
-              element.addEventListener('loadeddata', onReady, { once: true });
-              // 10 秒超时兜底，避免永久卡住 init()
-              setTimeout(() => {
-                element.removeEventListener('canplay', onReady);
-                element.removeEventListener('loadeddata', onReady);
-                resolve();
-              }, 10000);
-            });
-          }
+          // 先注册事件监听器，再设置 src + load()，防止 blob URL
+          //（已在内存中）瞬间完成加载导致 canplay 在监听器注册前触发。
+          await new Promise((resolve) => {
+            const onReady = () => {
+              element.removeEventListener('canplay', onReady);
+              element.removeEventListener('loadeddata', onReady);
+              resolve();
+            };
+            element.addEventListener('canplay', onReady, { once: true });
+            element.addEventListener('loadeddata', onReady, { once: true });
+            // 10 秒超时兜底，避免永久卡住 init()
+            const timer = setTimeout(() => {
+              element.removeEventListener('canplay', onReady);
+              element.removeEventListener('loadeddata', onReady);
+              resolve();
+            }, 10000);
+
+            // 设置 src 并触发加载（必须在监听器注册之后）
+            element.src = blobUrl;
+            element.load();
+
+            // 防御：load() 可能已同步完成（readyState 已 >= 3）
+            if (element.readyState >= 3) {
+              clearTimeout(timer);
+              element.removeEventListener('canplay', onReady);
+              element.removeEventListener('loadeddata', onReady);
+              resolve();
+            }
+          });
         }
         return bgm.id;
       } catch (e) {

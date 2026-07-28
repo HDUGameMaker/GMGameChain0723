@@ -3,10 +3,10 @@
  * 按 ` 键（反引号/backtick）切换显示，或自动随作弊模式显示
  * 显示 FPS、游戏状态、资源调试、系统开关等
  */
-import { store } from '../core/Store.js';
-import { eventBus } from '../core/EventBus.js';
-import { configRegistry } from '../core/ConfigRegistry.js';
-import { cheatManager } from '../utils/CheatManager.js';
+import { store } from '../../core/Store.js';
+import { eventBus } from '../../core/EventBus.js';
+import { configRegistry } from '../../core/ConfigRegistry.js';
+import { cheatManager } from '../../utils/CheatManager.js';
 
 const TOGGLE_KEY = '`'; // backtick 反引号
 const TOGGLE_KEY_ALT = '~'; // Shift+` 产生的字符
@@ -228,14 +228,16 @@ export class DebugPanel {
     const sys = this._systems;
 
     // 科技已研究数
-    const techResearched = sys.tech ? (sys.tech.getResearchedIds ? sys.tech.getResearchedIds().length : '--') : '--';
-    const techTotal = sys.tech ? (sys.tech.getAllTechIds ? sys.tech.getAllTechIds().length : '--') : '--';
+    let techResearched = '--';
+    if (sys.tech && sys.tech.getResearched) {
+      techResearched = sys.tech.getResearched().length;
+    }
 
-    // 人文政策已采纳数
-    let cultureAdopted = '--', cultureTotal = '--';
+    // 人文政策：已研究 / 已启用
+    let cultureResearched = '--', cultureActivated = '--';
     if (sys.culture) {
-      if (sys.culture.getAdoptedCount) cultureAdopted = sys.culture.getAdoptedCount();
-      if (sys.culture.getTotalCount) cultureTotal = sys.culture.getTotalCount();
+      if (sys.culture.getResearched) cultureResearched = sys.culture.getResearched().length;
+      if (sys.culture.getActivatedPolicies) cultureActivated = sys.culture.getActivatedPolicies().length;
     }
 
     // 战斗单位
@@ -253,8 +255,8 @@ export class DebugPanel {
     }
 
     this._systemsEl.innerHTML = `
-      <div class="debug-row"><span class="debug-label">科技树:</span> ${techResearched} / ${techTotal} 已研究</div>
-      <div class="debug-row"><span class="debug-label">人文政策:</span> ${cultureAdopted} / ${cultureTotal} 已采纳</div>
+      <div class="debug-row"><span class="debug-label">科技树:</span> ${techResearched} 已研究</div>
+      <div class="debug-row"><span class="debug-label">人文政策:</span> ${cultureResearched} 已研究 / ${cultureActivated} 已启用</div>
       <div class="debug-row"><span class="debug-label">战斗单位:</span> ${combatUnits}</div>
       <div class="debug-row"><span class="debug-label">道路:</span> ${roadCount}</div>
       <div class="debug-row"><span class="debug-label">作弊模式:</span> ${cheatManager.isEnabled() ? '✅ 开启' : '❌ 关闭'}</div>
