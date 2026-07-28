@@ -215,6 +215,9 @@ export class BuildingSystem {
     const targetConfig = configRegistry.getBuilding(config.upgradesTo);
     if (!targetConfig) return { valid: false, reason: '目标建筑不存在' };
 
+    // 合成中不可升级（避免合成产物与升级冲突）
+    if (building.synthesisProgress) return { valid: false, reason: '正在合成中' };
+
     // 检查升级消耗
     const upgradeCost = targetConfig.upgradeCost || [];
     if (!this._resourceSystem.canAfford(upgradeCost)) {
@@ -246,6 +249,8 @@ export class BuildingSystem {
     building.status = 'constructing';
     building.buildProgress = 0;
     building.currentWorkers = 0; // 工人遣返
+    // 清除遗留的合成进度（升级后建筑变体可能无对应合成配方，残留进度会导致 UI/逻辑异常）
+    building.synthesisProgress = null;
 
     this._updateStore();
     eventBus.emit('buildingUpgraded', { building });
@@ -468,16 +473,19 @@ export class BuildingSystem {
       }
       // 仓库类建筑：物资丢失50%
       if (bConfig.storageMultiplier && this._resourceSystem) {
-        for (const res of this._resourceSystem._resources) {
-          const loss = Math.floor(res.amount * 0.5);
+        for (const [resId, res] of Object.entries(this._resourceSystem._resources)) {
+          const current = res.current;
+          const loss = Math.floor(current * 0.5);
           if (loss > 0) {
-            this._resourceSystem.tryConsume(res.id, loss);
+            this._resourceSystem.tryConsume(resId, loss);
           }
         }
       }
     }
 
     this.buildings.splice(buildingIndex, 1);
+    // 拆除仓库类建筑后需重算存储倍率（否则上限保持旧虚高值）
+    this._updateStorageMultiplier();
     this._updateStore();
     eventBus.emit('buildingDemolished', { buildingId: building.buildingId });
     return true;
@@ -849,6 +857,8 @@ export class BuildingSystem {
 
   /**
    * 获取建筑的解锁条件（用于UI展示）
+   * @param {string} buildingId
+   * @returns {Array<{type: string, desc: string, met: boolean}>}
    */
   getUnlockConditions(buildingId) {
     const config = configRegistry.getBuilding(buildingId);
@@ -870,31 +880,6 @@ export class BuildingSystem {
           const name = t ? t.name : cond.techId;
           const met = this._techSystem ? this._techSystem.isResearched(cond.techId) : false;
           return { type: 'tech', desc: `科技: ${name}`, met };
-        }
-        default:
-          return { type: 'unknown', desc: `条件: ${cond.type}`, met: false };
-      }
-    });
-  }
-
-  /**
-   * 获取建筑的解锁条件（用于UI展示）
-   * @param {string} buildingId
-   * @returns {Array<{type: string, desc: string, met: boolean}>}
-   */
-  getUnlockConditions(buildingId) {
-    const config = configRegistry.getBuilding(buildingId);
-    if (!config) return [];
-    const conditions = config.unlockConditions;
-    if (!conditions || conditions.length === 0) return [{ type: 'always', desc: '初始可用', met: true }];
-
-    return conditions.map(cond => {
-      switch (cond.type) {
-        case 'building': {
-          const bCfg = configRegistry.getBuilding(cond.buildingId);
-          const name = bCfg ? bCfg.name : cond.buildingId;
-          const met = this.hasBuilding(cond.buildingId);
-          return { type: 'building', desc: `建造: ${name}`, met };
         }
         default:
           return { type: 'unknown', desc: `条件: ${cond.type}`, met: false };

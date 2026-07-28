@@ -192,12 +192,20 @@ export class ResourceSystem {
     for (const [id, res] of Object.entries(this._resources)) {
       state[id] = { current: res.current, max: res.max };
     }
+    // 保存存储倍率，读档后才能恢复正确的资源上限
+    state.__storageMultiplier = this._storageMultiplier;
     return state;
   }
 
   restoreState(state) {
     if (!state) return;
+    // 先恢复存储倍率，供后续 current 钳制使用
+    const savedMultiplier = state.__storageMultiplier;
+    if (typeof savedMultiplier === 'number') {
+      this._storageMultiplier = savedMultiplier;
+    }
     for (const [id, data] of Object.entries(state)) {
+      if (id === '__storageMultiplier') continue;
       if (this._resources[id]) {
         this._resources[id].current = data.current;
         this._resources[id].max = data.max;
@@ -206,6 +214,11 @@ export class ResourceSystem {
         // 直接根据存档数据创建条目
         this._resources[id] = { current: data.current, max: data.max };
       }
+    }
+    // 钳制：恢复后 current 不应超过实际容量上限（防止倍率丢失或配置下调导致非法状态）
+    for (const [id, res] of Object.entries(this._resources)) {
+      const maxCap = this.getMaxResourceCapacity(id);
+      if (res.current > maxCap) res.current = maxCap;
     }
     this._notifyChange();
   }

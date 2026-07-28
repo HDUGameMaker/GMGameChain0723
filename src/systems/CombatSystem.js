@@ -41,6 +41,16 @@ export class CombatSystem {
   setCultureSystem(cs) { this._cultureSystem = cs; }
   setAlchemySystem(as) { this._alchemySystem = as; }
 
+  /**
+   * 友方单位被移除（阵亡/解散）时，归还其占用的建造工人池名额。
+   * 仅训练营单位（occupiesWorker=true）占用 _constructionWorkers；
+   * 驯化单位不占用工人，无需释放。
+   */
+  _releaseUnitWorker(unit) {
+    if (!unit || !unit.occupiesWorker || !this._populationSystem) return;
+    this._populationSystem.releaseFromConstruction(1);
+  }
+
   init() { this._mapConfig = configRegistry.get('map'); }
 
   enterPlaceEnemyMode(enemyId) { this._editMode = enemyId; this._deployMode = null; store.setState({ combatPlaceMode: enemyId, deployTamedMode: false }); eventBus.emit('combatPlaceModeChanged', { enabled: true, enemyId }); }
@@ -129,8 +139,14 @@ export class CombatSystem {
     const eff = this._cultureSystem ? this._cultureSystem.getEffects() : null;
     const aEff = this._alchemySystem ? this._alchemySystem.getEffects() : {};
     const aCombat = aEff.combat || {};
-    const dmgMul = (type === 'archer' ? (eff?.archerDamageMul || 1) : (eff?.warriorDamageMul || 1)) * (aCombat.warriorDamageMul || 1) * (type === 'archer' ? (aCombat.archerDamageMul || 1) : 1);
-    const hpMul = (eff?.unitHpMul || 1) * (aCombat.unitHpMul || 1) * (aCombat.unitDamageTakenMul || 1);
+    // 伤害乘性：按单位类型分别取对应乘性（战士=warriorDamageMul，弓箭手=archerDamageMul）
+    // 不再把战士专属乘性套到弓箭手身上
+    const cultureDmgMul = type === 'archer' ? (eff?.archerDamageMul || 1) : (eff?.warriorDamageMul || 1);
+    const alchemyDmgMul = type === 'archer' ? (aCombat.archerDamageMul || 1) : (aCombat.warriorDamageMul || 1);
+    const dmgMul = cultureDmgMul * alchemyDmgMul;
+    // HP 乘性：unitHpMul 为生命加成（正面），unitDamageTakenMul 不应进 HP（它是"受到伤害放大"负面效果，
+    // 应在敌人攻击单位时应用，见 _onTick 敌人攻击单位处）
+    const hpMul = (eff?.unitHpMul || 1) * (aCombat.unitHpMul || 1);
 
     // 在建筑附近找空地
     for (let dx = -1; dx <= 1; dx++) {
@@ -154,7 +170,9 @@ export class CombatSystem {
           attack: Math.round(unitConfig.attack * dmgMul),
           attackRange: unitConfig.attackRange,
           attackCooldown: unitConfig.attackCooldown || 1,
-          _cooldownTicks: 0
+          _cooldownTicks: 0,
+          // 训练营单位占用 1 个建造工人池名额，阵亡时需释放
+          occupiesWorker: true
         });
         this._notify();
         eventBus.emit('unitSpawned', { type, gridX: x, gridY: y });
@@ -336,12 +354,19 @@ export class CombatSystem {
 
       if (nearestUnit && nearDist <= 1) {
         // 攻击友方单位
-        nearestUnit.hp -= cfg.attack || 1;
+        // unitDamageTakenMul（炼金负面效果）：放大单位受到的伤害
+        const aEffCombat = this._alchemySystem ? (this._alchemySystem.getEffects().combat || {}) : {};
+        const takenMul = aEffCombat.unitDamageTakenMul || 1;
+        nearestUnit.hp -= Math.round((cfg.attack || 1) * takenMul);
         const unitLabel = nearestUnit.source === 'tamed' ? (nearestUnit.tamedInfo?.name || '驯化单位') : (nearestUnit.type === 'archer' ? '弓箭手' : '战士');
         this._broadcast(`💥 ${cfg.name} 攻击${unitLabel}！`);
         if (nearestUnit.hp <= 0) {
           const idx = this.units.indexOf(nearestUnit);
-          if (idx >= 0) this.units.splice(idx, 1);
+          if (idx >= 0) {
+            this.units.splice(idx, 1);
+            // 训练营单位阵亡：归还占用的建造工人池名额
+            this._releaseUnitWorker(nearestUnit);
+          }
           this._broadcast(`💀 单位阵亡！`);
         }
         changed = true;
