@@ -8,22 +8,66 @@
     "R": {
       "name": "裸露石头",
       "buildable": "restricted",
-      "colorHint": "#dedede"
+      "colorHint": "#dedede",
+      "texture": "assets/map/rock1.png",
+      "variants": [
+        { "texture": "assets/map/rock.png", "chance": 0.03 }
+      ],
+      "neighborOverrides": [
+        { "dx": 0, "dy": 1, "match": "G", "texture": "assets/map/stone.png" },
+        { "dx": 0, "dy": 1, "match": "W", "texture": "assets/map/stone.png" },
+        { "dx": 0, "dy": 1, "match": "D", "texture": "assets/map/stone.png" },
+        { "dx": 0, "dy": 1, "match": "F", "texture": "assets/map/stone.png" }
+      ],
+      "proximityOverrides": [
+        {
+          "center": { "gridX": 79, "gridY": 107 },
+          "radius": 0,
+          "match": "assets/map/stone.png",
+          "texture": "assets/map/stone1.png"
+        }
+      ]
     },
     "G": {
       "name": "草地",
       "buildable": true,
-      "colorHint": "#7BA05B"
+      "colorHint": "#7BA05B",
+      "texture": "assets/map/tile_grass.png",
+      "variants": [
+        { "texture": "assets/map/daisy.png", "chance": 0.05 },
+        { "texture": "assets/map/forsythia.png", "chance": 0.03 }
+      ],
+      "neighborOverrides": [
+        { "dx": 0, "dy": 1, "match": "W", "texture": "assets/map/grasswater.png" },
+        { "dx": 0, "dy": -1, "match": "W", "texture": "assets/map/watergrass.png" },
+        { "dx": 0, "dy": -1, "match": "D", "texture": "assets/map/landgrass.png" }
+      ]
     },
     "D": {
       "name": "普通土地",
       "buildable": true,
-      "colorHint": "#B89B5A"
+      "colorHint": "#B89B5A",
+      "texture": "assets/map/land.png",
+      "variants": [
+        { "texture": "assets/map/land1.png", "chance": 0.02 }
+      ]
     },
     "F": {
       "name": "林地边缘",
       "buildable": true,
-      "colorHint": "#2D5A1E"
+      "colorHint": "#2D5A1E",
+      "texture": "assets/map/forest.png",
+      "variants": [
+        { "texture": "assets/map/forest1.png", "chance": 0.02 }
+      ],
+      "neighborOverrides": [
+        { "dx": 0, "dy": -1, "match": "G", "texture": "assets/map/grassforest.png" },
+        { "dx": 0, "dy": -1, "match": "W", "texture": "assets/map/grassforest.png" },
+        { "dx": 0, "dy": -1, "match": "D", "texture": "assets/map/grassforest.png" },
+        { "dx": 0, "dy": 1, "match": "G", "texture": "assets/map/forest1.png" },
+        { "dx": 0, "dy": 1, "match": "W", "texture": "assets/map/forest1.png" },
+        { "dx": 0, "dy": 1, "match": "D", "texture": "assets/map/forest1.png" }
+      ]
     },
     "M": {
       "name": "山脉",
@@ -33,7 +77,8 @@
     "W": {
       "name": "水源",
       "buildable": "restricted",
-      "colorHint": "#4682B4"
+      "colorHint": "#4682B4",
+      "texture": "assets/map/water.png"
     },
     "B": {
       "name": "屏障",

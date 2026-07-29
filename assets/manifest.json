@@ -1,7 +1,7 @@
 {
-  "generated": "2026-07-28T14:20:46.136Z",
+  "generated": "2026-07-29T13:51:18.657Z",
   "basePath": "assets/",
-  "totalFiles": 25,
+  "totalFiles": 41,
   "categories": {
     "buildings/anim_plank_house": [
       "buildings/anim_plank_house/building_plank_house_0.png",
@@ -34,9 +34,25 @@
       "icon/icon_wood.png"
     ],
     "map": [
+      "map/daisy.png",
+      "map/forest.png",
+      "map/forest1.png",
+      "map/forsythia.png",
       "map/generated_map_preview.png",
+      "map/grassforest.png",
+      "map/grasswater.png",
+      "map/land.png",
+      "map/land1.png",
+      "map/landgrass.png",
       "map/map.png",
-      "map/map_original.png"
+      "map/map_original.png",
+      "map/rock.png",
+      "map/rock1.png",
+      "map/stone.png",
+      "map/stone1.png",
+      "map/tile_grass.png",
+      "map/water.png",
+      "map/watergrass.png"
     ]
   },
   "files": [
@@ -62,8 +78,24 @@
     "icon/icon_plank.png",
     "icon/icon_steel.png",
     "icon/icon_wood.png",
+    "map/daisy.png",
+    "map/forest.png",
+    "map/forest1.png",
+    "map/forsythia.png",
     "map/generated_map_preview.png",
+    "map/grassforest.png",
+    "map/grasswater.png",
+    "map/land.png",
+    "map/land1.png",
+    "map/landgrass.png",
     "map/map.png",
-    "map/map_original.png"
+    "map/map_original.png",
+    "map/rock.png",
+    "map/rock1.png",
+    "map/stone.png",
+    "map/stone1.png",
+    "map/tile_grass.png",
+    "map/water.png",
+    "map/watergrass.png"
   ]
 }

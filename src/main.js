@@ -242,8 +242,9 @@ class Game {
       console.log('[Game] New game initialized');
     }
 
-    // 6. 初始化渲染器
+    // 6. 初始化渲染器（先构造，再异步预加载纹理后绘制）
     this.mapRenderer = new MapRenderer(this.app, this.systems.building, this.systems.torch, this.systems.road, this.systems.combat);
+    await this.mapRenderer.init();
 
     // 6.05 加载存档后恢复相机位置（覆盖 _centerView 的默认/配置位置）
     if (this._savedCamera) {

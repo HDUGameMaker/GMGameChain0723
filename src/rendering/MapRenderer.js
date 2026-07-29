@@ -80,6 +80,9 @@ export class MapRenderer {
 
     // 纹理缓存（避免重复加载）
     this._textureCache = new Map();
+    this._terrainSprites = [];
+    // 变体瓦片缓存：key="col,row" → true/false，保证同格决策一致 + 无相邻
+    this._tileVariants = new Map();
 
     // 地图上建造进度条的 PIXI 填充对象引用
     this._mapBuildFills = [];
@@ -126,7 +129,12 @@ export class MapRenderer {
       () => this._updateMapSynthBars()
     );
 
-    // 先确定初始相机位置（居中），再绘制
+    this._setupInteraction();
+    this._subscribeEvents();
+  }
+
+  async init() {
+    await this._preloadTerrainTextures();
     this._centerView();
     this._drawTerrainChunk();
     this._drawExpeditionEntrances();
@@ -135,9 +143,54 @@ export class MapRenderer {
     this._drawEnemies();
     this._drawTorches();
     this._createFogCanvas();
-    this._setupInteraction();
-    this._subscribeEvents();
-    this.refreshBuildings(); // 立即渲染初始建筑
+    this.refreshBuildings();
+  }
+
+  async _preloadTerrainTextures() {
+    const { groundTypes } = this.mapConfig;
+    const loadOne = (path) => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        this._textureCache.set(path, PIXI.Texture.from(img));
+        resolve();
+      };
+      img.onerror = () => reject(new Error(`Failed to load: ${path}`));
+      img.src = path;
+    });
+
+    const tasks = [];
+    for (const key of Object.keys(groundTypes)) {
+      const gt = groundTypes[key];
+      if (gt.texture) tasks.push(loadOne(gt.texture));
+      if (gt.variants) {
+        for (const v of gt.variants) {
+          if (v.texture) tasks.push(loadOne(v.texture));
+        }
+      }
+      if (gt.neighborOverrides) {
+        for (const o of gt.neighborOverrides) {
+          if (o.texture) tasks.push(loadOne(o.texture));
+        }
+      }
+      if (gt.proximityOverrides) {
+        for (const o of gt.proximityOverrides) {
+          if (o.texture) tasks.push(loadOne(o.texture));
+        }
+      }
+      if (gt.rowPatterns) {
+        for (const p of gt.rowPatterns) {
+          if (p.texture) tasks.push(loadOne(p.texture));
+        }
+      }
+    }
+    if (tasks.length === 0) return;
+
+    try {
+      await Promise.all(tasks);
+      console.log('[MapRenderer] 地形纹理预加载完成');
+    } catch (e) {
+      console.error('[MapRenderer] 地形纹理预加载失败:', e);
+    }
   }
 
   /**
@@ -714,30 +767,141 @@ export class MapRenderer {
    * 绘制当前屏幕范围内的地形（视口裁剪 + 视口本地坐标）
    * 参考 planner-config.html 的 drawTerrainTiles 方案：
    * terrainContainer 固定在 (0,0)，地形以本地坐标绘制 → 始终铺满屏幕
+   * 分层：纹理 Sprite（顶层）→ 纯色 Graphics（底层）
    */
   _drawTerrainChunk() {
-    if (this._terrainGraphics) {
-      this.terrainContainer.removeChild(this._terrainGraphics);
-      this._terrainGraphics.destroy();
-    }
+    this._clearTerrainGraphics();
+    this._clearTerrainSprites();
 
     const { gridWidth, gridHeight, tileSize, grid, groundTypes } = this.mapConfig;
     const ts = tileSize;
-    // 视口覆盖的世界范围（缩放越大，可见世界范围越小）
     const viewW = this.screenW / this.zoom;
     const viewH = this.screenH / this.zoom;
 
-    // 计算可见的世界格范围（与 planner 公式一致）
     const startCol = Math.max(0, Math.floor(this.camX / ts));
     const endCol = Math.min(gridWidth - 1, Math.ceil((this.camX + viewW) / ts));
     const startRow = Math.max(0, Math.floor(this.camY / ts));
     const endRow = Math.min(gridHeight - 1, Math.ceil((this.camY + viewH) / ts));
 
-    const graphics = new PIXI.Graphics();
-
-    // 先绘制地图背景（深色基底，让地图边界外也可见）
     const mapW = gridWidth * ts;
     const mapH = gridHeight * ts;
+
+    // --- 1. 纹理 Sprite（预加载保证纹理已就绪，排在子列表末尾=最顶层） ---
+    this._terrainSprites = [];
+
+    // 先确定可见范围内哪些格用变体纹理（两遍扫描 + 防相邻）
+    const variantSet = this._tileVariants;
+    for (let row = startRow; row <= endRow; row++) {
+      for (let col = startCol; col <= endCol; col++) {
+        const key = `${col},${row}`;
+        if (variantSet.has(key)) continue;
+
+        const gt = groundTypes[grid[row][col]];
+        if (!gt || !gt.variants || gt.variants.length === 0) {
+          variantSet.set(key, false); continue;
+        }
+        // 总变体概率 = 各变体概率之和
+        const totalChance = gt.variants.reduce((s, v) => s + v.chance, 0);
+        if (!this._isVariantCandidate(col, row, totalChance)) {
+          variantSet.set(key, false); continue;
+        }
+        variantSet.set(key, 'candidate');
+      }
+    }
+    // 清除相邻候选
+    for (let row = startRow; row <= endRow; row++) {
+      for (let col = startCol; col <= endCol; col++) {
+        const key = `${col},${row}`;
+        if (variantSet.get(key) !== 'candidate') continue;
+        let blocked = false;
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            if (dr === 0 && dc === 0) continue;
+            const nv = variantSet.get(`${col + dc},${row + dr}`);
+            if (nv === 'candidate' || (typeof nv === 'number' && nv >= 0)) { blocked = true; break; }
+          }
+          if (blocked) break;
+        }
+        if (blocked) { variantSet.set(key, false); continue; }
+        // 轮盘选择：根据各变体权重随机选一个
+        const gt = groundTypes[grid[row][col]];
+        let roll = Math.random() * gt.variants.reduce((s, v) => s + v.chance, 0);
+        let pick = 0;
+        for (let vi = 0; vi < gt.variants.length; vi++) {
+          roll -= gt.variants[vi].chance;
+          if (roll <= 0) { pick = vi; break; }
+        }
+        variantSet.set(key, pick);
+      }
+    }
+    // 兜底
+    for (let row = startRow; row <= endRow; row++) {
+      for (let col = startCol; col <= endCol; col++) {
+        const key = `${col},${row}`;
+        if (variantSet.get(key) === 'candidate') variantSet.set(key, false);
+      }
+    }
+
+    for (let row = startRow; row <= endRow; row++) {
+      for (let col = startCol; col <= endCol; col++) {
+        const gt = groundTypes[grid[row][col]];
+        // 无纹理且无变体/行纹 → 纯色回退
+        if (!gt || (!gt.texture && !gt.variants && !gt.rowPatterns && !gt.neighborOverrides)) continue;
+
+        // neighborOverrides 优先于 rowPatterns
+        let texPath = gt.texture;
+        if (gt.neighborOverrides) {
+          for (const o of gt.neighborOverrides) {
+            const nr = row + o.dy;
+            const nc = col + o.dx;
+            if (nr >= 0 && nr < gridHeight && nc >= 0 && nc < gridWidth) {
+              if (grid[nr][nc] === o.match) { texPath = o.texture; break; }
+            }
+          }
+        }
+        // rowPatterns 次优先
+        if (texPath === gt.texture && gt.rowPatterns) {
+          for (const p of gt.rowPatterns) {
+            const r = p.fromBottom ? (gridHeight - 1 - row) : row;
+            if (r % p.interval === 0) { texPath = p.texture; break; }
+          }
+        }
+        if (texPath === gt.texture) {
+          const vi = variantSet.get(`${col},${row}`);
+          if (typeof vi === 'number' && vi >= 0 && gt.variants) {
+            texPath = gt.variants[vi].texture;
+          }
+        }
+        // proximityOverrides: 靠近特定坐标时替换纹理（如矿洞入口）
+        if (gt.proximityOverrides) {
+          for (const o of gt.proximityOverrides) {
+            if (o.match && texPath !== o.match) continue;
+            const dx = col - o.center.gridX;
+            const dy = row - o.center.gridY;
+            if (Math.abs(dx) <= o.radius && Math.abs(dy) <= o.radius) {
+              texPath = o.texture; break;
+            }
+          }
+        }
+        // 无可用纹理 → 纯色回退（Graphics 层已绘制）
+        if (!texPath) continue;
+
+        const tex = this._getTexture(texPath);
+        if (!tex || tex.width <= 0) continue;
+
+        const sprite = new PIXI.Sprite(tex);
+        sprite.x = col * ts - this.camX;
+        sprite.y = row * ts - this.camY;
+        sprite.width = ts;
+        sprite.height = ts;
+        this.terrainContainer.addChild(sprite);
+        this._terrainSprites.push(sprite);
+      }
+    }
+
+    // --- 2. 纯色底 + 网格线（Graphics，insert at index 0 = 最底层） ---
+    const graphics = new PIXI.Graphics();
+
     graphics.rect(-this.camX, -this.camY, mapW, mapH);
     graphics.fill({ color: 0x0a0a18, alpha: 1 });
 
@@ -746,34 +910,58 @@ export class MapRenderer {
         const char = grid[row][col];
         const groundType = groundTypes[char];
         const color = groundType ? parseInt(groundType.colorHint.replace('#', ''), 16) : 0x333333;
-
-        // 世界坐标 → 视口本地坐标（关键：与 planner 的 ctx.translate 等效）
         const lx = col * ts - this.camX;
         const ly = row * ts - this.camY;
 
         graphics.rect(lx, ly, ts, ts);
         graphics.fill({ color, alpha: 1 });
 
-        // 网格线
         graphics.rect(lx, ly, ts, ts);
         graphics.stroke({ color: 0x000000, alpha: 0.15, width: 1 });
       }
     }
 
-    // 地图边界线（提示玩家地图范围）
+    // 地图边界线
     graphics.rect(-this.camX, -this.camY, mapW, mapH);
     graphics.stroke({ color: 0x886633, alpha: 0.9, width: 4 });
-    // 内层发光线
     graphics.rect(2 - this.camX, 2 - this.camY, mapW - 4, mapH - 4);
     graphics.stroke({ color: 0xffaa44, alpha: 0.3, width: 1 });
 
     this.terrainContainer.addChildAt(graphics, 0);
     this._terrainGraphics = graphics;
 
-    // 调试地块标注：随视口重绘（可见时才实际绘制文本）
+    // 调试地块标注
     if (this._terrainLabelLayer.visible) {
       this._drawTerrainLabels();
     }
+  }
+
+  _clearTerrainSprites() {
+    if (!this._terrainSprites) return;
+    for (const s of this._terrainSprites) {
+      this.terrainContainer.removeChild(s);
+      s.destroy();
+    }
+    this._terrainSprites = [];
+  }
+
+  _clearTerrainGraphics() {
+    if (this._terrainGraphics) {
+      this.terrainContainer.removeChild(this._terrainGraphics);
+      this._terrainGraphics.destroy();
+      this._terrainGraphics = null;
+    }
+  }
+
+  /**
+   * 基于坐标的确定性哈希：判断该格是否为变体候选（不负责相邻检查）
+   */
+  _isVariantCandidate(col, row, chance) {
+    // 多层混合哈希，避免同列/同行聚集
+    let h = ((col * 374761393 + row * 668265263) ^ 0x5bd1e995) >>> 0;
+    h = ((h ^ (h >>> 13)) * 1274126177) >>> 0;
+    h = (h ^ (h >>> 16)) >>> 0;
+    return (h % 100000) / 100000 < chance;
   }
 
   /**
