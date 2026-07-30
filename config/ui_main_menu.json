@@ -1,0 +1,241 @@
+{
+  "enabled": true,
+  "background": {
+    "type": "color",
+    "image": "",
+    "color": "#0c0c1e",
+    "scaleMode": "cover"
+  },
+  "logo": {
+    "type": "image",
+    "image": {
+      "src": "assets/gui/logo.png",
+      "position": {
+        "x": 50,
+        "y": 33
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "scale": 1.7,
+      "maxSize": {
+        "width": 300,
+        "height": 150
+      }
+    },
+    "text": {
+      "content": "GMGameChain",
+      "position": {
+        "x": 50,
+        "y": 12
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "fontSize": 48,
+      "fontFamily": "inherit",
+      "fontColor": "#f0a040",
+      "fontWeight": "bold"
+    }
+  },
+  "buttons": {
+    "newGame": {
+      "type": "text",
+      "position": {
+        "x": 50,
+        "y": 52
+      },
+      "size": {
+        "width": 200,
+        "height": 48
+      },
+      "image": {
+        "src": "",
+        "offset": {
+          "x": 0,
+          "y": 8
+        },
+        "scale": 1,
+        "maxSize": {
+          "width": 160,
+          "height": 28
+        }
+      },
+      "text": {
+        "content": "新游戏",
+        "offset": {
+          "x": 0,
+          "y": -8
+        },
+        "fontSize": 30,
+        "fontFamily": "inherit",
+        "fontColor": "#ececf0",
+        "fontWeight": "normal"
+      },
+      "bgColor": "rgba(91, 141, 239, 0)",
+      "hoverBgColor": "rgba(91, 141, 239, 0)",
+      "borderColor": "rgba(91, 141, 239, 0)",
+      "borderRadius": 12
+    },
+    "continueGame": {
+      "type": "text",
+      "position": {
+        "x": 50,
+        "y": 59
+      },
+      "size": {
+        "width": 200,
+        "height": 48
+      },
+      "image": {
+        "src": "",
+        "offset": {
+          "x": 0,
+          "y": 8
+        },
+        "scale": 1,
+        "maxSize": {
+          "width": 160,
+          "height": 28
+        }
+      },
+      "text": {
+        "content": "继续游戏",
+        "offset": {
+          "x": 0,
+          "y": -8
+        },
+        "fontSize": 30,
+        "fontFamily": "inherit",
+        "fontColor": "#ececf0",
+        "fontWeight": "normal"
+      },
+      "bgColor": "rgba(78, 203, 113, 0)",
+      "hoverBgColor": "rgba(78, 203, 113, 0)",
+      "borderColor": "rgba(78, 203, 113, 0)",
+      "borderRadius": 12
+    },
+    "settings": {
+      "type": "text",
+      "position": {
+        "x": 50,
+        "y": 66
+      },
+      "size": {
+        "width": 200,
+        "height": 48
+      },
+      "image": {
+        "src": "",
+        "offset": {
+          "x": 0,
+          "y": 8
+        },
+        "scale": 1,
+        "maxSize": {
+          "width": 160,
+          "height": 28
+        }
+      },
+      "text": {
+        "content": "设置",
+        "offset": {
+          "x": 0,
+          "y": -8
+        },
+        "fontSize": 30,
+        "fontFamily": "inherit",
+        "fontColor": "#ececf0",
+        "fontWeight": "normal"
+      },
+      "bgColor": "rgba(139, 124, 240, 0)",
+      "hoverBgColor": "rgba(139, 124, 240, 0)",
+      "borderColor": "rgba(139, 124, 240, 0)",
+      "borderRadius": 12
+    },
+    "about": {
+      "type": "text",
+      "position": {
+        "x": 50,
+        "y": 73
+      },
+      "size": {
+        "width": 200,
+        "height": 48
+      },
+      "image": {
+        "src": "",
+        "offset": {
+          "x": 0,
+          "y": 8
+        },
+        "scale": 1,
+        "maxSize": {
+          "width": 160,
+          "height": 28
+        }
+      },
+      "text": {
+        "content": "关于",
+        "offset": {
+          "x": 0,
+          "y": -8
+        },
+        "fontSize": 30,
+        "fontFamily": "inherit",
+        "fontColor": "#ececf0",
+        "fontWeight": "normal"
+      },
+      "bgColor": "rgba(240, 160, 64, 0)",
+      "hoverBgColor": "rgba(240, 160, 64, 0)",
+      "borderColor": "rgba(240, 160, 64, 0)",
+      "borderRadius": 12
+    },
+    "exit": {
+      "type": "text",
+      "position": {
+        "x": 50,
+        "y": 82
+      },
+      "size": {
+        "width": 200,
+        "height": 48
+      },
+      "image": {
+        "src": "",
+        "offset": {
+          "x": 0,
+          "y": 8
+        },
+        "scale": 1,
+        "maxSize": {
+          "width": 160,
+          "height": 28
+        }
+      },
+      "text": {
+        "content": "退出",
+        "offset": {
+          "x": 0,
+          "y": -8
+        },
+        "fontSize": 30,
+        "fontFamily": "inherit",
+        "fontColor": "#ff6b6b",
+        "fontWeight": "normal"
+      },
+      "bgColor": "rgba(255, 107, 107, 0)",
+      "hoverBgColor": "rgba(255, 107, 107, 0)",
+      "borderColor": "rgba(255, 107, 107, 0)",
+      "borderRadius": 12
+    }
+  },
+  "aboutContent": {
+    "title": "关于 GMGameChain",
+    "team": "GMGameChain 开发团队",
+    "message": "感谢游玩本游戏！\n这是一个末世生存建造游戏。\n希望你能在这个世界中找到乐趣。\n\n目前的游戏背景就是和智械危机相关的啦，后来的如果想完善的想改的请自便",
+    "version": "1.14.514"
+  }
+}

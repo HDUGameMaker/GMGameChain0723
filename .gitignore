@@ -1,0 +1,21 @@
+### Windows
+# Windows thumbnail cache files
+Thumbs.db
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows shortcuts
+*.lnk
+diag.log
+debug.log
+output.txt
+
+# 第五棒开发者本地身份信息文件（仅本地参考，不入库）
+第五棒开发者身份信息.md
+
+# 第七棒开发者本地身份信息文件（仅本地参考，不入库）
+第七棒开发者身份信息.md

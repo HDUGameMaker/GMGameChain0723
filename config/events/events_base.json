@@ -1,0 +1,443 @@
+[
+  {
+    "id": "story_stranger_arrives",
+    "name": "营地来客",
+    "description": "一位风尘仆仆的旅人出现在营地边缘，看起来疲惫不堪。",
+    "image": "",
+    "priority": 5,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning",
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "热情接待他",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "wood",
+            "amount": 50
+          },
+          {
+            "type": "trigger_event",
+            "eventId": "story_stranger_accepted"
+          }
+        ]
+      },
+      {
+        "text": "警惕地拒绝他",
+        "effects": [
+          {
+            "type": "trigger_event",
+            "eventId": "story_stranger_refused"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "story_stranger_accepted",
+    "name": "旅人离去",
+    "description": "旅人感激地接过木材，在营地歇息片刻后重新上路。「感谢你的慷慨，我会记住这份恩情。两日后我必定归来报答。」",
+    "image": "",
+    "priority": 10,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "regions": [],
+      "requiredCarriedItems": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "期待他的归来",
+        "effects": [
+          {
+            "type": "schedule_event",
+            "eventId": "story_stranger_return",
+            "delayDays": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "story_stranger_refused",
+    "name": "旅人远去",
+    "description": "旅人叹了口气，没有多说一句话，转身消失在荒野之中。也许他只是一个普通的过路人。",
+    "image": "",
+    "priority": 10,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "继续手头的工作",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "story_stranger_return",
+    "name": "旅人回归",
+    "description": "旅人如约归来，马背上驮着沉甸甸的物资。「我说过会回来的。这些是从远处矿场带来的，希望能帮上忙。」",
+    "image": "",
+    "priority": 10,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "收下铁矿（+20）",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "hematite",
+            "amount": 20
+          }
+        ]
+      },
+      {
+        "text": "收下煤炭（+30）",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "coal",
+            "amount": 30
+          }
+        ]
+      },
+      {
+        "text": "收下他从矿洞带回的暗影蕈（+2）",
+        "effects": [
+          {
+            "type": "add_material",
+            "materialId": "shadow_mycena",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "story_merchant_arrives",
+    "name": "远方商队",
+    "description": "一支风尘仆仆的商队出现在营地外，领头的老商人声称他们来自遥远的工业城邦。「我们带来了炼钢术的秘密，」他说，「但这可不是免费的午餐。」",
+    "image": "",
+    "priority": 5,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning",
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [
+        "forge"
+      ]
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "用100铁锭交换炼钢术",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "iron_ingot",
+            "amount": 100
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "steel",
+            "amount": 5
+          },
+          {
+            "type": "trigger_event",
+            "eventId": "story_merchant_leave"
+          }
+        ]
+      },
+      {
+        "text": "婉拒交易",
+        "effects": [
+          {
+            "type": "trigger_event",
+            "eventId": "story_merchant_refused"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "story_merchant_leave",
+    "name": "商队离去",
+    "description": "商队收下铁锭，留下几张泛黄的图纸和几块样品钢锭。「炼钢的关键是更高的温度和更久的冶炼时间，」老商人临行前说，「对了，往山那边走，有个废弃的旧时代回收场——等你有了像样的装备，可以去碰碰运气。」",
+    "image": "",
+    "priority": 10,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "研究炼钢图纸",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "story_merchant_refused",
+    "name": "商队远去",
+    "description": "老商人耸了耸肩，收起图纸。「随你吧。不过炼钢术迟早要学的，不跟我们学，自己摸索可要慢得多。」商队继续赶路，逐渐消失在地平线上。",
+    "image": "",
+    "priority": 10,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "继续手头的工作",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "story_scrapyard_signal",
+    "name": "奇怪的信号",
+    "description": "瞭望塔上的观察员报告了一件怪事：远处山脉方向检测到规律性的电磁脉冲信号，似乎是某种旧时代设备仍在运作。机械车间的技师认为，如果能制造一个扫描器追踪信号源，可能会有重大发现。",
+    "image": "",
+    "priority": 5,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning",
+        "afternoon",
+        "evening"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [
+        "machine_shop"
+      ]
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "消耗5个机械零件制造扫描器",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "machine_part",
+            "amount": 5
+          },
+          {
+            "type": "obtain_item",
+            "itemId": "electronic_scanner"
+          },
+          {
+            "type": "trigger_event",
+            "eventId": "story_scrapyard_reveal"
+          }
+        ]
+      },
+      {
+        "text": "暂缓调查",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "story_scrapyard_reveal",
+    "name": "回收场浮现",
+    "description": "电子扫描器的屏幕上亮起密集的光点——信号源位于山脉背面的一片广阔废墟。技师兴奋地说：「这是个旧时代的废弃回收场！里面埋着成吨的电子设备残骸。清理出安全通道后，我们可以定期前往探索。」废弃回收场区域现已解锁。",
+    "image": "",
+    "priority": 10,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": [
+      {
+        "text": "组织探险队",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "new_base_event",
+    "name": "新基地事件",
+    "description": "",
+    "image": "",
+    "priority": 0,
+    "mutexGroup": null,
+    "cooldownTicks": 0,
+    "maxTriggers": 1,
+    "triggerConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 1,
+    "effects": [],
+    "options": []
+  },
+  {
+    "id": "gather_herb_patch",
+    "name": "野生药草丛",
+    "description": "一名外出采集的工人发现了一片长势喜人的野生药草丛，血棘与雷蓟交错生长，深处还藏着几株暗影蕈。",
+    "image": "",
+    "priority": 3,
+    "mutexGroup": null,
+    "cooldownTicks": 20,
+    "maxTriggers": -1,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning",
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "invalidationConditions": {
+      "timePeriods": [],
+      "requiredItems": [],
+      "requiredBuildings": []
+    },
+    "probability": 0.6,
+    "effects": [],
+    "options": [
+      {
+        "text": "集中采集血棘（+3）",
+        "effects": [
+          {
+            "type": "add_material",
+            "materialId": "blood_thorn",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "text": "集中采集雷蓟（+3）",
+        "effects": [
+          {
+            "type": "add_material",
+            "materialId": "thunder_thistle",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "text": "冒险深入，搜寻暗影蕈（+1）",
+        "effects": [
+          {
+            "type": "add_material",
+            "materialId": "shadow_mycena",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  }
+]

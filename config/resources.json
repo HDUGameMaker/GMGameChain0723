@@ -1,0 +1,164 @@
+[
+  {
+    "id": "wood",
+    "name": "原木",
+    "icon": "assets/icon/icon_wood.png",
+    "initial": 200,
+    "max": 5000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "plank",
+    "name": "木板",
+    "icon": "assets/icon/icon_plank.png",
+    "initial": 0,
+    "max": 1000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "stone",
+    "name": "石头",
+    "icon": "assets/icon/icon_koishi.png",
+    "initial": 100,
+    "max": 5000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "hematite",
+    "name": "赤铁矿",
+    "icon": "assets/icon/icon_hematite.png",
+    "initial": 0,
+    "max": 1000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "coal",
+    "name": "煤炭",
+    "icon": "assets/icon/icon_coal.png",
+    "initial": 100,
+    "max": 1000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "iron_ingot",
+    "name": "铁锭",
+    "icon": "assets/icon/icon_iron.png",
+    "initial": 0,
+    "max": 5000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "machine_part",
+    "name": "机械零件",
+    "icon": "assets/icon/icon_gear.png",
+    "initial": 0,
+    "max": 500,
+    "rare": true,
+    "showInHUD": true
+  },
+  {
+    "id": "steel",
+    "name": "钢锭",
+    "icon": "assets/icon/icon_steel.png",
+    "initial": 0,
+    "max": 5000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "brick",
+    "name": "砖块",
+    "icon": "assets/icon/icon_brick.png",
+    "initial": 0,
+    "max": 2000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "electronic_part",
+    "name": "电子元器件",
+    "icon": "assets/icon/icon_electric.png",
+    "initial": 0,
+    "max": 300,
+    "rare": true,
+    "showInHUD": true
+  },
+  {
+    "id": "food",
+    "name": "食物",
+    "icon": "assets/icon/icon_food.png",
+    "initial": 100,
+    "max": 5000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "fur",
+    "name": "动物皮毛",
+    "icon": "",
+    "initial": 0,
+    "max": 1000,
+    "rare": false,
+    "showInHUD": true
+  },
+  {
+    "id": "gear",
+    "name": "齿轮",
+    "icon": "",
+    "initial": 0,
+    "max": 500,
+    "rare": true,
+    "showInHUD": true
+  },
+  {
+    "id": "water_pure",
+    "name": "纯净水",
+    "icon": "",
+    "initial": 20,
+    "max": 200,
+    "rare": false,
+    "showInHUD": false
+  },
+  {
+    "id": "essence_oil",
+    "name": "精油",
+    "icon": "",
+    "initial": 0,
+    "max": 100,
+    "rare": false,
+    "showInHUD": false
+  },
+  {
+    "id": "spirit_distilled",
+    "name": "蒸馏烈酒",
+    "icon": "",
+    "initial": 0,
+    "max": 100,
+    "rare": false,
+    "showInHUD": false
+  },
+  {
+    "id": "alchemy_herb",
+    "name": "炼金草药",
+    "icon": "",
+    "initial": 5,
+    "max": 200,
+    "rare": false,
+    "showInHUD": false
+  },
+  {
+    "id": "alchemy_mineral",
+    "name": "炼金矿石",
+    "icon": "",
+    "initial": 0,
+    "max": 200,
+    "rare": false,
+    "showInHUD": false
+  }
+]

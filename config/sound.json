@@ -1,0 +1,715 @@
+{
+  "masterVolume": 0.8,
+  "bgmVolume": 0.7,
+  "sfxVolume": 0.8,
+  "bgm": [
+    {
+      "id": "bgm_main",
+      "name": "主界面背景音乐",
+      "file": "assets/audio/bgm/main.mp3",
+      "volume": 1,
+      "loop": true
+    },
+    {
+      "id": "bgm_night",
+      "name": "夜晚背景音乐",
+      "file": "assets/audio/bgm/night.mp3",
+      "volume": 0.9,
+      "loop": true
+    }
+  ],
+  "sfx": [
+    {
+      "id": "sfx_build",
+      "name": "默认建造音效",
+      "file": "assets/audio/sfx/build.wav",
+      "volume": 0.8
+    },
+    {
+      "id": "sfx_complete",
+      "name": "默认建筑完成音效",
+      "file": "assets/audio/sfx/build_complete.wav",
+      "volume": 0.9
+    },
+    {
+      "id": "sfx_upgrade",
+      "name": "默认升级音效",
+      "file": "assets/audio/sfx/upgrade.wav",
+      "volume": 0.7
+    },
+    {
+      "id": "sfx_click",
+      "name": "默认点击音效",
+      "file": "assets/audio/sfx/click.wav",
+      "volume": 0.5
+    },
+    {
+      "id": "sfx_demolish",
+      "name": "默认拆除音效",
+      "file": "assets/audio/sfx/demolish.wav",
+      "volume": 0.6
+    },
+    {
+      "id": "sfx_resource",
+      "name": "资源变化音效",
+      "file": "assets/audio/sfx/resource.wav",
+      "volume": 0.4
+    },
+    {
+      "id": "sfx_torch_lit",
+      "name": "火把点燃音效",
+      "file": "assets/audio/sfx/torch_lit.wav",
+      "volume": 0.7
+    },
+    {
+      "id": "sfx_torch_out",
+      "name": "火把熄灭音效",
+      "file": "assets/audio/sfx/torch_out.wav",
+      "volume": 0.6
+    },
+    {
+      "id": "sfx_expedition_start",
+      "name": "探险出发音效",
+      "file": "assets/audio/sfx/expedition_start.wav",
+      "volume": 0.8
+    },
+    {
+      "id": "sfx_expedition_complete",
+      "name": "探险归来音效",
+      "file": "assets/audio/sfx/expedition_complete.wav",
+      "volume": 0.8
+    },
+    {
+      "id": "sfx_synthesis",
+      "name": "合成完成音效",
+      "file": "assets/audio/sfx/synthesis.wav",
+      "volume": 0.7
+    },
+    {
+      "id": "sfx_period_change",
+      "name": "时段切换音效",
+      "file": "assets/audio/sfx/period_change.wav",
+      "volume": 0.5
+    },
+    {
+      "id": "sfx_electronic_item",
+      "name": "电子仪器类合成音效",
+      "file": "assets/audio/sfx/sfx_electronic_item.ogg",
+      "volume": 0.8
+    },
+    {
+      "id": "sfx_forge_building",
+      "name": "锻造坊类建造音效",
+      "file": "assets/audio/sfx/sfx_forge_building.ogg",
+      "volume": 0.8
+    },
+    {
+      "id": "sfx_forge_building_upgrade",
+      "name": "锻造坊类升级音效",
+      "file": "assets/audio/sfx/sfx_forge_building_upgrade.ogg",
+      "volume": 0.8
+    },
+    {
+      "id": "sfx_gear_building",
+      "name": "齿轮类建造音效",
+      "file": "assets/audio/sfx/sfx_gear_building.ogg",
+      "volume": 0.8
+    },
+    {
+      "id": "sfx_iron_building",
+      "name": "钢铁类建造音效",
+      "file": "assets/audio/sfx/sfx_iron_building.ogg",
+      "volume": 0.8
+    },
+    {
+      "id": "sfx_iron_item",
+      "name": "钢铁类物品合成音效",
+      "file": "assets/audio/sfx/sfx_iron_item.ogg",
+      "volume": 0.8
+    },
+    {
+      "id": "sfx_marine_building",
+      "name": "水下类建造音效",
+      "file": "assets/audio/sfx/sfx_marine_building.ogg",
+      "volume": 0.8
+    },
+    {
+      "id": "sfx_plank_building",
+      "name": "木板类建造音效",
+      "file": "assets/audio/sfx/sfx_plank_building.ogg",
+      "volume": 0.8
+    },
+    {
+      "id": "sfx_plank_item",
+      "name": "木板类合成音效",
+      "file": "assets/audio/sfx/sfx_plank_item.ogg",
+      "volume": 0.8
+    },
+    {
+      "id": "sfx_koishi_building",
+      "name": "石头类建造音效",
+      "file": "assets/audio/sfx/sfx_koishi_building.ogg",
+      "volume": 0.8
+    },
+    {
+      "id": "sfx_wood_building",
+      "name": "原木类建造音效",
+      "file": "assets/audio/sfx/sfx_wood_building.ogg",
+      "volume": 0.8
+    },
+    {
+      "id": "sfx_farm_building",
+      "name": "农田类建造音效",
+      "file": "assets/audio/sfx/sfx_farm_building.ogg",
+      "volume": 0.8
+    }
+  ],
+  "bgmBindings": [
+    {
+      "event": "periodChange",
+      "bgm": "bgm_main",
+      "periods": [
+        "morning",
+        "afternoon"
+      ]
+    },
+    {
+      "event": "periodChange",
+      "bgm": "bgm_night",
+      "periods": [
+        "evening",
+        "night"
+      ]
+    }
+  ],
+  "eventBindings": [
+    {
+      "event": "buildingPlaced",
+      "sound": "sfx_build"
+    },
+    {
+      "event": "buildingComplete",
+      "sound": "sfx_complete"
+    },
+    {
+      "event": "buildingUpgraded",
+      "sound": "sfx_upgrade"
+    },
+    {
+      "event": "buildingClicked",
+      "sound": "sfx_click"
+    },
+    {
+      "event": "buildingDemolished",
+      "sound": "sfx_demolish"
+    },
+    {
+      "event": "resourceChanged",
+      "sound": null
+    },
+    {
+      "event": "itemObtained",
+      "sound": null
+    },
+    {
+      "event": "itemLost",
+      "sound": null
+    },
+    {
+      "event": "itemsChanged",
+      "sound": null
+    },
+    {
+      "event": "torchLit",
+      "sound": "sfx_torch_lit"
+    },
+    {
+      "event": "torchExtinguished",
+      "sound": "sfx_torch_out"
+    },
+    {
+      "event": "expeditionStarted",
+      "sound": null
+    },
+    {
+      "event": "expeditionComplete",
+      "sound": null
+    },
+    {
+      "event": "synthesisComplete",
+      "sound": "sfx_synthesis"
+    },
+    {
+      "event": "periodChange",
+      "sound": null
+    },
+    {
+      "event": "tick",
+      "sound": null
+    }
+  ],
+  "buildingSoundBindings": {
+    "default": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null
+    },
+    "work_shed": {
+      "buildStart": "sfx_plank_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "plank_house": {
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_plank_item",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "tile_house": {
+      "buildStart": "sfx_wood_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "hunting_hut": {
+      "buildStart": "sfx_plank_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "farm": {
+      "buildStart": "sfx_farm_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "warehouse": {
+      "buildStart": "sfx_plank_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "industrial_warehouse": {
+      "buildStart": "sfx_koishi_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_koishi_building",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "lumber_mill": {
+      "buildStart": "sfx_plank_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "quarry": {
+      "buildStart": "sfx_koishi_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "logging_camp": {
+      "buildStart": "sfx_wood_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "forge": {
+      "buildStart": "sfx_forge_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "mine_support": {
+      "buildStart": "sfx_koishi_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "basic_workshop": {
+      "buildStart": "sfx_plank_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "advanced_workshop": {
+      "buildStart": "sfx_koishi_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "steel_furnace": {
+      "buildStart": "sfx_forge_building_upgrade",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "brick_kiln": {
+      "buildStart": "sfx_forge_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "machine_shop": {
+      "buildStart": "sfx_gear_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "brick_house": {
+      "buildStart": "sfx_koishi_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "steel_warehouse": {
+      "buildStart": "sfx_iron_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "watchtower": {
+      "buildStart": "sfx_iron_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "precision_workshop": {
+      "buildStart": "sfx_iron_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "eternal_torch": {
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "normal_torch_l1": {
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "normal_torch_l2": {
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "normal_torch_l3": {
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "enhanced_forge": {
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_forge_building_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "advanced_forge": {
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_forge_building_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "enhanced_logging_camp": {
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_wood_building",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "advanced_logging_camp": {
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_wood_building",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "enhanced_lumber_mill": {
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_plank_item",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "advanced_lumber_mill": {
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_plank_building",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "fishing_ground": {
+      "buildStart": "sfx_marine_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "hunting_ground": {
+      "buildStart": "sfx_plank_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null,
+      "click": "sfx_click"
+    },
+    "stope": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null
+    },
+    "enhanced_stope": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_iron_building",
+      "move": null
+    },
+    "advanced_stope": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_iron_item",
+      "move": null
+    },
+    "torch": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null
+    },
+    "enhanced_torch": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null
+    },
+    "advanced_torch": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null
+    },
+    "enhanced_hunting_ground": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_plank_item",
+      "move": null
+    },
+    "advanced_hunting_ground": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_plank_item",
+      "move": null
+    },
+    "enhanced_fishing_ground": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_marine_building",
+      "move": null
+    },
+    "advanced_fishing_ground": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_marine_building",
+      "move": null
+    },
+    "enhanced_farm": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null
+    },
+    "advanced_farm": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null
+    },
+    "granary": {
+      "click": "sfx_click",
+      "buildStart": "sfx_plank_item",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null
+    },
+    "enhanced_granary": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_plank_item",
+      "move": null
+    },
+    "advanced_granary": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_plank_item",
+      "move": null
+    },
+    "resource_expansion_room": {
+      "click": "sfx_click",
+      "buildStart": "sfx_plank_building",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_upgrade",
+      "move": null
+    },
+    "enhanced_resource_expansion_room": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_koishi_building",
+      "move": null
+    },
+    "advanced_resource_expansion_room": {
+      "click": "sfx_click",
+      "buildStart": "sfx_build",
+      "buildComplete": "sfx_complete",
+      "demolish": "sfx_demolish",
+      "upgrade": "sfx_iron_building",
+      "move": null
+    }
+  },
+  "itemSoundBindings": {
+    "default": {
+      "synthesisStart": "sfx_click",
+      "synthesisComplete": "sfx_complete"
+    },
+    "transporter": {
+      "synthesisStart": "sfx_plank_item",
+      "synthesisComplete": "sfx_complete"
+    },
+    "iron_tool_set": {
+      "synthesisStart": "sfx_iron_item",
+      "synthesisComplete": "sfx_complete"
+    },
+    "miner_headlamp": {
+      "synthesisStart": "sfx_iron_item",
+      "synthesisComplete": "sfx_complete"
+    },
+    "marking_torch": {
+      "synthesisStart": "sfx_forge_building",
+      "synthesisComplete": "sfx_complete"
+    },
+    "steel_tool_set": {
+      "synthesisStart": "sfx_iron_item",
+      "synthesisComplete": "sfx_complete"
+    },
+    "climbing_gear": {
+      "synthesisStart": "sfx_iron_building",
+      "synthesisComplete": "sfx_complete"
+    },
+    "heavy_cart": {
+      "synthesisStart": "sfx_iron_building",
+      "synthesisComplete": "sfx_complete"
+    },
+    "steel_transport_truck": {
+      "synthesisStart": "sfx_iron_item",
+      "synthesisComplete": "sfx_complete"
+    },
+    "steel_pickaxe": {
+      "synthesisStart": "sfx_iron_item",
+      "synthesisComplete": "sfx_complete"
+    },
+    "electronic_scanner": {
+      "synthesisStart": "sfx_electronic_item",
+      "synthesisComplete": "sfx_complete"
+    }
+  }
+}

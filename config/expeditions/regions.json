@@ -1,0 +1,343 @@
+[
+  {
+    "id": "forest",
+    "name": "森林",
+    "description": "茂密的原始森林，出产原木和少量石头。平衡型基础区域。",
+    "image": "region_forest.png",
+    "unlockConditions": [],
+    "workerCost": 2,
+    "baseYields": {
+      "morning": {
+        "wood": 20,
+        "stone": 3
+      },
+      "afternoon": {
+        "wood": 16,
+        "stone": 3
+      },
+      "evening": {
+        "wood": 12,
+        "stone": 2
+      },
+      "night": {
+        "wood": 8,
+        "stone": 2
+      }
+    }
+  },
+  {
+    "id": "mine_periphery",
+    "name": "矿洞外围",
+    "description": "矿洞入口周围的崎岖地带，盛产石头，偶见煤炭和铁矿露头。",
+    "image": "region_mine_periphery.png",
+    "unlockConditions": [],
+    "workerCost": 2,
+    "baseYields": {
+      "morning": {
+        "stone": 12,
+        "coal": 6,
+        "hematite": 3
+      },
+      "afternoon": {
+        "stone": 10,
+        "coal": 5,
+        "hematite": 2
+      },
+      "evening": {
+        "stone": 8,
+        "coal": 4,
+        "hematite": 2
+      },
+      "night": {
+        "stone": 5,
+        "coal": 3,
+        "hematite": 1
+      }
+    }
+  },
+  {
+    "id": "mine_interior",
+    "name": "矿洞深处",
+    "description": "黑暗的矿洞深处，蕴藏着煤炭和铁矿脉。需要照明工具或基地的支撑结构才能安全进入。",
+    "image": "region_mine_interior.png",
+    "unlockConditions": [
+      {
+        "type": "item",
+        "itemId": "miner_headlamp"
+      },
+      {
+        "type": "building",
+        "buildingId": "mine_support"
+      }
+    ],
+    "workerCost": 3,
+    "baseYields": {
+      "morning": {
+        "coal": 13,
+        "hematite": 10
+      },
+      "afternoon": {
+        "coal": 11,
+        "hematite": 8
+      },
+      "evening": {
+        "coal": 8,
+        "hematite": 6
+      },
+      "night": {
+        "coal": 6,
+        "hematite": 4
+      }
+    },
+    "materialDrops": [
+      { "materialId": "grave_truffle", "chance": 0.20, "min": 1, "max": 2 }
+    ]
+  },
+  {
+    "id": "mountain_summit",
+    "name": "山巅",
+    "description": "高海拔矿脉地带。山顶废弃的旧时代气象站偶尔能发现遗留的电子元器件。",
+    "image": "region_mountain_summit.png",
+    "unlockConditions": [
+      {
+        "type": "item",
+        "itemId": "climbing_gear"
+      },
+      {
+        "type": "building",
+        "buildingId": "watchtower"
+      }
+    ],
+    "workerCost": 4,
+    "baseYields": {
+      "morning": {
+        "coal": 9,
+        "hematite": 8,
+        "electronic_part": 3
+      },
+      "afternoon": {
+        "coal": 7,
+        "hematite": 7,
+        "electronic_part": 2
+      },
+      "evening": {
+        "coal": 6,
+        "hematite": 5,
+        "electronic_part": 2
+      },
+      "night": {
+        "coal": 4,
+        "hematite": 3,
+        "electronic_part": 1
+      }
+    },
+    "materialDrops": [
+      { "materialId": "diamond_dust", "chance": 0.12, "min": 1, "max": 1 }
+    ]
+  },
+  {
+    "id": "scrapyard",
+    "name": "废弃回收场",
+    "description": "旧时代垃圾处理场废墟，大量废弃设备埋藏在废墟之下。需要钢制工具组才能清理出安全通道。",
+    "image": "region_scrapyard.png",
+    "unlockConditions": [
+      {
+        "type": "item",
+        "itemId": "steel_tool_set"
+      }
+    ],
+    "workerCost": 3,
+    "baseYields": {
+      "morning": {
+        "electronic_part": 6,
+        "hematite": 6,
+        "coal": 5,
+        "steel": 3
+      },
+      "afternoon": {
+        "electronic_part": 5,
+        "hematite": 5,
+        "coal": 4,
+        "steel": 2
+      },
+      "evening": {
+        "electronic_part": 4,
+        "hematite": 4,
+        "coal": 3,
+        "steel": 2
+      },
+      "night": {
+        "electronic_part": 3,
+        "hematite": 3,
+        "coal": 2,
+        "steel": 1
+      }
+    }
+  },
+  {
+    "id": "dense_forest",
+    "name": "密林",
+    "description": "人迹罕至的原始密林，巨木参天，纯木材产地。",
+    "image": "region_dense_forest.png",
+    "unlockConditions": [
+      {
+        "type": "building",
+        "buildingId": "lumber_mill"
+      }
+    ],
+    "workerCost": 3,
+    "baseYields": {
+      "morning": {
+        "wood": 28
+      },
+      "afternoon": {
+        "wood": 23
+      },
+      "evening": {
+        "wood": 17
+      },
+      "night": {
+        "wood": 11
+      }
+    },
+    "materialDrops": [
+      { "materialId": "rainbow_cap", "chance": 0.06, "min": 1, "max": 1 }
+    ]
+  },
+  {
+    "id": "iron_ridge",
+    "name": "铁矿脊",
+    "description": "矿洞外围延伸出的铁矿富集带，裸露岩壁上随处可见赤红色铁矿石。",
+    "image": "region_iron_ridge.png",
+    "unlockConditions": [
+      {
+        "type": "tag",
+        "tag": "forge"
+      }
+    ],
+    "workerCost": 3,
+    "baseYields": {
+      "morning": {
+        "stone": 5,
+        "coal": 4,
+        "hematite": 13
+      },
+      "afternoon": {
+        "stone": 4,
+        "coal": 3,
+        "hematite": 11
+      },
+      "evening": {
+        "stone": 3,
+        "coal": 3,
+        "hematite": 8
+      },
+      "night": {
+        "stone": 2,
+        "coal": 2,
+        "hematite": 6
+      }
+    }
+  },
+  {
+    "id": "coal_seam",
+    "name": "煤层区",
+    "description": "矿洞深处的富煤矿床，厚重的煤层几乎填满整条矿道。炼钢的理想燃料来源。",
+    "image": "region_coal_seam.png",
+    "unlockConditions": [
+      {
+        "type": "item",
+        "itemId": "miner_headlamp"
+      },
+      {
+        "type": "building",
+        "buildingId": "mine_support"
+      },
+      {
+        "type": "building",
+        "buildingId": "steel_furnace"
+      }
+    ],
+    "workerCost": 4,
+    "baseYields": {
+      "morning": {
+        "coal": 22,
+        "hematite": 3
+      },
+      "afternoon": {
+        "coal": 18,
+        "hematite": 2
+      },
+      "evening": {
+        "coal": 13,
+        "hematite": 2
+      },
+      "night": {
+        "coal": 9,
+        "hematite": 1
+      }
+    }
+  },
+  {
+    "id": "summit_ruins",
+    "name": "山顶废墟",
+    "description": "山巅的旧时代气象站废墟，设备残骸散落各处。电子元器件密度远高于普通山巅。",
+    "image": "region_summit_ruins.png",
+    "unlockConditions": [
+      {
+        "type": "building",
+        "buildingId": "machine_shop"
+      }
+    ],
+    "workerCost": 4,
+    "baseYields": {
+      "morning": {
+        "electronic_part": 5
+      },
+      "afternoon": {
+        "electronic_part": 4
+      },
+      "evening": {
+        "electronic_part": 3
+      },
+      "night": {
+        "electronic_part": 2
+      }
+    },
+    "materialDrops": [
+      { "materialId": "diamond_dust", "chance": 0.10, "min": 1, "max": 1 },
+      { "materialId": "philosopher_ore", "chance": 0.04, "min": 1, "max": 1 }
+    ]
+  },
+  {
+    "id": "scrapyard_core",
+    "name": "回收场核心区",
+    "description": "废弃回收场最深处，堆积着大量未分类电子废料和合金构件。需要电子扫描器定位高价值目标。",
+    "image": "region_scrapyard_core.png",
+    "unlockConditions": [
+      {
+        "type": "item",
+        "itemId": "electronic_scanner"
+      }
+    ],
+    "workerCost": 5,
+    "baseYields": {
+      "morning": {
+        "electronic_part": 8,
+        "steel": 4
+      },
+      "afternoon": {
+        "electronic_part": 6,
+        "steel": 3
+      },
+      "evening": {
+        "electronic_part": 5,
+        "steel": 2
+      },
+      "night": {
+        "electronic_part": 3,
+        "steel": 2
+      }
+    }
+  }
+]

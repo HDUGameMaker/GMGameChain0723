@@ -1,0 +1,203 @@
+[
+  {
+    "id": "transporter",
+    "name": "运载车",
+    "icon": "item_transporter.png",
+    "description": "结实的运载推车，可以装下更多采集到的资源。",
+    "unique": true,
+    "consumable": false,
+    "capacityCost": 2,
+    "expeditionEffects": [
+      {
+        "type": "resource_capacity_bonus",
+        "value": 350
+      }
+    ]
+  },
+  {
+    "id": "iron_tool_set",
+    "name": "铁质工具组",
+    "icon": "item_iron_tool_set.png",
+    "description": "精良的铁质镐和斧，大幅提升森林和矿洞内的采集效率。",
+    "unique": true,
+    "consumable": false,
+    "capacityCost": 2,
+    "expeditionEffects": [
+      {
+        "type": "yield_multiplier",
+        "value": 2,
+        "regions": [
+          "forest",
+          "mine_interior"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "miner_headlamp",
+    "name": "矿工头灯",
+    "icon": "item_miner_headlamp.png",
+    "description": "可靠的矿工照明工具，没有它可进不了漆黑的矿洞深处。",
+    "unique": true,
+    "consumable": false,
+    "capacityCost": 1,
+    "expeditionEffects": []
+  },
+  {
+    "id": "marking_torch",
+    "name": "标记火把",
+    "icon": "item_marking_torch.png",
+    "description": "插在地上的标记火把，能让矿场外围的采集路线更高效。探险结束后消耗。",
+    "unique": false,
+    "consumable": true,
+    "capacityCost": 1,
+    "expeditionEffects": [
+      {
+        "type": "yield_flat_bonus",
+        "resourceId": "coal",
+        "value": 15,
+        "regions": [
+          "mine_periphery"
+        ]
+      },
+      {
+        "type": "yield_flat_bonus",
+        "resourceId": "hematite",
+        "value": 10,
+        "regions": [
+          "mine_periphery"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "steel_tool_set",
+    "name": "钢制工具组",
+    "icon": "item_steel_tool_set.png",
+    "description": "精良的钢制镐和斧，所有区域的采集效率大幅提升。",
+    "unique": true,
+    "consumable": false,
+    "capacityCost": 2,
+    "expeditionEffects": [
+      {
+        "type": "yield_multiplier",
+        "value": 2.5
+      }
+    ]
+  },
+  {
+    "id": "climbing_gear",
+    "name": "攀爬装备",
+    "icon": "item_climbing_gear.png",
+    "description": "钢制岩钉和绳索套装，有了它就能安全攀登至山巅区域。",
+    "unique": true,
+    "consumable": false,
+    "capacityCost": 2,
+    "expeditionEffects": []
+  },
+  {
+    "id": "heavy_cart",
+    "name": "重型马车",
+    "icon": "item_heavy_cart.png",
+    "description": "钢架加固的大型运输马车，能装下远超普通运载车的资源。",
+    "unique": true,
+    "consumable": false,
+    "capacityCost": 4,
+    "expeditionEffects": [
+      {
+        "type": "resource_capacity_bonus",
+        "value": 800
+      }
+    ]
+  },
+  {
+    "id": "steel_transport_truck",
+    "name": "钢制运输车",
+    "icon": "item_steel_transport_truck.png",
+    "description": "装配了电子控制系统的重型运输车，拥有惊人的装载能力。",
+    "unique": true,
+    "consumable": false,
+    "capacityCost": 6,
+    "expeditionEffects": [
+      {
+        "type": "resource_capacity_bonus",
+        "value": 1500
+      }
+    ]
+  },
+  {
+    "id": "steel_pickaxe",
+    "name": "钢制镐",
+    "icon": "item_steel_pickaxe.png",
+    "description": "精钢锻造的矿镐，在矿洞深处能产出更多资源。探险结束后消耗。",
+    "unique": false,
+    "consumable": true,
+    "capacityCost": 1,
+    "expeditionEffects": [
+      {
+        "type": "yield_flat_bonus",
+        "resourceId": "coal",
+        "value": 80,
+        "regions": [
+          "mine_interior"
+        ]
+      },
+      {
+        "type": "yield_flat_bonus",
+        "resourceId": "hematite",
+        "value": 80,
+        "regions": [
+          "mine_interior"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "electronic_scanner",
+    "name": "电子扫描器",
+    "icon": "item_electronic_scanner.png",
+    "description": "利用回收的电子元器件组装的环境扫描装置，能精准定位废弃回收场中的高价值目标，产量翻倍。",
+    "unique": true,
+    "consumable": false,
+    "capacityCost": 1,
+    "expeditionEffects": [
+      {
+        "type": "yield_multiplier",
+        "value": 2,
+        "regions": [
+          "scrapyard"
+        ]
+      }
+    ]
+  },
+  { "id": "potion_healing",           "name": "生命药剂",      "icon": "", "description": "恢复人口生命值。",                                  "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "healing" } },
+  { "id": "potion_frost",             "name": "冰霜药剂",      "icon": "", "description": "释放霜寒光环，减缓周围敌人。",                        "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "frost_aura" } },
+  { "id": "potion_strength",          "name": "力量药剂",      "icon": "", "description": "提升建造与生产效率，增强战士伤害。",                   "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "strength" } },
+  { "id": "potion_swiftness",         "name": "迅捷药剂",      "icon": "", "description": "提升建造速度与弓箭手伤害。",                           "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "swiftness" } },
+  { "id": "potion_stone_skin",        "name": "石肤药剂",      "icon": "", "description": "提升建筑防御与单位生命值。",                           "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "stone_skin" } },
+  { "id": "potion_antidote",          "name": "解毒药剂",      "icon": "", "description": "清除人口中毒状态。",                                  "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "antidote" } },
+  { "id": "potion_fire_protect",      "name": "防火药剂",      "icon": "", "description": "免疫火焰伤害。",                                      "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "fire_protection" } },
+  { "id": "potion_night_vision",      "name": "夜视药剂",      "icon": "", "description": "夜间火把视野范围翻倍。",                               "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "night_vision" } },
+  { "id": "potion_mana",              "name": "法力药剂",      "icon": "", "description": "提升科技与人文研究速度。",                             "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "mana" } },
+  { "id": "potion_poison_protect",    "name": "防毒药剂",      "icon": "", "description": "免疫中毒效果。",                                      "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "poison_protection" } },
+  { "id": "potion_lightning_protect", "name": "避雷药剂",      "icon": "", "description": "免疫雷击伤害。",                                      "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "lightning_protection" } },
+  { "id": "potion_fertile_earth",     "name": "丰饶药剂",      "icon": "", "description": "农田产量翻倍。",                                      "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "fertile_earth" } },
+  { "id": "potion_charming",          "name": "魅惑药剂",      "icon": "", "description": "降低商人价格，提升事件外交成功率。",                   "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "charming" } },
+  { "id": "potion_inspiration",       "name": "灵感药剂",      "icon": "", "description": "大幅提升研究速度。",                                  "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "inspiration" } },
+  { "id": "potion_invisibility",      "name": "隐形药剂",      "icon": "", "description": "探险不被敌人发现。",                                  "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "invisibility" } },
+  { "id": "potion_rejuvenation",      "name": "回春药剂",      "icon": "", "description": "持续恢复人口生命值。",                                "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "rejuvenation" } },
+  { "id": "potion_berserk",           "name": "狂暴药剂",      "icon": "", "description": "战士伤害翻倍但受伤害加倍。",                           "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "berserk" } },
+  { "id": "potion_transmute",         "name": "嬗变药剂",      "icon": "", "description": "铁矿炼为钢锭，产量大幅提升。",                         "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "transmute_metal" } },
+  { "id": "potion_luck",              "name": "幸运药剂",      "icon": "", "description": "提升事件正面概率与探险收益。",                         "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "luck" } },
+  { "id": "potion_shrink",            "name": "缩小药剂",      "icon": "", "description": "建筑占地面积暂时减半。",                              "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "shrink" } },
+  { "id": "potion_sleep",             "name": "安眠药剂",      "icon": "", "description": "人口消耗减半但生产暂停。",                            "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "sleep" } },
+  { "id": "potion_purify",            "name": "净化药剂",      "icon": "", "description": "移除地面污染，净化可建造区域。",                       "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "purify_land" } },
+  { "id": "potion_healing_iii",       "name": "强效生命药剂",  "icon": "", "description": "大幅恢复人口生命值（III级）。",                       "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "healing", "quality": "III" } },
+  { "id": "potion_strength_iii",      "name": "强效力量药剂",  "icon": "", "description": "极大幅提升生产效率与战士伤害（III级）。",               "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "strength", "quality": "III" } },
+  { "id": "potion_swiftness_iii",     "name": "强效迅捷药剂",  "icon": "", "description": "极大幅提升建造速度与弓箭伤害（III级）。",               "unique": false, "consumable": true, "capacityCost": 0, "potionEffect": { "id": "swiftness", "quality": "III" } },
+  { "id": "nigredo_substance",        "name": "黑化物质",      "icon": "", "description": "伟大工作第一阶段产物——分解与腐化的精髓。",             "unique": true,  "consumable": false, "capacityCost": 0 },
+  { "id": "albedo_substance",         "name": "白化物质",      "icon": "", "description": "伟大工作第二阶段产物——净化与洗涤的结晶。",             "unique": true,  "consumable": false, "capacityCost": 0 },
+  { "id": "citrinitas_substance",     "name": "黄化物质",      "icon": "", "description": "伟大工作第三阶段产物——觉醒与转化的证明。",             "unique": true,  "consumable": false, "capacityCost": 0 },
+  { "id": "rubedo_substance",         "name": "红化物质",      "icon": "", "description": "伟大工作第四阶段产物——融合与圆满的巅峰。",             "unique": true,  "consumable": false, "capacityCost": 0 },
+  { "id": "philosopher_stone",        "name": "贤者之石",      "icon": "", "description": "伟大工作的终极成就——万力之力，摧坚拔韧。",             "unique": true,  "consumable": false, "capacityCost": 0 }
+]

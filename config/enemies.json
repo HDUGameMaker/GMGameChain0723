@@ -1,0 +1,108 @@
+{
+  "enemies": [
+    {
+      "id": "wild_animal",
+      "name": "野生动物",
+      "description": "饥饿的野兽，在夜晚出没攻击人口。",
+      "maxHp": 5,
+      "attack": 1,
+      "attackTarget": "population",
+      "spawnConditions": {
+        "timePeriods": [
+          "night"
+        ],
+        "minDay": 1
+      },
+      "drops": [
+        { "resourceId": "fur", "amount": 2, "chance": 0.8 },
+        { "resourceId": "food", "amount": 1, "chance": 0.4 }
+      ],
+      "tameChance": 0.25,
+      "tamedUnit": {
+        "name": "驯服野兽",
+        "icon": "🐺",
+        "maxHp": 5,
+        "attack": 1,
+        "attackRange": 1,
+        "attackCooldown": 2
+      }
+    },
+    {
+      "id": "robot_scout",
+      "name": "侦察机器人",
+      "description": "旧时代遗留的自动机械，敌我不分。",
+      "maxHp": 5,
+      "attack": 1,
+      "attackTarget": "both",
+      "spawnConditions": {
+        "timePeriods": [
+          "night"
+        ],
+        "minDay": 5
+      },
+      "drops": [
+        { "resourceId": "gear", "amount": 1, "chance": 0.6 },
+        { "resourceId": "machine_part", "amount": 1, "chance": 0.3 }
+      ],
+      "tameChance": 0.15,
+      "tamedUnit": {
+        "name": "驯服机器人",
+        "icon": "🤖",
+        "maxHp": 5,
+        "attack": 1,
+        "attackRange": 1,
+        "attackCooldown": 2
+      }
+    },
+    {
+      "id": "robot_raider",
+      "name": "袭击者机器人",
+      "description": "配备武器的战斗机器人，对基地有系统性破坏能力。",
+      "maxHp": 5,
+      "attack": 1,
+      "attackTarget": "both",
+      "spawnConditions": {
+        "timePeriods": [
+          "night"
+        ],
+        "minDay": 10
+      },
+      "drops": [
+        { "resourceId": "gear", "amount": 2, "chance": 0.8 },
+        { "resourceId": "machine_part", "amount": 1, "chance": 0.5 },
+        { "resourceId": "hematite", "amount": 1, "chance": 0.2 }
+      ],
+      "tameChance": 0.10,
+      "tamedUnit": {
+        "name": "驯服袭击者",
+        "icon": "🤖",
+        "maxHp": 5,
+        "attack": 2,
+        "attackRange": 1,
+        "attackCooldown": 2
+      }
+    }
+  ],
+  "units": [
+    {
+      "id": "warrior",
+      "name": "战士",
+      "hp": 5,
+      "attack": 2,
+      "attackRange": 1,
+      "attackCooldown": 2
+    },
+    {
+      "id": "archer",
+      "name": "弓箭手",
+      "hp": 5,
+      "attack": 2,
+      "attackRange": 2,
+      "attackCooldown": 1
+    }
+  ],
+  "global": {
+    "humanHp": 2,
+    "clickAttack": 1
+  }
+}

@@ -1,0 +1,134 @@
+[
+  {
+    "id": "lumber_mill_near_logging_camp",
+    "name": "木材处理厂·伐木协同",
+    "sourceBuildingId": "lumber_mill",
+    "targetBuildingId": "logging_camp",
+    "maxDistance": 1,
+    "effectType": "multiplier",
+    "effectValue": 1.5,
+    "applyToField": "production",
+    "applyTo": "all"
+  },
+  {
+    "id": "furnace_near_stope",
+    "name": "熔炉·采场协同",
+    "sourceBuildingId": "forge",
+    "targetBuildingId": "stope",
+    "maxDistance": 1,
+    "effectType": "multiplier",
+    "effectValue": 1.3,
+    "applyToField": "production",
+    "applyTo": "all"
+  },
+  {
+    "id": "steel_furnace_near_furnace",
+    "name": "炼钢炉·熔炉热链",
+    "sourceBuildingId": "steel_furnace",
+    "targetBuildingId": "forge",
+    "maxDistance": 1,
+    "effectType": "multiplier",
+    "effectValue": 1.3,
+    "applyToField": "production",
+    "applyTo": "all"
+  },
+  {
+    "id": "brick_kiln_near_stope",
+    "name": "砖窑·采场协同",
+    "sourceBuildingId": "brick_kiln",
+    "targetBuildingId": "stope",
+    "maxDistance": 1,
+    "effectType": "multiplier",
+    "effectValue": 1.3,
+    "applyToField": "production",
+    "applyTo": "all"
+  },
+  {
+    "id": "machine_shop_near_steel_furnace",
+    "name": "机械车间·炼钢炉热链",
+    "sourceBuildingId": "machine_shop",
+    "targetBuildingId": "steel_furnace",
+    "maxDistance": 1,
+    "effectType": "multiplier",
+    "effectValue": 1.2,
+    "applyToField": "production",
+    "applyTo": "all"
+  },
+  {
+    "id": "precision_workshop_near_machine_shop",
+    "name": "精密工作室·机械车间协同",
+    "sourceBuildingId": "precision_workshop",
+    "targetBuildingId": "machine_shop",
+    "maxDistance": 1,
+    "effectType": "multiplier",
+    "effectValue": 1.2,
+    "applyToField": "production",
+    "applyTo": "all"
+  },
+  {
+    "id": "hunting_hut_near_logging_camp",
+    "name": "狩猎小屋·林地协作",
+    "sourceBuildingId": "hunting_hut",
+    "targetBuildingId": "logging_camp",
+    "maxDistance": 2,
+    "effectType": "flat",
+    "effectValue": 2,
+    "applyToField": "foodCapacity",
+    "applyTo": "food"
+  },
+  {
+    "id": "farm_near_hunting_hut",
+    "name": "农田·狩猎小屋协作",
+    "sourceBuildingId": "farm",
+    "targetBuildingId": "hunting_hut",
+    "maxDistance": 2,
+    "effectType": "flat",
+    "effectValue": 3,
+    "applyToField": "foodCapacity",
+    "applyTo": "food"
+  },
+  {
+    "id": "farm_near_furnace_penalty",
+    "name": "农田·熔炉高温危害",
+    "sourceBuildingId": "farm",
+    "targetBuildingId": "forge",
+    "maxDistance": 2,
+    "effectType": "multiplier",
+    "effectValue": 0.7,
+    "applyToField": "foodCapacity",
+    "applyTo": "food"
+  },
+  {
+    "id": "hunting_hut_near_brick_kiln_penalty",
+    "name": "狩猎小屋·砖窑烟尘",
+    "sourceBuildingId": "hunting_hut",
+    "targetBuildingId": "brick_kiln",
+    "maxDistance": 2,
+    "effectType": "multiplier",
+    "effectValue": 0.7,
+    "applyToField": "foodCapacity",
+    "applyTo": "food"
+  },
+  {
+    "id": "farm_near_stope_penalty",
+    "name": "农田·采场尘土",
+    "sourceBuildingId": "farm",
+    "targetBuildingId": "stope",
+    "maxDistance": 2,
+    "effectType": "multiplier",
+    "effectValue": 0.8,
+    "applyToField": "foodCapacity",
+    "applyTo": "food"
+  },
+  {
+    "id": "farm_near_steel_furnace_penalty",
+    "name": "农田·炼钢炉高温危害",
+    "sourceBuildingId": "farm",
+    "targetBuildingId": "steel_furnace",
+    "maxDistance": 2,
+    "effectType": "multiplier",
+    "effectValue": 0.7,
+    "applyToField": "foodCapacity",
+    "applyTo": "food"
+  }
+]

@@ -1,0 +1,61 @@
+{
+  "resources": [
+    {
+      "resourceId": "wood",
+      "amount": 200
+    },
+    {
+      "resourceId": "stone",
+      "amount": 150
+    },
+    {
+      "resourceId": "plank",
+      "amount": 0
+    },
+    {
+      "resourceId": "hematite",
+      "amount": 0
+    },
+    {
+      "resourceId": "coal",
+      "amount": 0
+    },
+    {
+      "resourceId": "iron_ingot",
+      "amount": 0
+    },
+    {
+      "resourceId": "machine_part",
+      "amount": 0
+    },
+    {
+      "resourceId": "steel",
+      "amount": 0
+    },
+    {
+      "resourceId": "brick",
+      "amount": 0
+    },
+    {
+      "resourceId": "electronic_part",
+      "amount": 0
+    },
+    {
+      "resourceId": "food",
+      "amount": 100
+    },
+    {
+      "resourceId": "fur",
+      "amount": 0
+    }
+  ],
+  "items": [],
+  "population": {
+    "initial": 2
+  },
+  "foodPerPerson": 5,
+  "capacities": {
+    "expeditionResourceCapacity": 100,
+    "backpackCapacity": 10
+  }
+}

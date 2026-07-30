@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>新手教程 — GMGameChain</title>
+<style>
+:root {
+  --bg: #0f0f1a; --surface: #1a1a2e; --card: #222240;
+  --text: #e0e0ec; --muted: #9090aa; --accent: #5b8def;
+  --good: #4ecb71; --warn: #f0a040; --bad: #ff6b6b;
+  --border: rgba(255,255,255,0.08);
+}
+* { box-sizing: border-box; margin: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 15px/1.7 -apple-system, "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  max-width: 860px; margin: 0 auto; padding: 40px 24px 80px;
+}
+h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+h1 + p { color: var(--muted); margin-bottom: 36px; }
+h2 {
+  font-size: 20px; font-weight: 700; margin: 48px 0 16px;
+  padding-bottom: 10px; border-bottom: 2px solid var(--border);
+}
+h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; color: var(--accent); }
+p { margin: 0 0 12px; color: #c8c8dc; }
+ul, ol { padding-left: 22px; margin-bottom: 14px; }
+li { margin-bottom: 6px; color: #c8c8dc; }
+a { color: var(--accent); }
+
+/* card */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px 24px; margin: 16px 0;
+}
+
+/* inline code */
+code {
+  background: rgba(255,255,255,0.08); padding: 2px 7px;
+  border-radius: 4px; font-size: 13px; font-family: "JetBrains Mono","SF Mono","Cascadia Code","Consolas",monospace;
+}
+
+/* code block */
+pre {
+  background: #0a0a16; border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px 20px; overflow-x: auto;
+  margin: 12px 0; font-size: 13px; line-height: 1.6;
+  font-family: "JetBrains Mono","SF Mono","Cascadia Code","Consolas",monospace;
+  position: relative;
+}
+pre .copy-btn {
+  position: absolute; top: 8px; right: 12px;
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+  color: var(--muted); font-size: 11px; padding: 3px 10px;
+  border-radius: 5px; cursor: pointer; font-family: inherit;
+}
+pre .copy-btn:hover { background: rgba(255,255,255,0.16); color: var(--text); }
+
+/* tip box */
+.tip {
+  border-left: 3px solid var(--accent); background: rgba(91,141,239,0.08);
+  padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0;
+}
+.tip::before { content: "💡 "; }
+.warn {
+  border-left: 3px solid var(--warn); background: rgba(240,160,64,0.08);
+  padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0;
+}
+.warn::before { content: "⚠️ "; }
+.good {
+  border-left: 3px solid var(--good); background: rgba(78,203,113,0.08);
+  padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0;
+}
+
+/* step number */
+.step {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-weight: 700;
+  font-size: 13px; margin-right: 8px; flex-shrink: 0;
+}
+
+/* table */
+table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14px; }
+th, td {
+  text-align: left; padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+td { color: #c8c8dc; }
+
+/* keyboard key */
+kbd {
+  display: inline-block; background: #2a2a40; border: 1px solid #444;
+  border-radius: 4px; padding: 1px 7px; font-size: 12px;
+  font-family: inherit; box-shadow: 0 1px 0 #444;
+}
+
+/* section nav */
+#toc { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 36px; }
+#toc a {
+  display: block; padding: 8px 16px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 20px;
+  color: var(--text); text-decoration: none; font-size: 14px;
+  transition: background 0.2s, border-color 0.2s;
+}
+#toc a:hover { background: #2a2a4a; border-color: var(--accent); }
+
+/* image placeholder */
+.img-placeholder {
+  background: #111; border: 1px dashed var(--border);
+  border-radius: 8px; padding: 40px 20px; text-align: center;
+  color: var(--muted); font-size: 13px; margin: 16px 0;
+}
+
+@media (max-width: 640px) {
+  body { padding: 20px 14px 60px; font-size: 14px; }
+  h1 { font-size: 22px; }
+  h2 { font-size: 17px; }
+  pre { font-size: 12px; padding: 12px 14px; }
+}
+</style>
+</head>
+<body>
+
+<h1>🕹️ GMGameChain 新手教程</h1>
+<p>几分钟了解项目工作流：启动游戏 → 配置编辑 → 调试 → Git 版本管理</p>
+
+<nav id="toc">
+  <a href="#quickstart">🚀 快速启动</a>
+  <a href="#config-editor">🎛️ 配置编辑器</a>
+  <a href="#f12">🔍 F12 调试</a>
+  <a href="#git">🔄 Git 版本管理</a>
+</nav>
+
+<!-- ============================================================ -->
+<h2 id="quickstart">🚀 快速启动</h2>
+
+<h3>1. 安装 Node.js（仅首次）</h3>
+<p>去 <a href="https://nodejs.org/" target="_blank">nodejs.org</a> 下载 LTS 版本，一路下一步安装即可。</p>
+<div class="tip">安装后验证：打开终端（CMD 或 PowerShell），输入 <code>node -v</code> 能看到版本号就说明 OK。</div>
+
+<h3>2. 启动游戏</h3>
+<p>双击项目根目录的 <code>启动游戏.bat</code>，会自动：</p>
+<ol>
+  <li>检测 Node.js 是否安装（没装会引导下载）</li>
+  <li>启动 HTTP 服务器</li>
+  <li>打开浏览器访问 <code>http://127.0.0.1:8080</code></li>
+</ol>
+
+<p>或者手动在终端里跑：</p>
+<pre><span class="copy-btn">复制</span>cd 项目目录
+npx http-server -p 8080 -c-1 --cors</pre>
+
+<div class="warn">必须通过 HTTP 服务器访问！直接用浏览器打开 <code>index.html</code>（file:// 协议）会报错，因为游戏需要 fetch 加载 JSON 配置文件。</div>
+
+<!-- ============================================================ -->
+<h2 id="config-editor">🎛️ 配置编辑器（策划 & 美术）</h2>
+
+<p>项目有两个<strong>零代码可视化配置编辑器</strong>，双击 HTML 文件就能用，不需要写任何 JSON。</p>
+
+<h3>策划配置编辑器 <code>planner-config.html</code></h3>
+<p>给数值策划和系统策划用，可以编辑：</p>
+<table>
+  <tr><th>Tab</th><th>编辑内容</th><th>数据源</th></tr>
+  <tr><td>建筑</td><td>名称、占地、建造消耗、升级链、生产产出、合成配方</td><td>buildings.json</td></tr>
+  <tr><td>资源</td><td>资源名称、初始值、存储上限</td><td>resources.json</td></tr>
+  <tr><td>物品</td><td>物品属性、探险效果、唯一性标记</td><td>items.json</td></tr>
+  <tr><td>事件</td><td>触发条件、选项分支、效果链</td><td>events/*.json</td></tr>
+  <tr><td>探险</td><td>区域产量矩阵、解锁条件、全局参数</td><td>expeditions/*.json</td></tr>
+  <tr><td>地图</td><td>初始建筑坐标、探险入口位置</td><td>maps/base_map.json</td></tr>
+</table>
+
+<h3>美术配置编辑器 <code>artist-config.html</code></h3>
+<p>给美术同学用，主要功能：</p>
+<table>
+  <tr><th>Tab</th><th>做什么</th></tr>
+  <tr><td>地图色板</td><td>修改 6 种地形颜色，迷你地图实时预览</td></tr>
+  <tr><td>标签布局</td><td>拖滑块调整建筑名字/进度条/工人数的显示位置</td></tr>
+  <tr><td>素材引用</td><td>管理建筑图标/详情图路径，自动检测缺失文件</td></tr>
+</table>
+
+<h3>使用步骤（首次）</h3>
+
+<div class="card">
+  <p><span class="step">1</span> <strong>先启动游戏服务器</strong>（双击 <code>启动游戏.bat</code> 或手动 <code>npx http-server</code>），保证 8080 端口开着。</p>
+
+  <p><span class="step">2</span> <strong>打开配置编辑器</strong></p>
+  <p>方式 A：双击 <code>打开配置编辑器.bat</code> → 选择策划或美术编辑器</p>
+  <p>方式 B：浏览器直接打开 <code>http://127.0.0.1:8080/planner-config.html</code> 或 <code>artist-config.html</code></p>
+
+  <p><span class="step">3</span> <strong>授权写入权限（仅首次）</strong></p>
+  <p>点击顶部 <strong>"选择目录"</strong> 按钮 → 在系统弹窗中选择项目的 <code>config/</code> 文件夹 → 确认。</p>
+  <p>浏览器会记住这个授权，下次打开不用重新选。</p>
+
+  <p><span class="step">4</span> <strong>开始编辑</strong></p>
+  <p>改任何字段后约 1 秒自动保存到源 JSON 文件。顶部状态灯变绿 = 保存成功。</p>
+</div>
+
+<div class="tip">
+  策划和美术可以<strong>同时</strong>打开各自的编辑器，互不影响。
+  但如果两人编辑<strong>同一个 JSON 文件</strong>（比如都改 buildings.json），后保存的会覆盖先保存的 — 建议提前沟通分工。
+</div>
+
+<div class="warn">
+  编辑器需要 <strong>Chrome 86+</strong> 或 <strong>Edge 86+</strong>（需要 File System Access API）。
+  Firefox / Safari 暂不支持自动写回功能。
+</div>
+
+<!-- ============================================================ -->
+<h2 id="f12">🔍 F12 开发者工具调试</h2>
+
+<p>游戏出问题时，<kbd>F12</kbd> 是排查问题的第一入口。</p>
+
+<h3>打开方式</h3>
+<ul>
+  <li><strong>Chrome / Edge：</strong>按 <kbd>F12</kbd>，或右键页面 → "检查"</li>
+  <li><strong>快速切到 Console：</strong>按 <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>J</kbd></li>
+</ul>
+
+<h3>Console（控制台）— 看报错</h3>
+<p>打开后切换到 <strong>Console</strong> 标签页。这里会显示：</p>
+<ul>
+  <li>🔴 <strong>红色错误</strong>：代码运行出错，通常说明功能不正常</li>
+  <li>🟡 <strong>黄色警告</strong>：不影响运行但建议修复的问题</li>
+  <li>🔵 <strong>普通日志</strong>：游戏主动输出的信息（如 <code>[Game] Initialization complete!</code>）</li>
+</ul>
+
+<div class="card">
+  <strong>常见报错及解决：</strong>
+  <table>
+    <tr><th>报错信息</th><th>原因</th><th>解决</th></tr>
+    <tr>
+      <td><code>Failed to fetch ... config/xxx.json</code></td>
+      <td>没有通过 HTTP 服务器打开</td>
+      <td>用 <code>npx http-server</code> 启动，不要直接双击 index.html</td>
+    </tr>
+    <tr>
+      <td><code>PIXI is not defined</code></td>
+      <td>PixiJS 库没加载成功</td>
+      <td>检查 <code>lib/pixi.min.js</code> 文件是否存在</td>
+    </tr>
+    <tr>
+      <td><code>Cannot read properties of undefined</code></td>
+      <td>某个 config 数据缺失或格式不对</td>
+      <td>检查对应 JSON 文件是否被误改，用配置编辑器修正</td>
+    </tr>
+    <tr>
+      <td><code>Failed to load resource: 404</code></td>
+      <td>图片或文件路径不存在</td>
+      <td>检查 <code>assets/</code> 目录下对应文件是否存在</td>
+    </tr>
+  </table>
+</div>
+
+<h3>Network（网络）— 看文件加载</h3>
+<p>切换到 <strong>Network</strong> 标签页，刷新页面。可以看到所有 JS/CSS/JSON/图片的加载情况。红色 404 说明文件缺失，红色 (failed) 说明网络不通。</p>
+
+<h3>调试技巧</h3>
+<ul>
+  <li>在 Console 中输入 <code>window.__game</code> 可以访问游戏实例，查看所有系统状态</li>
+  <li>例如 <code>window.__game.systems.resource._resources</code> 查看当前资源数据</li>
+  <li>按 <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd> 然后点击页面元素可以查看对应 HTML/CSS</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="git">🔄 Git 版本管理</h2>
+
+<p>配置改错了想回滚？多人协作需要同步？用 Git + 图形化工具管理。</p>
+
+<h3>仓库信息</h3>
+<div class="card">
+  <table>
+    <tr><td>仓库地址</td><td><code>git@github.com:HDUGameMaker/GMGameChain0723.git</code></td></tr>
+    <tr><td>Web 页面</td><td><a href="https://github.com/HDUGameMaker/GMGameChain0723" target="_blank">https://github.com/HDUGameMaker/GMGameChain0723</a></td></tr>
+    <tr><td>主分支</td><td><code>master</code></td></tr>
+  </table>
+</div>
+
+<h3>克隆仓库到本地</h3>
+<pre><span class="copy-btn">复制</span>git clone git@github.com:HDUGameMaker/GMGameChain0723.git</pre>
+<p>或在 Fork 中：File → Clone → 粘贴仓库地址 → 选择本地目录 → Clone。</p>
+
+<div class="good">推荐使用 <strong>Fork</strong>（<a href="https://git-fork.com/" target="_blank">git-fork.com</a>），免费、轻量、Windows 原生，比命令行直观很多。</div>
+
+<h3>Fork 安装 & 首次设置</h3>
+<ol>
+  <li>去 <a href="https://git-fork.com/" target="_blank">git-fork.com</a> 下载安装</li>
+  <li>打开 Fork → File → Clone Repository</li>
+  <li>填入仓库地址（GitHub / Gitee 等），选择本地目录，点 Clone</li>
+  <li>克隆完成后就能在 Fork 里看到所有文件</li>
+</ol>
+
+<h3>日常工作流</h3>
+
+<div class="card">
+  <p><span class="step">1</span> <strong>改配置前先 Pull（拉取最新代码）</strong></p>
+  <p>工具栏点 <strong>Pull</strong> 按钮（或 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>），保证本地是最新版本，避免覆盖别人的修改。</p>
+
+  <p><span class="step">2</span> <strong>编辑配置 / 美术资源</strong></p>
+  <p>用配置编辑器改 JSON，或替换 assets 里的图片。Fork 会自动检测到文件变化，在 Changes 面板列出所有改过的文件。</p>
+
+  <p><span class="step">3</span> <strong>Stage（暂存）要提交的文件</strong></p>
+  <p>在 Changes 面板中，勾选你想提交的文件，或者直接点 Stage All。文件会从 "Unstaged" 移到 "Staged" 区。</p>
+  <div class="tip">建议只勾选你<strong>真正修改过</strong>的文件，不要把自动生成的文件（如 manifest.json）混在一起提交。</div>
+
+  <p><span class="step">4</span> <strong>Commit（提交）</strong></p>
+  <p>左下角写提交信息，格式建议：</p>
+<pre>建筑: 农田产出从 5 提高到 7
+事件: 新增"暴风雪"事件，morning 触发
+美术: 替换工棚图标，修正绿色背景</pre>
+  <p>写好后点 <strong>Commit</strong> 按钮。</p>
+
+  <p><span class="step">5</span> <strong>Push（推送）</strong></p>
+  <p>工具栏点 <strong>Push</strong> 按钮，把本地提交推送到远程仓库，别人就能看到你的改动了。</p>
+</div>
+
+<h3>改错了怎么办</h3>
+<table>
+  <tr><th>情况</th><th>操作</th></tr>
+  <tr>
+    <td>还没 Commit，想撤销某个文件的修改</td>
+    <td>在 Changes 面板右键该文件 → <strong>Discard Changes</strong></td>
+  </tr>
+  <tr>
+    <td>已经 Commit 但还没 Push</td>
+    <td>菜单 Repository → <strong>Undo Last Commit</strong>（撤销提交但保留文件修改）</td>
+  </tr>
+  <tr>
+    <td>已经 Push 了</td>
+    <td>菜单 Repository → <strong>Revert Commit</strong>（生成一个反向提交）</td>
+  </tr>
+  <tr>
+    <td>想回到某个历史版本</td>
+    <td>在提交历史中右键某个旧 Commit → <strong>Reset → 选择模式</strong></td>
+  </tr>
+</table>
+
+<div class="warn">
+  Reset 操作会丢失历史，Push 过的 Commit 不建议 Reset。不确定时先问一下团队里熟悉 Git 的人。
+</div>
+
+<h3>分支管理</h3>
+<p>多人协作时建议每人开自己的分支，改完再合并：</p>
+<ol>
+  <li>Fork 工具栏点 <strong>Branch</strong> → New Branch → 输入分支名（如 <code>planner/balance-tuning</code> 或 <code>artist/icons-update</code>）</li>
+  <li>在新分支上正常 Commit / Push</li>
+  <li>改完测试没问题后，切回 main 分支，Merge 你的分支</li>
+</ol>
+
+<div class="tip">
+  如果团队用 GitHub / Gitee，可以在网页上创建 <strong>Pull Request</strong>，让同事 Review 后再合并，更安全。
+</div>
+
+<!-- ============================================================ -->
+<h2>📋 速查卡片</h2>
+
+<div class="card">
+  <table>
+    <tr><th>我想做什么</th><th>怎么做</th></tr>
+    <tr><td>启动游戏</td><td>双击 <code>启动游戏.bat</code></td></tr>
+    <tr><td>改建筑属性（不写代码）</td><td>打开 <code>planner-config.html</code> → 建筑 Tab</td></tr>
+    <tr><td>改地形颜色 / 调标签位置</td><td>打开 <code>artist-config.html</code></td></tr>
+    <tr><td>添加新建筑 / 资源 / 事件</td><td>配置编辑器里点 [+新增]</td></tr>
+    <tr><td>看游戏报错</td><td>按 <kbd>F12</kbd> → Console 标签</td></tr>
+    <tr><td>拉取最新配置</td><td>Fork → Pull</td></tr>
+    <tr><td>提交我的修改</td><td>Fork → Stage 文件 → Commit → Push</td></tr>
+    <tr><td>撤销还没 Push 的修改</td><td>Fork → Discard Changes 或 Undo Last Commit</td></tr>
+    <tr><td>配置编辑器保存不了</td><td>确认用 Chrome/Edge，且已授权 config 文件夹</td></tr>
+    <tr><td>游戏打开白屏</td><td>F12 → Console 看报错，常见原因：没走 HTTP 服务器</td></tr>
+  </table>
+</div>
+
+<hr style="border-color:var(--border);margin:40px 0 20px;">
+<p style="color:var(--muted);font-size:13px;">
+  最后更新：2026-07-23 &nbsp;|&nbsp;
+  <a href="CLAUDE.md">CLAUDE.md</a>（开发者技术文档）&nbsp;|&nbsp;
+  <a href="README.md">README.md</a>（项目总览）
+</p>
+
+<script>
+// 代码块复制按钮
+document.querySelectorAll('pre .copy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const code = btn.parentElement.textContent.replace(/^复制\n?/,'').trim();
+    navigator.clipboard.writeText(code).then(() => {
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = '复制'; }, 1500);
+    });
+  });
+});
+</script>
+</body>
+</html>
