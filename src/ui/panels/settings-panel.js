@@ -54,45 +54,6 @@ export function renderSettingsPanel(data, body, pm) {
   displaySection.appendChild(displayTitle);
   displaySection.appendChild(toggleRow);
 
-  // ===== 永夜迷雾模式开关 =====
-  const torchSys = window.__game?.systems?.torch;
-  const darknessRow = document.createElement('div');
-  darknessRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-top:10px;';
-  const darknessLabel = document.createElement('span');
-  darknessLabel.style.cssText = 'font-size:13px;color:#a0a0ba;';
-  darknessLabel.textContent = '永夜迷雾模式';
-  const darknessHint = document.createElement('div');
-  darknessHint.style.cssText = 'font-size:11px;color:#6a6a7a;margin-top:4px;line-height:1.4;';
-  darknessHint.textContent = '开启后建筑只能建造在火把照亮范围内';
-
-  const darknessBtn = document.createElement('button');
-  const isDark = torchSys ? torchSys.isDarknessMode() : false;
-  const updateDarkness = (enabled) => {
-    darknessBtn.textContent = enabled ? '已开启' : '已关闭';
-    darknessBtn.style.cssText = `
-      padding:6px 16px;border-radius:20px;border:1px solid ${enabled ? 'rgba(91,141,239,0.3)' : 'rgba(255,255,255,0.1)'};
-      background:${enabled ? 'rgba(91,141,239,0.15)' : 'rgba(255,255,255,0.06)'};
-      color:${enabled ? '#5b8def' : '#888'};font-size:13px;font-weight:500;cursor:pointer;
-      font-family:inherit;transition:all 0.3s;min-width:72px;
-    `;
-  };
-  updateDarkness(isDark);
-
-  darknessBtn.addEventListener('click', () => {
-    const ts = window.__game?.systems?.torch;
-    if (!ts) return;
-    const next = !ts.isDarknessMode();
-    ts.setDarknessMode(next);
-    updateDarkness(next);
-  });
-
-  darknessRow.appendChild(darknessLabel);
-  darknessRow.appendChild(darknessBtn);
-  const darknessWrapper = document.createElement('div');
-  darknessWrapper.appendChild(darknessRow);
-  darknessWrapper.appendChild(darknessHint);
-  displaySection.appendChild(darknessWrapper);
-
   // ===== 广播播报开关 =====
   const broadcastTitle = document.createElement('div');
   broadcastTitle.style.cssText = 'font-size:13px;font-weight:600;color:#ececf0;margin:14px 0 8px;letter-spacing:0.01em;';
@@ -136,6 +97,30 @@ export function renderSettingsPanel(data, body, pm) {
     () => messageLog.isResourceEnabled(),
     (v) => messageLog.saveSettings({ resource: v })
   ));
+
+  // ===== 新手教程按钮 =====
+  const questSys2 = window.__game?.systems?.quest;
+  if (questSys2) {
+    const questRow = document.createElement('div');
+    questRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-top:10px;';
+    const questLabel2 = document.createElement('span');
+    questLabel2.style.cssText = 'font-size:13px;color:#a0a0ba;';
+    questLabel2.textContent = '📋 新手教程任务';
+    const questBtn2 = document.createElement('button');
+    questBtn2.textContent = '启动';
+    questBtn2.style.cssText = 'padding:6px 16px;border-radius:20px;border:1px solid rgba(91,141,239,0.3);background:rgba(91,141,239,0.15);color:#5b8def;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;min-width:72px;';
+    questBtn2.addEventListener('click', () => {
+      questSys2.enable();
+      const q = questSys2.getActiveQuest();
+      if (q) {
+        pm.close();
+        setTimeout(() => pm.open('quest_panel', { quest: q }), 200);
+      }
+    });
+    questRow.appendChild(questLabel2);
+    questRow.appendChild(questBtn2);
+    displaySection.appendChild(questRow);
+  }
 
   container.appendChild(displaySection);
 

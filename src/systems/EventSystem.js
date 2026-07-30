@@ -386,14 +386,12 @@ export class EventSystem {
   // ===== 事件触发 → 进入队列 =====
 
   _triggerEvent(evt) {
-    // 记录触发计数和冷却
     this._triggerCounts[evt.id] = (this._triggerCounts[evt.id] || 0) + 1;
     if (evt.cooldownTicks > 0) {
       this._cooldowns[evt.id] = evt.cooldownTicks;
     }
-
-    // 进入事件队列
     this._enqueueEvent(evt);
+    eventBus.emit('eventTriggered', { eventId: evt.id, name: evt.name });
   }
 
   _triggerEventDirect(eventId) {

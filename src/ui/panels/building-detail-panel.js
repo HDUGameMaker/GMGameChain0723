@@ -143,7 +143,7 @@ export function renderBuildingDetailPanel(data, body, pm) {
   header.style.textAlign = 'center';
   header.innerHTML = `
     <div style="font-size:18px;font-weight:700;color:#ececf0;letter-spacing:-0.01em;">${config.name}</div>
-    <div style="font-size:13px;color:#a0a0ba;margin-top:4px;">${config.description || ''}</div>
+    <div style="font-size:13px;color:#a0a0ba;margin-top:4px;">${config.description || ''}${config.roadRequired ? '<br><span style="color:#f0a040;">🛤️ 道路依赖：必须紧邻道路</span>' : ''}</div>
     <div class="status-label" style="font-size:12px;color:${statusColor};margin-top:6px;font-weight:500;">${statusText}</div>
     ${building.status === 'constructing' ? `
       <div class="build-progress" style="margin-top:10px;">
@@ -478,6 +478,23 @@ export function renderBuildingDetailPanel(data, body, pm) {
       trainSection.appendChild(trainArcherBtn);
     }
     container.appendChild(trainSection);
+  }
+
+  // ===== 移动 =====
+  if (building.status === 'active' && config.draggable !== false) {
+    const moveBtn = actionButton(
+      '↔️ 移动建筑',
+      'rgba(91, 141, 239, 0.12)',
+      () => {
+        const mr = window.__game?.mapRenderer;
+        if (mr) {
+          pm.close();
+          setTimeout(() => mr.startBuildingMove(buildingIndex), 50);
+        }
+      }
+    );
+    moveBtn.style.marginTop = '4px';
+    container.appendChild(moveBtn);
   }
 
   // ===== 拆除 =====

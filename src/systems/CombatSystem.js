@@ -71,10 +71,9 @@ export class CombatSystem {
     if (gridX < 0 || gridY < 0 || gridX >= this._mapConfig.gridWidth || gridY >= this._mapConfig.gridHeight) return false;
     if (this.getEnemyAt(gridX, gridY) || this.getUnitAt(gridX, gridY)) return false;
     if (this._isBlocked(gridX, gridY)) return false;
-    // 必须在火把照明范围（营地）内
-    const torch = this._buildingSystem?._torchSystem;
-    if (torch) {
-      const visible = torch.getVisibilityMatrix();
+    const ts = this._buildingSystem?._torchSystem;
+    if (ts) {
+      const visible = ts.getVisibilityMatrix();
       if (visible && !visible[gridY]?.[gridX]) return false;
     }
     return true;
@@ -215,35 +214,40 @@ export class CombatSystem {
 
   _findSpawnPosition() {
     if (!this._mapConfig) return null;
-    // 优先：在已照明区外缘 3~8 格环带内刷新，保证玩家迟早遇到且不贴脸
+    // 在光源边缘6~13格环带内刷新
     const ringPos = this._findSpawnOnVisibilityRing();
     if (ringPos) return ringPos;
-    // 回退：在所有已建成建筑外缘环带刷新
-    const bldRingPos = this._findSpawnOnBuildingRing();
-    if (bldRingPos) return bldRingPos;
-    // 最后回退：全图随机（仅排除建筑/已占格）
+    // 回退：全图随机（仅排除建筑/已占格/光照区域内）
+    const visible = this._getVisibilityMatrix();
     for (let i = 0; i < 100; i++) {
       const x = Math.floor(Math.random() * this._mapConfig.gridWidth);
       const y = Math.floor(Math.random() * this._mapConfig.gridHeight);
       if (!this._mapConfig.grid[y]?.[x]) continue;
       if (this._isBlocked(x, y)) continue;
       if (this.getEnemyAt(x, y) || this.getUnitAt(x, y)) continue;
+      // 不在光照区域内
+      if (visible && visible[y]?.[x]) continue;
       return { x, y };
     }
     return null;
   }
 
+  _getVisibilityMatrix() {
+    const ts = this._buildingSystem?._torchSystem;
+    return ts ? ts.getVisibilityMatrix() : null;
+  }
+
   /** 在已照明区外缘向外 3~8 格的环带里找可刷新空地 */
   _findSpawnOnVisibilityRing() {
-    const torch = this._buildingSystem?._torchSystem;
-    if (!torch) return null;
-    const visible = torch.getVisibilityMatrix();
-    if (!visible || visible.length === 0) return null;
+    if (!this._mapConfig) return null;
     const gh = this._mapConfig.gridHeight;
     const gw = this._mapConfig.gridWidth;
-    const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+    const visible = this._getVisibilityMatrix();
+    if (!visible || visible.length === 0) return null;
 
-    // 收集照明区边界格（可见且至少有一个不可见邻居）
+    // 9.怪物只能在光源边缘6格以外生成
+    // 收集光源边缘
+    const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
     const edge = [];
     for (let y = 0; y < gh; y++) {
       for (let x = 0; x < gw; x++) {
@@ -257,39 +261,13 @@ export class CombatSystem {
     }
     if (edge.length === 0) return null;
 
-    // 从边界向外扩 3~8 格随机尝试
-    for (let attempt = 0; attempt < 60; attempt++) {
+    // 从边界向外 6+ 格尝试
+    for (let attempt = 0; attempt < 80; attempt++) {
       const e = edge[Math.floor(Math.random() * edge.length)];
-      const dist = 3 + Math.floor(Math.random() * 6); // 3~8
+      const dist = 6 + Math.floor(Math.random() * 8); // 6~13
       const ang = Math.random() * Math.PI * 2;
       const x = Math.round(e.x + Math.cos(ang) * dist);
       const y = Math.round(e.y + Math.sin(ang) * dist);
-      if (x < 0 || y < 0 || x >= gw || y >= gh) continue;
-      if (!this._mapConfig.grid[y]?.[x]) continue;
-      if (this._isBlocked(x, y)) continue;
-      if (this.getEnemyAt(x, y) || this.getUnitAt(x, y)) continue;
-      return { x, y };
-    }
-    return null;
-  }
-
-  /** 在已建成建筑外缘向外 2~6 格环带刷新（无照明时回退方案） */
-  _findSpawnOnBuildingRing() {
-    if (!this._buildingSystem || this._buildingSystem.buildings.length === 0) return null;
-    const gw = this._mapConfig.gridWidth;
-    const gh = this._mapConfig.gridHeight;
-    for (let attempt = 0; attempt < 60; attempt++) {
-      const b = this._buildingSystem.buildings[
-        Math.floor(Math.random() * this._buildingSystem.buildings.length)
-      ];
-      const c = configRegistry.getBuilding(b.buildingId);
-      if (!c) continue;
-      const cx = b.gridX + Math.floor(c.footprint.width / 2);
-      const cy = b.gridY + Math.floor(c.footprint.height / 2);
-      const dist = 2 + Math.floor(Math.random() * 5); // 2~6
-      const ang = Math.random() * Math.PI * 2;
-      const x = Math.round(cx + Math.cos(ang) * dist);
-      const y = Math.round(cy + Math.sin(ang) * dist);
       if (x < 0 || y < 0 || x >= gw || y >= gh) continue;
       if (!this._mapConfig.grid[y]?.[x]) continue;
       if (this._isBlocked(x, y)) continue;

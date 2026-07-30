@@ -12,6 +12,7 @@ export class BuildingSystem {
     this.buildings = []; // 运行时建筑实例列表
     this.placingState = 'IDLE'; // IDLE | SELECTING | PLACING
     this.placingBuildingId = null;
+    this._roadSystem = null;
     this._resourceSystem = null;
     this._populationSystem = null;
     this._mapConfig = null;
@@ -62,12 +63,6 @@ export class BuildingSystem {
     const h = config.footprint.height;
     const map = this._mapConfig;
 
-    // 迷雾检查：仅在"永夜迷雾模式"下要求建筑占地全部在火把可见范围内
-    if (this._torchSystem && this._torchSystem.isDarknessMode() &&
-        !this._torchSystem.canBuild(gridX, gridY, w, h)) {
-      return { valid: false, reason: '该区域尚未探索（永夜迷雾模式）' };
-    }
-
     // 边界检查
     if (!isAreaInBounds(gridX, gridY, w, h, map.gridWidth, map.gridHeight)) {
       return { valid: false, reason: '超出地图边界' };
@@ -102,20 +97,20 @@ export class BuildingSystem {
       }
     }
 
+    // 道路上不可修建建筑
+    if (this._roadSystem) {
+      for (const road of this._roadSystem.roads) {
+        if (isAreaOverlap(gridX, gridY, w, h, road.gridX, road.gridY, 1, 1)) {
+          return { valid: false, reason: '道路上不能修建建筑' };
+        }
+      }
+    }
+
     // 重叠检查（已有建筑）
     for (const b of this.buildings) {
       const bConfig = configRegistry.getBuilding(b.buildingId);
       if (isAreaOverlap(gridX, gridY, w, h, b.gridX, b.gridY, bConfig.footprint.width, bConfig.footprint.height)) {
         return { valid: false, reason: '与已有建筑重叠' };
-      }
-    }
-
-    // 重叠检查（已有火把）
-    if (this._torchSystem) {
-      for (const t of this._torchSystem.torches) {
-        if (isAreaOverlap(gridX, gridY, w, h, t.gridX, t.gridY, 1, 1)) {
-          return { valid: false, reason: '与已有火把重叠' };
-        }
       }
     }
 
@@ -137,7 +132,12 @@ export class BuildingSystem {
       }
     }
 
-    // 道路邻接检查已移除：建筑不再强制要求邻接道路或仓库
+    // 道路依赖建筑：必须邻接道路
+    if (config.roadRequired && this._roadSystem) {
+      if (!this._roadSystem.hasAdjacentRoad(gridX, gridY, w, h)) {
+        return { valid: false, reason: '该建筑需要紧邻道路（道路依赖）' };
+      }
+    }
 
     return { valid: true };
   }
@@ -504,12 +504,6 @@ export class BuildingSystem {
     const h = config.footprint.height;
     const map = this._mapConfig;
 
-    // 迷雾检查：仅在"永夜迷雾模式"下要求目标区域在火把可见范围内
-    if (this._torchSystem && this._torchSystem.isDarknessMode() &&
-        !this._torchSystem.canBuild(newGridX, newGridY, w, h)) {
-      return { valid: false, reason: '目标区域尚未探索（永夜迷雾模式）' };
-    }
-
     // 边界检查
     if (!isAreaInBounds(newGridX, newGridY, w, h, map.gridWidth, map.gridHeight)) {
       return { valid: false, reason: '超出地图边界' };
@@ -541,6 +535,15 @@ export class BuildingSystem {
       }
     }
 
+    // 道路上不可修建建筑
+    if (this._roadSystem) {
+      for (const road of this._roadSystem.roads) {
+        if (isAreaOverlap(newGridX, newGridY, w, h, road.gridX, road.gridY, 1, 1)) {
+          return { valid: false, reason: '道路上不能修建建筑' };
+        }
+      }
+    }
+
     // 重叠检查（排除自身）
     for (let i = 0; i < this.buildings.length; i++) {
       if (i === buildingIndex) continue;
@@ -551,18 +554,6 @@ export class BuildingSystem {
       }
     }
 
-    // 重叠检查（已有火把，排除自身的火把）
-    if (this._torchSystem) {
-      const bldg = this.buildings[buildingIndex];
-      for (const t of this._torchSystem.torches) {
-        // 排除自身（火把建筑移动到新位置时，旧位置的火把还在）
-        if (t.gridX === bldg.gridX && t.gridY === bldg.gridY && t.torchId === bldg.buildingId) continue;
-        if (isAreaOverlap(newGridX, newGridY, w, h, t.gridX, t.gridY, 1, 1)) {
-          return { valid: false, reason: '与已有火把重叠' };
-        }
-      }
-    }
-
     // 重叠检查（活跃的事件标记）
     const removedIds = new Set(store.getState('removedEventMarkers') || []);
     const eventMarkers = map.eventMarkers || [];
@@ -570,6 +561,13 @@ export class BuildingSystem {
       if (removedIds.has(marker.id)) continue;
       if (isAreaOverlap(newGridX, newGridY, w, h, marker.gridX, marker.gridY, 1, 1)) {
         return { valid: false, reason: '与事件标记重叠' };
+      }
+    }
+
+    // 道路依赖建筑：必须邻接道路
+    if (config.roadRequired && this._roadSystem) {
+      if (!this._roadSystem.hasAdjacentRoad(newGridX, newGridY, w, h)) {
+        return { valid: false, reason: '该建筑需要紧邻道路（道路依赖）' };
       }
     }
 
@@ -587,9 +585,41 @@ export class BuildingSystem {
     building.gridX = newGridX;
     building.gridY = newGridY;
 
+    // 检查移动后建筑有效性
+    const validity = this.checkBuildingValidity(buildingIndex);
+    building._invalid = !validity.valid;
+    building._invalidReason = validity.reason || '';
+
     this._updateStore();
     eventBus.emit('buildingMoved', { buildingIndex, building });
     return true;
+  }
+
+  checkBuildingValidity(buildingIndex) {
+    const building = this.buildings[buildingIndex];
+    if (!building) return { valid: true };
+    const config = configRegistry.getBuilding(building.buildingId);
+    if (!config) return { valid: true };
+    // 道路依赖建筑检查
+    if (config.roadRequired && this._roadSystem) {
+      if (!this._roadSystem.hasAdjacentRoad(building.gridX, building.gridY, config.footprint.width, config.footprint.height)) {
+        return { valid: false, reason: '需要紧邻道路' };
+      }
+    }
+    return { valid: true };
+  }
+
+  /** 检查所有建筑有效性，更新_invalid标记并重绘 */
+  checkAllBuildingsValidity() {
+    let changed = false;
+    for (let i = 0; i < this.buildings.length; i++) {
+      const check = this.checkBuildingValidity(i);
+      const wasInvalid = this.buildings[i]._invalid;
+      this.buildings[i]._invalid = !check.valid;
+      this.buildings[i]._invalidReason = check.valid ? '' : (check.reason || '');
+      if (wasInvalid !== this.buildings[i]._invalid) changed = true;
+    }
+    if (changed) this._updateStore();
   }
 
   // ===== Tick 处理 =====
@@ -749,6 +779,7 @@ export class BuildingSystem {
     let total = 0;
     for (const b of this.buildings) {
       if (b.status !== 'active') continue;
+      if (b._invalid) continue; // 失效建筑不提供住宅上限
       const config = configRegistry.getBuilding(b.buildingId);
       if (config && config.housingCapacity) {
         total += config.housingCapacity;
@@ -756,6 +787,10 @@ export class BuildingSystem {
     }
     return total;
   }
+
+  /**
+   * 获取每天食物产出量（每工人每天产出 foodCapacity 食物）
+   */
 
   /**
    * 获取每天食物产出量（每工人每天产出 foodCapacity 食物）

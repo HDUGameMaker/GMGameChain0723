@@ -273,6 +273,38 @@
       color: var(--accent);
     }
 
+    .hud-btn-top {
+      width: 36px;
+      height: 36px;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    /* 暂停状态指示（顶部栏居中） */
+    #pause-indicator {
+      display: none;
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ff4444;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 6px 18px;
+      border-radius: 20px;
+      z-index: 9999;
+      letter-spacing: 0.05em;
+      box-shadow: 0 0 16px rgba(255,68,68,0.5);
+      animation: pause-pulse 1.5s ease-in-out infinite;
+    }
+    #pause-indicator.visible { display: block; }
+
+    @keyframes pause-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
     /* ===== 底部操作栏 ===== */
     #hud-bottom {
       position: absolute;
@@ -289,9 +321,12 @@
       -webkit-backdrop-filter: blur(8px);
     }
 
+    .hud-spacer { flex: 1; min-width: 40px; }
+
     .hud-btn {
-      width: 48px;
+      min-width: 48px;
       height: 48px;
+      padding: 4px 10px;
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       background: var(--bg-card);
@@ -325,6 +360,38 @@
 
     .hud-btn.hidden {
       display: none;
+    }
+    .hud-btn-icon { font-size: 18px; line-height: 1; }
+    .hud-btn-label { font-size: 10px; font-weight: 500; line-height: 1; color: var(--text-muted); }
+    .hud-btn-speed { min-width: 48px; padding: 4px 6px; }
+
+    /* ===== 挪动模式切换按钮（右下角）===== */
+    #move-mode-toggle {
+      position: absolute;
+      bottom: 80px;
+      right: 16px;
+      z-index: 1000;
+    }
+    #btn-move-mode {
+      padding: 8px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      backdrop-filter: blur(4px);
+      transition: all 0.2s;
+    }
+    #btn-move-mode:hover {
+      background: var(--bg-card-hover);
+    }
+    #btn-move-mode.active {
+      border-color: rgba(240, 160, 64, 0.5);
+      background: rgba(240, 160, 64, 0.15);
+      color: #f0a040;
     }
 
     /* ===== 弹窗系统 ===== */
@@ -849,6 +916,62 @@
       white-space: pre-line;
       margin-bottom: 16px;
     }
+    /* ===== 任务悬浮窗（右侧）===== */
+    #quest-widget {
+      position: fixed;
+      top: 120px;
+      right: 12px;
+      z-index: 1100;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(8px);
+      cursor: pointer;
+      transition: opacity 0.3s, transform 0.3s;
+      max-width: 220px;
+    }
+    #quest-widget:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(91,141,239,0.15);
+    }
+    #quest-widget.hidden { display: none; }
+    #quest-widget-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    #quest-widget-text {
+      font-size: 12px;
+      color: #ececf0;
+      line-height: 1.4;
+    }
+    #quest-widget-text .qw-name {
+      font-weight: 600;
+      font-size: 13px;
+    }
+    #quest-widget-text .qw-progress {
+      color: #888;
+      font-size: 11px;
+    }
+    /* 红点提示 */
+    #quest-widget .qw-dot {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 12px;
+      height: 12px;
+      background: #ff4444;
+      border-radius: 50%;
+      border: 2px solid var(--bg-card);
+      animation: dot-pulse 2s ease-in-out infinite;
+    }
+    @keyframes dot-pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.7; }
+    }
   </style>
 </head>
 <body>
@@ -862,7 +985,15 @@
         <div id="weather-display"></div>
         <div id="time-display"></div>
         <div id="viewport-center-display" title="当前视角中心所在的网格坐标"></div>
+        <button class="hud-btn hud-btn-top" id="btn-fullscreen" title="全屏">⛶</button>
+        <button class="hud-btn hud-btn-top" id="btn-settings" title="设置">⚙️</button>
       </div>
+    </div>
+
+    <!-- 任务悬浮窗 -->
+    <div id="quest-widget" class="hidden">
+      <div id="quest-widget-icon"></div>
+      <div id="quest-widget-text"></div>
     </div>
 
     <!-- 消息播报系统 -->
@@ -874,17 +1005,22 @@
     <div id="expedition-status"></div>
 
     <div id="hud-bottom">
-      <button class="hud-btn" id="btn-tech" title="科技">🔬</button>
-      <button class="hud-btn" id="btn-culture" title="人文">📜</button>
-      <button class="hud-btn" id="btn-alchemy" title="炼金">🧪</button>
-      <button class="hud-btn" id="btn-tame" title="驯养">🐾</button>
-      <button class="hud-btn" id="btn-road" title="道路">🛤️</button>
-      <button class="hud-btn" id="btn-build" title="建设">🏗️</button>
+      <button class="hud-btn" id="btn-tech" title="科技"><span class="hud-btn-icon">🔬</span><span class="hud-btn-label">科技</span></button>
+      <button class="hud-btn" id="btn-culture" title="人文"><span class="hud-btn-icon">📜</span><span class="hud-btn-label">人文</span></button>
+      <button class="hud-btn" id="btn-alchemy" title="炼金" style="display:none"><span class="hud-btn-icon">🧪</span><span class="hud-btn-label">炼金</span></button>
+      <button class="hud-btn" id="btn-tame" title="驯养"><span class="hud-btn-icon">🐾</span><span class="hud-btn-label">驯养</span></button>
+      <button class="hud-btn" id="btn-road" title="道路"><span class="hud-btn-icon">🛤️</span><span class="hud-btn-label">铺路</span></button>
+      <button class="hud-btn" id="btn-quest" title="任务"><span class="hud-btn-icon">📋</span><span class="hud-btn-label">任务</span></button>
+      <button class="hud-btn" id="btn-build" title="建设"><span class="hud-btn-icon">🏗️</span><span class="hud-btn-label">建设</span></button>
       <button class="hud-btn" id="btn-cancel-place" title="取消放置" style="display:none">✕</button>
-      <button class="hud-btn" id="btn-fullscreen" title="全屏">⛶</button>
-      <button class="hud-btn" id="btn-settings" title="设置">⚙️</button>
-      <button class="hud-btn" id="btn-speed" title="加速">⏩</button>
-      <button class="hud-btn" id="btn-pause" title="暂停">⏸</button>
+      <div class="hud-spacer"></div>
+      <button class="hud-btn hud-btn-speed" id="btn-speed" title="加速">⏩</button>
+      <button class="hud-btn hud-btn-speed" id="btn-pause" title="暂停">⏸</button>
+    </div>
+
+    <!-- 挪动模式/常时模式切换 -->
+    <div id="move-mode-toggle">
+      <button id="btn-move-mode" title="挪动模式">✋ 常时模式</button>
     </div>
   </div>
 

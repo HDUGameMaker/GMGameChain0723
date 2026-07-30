@@ -385,11 +385,6 @@
   ],
   "initialBuildings": [
     {
-      "buildingId": "eternal_torch",
-      "gridX": 80,
-      "gridY": 113
-    },
-    {
       "buildingId": "work_shed",
       "gridX": 80,
       "gridY": 110
@@ -402,7 +397,7 @@
   ],
   "viewportCenter": {
     "defaultGridX": 80,
-    "defaultGridY": 113,
+    "defaultGridY": 110,
     "useLastSavedPosition": false
   }
 }

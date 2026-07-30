@@ -186,18 +186,9 @@ export class RoadSystem {
       }
     }
 
-    // 不与火把重叠
-    if (this._buildingSystem?._torchSystem) {
-      for (const t of this._buildingSystem._torchSystem.torches) {
-        if (t.gridX === gridX && t.gridY === gridY) {
-          return { valid: false, reason: '与火把重叠' };
-        }
-      }
-    }
-
-    // 连通性检查：除非是邻接已有道路或邻接仓库，否则不能铺
+    // 连通性检查：必须邻接已有道路或建筑
     if (!this._isConnectedToNetwork(gridX, gridY)) {
-      return { valid: false, reason: '道路必须邻接已有道路或仓库' };
+      return { valid: false, reason: '道路必须邻接已有道路或建筑' };
     }
 
     return { valid: true };
@@ -207,29 +198,24 @@ export class RoadSystem {
    * 检查一格是否与已有路网连通（或邻接仓库）
    */
   _isConnectedToNetwork(gridX, gridY) {
-    // 有道路网络（包括建造中的） → 必须邻接已有道路
     if (this.roads.length > 0) {
       return this._hasAdjacentRoad(gridX, gridY);
     }
-
-    // 没有道路网络 → 第一格必须邻接仓库类建筑
+    // 无道路时：第一格必须邻接任意建筑
     if (this._buildingSystem) {
       for (const b of this._buildingSystem.buildings) {
         const cfg = configRegistry.getBuilding(b.buildingId);
-        if (cfg && cfg.storageMultiplier) {
-          const bw = cfg.footprint.width;
-          const bh = cfg.footprint.height;
-          // 检查是否紧贴仓库的边
-          if (gridX >= b.gridX - 1 && gridX < b.gridX + bw + 1 &&
-              gridY >= b.gridY - 1 && gridY < b.gridY + bh + 1 &&
-              !(gridX >= b.gridX && gridX < b.gridX + bw &&
-                gridY >= b.gridY && gridY < b.gridY + bh)) {
-            return true;
-          }
+        if (!cfg) continue;
+        const bw = cfg.footprint.width;
+        const bh = cfg.footprint.height;
+        if (gridX >= b.gridX - 1 && gridX < b.gridX + bw + 1 &&
+            gridY >= b.gridY - 1 && gridY < b.gridY + bh + 1 &&
+            !(gridX >= b.gridX && gridX < b.gridX + bw &&
+              gridY >= b.gridY && gridY < b.gridY + bh)) {
+          return true;
         }
       }
     }
-
     return false;
   }
 
@@ -241,19 +227,18 @@ export class RoadSystem {
     for (const [dx, dy] of dirs) {
       if (this.getRoadAt(gridX + dx, gridY + dy) !== null) return true;
     }
-    // 也检查邻接仓库
+    // 也检查邻接建筑
     if (this._buildingSystem) {
       for (const b of this._buildingSystem.buildings) {
         const cfg = configRegistry.getBuilding(b.buildingId);
-        if (cfg && cfg.storageMultiplier) {
-          const bw = cfg.footprint.width;
-          const bh = cfg.footprint.height;
-          if (gridX >= b.gridX - 1 && gridX < b.gridX + bw + 1 &&
-              gridY >= b.gridY - 1 && gridY < b.gridY + bh + 1 &&
-              !(gridX >= b.gridX && gridX < b.gridX + bw &&
-                gridY >= b.gridY && gridY < b.gridY + bh)) {
-            return true;
-          }
+        if (!cfg) continue;
+        const bw = cfg.footprint.width;
+        const bh = cfg.footprint.height;
+        if (gridX >= b.gridX - 1 && gridX < b.gridX + bw + 1 &&
+            gridY >= b.gridY - 1 && gridY < b.gridY + bh + 1 &&
+            !(gridX >= b.gridX && gridX < b.gridX + bw &&
+              gridY >= b.gridY && gridY < b.gridY + bh)) {
+          return true;
         }
       }
     }
@@ -361,9 +346,8 @@ export class RoadSystem {
     const idx = this.roads.findIndex(r => r.gridX === gridX && r.gridY === gridY);
     if (idx === -1) return false;
 
-    // 最少保留一段路（不能拆光）
-    const activeRoads = this.roads.filter(r => r.buildProgress === null);
-    if (activeRoads.length <= 1 && this.roads[idx].buildProgress === null) return false;
+    // 至少保留一条邻接仓库的道路
+    if (!this._canRemoveRoad(idx)) return false;
 
     const road = this.roads[idx];
     const roadConfig = this.getRoadConfig(road.roadId);
@@ -386,6 +370,11 @@ export class RoadSystem {
     this.roads.splice(idx, 1);
     this._notifyChange();
     eventBus.emit('roadRemoved', { gridX, gridY });
+
+    // 道路删除后检查道路依赖建筑
+    if (this._buildingSystem) {
+      this._buildingSystem.checkAllBuildingsValidity();
+    }
     return true;
   }
 
@@ -468,6 +457,34 @@ export class RoadSystem {
 
   // ===== 内部方法 =====
 
+  _canRemoveRoad(idx) {
+    // 计算移除后仓库是否还有至少一条邻接道路
+    const remaining = this.roads.filter((_, i) => i !== idx);
+    const activeRest = remaining.filter(r => r.buildProgress === null);
+    if (activeRest.length === 0) return false;
+
+    if (!this._buildingSystem) return true;
+    for (const b of this._buildingSystem.buildings) {
+      const cfg = configRegistry.getBuilding(b.buildingId);
+      if (!cfg || !cfg.storageMultiplier) continue;
+      let hasAdj = false;
+      for (const r of activeRest) {
+        if (this._isAdjacentToBuilding(r.gridX, r.gridY, b, cfg)) {
+          hasAdj = true; break;
+        }
+      }
+      if (!hasAdj) return false;
+    }
+    return true;
+  }
+
+  _isAdjacentToBuilding(gx, gy, b, cfg) {
+    return gx >= b.gridX - 1 && gx < b.gridX + cfg.footprint.width + 1 &&
+           gy >= b.gridY - 1 && gy < b.gridY + cfg.footprint.height + 1 &&
+           !(gx >= b.gridX && gx < b.gridX + cfg.footprint.width &&
+             gy >= b.gridY && gy < b.gridY + cfg.footprint.height);
+  }
+
   _notifyChange() {
     store.setState({ roadVersion: Date.now() });
   }
@@ -485,13 +502,11 @@ export class RoadSystem {
   }
 
   restoreState(states) {
-    if (!states || !Array.isArray(states) || states.length === 0) {
-      // 无道路数据 → 从建筑生成初始道路
+    if (!states || !Array.isArray(states)) {
       this.roads = [];
       this.initFromBuildings();
       return;
     }
-    // 读档时为建造中道路补 startTick/startTimeProgress，避免进度条公式失真
     const state = store.getState();
     const currentTick = state.timeTick ?? 0;
     this.roads = states.map(s => ({

@@ -30,11 +30,6 @@
     "description": "工作站系"
   },
   {
-    "id": "torch",
-    "name": "火把系",
-    "description": "火把系"
-  },
-  {
     "id": "fishing_ground",
     "name": "渔场系",
     "description": "渔场系建筑"

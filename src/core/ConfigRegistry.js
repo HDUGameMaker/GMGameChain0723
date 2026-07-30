@@ -28,7 +28,8 @@ class ConfigRegistry {
       'techs': 'config/techs.json',
       'enemies': 'config/enemies.json',
       'culture': 'config/culture.json',
-      'alchemy': 'config/alchemy.json'
+      'alchemy': 'config/alchemy.json',
+      'quests': 'config/quests.json'
     };
 
     const loadPromises = Object.entries(configFiles).map(async ([key, path]) => {

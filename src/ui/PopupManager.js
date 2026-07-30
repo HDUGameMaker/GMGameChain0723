@@ -192,7 +192,8 @@ export class PopupManager {
       'culture_tree': '人文树',
       'alchemy_lab': '炼金实验室',
       'potion_inventory': '药剂库存',
-      'tamed_pool': '驯养管理'
+      'tamed_pool': '驯养管理',
+      'quest_panel': '任务'
     };
     return titles[type] || '';
   }
@@ -255,6 +256,9 @@ export class PopupManager {
       this.register('tamed_pool', (data, body, pm) => {
         m.renderTamedPoolPanel({ ...data, combatSystem: this._combatSystem }, body, pm);
       });
+    });
+    import('./panels/quest-panel.js').then(m => {
+      this.register('quest_panel', m.renderQuestPanel);
     });
   }
 }

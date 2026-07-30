@@ -41,17 +41,19 @@ export class MapRenderer {
     this.terrainContainer = new PIXI.Container();
     this.gameView.addChild(this.terrainContainer);
 
-    // 2. 移动世界层（建筑/火把/虚影，世界坐标，容器位移 = -cam）
+    // 2. 移动世界层（建筑/虚影，世界坐标，容器位移 = -cam）
     this.worldContainer = new PIXI.Container();
-    this.roadLayer = new PIXI.Container();
-    this.torchLayer = new PIXI.Container();
     this.buildingLayer = new PIXI.Container();
     this.ghostLayer = new PIXI.Container();
+    // Alt 光源边界描边层
+    this.lightOverlay = new PIXI.Container();
+    this.lightOverlay.visible = false;
     this.gameView.addChild(this.worldContainer);
-    this.worldContainer.addChild(this.roadLayer);
     this.worldContainer.addChild(this.buildingLayer);
-    this.worldContainer.addChild(this.torchLayer);
+    this.roadLayer = new PIXI.Container();
+    this.worldContainer.addChild(this.roadLayer);
     this.worldContainer.addChild(this.ghostLayer);
+    this.worldContainer.addChild(this.lightOverlay);
 
     // 3. 固定迷雾层（永远在 0,0，迷雾以视口本地坐标绘制 → 始终铺满屏幕）
     this.fogContainer = new PIXI.Container();
@@ -86,10 +88,8 @@ export class MapRenderer {
 
     // 地图上建造进度条的 PIXI 填充对象引用
     this._mapBuildFills = [];
-    this._unregisterMapBars = null;
-
-    // 道路建造进度条引用
     this._roadBuildFills = [];
+    this._unregisterMapBars = null;
 
     // 地图上合成进度条的 PIXI 填充对象引用
     this._mapSynthFills = [];
@@ -139,9 +139,8 @@ export class MapRenderer {
     this._drawTerrainChunk();
     this._drawExpeditionEntrances();
     this._drawEventMarkers();
-    this._drawRoads();
     this._drawEnemies();
-    this._drawTorches();
+    this._drawRoads();
     this._createFogCanvas();
     this.refreshBuildings();
   }
@@ -260,6 +259,59 @@ export class MapRenderer {
 
   // ===== 地图事件标记渲染 =====
 
+  // ===== 道路渲染 =====
+
+  _drawRoads() {
+    this.roadLayer.removeChildren();
+    this._roadBuildFills = [];
+    if (!this._roadSystem) return;
+    const ts = this.tileSize;
+    const roads = this._roadSystem.getAllStates();
+    if (!roads || roads.length === 0) return;
+    const roadConfig = this._roadSystem.getDefaultRoadConfig();
+    const baseColor = roadConfig ? parseInt(roadConfig.color.replace('#', ''), 16) : 0x8B7355;
+
+    for (const r of roads) {
+      const x = r.gridX * ts;
+      const y = r.gridY * ts;
+      const constructing = r.buildProgress !== null;
+
+      const g = new PIXI.Graphics();
+      g.rect(x + 4, y + 4, ts - 8, ts - 8);
+      g.fill({ color: constructing ? 0x666666 : baseColor, alpha: constructing ? 0.4 : 0.8 });
+      this.roadLayer.addChild(g);
+
+      // 建造进度条
+      if (constructing) {
+        const barW = ts - 12;
+        const barH = 4;
+        const barX = x + 6;
+        const barY = y + ts / 2 - 2;
+
+        const bg = new PIXI.Graphics();
+        bg.rect(barX, barY, barW, barH);
+        bg.fill({ color: 0x333333, alpha: 0.6 });
+        this.roadLayer.addChild(bg);
+
+        const fill = new PIXI.Graphics();
+        fill.rect(barX, barY, 0, barH);
+        fill.fill({ color: 0xffaa00, alpha: 0.9 });
+        this.roadLayer.addChild(fill);
+
+        const total = r.buildTime || 1;
+        const cur = r.buildProgress ?? 0;
+        const ratio = Math.min(1, cur / total);
+        fill.clear();
+        fill.rect(barX, barY, barW * ratio, barH);
+        fill.fill({ color: 0xffaa00, alpha: 0.9 });
+
+        this._roadBuildFills.push({ fill, gridX: r.gridX, gridY: r.gridY, barX, barY, barW, barH });
+      }
+    }
+  }
+
+  // ===== 地图事件标记渲染 =====
+
   /**
    * 绘制地图上的事件标记（"?"）
    * 从 base_map.json 的 eventMarkers 数组读取
@@ -348,102 +400,6 @@ export class MapRenderer {
     this._eventMarkerData = [];
     // 重新绘制
     this._drawEventMarkers();
-  }
-
-  // ===== 道路渲染 =====
-
-  /**
-   * 绘制所有道路
-   */
-  _drawRoads() {
-    this.roadLayer.removeChildren();
-    this._roadBuildFills = [];
-    if (!this._roadSystem) {
-      console.log('[RoadDraw] _roadSystem is null');
-      return;
-    }
-
-    const ts = this.tileSize;
-    const roads = this._roadSystem.getAllStates();
-    console.log('[RoadDraw] roads count:', roads ? roads.length : 0, 'roadSystem:', !!this._roadSystem);
-    if (!roads || roads.length === 0) return;
-
-    const roadConfig = this._roadSystem.getDefaultRoadConfig();
-    const baseColor = roadConfig ? parseInt(roadConfig.color.replace('#', ''), 16) : 0x8B7355;
-    const baseAlpha = roadConfig ? roadConfig.alpha : 0.8;
-
-    for (const r of roads) {
-      const x = r.gridX * ts;
-      const y = r.gridY * ts;
-
-      // 判断是否在建造中（buildProgress !== null）
-      const constructing = r.buildProgress !== null;
-      const color = constructing ? 0x666666 : baseColor;
-      const alpha = constructing ? 0.4 : baseAlpha;
-
-      const g = new PIXI.Graphics();
-      // 道路底色
-      g.rect(x + 4, y + 4, ts - 8, ts - 8);
-      g.fill({ color, alpha });
-
-      // 道路边框（轻微加深）
-      g.rect(x + 4, y + 4, ts - 8, ts - 8);
-      g.stroke({ color: 0x6B5330, alpha: constructing ? 0.2 : 0.4, width: 1 });
-
-      this.roadLayer.addChild(g);
-
-      // 建造中的道路：叠加进度条
-      if (constructing) {
-        const barWidth = ts - 12;
-        const barHeight = 4;
-        const barX = x + 6;
-        const barY = y + ts - 10;
-
-        // 背景条
-        const bg = new PIXI.Graphics();
-        bg.rect(barX, barY, barWidth, barHeight);
-        bg.fill({ color: 0x333333, alpha: 0.6 });
-        this.roadLayer.addChild(bg);
-
-        // 填充条（进度由 _updateRoadBuildBars 每帧更新）
-        const fill = new PIXI.Graphics();
-        fill.rect(barX, barY, 0, barHeight);
-        fill.fill({ color: 0xffaa00, alpha: 0.9 });
-        this.roadLayer.addChild(fill);
-
-        this._roadBuildFills.push({
-          fill,
-          gridX: r.gridX,
-          gridY: r.gridY,
-          barX, barY, barWidth, barHeight
-        });
-      }
-    }
-  }
-
-  /**
-   * 每帧更新道路建造进度条
-   */
-  _updateRoadBuildBars() {
-    const t = store.getState('timeProgress') || 0;
-    for (const ref of this._roadBuildFills) {
-      const road = this._roadSystem.getRoadAt(ref.gridX, ref.gridY);
-      if (!road || road.buildProgress === null) {
-        ref.fill.clear();
-        continue;
-      }
-      const bt = road.buildTime || 1;
-      const cur = road.buildProgress ?? 0;
-      // base/next 插值模型（与建筑/合成条一致），消除 tick 边界跳变
-      const base = cur / bt;
-      const next = (cur + 1) / bt;
-      let smooth = base + (next - base) * t;
-      smooth = Math.max(0, Math.min(1, smooth));
-
-      ref.fill.clear();
-      ref.fill.rect(ref.barX, ref.barY, ref.barWidth * smooth, ref.barHeight);
-      ref.fill.fill({ color: 0xffaa00, alpha: 0.9 });
-    }
   }
 
   // ===== 敌人渲染 =====
@@ -582,59 +538,6 @@ export class MapRenderer {
     }
   }
 
-  // ===== 火把渲染 =====
-
-  _drawTorches() {
-    if (!this._torchSystem) return;
-    this.torchLayer.removeChildren();
-    this._torchSprites = [];
-
-    const ts = this.tileSize;
-
-    for (let i = 0; i < this._torchSystem.torches.length; i++) {
-      const torch = this._torchSystem.torches[i];
-      const cfg = this._torchSystem.getTorchConfig(torch.torchId);
-      if (!cfg) continue;
-
-      // 火把建筑处于 constructing 状态时，由 building layer 渲染进度条，
-      // torch layer 不重复渲染（升级/建造完成后恢复火焰图标显示）
-      if (this.buildingSystem) {
-        const building = this.buildingSystem.buildings.find(
-          b => b.gridX === torch.gridX && b.gridY === torch.gridY
-        );
-        if (building && building.status === 'constructing') continue;
-      }
-
-      const container = new PIXI.Container();
-      const cx = (torch.gridX + 0.5) * ts;
-      const cy = (torch.gridY + 0.5) * ts;
-
-      // 微弱光晕（点燃时）
-      if (torch.lit) {
-        const glow = new PIXI.Graphics();
-        glow.circle(cx, cy, cfg.radius * ts);
-        glow.fill({ color: 0xffaa00, alpha: 0.04 });
-        container.addChild(glow);
-      }
-
-      // 火把图标
-      const icon = new PIXI.Text({
-        text: torch.lit ? '🔥' : '🕯️',
-        style: { fontSize: Math.min(20, ts * 0.35) }
-      });
-      icon.anchor.set(0.5);
-      icon.x = cx;
-      icon.y = cy;
-      container.addChild(icon);
-
-      // 存储索引
-      container.__torchIndex = i;
-
-      this.torchLayer.addChild(container);
-      this._torchSprites.push(container);
-    }
-  }
-
   // ===== 迷雾渲染（Canvas 2D 离屏纹理）=====
 
   /**
@@ -661,28 +564,46 @@ export class MapRenderer {
 
   /**
    * 根据当前时段返回迷雾底色的不透明度（0=完全透明=白天，1=全黑=深夜）
-   * 白天几乎无暗化；傍晚渐暗；深夜最暗。火把光照区域由 destination-out 擦除，
-   * 始终保持明亮，因此"夜晚整体暗化但火把光照范围除外"天然成立。
    */
   _getFogBaseAlpha() {
-    // 永夜迷雾模式：无视时段，全图恒定近全黑（仅火把照亮范围由 destination-out 擦除保持明亮）
-    if (this._torchSystem && this._torchSystem.isDarknessMode()) {
-      return 0.97;
-    }
     const period = store.getState('timePeriod') || 'morning';
     switch (period) {
       case 'morning':   return 0.05;  // 清晨：基本无暗化
       case 'afternoon': return 0.00;  // 下午：完全明亮
       case 'evening':   return 0.45;  // 傍晚：明显变暗
-      case 'night':     return 0.82;  // 深夜：接近全黑（火把范围除外）
+      case 'night':     return 0.82;  // 深夜：接近全黑（建筑/道路光照范围除外）
       default:          return 0.05;
     }
   }
 
   /**
+   * 收集所有光源矩形（网格坐标）
+   * n×n建筑：(n+2)×(n+2) 居中于建筑占地
+   */
+  _computeLightRects() {
+    const rects = [];
+    if (this.buildingSystem) {
+      for (const b of this.buildingSystem.buildings) {
+        if (b.status !== 'active') continue;
+        const cfg = configRegistry.getBuilding(b.buildingId);
+        if (!cfg) continue;
+        const bw = cfg.footprint.width;
+        const bh = cfg.footprint.height;
+        rects.push({ gx: b.gridX - 1, gy: b.gridY - 1, gw: bw + 2, gh: bh + 2 });
+      }
+    }
+    if (this._roadSystem) {
+      for (const road of this._roadSystem.roads) {
+        if (road.buildProgress !== null) continue;
+        rects.push({ gx: road.gridX - 1, gy: road.gridY - 1, gw: 3, gh: 3 });
+      }
+    }
+    return rects;
+  }
+
+  /**
    * 在 Canvas 2D 上重新绘制迷雾纹理
-   * 迷雾覆盖整个屏幕，火把世界坐标转视口本地坐标（减去 camX/camY）
-   * 底色不透明度随时段变化（昼夜亮暗），火把光照区域用 destination-out 擦除保持明亮
+   * 建筑+道路提供矩形光照，其余区域按时段暗化
    */
   _updateFogTexture() {
     if (!this._fogCanvas) return;
@@ -692,7 +613,6 @@ export class MapRenderer {
     const w = this._fogCanvas.width;
     const h = this._fogCanvas.height;
 
-    // 1. 全屏填充迷雾色（不透明度随时段变化 → 昼夜亮暗）
     ctx.globalCompositeOperation = 'source-over';
     ctx.clearRect(0, 0, w, h);
     const baseAlpha = this._getFogBaseAlpha();
@@ -701,37 +621,51 @@ export class MapRenderer {
       ctx.fillRect(0, 0, w, h);
     }
 
-    // 2. 用 destination-out 清除每个点燃火把的照亮区域（世界坐标 → 视口本地坐标）
-    if (this._torchSystem) {
+    const rects = this._computeLightRects();
+
+    // 可见性矩阵：每格中心是否在光照范围内
+    const { gridWidth: gw, gridHeight: gh } = this.mapConfig;
+    const visible = Array.from({ length: gh }, () => Array(gw).fill(false));
+    for (const r of rects) {
+      const c1 = Math.max(0, Math.ceil(r.gx));
+      const c2 = Math.min(gw - 1, Math.floor(r.gx + r.gw - 0.001));
+      const r1 = Math.max(0, Math.ceil(r.gy));
+      const r2 = Math.min(gh - 1, Math.floor(r.gy + r.gh - 0.001));
+      for (let row = r1; row <= r2; row++) {
+        for (let col = c1; col <= c2; col++) {
+          visible[row][col] = true;
+        }
+      }
+    }
+    this._visibleGrid = visible;
+
+    if (rects.length > 0) {
       ctx.globalCompositeOperation = 'destination-out';
+      for (const r of rects) {
+        const sx = r.gx * ts - this.camX;
+        const sy = r.gy * ts - this.camY;
+        const sw = r.gw * ts;
+        const sh = r.gh * ts;
 
-      const litTorches = this._torchSystem.getLitTorches();
-      for (const t of litTorches) {
-        const cfg = this._torchSystem.getTorchConfig(t.torchId);
-        if (!cfg) continue;
+        if (sx + sw < -ts * 3 || sx > w + ts * 3 || sy + sh < -ts * 3 || sy > h + ts * 3) continue;
 
-        const maxR = cfg.radius * ts;
+        // 以光源矩形中心为圆心，绘制大范围径向渐变自然光
+        const cwx = sx + sw / 2;
+        const cwy = sy + sh / 2;
+        const coreR = Math.min(sw, sh) * 0.45;
+        const glowR = Math.max(sw, sh) * 1.5 + ts * 1.5;
 
-        // 火把世界坐标 → 视口本地坐标（不受 zoom 影响，仅在 gameView 本地空间）
-        const worldCx = (t.gridX + 0.5) * ts;
-        const worldCy = (t.gridY + 0.5) * ts;
-        const cx = worldCx - this.camX;
-        const cy = worldCy - this.camY;
+        const grad = ctx.createRadialGradient(cwx, cwy, coreR, cwx, cwy, glowR);
+        grad.addColorStop(0, 'rgba(0,0,0,1)');
+        grad.addColorStop(0.15, 'rgba(0,0,0,1)');
+        grad.addColorStop(0.3, 'rgba(0,0,0,0.85)');
+        grad.addColorStop(0.5, 'rgba(0,0,0,0.5)');
+        grad.addColorStop(0.7, 'rgba(0,0,0,0.15)');
+        grad.addColorStop(0.85, 'rgba(0,0,0,0.03)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
 
-        // 视口裁剪：跳过完全在屏幕外的火把
-        if (cx + maxR < -ts || cx - maxR > w + ts ||
-            cy + maxR < -ts || cy - maxR > h + ts) continue;
-
-        // 径向渐变柔边
-        const gradient = ctx.createRadialGradient(cx, cy, maxR * 0.2, cx, cy, maxR);
-        gradient.addColorStop(0, 'rgba(0,0,0,1)');
-        gradient.addColorStop(0.4, 'rgba(0,0,0,0.95)');
-        gradient.addColorStop(0.65, 'rgba(0,0,0,0.7)');
-        gradient.addColorStop(0.85, 'rgba(0,0,0,0.2)');
-        gradient.addColorStop(1, 'rgba(0,0,0,0)');
-
-        ctx.fillStyle = gradient;
-        ctx.fillRect(cx - maxR, cy - maxR, maxR * 2, maxR * 2);
+        ctx.fillStyle = grad;
+        ctx.fillRect(cwx - glowR, cwy - glowR, glowR * 2, glowR * 2);
       }
     }
 
@@ -741,26 +675,116 @@ export class MapRenderer {
       this._fogTexture.source.update();
     }
 
-    // 迷雾精灵固定在视口原点
     if (this._fogSprite) {
       this._fogSprite.x = 0;
       this._fogSprite.y = 0;
     }
+  }
 
-    // 缓存可见性格子供 _isTileRevealed 查询
-    if (this._torchSystem) {
-      this._visibleGrid = this._torchSystem.getVisibilityMatrix();
-    }
+  _isTileRevealed(col, row) {
+    return true;
   }
 
   /**
-   * 检查指定格子是否可见（迷雾已驱散）
+   * 进入挪动模式（右下角按钮切换）
    */
-  _isTileRevealed(col, row) {
-    if (!this._torchSystem || !this._visibleGrid) return true; // 无火把系统时全可见
-    if (row < 0 || row >= this._visibleGrid.length) return false;
-    if (col < 0 || col >= this._visibleGrid[0].length) return false;
-    return this._visibleGrid[row][col];
+  enterMoveMode() {
+    this._moveMode = true;
+    eventBus.emit('moveModeChanged', { enabled: true });
+  }
+
+  /**
+   * 退出挪动模式
+   */
+  exitMoveMode() {
+    this._moveMode = false;
+    if (this._dragBuildingIndex !== null) {
+      this._clearBuildingDragGhost();
+      this._dragBuildingIndex = null;
+      this._dragBuildingConfig = null;
+    }
+    eventBus.emit('moveModeChanged', { enabled: false });
+  }
+
+  /**
+   * 切换挪动模式（放置建筑时禁止）
+   */
+  toggleMoveMode() {
+    if (this._roadSystem && this._roadSystem.isEditMode()) return;
+    if (this.buildingSystem.placingState === 'PLACING') return;
+    if (this._moveMode) {
+      this.exitMoveMode();
+    } else {
+      this.enterMoveMode();
+    }
+  }
+
+  /** 是否处于挪动模式 */
+  isMoveMode() { return this._moveMode; }
+
+  /**
+   * 从建筑详情面板搬迁建筑（蓝色指示框+点击放置）
+   */
+  startBuildingMove(buildingIndex) {
+    const building = this.buildingSystem.buildings[buildingIndex];
+    if (!building) return false;
+    const config = configRegistry.getBuilding(building.buildingId);
+    if (!config || config.draggable === false) return false;
+    this._relocateIndex = buildingIndex;
+    this._relocateConfig = config;
+    return true;
+  }
+
+  /**
+   * 绘制光源最大边缘描边（Alt 键按下时显示）
+   */
+  _drawLightOutline() {
+    this.lightOverlay.removeChildren();
+    const g = new PIXI.Graphics();
+    const ts = this.tileSize;
+    const { gridWidth: gw, gridHeight: gh } = this.mapConfig;
+
+    const rects = this._computeLightRects();
+    const visible = Array.from({ length: gh }, () => Array(gw).fill(false));
+    for (const r of rects) {
+      const c1 = Math.max(0, Math.ceil(r.gx));
+      const c2 = Math.min(gw - 1, Math.floor(r.gx + r.gw - 0.001));
+      const r1 = Math.max(0, Math.ceil(r.gy));
+      const r2 = Math.min(gh - 1, Math.floor(r.gy + r.gh - 0.001));
+      for (let row = r1; row <= r2; row++) {
+        for (let col = c1; col <= c2; col++) {
+          visible[row][col] = true;
+        }
+      }
+    }
+
+    // 填充所有光照格子（黄色半透明），并描边最外层边缘
+    for (let row = 0; row < gh; row++) {
+      for (let col = 0; col < gw; col++) {
+        if (!visible[row][col]) continue;
+        g.rect(col * ts, row * ts, ts, ts);
+      }
+    }
+    g.fill({ color: 0xffcc00, alpha: 0.2 });
+    g.stroke({ color: 0xffcc00, width: 1.5, alpha: 0.7 });
+    this.lightOverlay.addChild(g);
+  }
+
+  /**
+   * 更新视口中心坐标显示
+   */
+  _updateViewportCenter() {
+    const ts = this.tileSize;
+    const screenCX = this.screenW / 2;
+    const screenCY = this.screenH / 2;
+    const worldX = this.camX + screenCX / this.zoom;
+    const worldY = this.camY + screenCY / this.zoom;
+    const cx = Math.round(worldX / ts);
+    const cy = Math.round(worldY / ts);
+    const el = document.getElementById('viewport-center-display');
+    if (el) {
+      el.innerHTML = `<span class="vc-label">📍</span><span class="vc-coord">${cx}, ${cy}</span>`;
+    }
   }
 
   /**
@@ -1033,6 +1057,7 @@ export class MapRenderer {
   _updateWorldContainerPosition() {
     this.worldContainer.x = -this.camX;
     this.worldContainer.y = -this.camY;
+    this._updateViewportCenter();
   }
 
   /**
@@ -1098,8 +1123,30 @@ export class MapRenderer {
     this._dragBuildingIndex = null;
     this._dragBuildingConfig = null;
 
+    // 挪动模式（右下角开关控制）
+    this._moveMode = false;
+
+    // 搬迁模式（从详情面板发起）
+    this._relocateIndex = null;
+    this._relocateConfig = null;
+
     canvas.addEventListener('pointerdown', (e) => {
-      // 放置模式下使用原有逻辑（地图拖动放置虚影）
+      const gridPos = this._clientToGrid(e.clientX, e.clientY);
+
+      // 道路编辑模式
+      if (this._roadSystem && this._roadSystem.isEditMode() && gridPos) {
+        const existing = this._roadSystem.getRoadAt(gridPos.col, gridPos.row);
+        if (existing && existing.buildProgress === null) {
+          this._roadSystem.removeRoad(gridPos.col, gridPos.row);
+        } else if (!existing) {
+          this._roadSystem.buildRoad(gridPos.col, gridPos.row);
+        }
+        this._drawRoads();
+        this._updateFogTexture();
+        return;
+      }
+
+      // 放置建筑模式：禁止切换挪动模式，保持常时行为
       if (this.buildingSystem.placingState === 'PLACING') {
         this.isDragging = true;
         this.hasMoved = false;
@@ -1110,23 +1157,21 @@ export class MapRenderer {
         return;
       }
 
-      const gridPos = this._clientToGrid(e.clientX, e.clientY);
-
-      // 检查是否点击了单位 → 单位拖动优先级高于建筑和地图平移
-      if (gridPos && this._combatSystem && this._isTileRevealed(gridPos.col, gridPos.row)) {
-        const unitIdx = this._combatSystem.units.findIndex(u => u.gridX === gridPos.col && u.gridY === gridPos.row);
-        if (unitIdx >= 0) {
-          this._dragUnitIndex = unitIdx;
-          this.isDragging = false;
-          this.hasMoved = false;
-          this.dragStartX = e.clientX;
-          this.dragStartY = e.clientY;
-          return;
+      // 搬迁模式：点击放置建筑
+      if (this._relocateIndex !== null && gridPos) {
+        const moved = this.buildingSystem.moveBuilding(this._relocateIndex, gridPos.col, gridPos.row);
+        if (moved) {
+          this.refreshBuildings();
+          this._updateFogTexture();
         }
+        this._clearRelocateGhost();
+        this._relocateIndex = null;
+        this._relocateConfig = null;
+        return;
       }
 
-      // 检查是否点击了建筑 → 启动建筑拖动（迷雾门控）
-      if (gridPos && this._isTileRevealed(gridPos.col, gridPos.row)) {
+      // 挪动模式：仅允许拖动建筑，不拖动地图不点击建筑
+      if (this._moveMode && gridPos) {
         const buildingIndex = this._getBuildingAt(gridPos.col, gridPos.row);
         if (buildingIndex >= 0) {
           const building = this.buildingSystem.buildings[buildingIndex];
@@ -1136,16 +1181,28 @@ export class MapRenderer {
             this._dragBuildingConfig = bldgConfig;
             this._dragStartGridX = building.gridX;
             this._dragStartGridY = building.gridY;
-            this.isDragging = false;
             this.hasMoved = false;
             this.dragStartX = e.clientX;
             this.dragStartY = e.clientY;
             return;
           }
         }
+        return; // 挪动模式下点击空白无操作
       }
 
-      // 否则启动地图平移
+      // 常时模式：检查单位拖动
+      if (gridPos && this._combatSystem) {
+        const unitIdx = this._combatSystem.units.findIndex(u => u.gridX === gridPos.col && u.gridY === gridPos.row);
+        if (unitIdx >= 0) {
+          this._dragUnitIndex = unitIdx;
+          this.hasMoved = false;
+          this.dragStartX = e.clientX;
+          this.dragStartY = e.clientY;
+          return;
+        }
+      }
+
+      // 常时模式：地图平移
       this.isDragging = true;
       this.hasMoved = false;
       this.dragStartX = e.clientX;
@@ -1155,6 +1212,12 @@ export class MapRenderer {
     });
 
     canvas.addEventListener('pointermove', (e) => {
+      // 道路编辑模式
+      if (this._roadSystem && this._roadSystem.isEditMode()) {
+        this._updateRoadGhost(e.clientX, e.clientY);
+        return;
+      }
+
       // 单位拖动
       if (this._dragUnitIndex !== null) {
         const dx = e.clientX - this.dragStartX;
@@ -1190,6 +1253,11 @@ export class MapRenderer {
       // 放置模式下更新虚影
       if (this.buildingSystem.placingState === 'PLACING') {
         this._updateGhost(e.clientX, e.clientY);
+      }
+
+      // 搬迁模式下更新蓝色虚影
+      if (this._relocateIndex !== null) {
+        this._updateRelocateGhost(e.clientX, e.clientY);
       }
 
       // 驯化单位部署模式下更新虚影
@@ -1238,8 +1306,10 @@ export class MapRenderer {
             }
           }
         } else {
-          // 没有拖动，触发点击事件
-          eventBus.emit('buildingClicked', { buildingIndex });
+          // 挪动模式下点击不放查看详情
+          if (!this._moveMode) {
+            eventBus.emit('buildingClicked', { buildingIndex });
+          }
         }
         return;
       }
@@ -1269,22 +1339,46 @@ export class MapRenderer {
 
     // Esc 取消放置
     window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this._roadSystem && this._roadSystem.isEditMode()) {
+        this._roadSystem.exitEditMode();
+        this._clearRoadGhost();
+      }
       if (e.key === 'Escape' && this.buildingSystem.placingState === 'PLACING') {
         this.buildingSystem.exitPlacingMode();
         this._clearGhost();
       }
-      // Esc 退出道路编辑模式
-      if (e.key === 'Escape' && this._roadSystem && this._roadSystem.isEditMode()) {
-        this._roadSystem.exitEditMode();
-      }
-      // Esc 退出放置敌人模式
       if (e.key === 'Escape' && this._combatSystem && this._combatSystem.isPlaceEnemyMode()) {
         this._combatSystem.exitPlaceEnemyMode();
       }
-      // Esc 退出驯化单位部署模式
       if (e.key === 'Escape' && this._combatSystem && this._combatSystem.isDeployTamedMode()) {
         this._combatSystem.exitDeployTamedMode();
         this._clearGhost();
+      }
+      // Esc 退出搬迁模式
+      if (e.key === 'Escape' && this._relocateIndex !== null) {
+        this._clearRelocateGhost();
+        this._relocateIndex = null;
+        this._relocateConfig = null;
+      }
+      // 6.F键切换挪动模式
+      if (e.key === 'f' || e.key === 'F') {
+        if (!e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          this.toggleMoveMode();
+        }
+      }
+      if (e.key === 'Alt' && !e.repeat) {
+        e.preventDefault();
+        this._drawLightOutline();
+        this.lightOverlay.visible = true;
+        window.__game?.systems?.quest?.onPlayerAction('view_light');
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'Alt') {
+        this.lightOverlay.visible = false;
+        this.lightOverlay.removeChildren();
       }
     });
 
@@ -1343,34 +1437,7 @@ export class MapRenderer {
       return;
     }
 
-    // 道路编辑模式
-    if (this._roadSystem && this._roadSystem.isEditMode()) {
-      if (!this._isTileRevealed(gridPos.col, gridPos.row)) return;
-      const existing = this._roadSystem.getRoadAt(gridPos.col, gridPos.row);
-      if (existing) {
-        // 点击已有道路 → 拆除
-        this._roadSystem.removeRoad(gridPos.col, gridPos.row);
-        this._drawRoads();
-      } else {
-        // 点击空地 → 铺路
-        const check = this._roadSystem.canBuildRoad(gridPos.col, gridPos.row);
-        if (!check.valid) {
-          // 铺路失败给出可见反馈，避免"吞材料"错觉（实际未消耗）
-          eventBus.emit('combatBroadcast', { message: `🛑 无法在此铺路：${check.reason}` });
-          return;
-        }
-        const success = this._roadSystem.buildRoad(gridPos.col, gridPos.row);
-        if (success) {
-          this._drawRoads();
-        }
-      }
-      return;
-    }
-
     if (this.buildingSystem.placingState === 'PLACING') {
-      // 放置模式：永夜迷雾模式下要求点击地块在火把可见范围内
-      const ts = this._torchSystem;
-      if (ts && ts.isDarknessMode() && !this._isTileRevealed(gridPos.col, gridPos.row)) return;
 
       const buildingId = this.buildingSystem.placingBuildingId;
       const config = configRegistry.getBuilding(buildingId);
@@ -1398,15 +1465,6 @@ export class MapRenderer {
       if (clickedEntrance) {
         eventBus.emit('expeditionEntranceClicked', clickedEntrance);
         return;
-      }
-
-      // 检查是否点击了火把
-      if (this._torchSystem) {
-        const torchIndex = this._torchSystem.getTorchAt(gridPos.col, gridPos.row);
-        if (torchIndex >= 0) {
-          eventBus.emit('torchClicked', { torchIndex });
-          return;
-        }
       }
 
       // 检查是否点击了建筑
@@ -1652,6 +1710,35 @@ export class MapRenderer {
     this._clearAdjacencyHints();
   }
 
+  _updateRoadGhost(clientX, clientY) {
+    const gridPos = this._clientToGrid(clientX, clientY);
+    this._clearRoadGhost();
+    if (!gridPos) return;
+    let valid = false;
+    if (this._roadSystem) {
+      const check = this._roadSystem.canBuildRoad(gridPos.col, gridPos.row);
+      valid = check.valid;
+    }
+    const x = gridPos.col * this.tileSize;
+    const y = gridPos.row * this.tileSize;
+    const ts = this.tileSize;
+    const g = new PIXI.Graphics();
+    g.rect(x, y, ts, ts);
+    g.fill({ color: valid ? 0x44ff44 : 0xff4444, alpha: 0.25 });
+    g.rect(x, y, ts, ts);
+    g.stroke({ color: valid ? 0x44ff44 : 0xff4444, alpha: 0.9, width: 2 });
+    this.ghostLayer.addChild(g);
+    this._roadGhost = g;
+  }
+
+  _clearRoadGhost() {
+    if (this._roadGhost) {
+      this.ghostLayer.removeChild(this._roadGhost);
+      this._roadGhost.destroy();
+      this._roadGhost = null;
+    }
+  }
+
   // ===== 建筑拖动虚影 =====
 
   /**
@@ -1728,6 +1815,70 @@ export class MapRenderer {
       this._dragGhostGraphic = null;
     }
     this._clearAdjacencyHints();
+  }
+
+  // ===== 搬迁模式（蓝色虚影 + 点击放置）=====
+
+  _updateRelocateGhost(clientX, clientY) {
+    const gridPos = this._clientToGrid(clientX, clientY);
+    this._clearRelocateGhost();
+    if (!gridPos) return;
+
+    const cfg = this._relocateConfig;
+    const w = cfg.footprint.width;
+    const h = cfg.footprint.height;
+    const x = gridPos.col * this.tileSize;
+    const y = gridPos.row * this.tileSize;
+
+    const check = this.buildingSystem.canMoveTo(this._relocateIndex, gridPos.col, gridPos.row);
+    const valid = check.valid;
+
+    const g = new PIXI.Graphics();
+    g.rect(x, y, w * this.tileSize, h * this.tileSize);
+    g.fill({ color: valid ? 0x4488ff : 0xff4444, alpha: 0.3 });
+    g.rect(x, y, w * this.tileSize, h * this.tileSize);
+    g.stroke({ color: valid ? 0x4488ff : 0xff4444, alpha: 0.8, width: 2 });
+
+    this.ghostLayer.addChild(g);
+    this._relocateGhost = g;
+    this._updateAdjacencyHints(gridPos.col, gridPos.row, this._relocateConfig.id, valid);
+  }
+
+  _clearRelocateGhost() {
+    if (this._relocateGhost) {
+      this.ghostLayer.removeChild(this._relocateGhost);
+      this._relocateGhost.destroy();
+      this._relocateGhost = null;
+    }
+    this._clearAdjacencyHints();
+  }
+
+  // ===== 事件触发通知 =====
+
+  _showEventNotification(name) {
+    this._clearEventNotifications();
+    const cx = this.screenW / 2 / this.zoom + this.camX;
+    const cy = this.screenH / 3 / this.zoom + this.camY;
+    const notif = new PIXI.Text({
+      text: '❗',
+      style: { fontSize: 28, fill: 0xffaa00, fontWeight: 'bold',
+        stroke: { color: 0x000000, width: 3 } }
+    });
+    notif.anchor.set(0.5);
+    notif.x = cx;
+    notif.y = cy;
+    this.worldContainer.addChild(notif);
+    this._eventNotifs = this._eventNotifs || [];
+    this._eventNotifs.push(notif);
+  }
+
+  _clearEventNotifications() {
+    if (!this._eventNotifs) return;
+    for (const n of this._eventNotifs) {
+      this.worldContainer.removeChild(n);
+      n.destroy();
+    }
+    this._eventNotifs = [];
   }
 
   // ===== 相邻加成可视化提示 =====
@@ -1998,8 +2149,8 @@ export class MapRenderer {
     for (const building of this.buildingSystem.buildings) {
       const config = configRegistry.getBuilding(building.buildingId);
       if (!config) continue;
-      // 火把建筑由 _drawTorches() 在 torchLayer 渲染，但建造中的火把仍需在此渲染（显示进度条）
-      if (config.isTorch && building.status !== 'constructing') continue;
+
+
 
       const w = config.footprint.width;
       const h = config.footprint.height;
@@ -2227,6 +2378,18 @@ export class MapRenderer {
         container.addChild(barFill);
       }
 
+      // 无效建筑标记（如道路被拆除后不邻接道路的建筑）
+      if (building._invalid) {
+        const invalidIcon = new PIXI.Text({
+          text: '❌',
+          style: { fontSize: 14, fill: 0xff4444, fontWeight: 'bold' }
+        });
+        invalidIcon.anchor.set(0.5);
+        invalidIcon.x = centerX;
+        invalidIcon.y = centerY;
+        container.addChild(invalidIcon);
+      }
+
       this.buildingLayer.addChild(container);
       this._buildingSprites.push(container);
     }
@@ -2363,12 +2526,27 @@ export class MapRenderer {
       if (!config) continue;
       const bt = config.buildTime || 1;
       const cur = b.buildProgress ?? 0;
-      // base/next 插值模型（与合成条一致）：消除 tick 边界 +1 又复原的跳变
       const base = cur / bt;
       const next = (cur + 1) / bt;
       let smooth = base + (next - base) * t;
       smooth = Math.max(0, Math.min(1, smooth));
+      ref.fill.clear();
+      ref.fill.rect(ref.barX, ref.barY, ref.barWidth * smooth, ref.barHeight);
+      ref.fill.fill({ color: 0xffaa00, alpha: 0.9 });
+    }
+  }
 
+  _updateRoadBuildBars() {
+    const t = store.getState('timeProgress') || 0;
+    for (const ref of this._roadBuildFills) {
+      const road = this._roadSystem.getRoadAt(ref.gridX, ref.gridY);
+      if (!road || road.buildProgress === null) continue;
+      const bt = road.buildTime || 1;
+      const cur = road.buildProgress ?? 0;
+      const base = cur / bt;
+      const next = (cur + 1) / bt;
+      let smooth = base + (next - base) * t;
+      smooth = Math.max(0, Math.min(1, smooth));
       ref.fill.clear();
       ref.fill.rect(ref.barX, ref.barY, ref.barWidth * smooth, ref.barHeight);
       ref.fill.fill({ color: 0xffaa00, alpha: 0.9 });
@@ -2583,11 +2761,11 @@ export class MapRenderer {
       this._updateFogTexture();
     });
 
-    // 永夜迷雾模式切换 → 立即重绘迷雾底色（全黑↔按时段）
-    eventBus.on('darknessModeToggled', () => {
-      this._updateFogTexture();
-    });
-
+    // 建筑/道路状态变化：重绘迷雾
+    eventBus.on('buildingPlaced', () => { this.refreshBuildings(); this._updateFogTexture(); });
+    eventBus.on('buildingComplete', () => { this.refreshBuildings(); this._updateFogTexture(); });
+    eventBus.on('buildingDemolished', () => { this.refreshBuildings(); this._updateFogTexture(); });
+    eventBus.on('buildingMoved', () => { this.refreshBuildings(); this._updateFogTexture(); });
     eventBus.on('buildingPlaced', () => this.refreshBuildings());
     eventBus.on('buildingComplete', () => this.refreshBuildings());
     eventBus.on('buildingUpgraded', () => this.refreshBuildings());
@@ -2605,13 +2783,15 @@ export class MapRenderer {
     });
 
     // tick 时刷新建筑（建造进度）
-    eventBus.on('tick', () => this.refreshBuildings());
+    eventBus.on('tick', () => {
+      this.refreshBuildings();
+      this._clearEventNotifications();
+    });
 
-    // 道路变化重绘
-    eventBus.on('roadBuilt', () => this._drawRoads());
-    eventBus.on('roadRemoved', () => this._drawRoads());
-    store.subscribe('roadEditMode', () => this._drawRoads());
-    store.subscribe('roadVersion', () => this._drawRoads());
+    // 事件触发通知
+    eventBus.on('eventTriggered', ({ name }) => {
+      this._showEventNotification(name);
+    });
 
     // 敌人重绘
     eventBus.on('enemySpawned', () => this._drawEnemies());
@@ -2620,10 +2800,16 @@ export class MapRenderer {
     eventBus.on('tamedCreatureGained', () => this._drawEnemies());
     store.subscribe('combatVersion', () => this._drawEnemies());
 
-    // 火把状态变化：重绘火把和迷雾
+    // 光照状态变化：重绘迷雾
     eventBus.on('torchStateChanged', () => {
-      this._drawTorches();
       this._updateFogTexture();
+    });
+
+    // 道路状态变化：重绘道路和迷雾
+    eventBus.on('roadBuilt', () => { this._drawRoads(); this._updateFogTexture(); });
+    eventBus.on('roadRemoved', () => { this._drawRoads(); this._updateFogTexture(); });
+    eventBus.on('roadEditModeChanged', ({ enabled }) => {
+      if (!enabled) this._clearRoadGhost();
     });
 
     // 监听已移除事件标记的变化（来自存档恢复等）

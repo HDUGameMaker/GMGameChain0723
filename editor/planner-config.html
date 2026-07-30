@@ -1257,10 +1257,7 @@ function renderInitialForm(i) {
   html += '</div>';
 
   html += '<div class="section-title">食物配置</div>';
-  html += '<div class="form-row span-3">';
-  html += field('foodPerPerson', '人均食量（每日）', i.foodPerPerson !== undefined ? i.foodPerPerson : 5, { type: 'number', step: '0.5' });
-  html += '</div>';
-  html += '<p style="font-size:11px;color:var(--muted);margin-bottom:8px">💡 食物日消耗 = 人均食量 × 现有人口数</p>';
+  html += '<p style="font-size:11px;color:var(--muted);margin-bottom:8px">💡 食物日消耗 = 1 × 现有人口数（受人文/炼金影响）</p>';
 
   return html;
 }

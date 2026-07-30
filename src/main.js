@@ -14,13 +14,14 @@ import { ItemSystem } from './systems/ItemSystem.js';
 import { EventSystem } from './systems/EventSystem.js';
 import { ExpeditionSystem } from './systems/ExpeditionSystem.js';
 import { TorchSystem } from './systems/TorchSystem.js';
-import { AudioSystem } from './systems/AudioSystem.js';
 import { RoadSystem } from './systems/RoadSystem.js';
+import { AudioSystem } from './systems/AudioSystem.js';
 import { TechSystem } from './systems/TechSystem.js';
 import { CultureSystem } from './systems/CultureSystem.js';
 import { AlchemySystem } from './systems/AlchemySystem.js';
 import { CombatSystem } from './systems/CombatSystem.js';
 import { WeatherSystem } from './systems/WeatherSystem.js';
+import { QuestSystem } from './systems/QuestSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
@@ -53,7 +54,7 @@ class Game {
     this.systems.item = new ItemSystem();
     this.systems.expedition = new ExpeditionSystem();
 
-    // 火把系统
+    // 火把系统（光照）
     this.systems.torch = new TorchSystem();
 
     // 道路系统
@@ -77,6 +78,9 @@ class Game {
     // 音效系统
     this.systems.audio = new AudioSystem();
 
+    // 任务系统
+    this.systems.quest = new QuestSystem();
+
     // 3.05 初始化弹窗管理器（需要先有 tech / culture / alchemy 系统）
     this.popupManager = new PopupManager(gameLoop, this.systems.tech, this.systems.culture, this.systems.alchemy, this.systems.combat);
 
@@ -97,7 +101,15 @@ class Game {
     this.systems.building.init();
     this.systems.torch.setResourceSystem(this.systems.resource);
     this.systems.torch.setBuildingSystem(this.systems.building);
+    this.systems.torch.setRoadSystem(this.systems.road);
     this.systems.torch.init();
+    this.systems.road.setBuildingSystem(this.systems.building);
+    this.systems.road.setResourceSystem(this.systems.resource);
+    this.systems.road.setPopulationSystem(this.systems.population);
+    this.systems.road.init();
+    this.systems.quest.setBuildingSystem(this.systems.building);
+    this.systems.quest.setRoadSystem(this.systems.road);
+    this.systems.quest.init();
     this.systems.tech.setResourceSystem(this.systems.resource);
     this.systems.tech.setBuildingSystem(this.systems.building);
     this.systems.tech.setItemSystem(this.systems.item);
@@ -113,10 +125,6 @@ class Game {
     this.systems.alchemy.setBuildingSystem(this.systems.building);
     this.systems.alchemy.setTimeSystem(this.systems.time);
     this.systems.alchemy.init();
-    this.systems.road.setBuildingSystem(this.systems.building);
-    this.systems.road.setResourceSystem(this.systems.resource);
-    this.systems.road.setPopulationSystem(this.systems.population);
-    this.systems.road.init();
     this.systems.combat.setBuildingSystem(this.systems.building);
     this.systems.combat.setPopulationSystem(this.systems.population);
     this.systems.combat.setResourceSystem(this.systems.resource);
@@ -176,7 +184,7 @@ class Game {
       this.popupManager.open('building_detail', { buildingIndex });
     });
 
-    // 道路编辑模式与建筑放置互斥
+    // 道路编辑模式切换时，退出建筑放置模式
     eventBus.on('roadEditModeChanged', ({ enabled }) => {
       if (enabled && this.systems.building.placingState === 'PLACING') {
         this.systems.building.exitPlacingMode();
@@ -185,14 +193,20 @@ class Game {
 
     // 注册探险出发口点击事件
     eventBus.on('expeditionEntranceClicked', (entrance) => {
-      // 探险进行中不可进入准备界面
       if (this.systems.expedition.getCurrentExpedition()) return;
+      // 入口必须与道路相连
+      if (this.systems.road && !this.systems.road.hasAdjacentRoad(entrance.gridX, entrance.gridY, 1, 1)) {
+        eventBus.emit('combatBroadcast', { message: '🛑 该入口还未与道路相连，无法进入！' });
+        return;
+      }
       this.popupManager.open('expedition_prep', { entrance });
     });
 
-    // 注册火把点击事件
-    eventBus.on('torchClicked', ({ torchIndex }) => {
-      this.popupManager.open('torch_detail', { torchIndex });
+    // 任务完成后自动弹出下一个任务面板
+    eventBus.on('questNewActive', ({ quest }) => {
+      if (quest) {
+        setTimeout(() => this.popupManager.open('quest_panel', { quest }), 500);
+      }
     });
 
     // 注册事件标记点击事件
@@ -211,24 +225,6 @@ class Game {
           store.setState({ removedEventMarkers: [...removed, _pendingMarkerId] });
         }
         _pendingMarkerId = null;
-      }
-    });
-
-    // 建筑与火把系统桥接：拆除 → 同步火把运行时条目
-    eventBus.on('buildingDemolished', ({ buildingId }) => {
-      if (buildingId) {
-        const cfg = configRegistry.getBuilding(buildingId);
-        if (cfg && cfg.isTorch) {
-          this.systems.torch.syncFromBuildings();
-        }
-      }
-    });
-
-    // 建筑与火把系统桥接：移动 → 更新火把位置
-    eventBus.on('buildingMoved', ({ buildingIndex, building }) => {
-      const cfg = configRegistry.getBuilding(building.buildingId);
-      if (cfg && cfg.isTorch) {
-        this.systems.torch.onBuildingMoved(buildingIndex, building.gridX, building.gridY);
       }
     });
 
@@ -272,6 +268,23 @@ class Game {
 
     // 7. 初始化 HUD
     this.hud = new HUD(this.systems, this.popupManager);
+
+    // 7.03 有存档时恢复任务悬浮窗显示
+    if (saveData) {
+      const q = this.systems.quest.getActiveQuest();
+      if (q) eventBus.emit('questUpdated', { quest: q });
+    }
+
+    // 7.05 新存档询问是否开启新手教程
+    if (!saveData) {
+      setTimeout(() => {
+        if (confirm('您是否第一次游玩本游戏？\n\n选择"确定"开启新手教程，选择"取消"跳过。\n\n之后可在设置中"启动"新手教程。')) {
+          this.systems.quest.enable();
+          const q = this.systems.quest.getActiveQuest();
+          if (q) setTimeout(() => this.popupManager.open('quest_panel', { quest: q }), 300);
+        }
+      }, 600);
+    }
 
     // 7.05 初始化调试面板（按 ~ 键切换）
     this.debugPanel = new DebugPanel(this.systems, gameLoop);
@@ -335,9 +348,7 @@ class Game {
     // 初始化火把
     this.systems.torch.initFromConfig();
 
-    // 初始化道路（要在建筑放好之后）
-    this.systems.road.initFromBuildings();
-
+    // 初始化道路
     // 初始化天气
     this.systems.weather.initNew();
 
@@ -361,8 +372,9 @@ class Game {
     if (saveData.torches) {
       this.systems.torch.restoreState(saveData.torches);
     }
-    // 道路存档：必须在建筑恢复之后调用（无数据时从建筑生成初始道路，依赖 buildingSystem.buildings）
-    this.systems.road.restoreState(saveData?.roads);
+    if (saveData.roads) {
+      this.systems.road.restoreState(saveData.roads);
+    }
     if (saveData.audio) {
       this.systems.audio.restoreState(saveData.audio);
     }
@@ -380,6 +392,9 @@ class Game {
     }
     if (saveData.weather) {
       this.systems.weather.restoreState(saveData.weather);
+    }
+    if (saveData.quest) {
+      this.systems.quest.restoreState(saveData.quest);
     }
     // 恢复相机位置（后续 MapRenderer 初始化后应用）
     this._savedCamera = saveData.camera || null;
@@ -420,6 +435,7 @@ class Game {
       culture: this.systems.culture.getState(),
       alchemy: this.systems.alchemy.getState(),
       combat: this.systems.combat.getState(),
+      quest: this.systems.quest.getState(),
       weather: this.systems.weather.getState(),
       audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
@@ -444,12 +460,14 @@ class Game {
       expedition: this.systems.expedition.getCurrentExpedition(),
       events: this.systems.event.getSaveState(),
       torches: this.systems.torch.getAllStates(),
+      roads: this.systems.road.getAllStates(),
       audio: this.systems.audio.getAllStates(),
       weather: this.systems.weather.getState(),
       tech: this.systems.tech.getState(),
       culture: this.systems.culture.getState(),
       alchemy: this.systems.alchemy.getState(),
       combat: this.systems.combat.getState(),
+      quest: this.systems.quest.getState(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
       removedEventMarkers: this.mapRenderer ? this.mapRenderer.getMarkerState() : []
     };

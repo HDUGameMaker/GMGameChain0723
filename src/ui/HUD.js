@@ -18,6 +18,7 @@ export class HUD {
 
     this._cacheDOM();
     this._bindButtons();
+    this._bindKeyboard();
     this._subscribeStore();
     this._subscribeEvents();
     this._subscribeWeather();
@@ -34,11 +35,13 @@ export class HUD {
     this.btnAlchemy = document.getElementById('btn-alchemy');
     this.btnTame = document.getElementById('btn-tame');
     this.btnRoad = document.getElementById('btn-road');
+    this.btnQuest = document.getElementById('btn-quest');
     this.btnCancelPlace = document.getElementById('btn-cancel-place');
     this.btnFullscreen = document.getElementById('btn-fullscreen');
     this.btnSettings = document.getElementById('btn-settings');
     this.btnSpeed = document.getElementById('btn-speed');
     this.btnPause = document.getElementById('btn-pause');
+    this.btnMoveMode = document.getElementById('btn-move-mode');
     this.weatherDisplay = document.getElementById('weather-display');
     this.expeditionStatus = document.getElementById('expedition-status');
     // 进度条元素（懒初始化）
@@ -70,11 +73,18 @@ export class HUD {
     // 道路编辑
     this.btnRoad.addEventListener('click', () => {
       if (this.systems.road) {
+        const mr = window.__game?.mapRenderer;
+        if (mr && mr._moveMode) mr.exitMoveMode();
         this.systems.road.toggleEditMode();
       }
     });
 
-    // 建设按钮
+    // 任务面板
+    this.btnQuest.addEventListener('click', () => {
+      const qs = window.__game?.systems?.quest;
+      const quest = qs ? qs.getActiveQuest() : null;
+      this.popupManager.open('quest_panel', { quest });
+    });
     this.btnBuild.addEventListener('click', () => {
       this.popupManager.open('building_select', {});
     });
@@ -113,18 +123,56 @@ export class HUD {
     // 暂停
     this.btnPause.addEventListener('click', () => {
       const paused = this.systems.time.togglePause();
-      this.btnPause.textContent = paused ? '▶' : '⏸';
+      this._updatePauseIndicator(paused);
+      window.__game?.systems?.quest?.onPlayerAction('toggle_pause');
+    });
+
+    // 挪动模式切换
+    this.btnMoveMode.addEventListener('click', () => {
+      const mr = window.__game?.mapRenderer;
+      if (mr) mr.toggleMoveMode();
     });
 
     // 全屏不支持时隐藏
     if (!document.fullscreenEnabled) {
       this.btnFullscreen.style.display = 'none';
     }
-
-    // 全屏状态监听
     document.addEventListener('fullscreenchange', () => {
       this.btnFullscreen.textContent = document.fullscreenElement ? '⛶' : '⛶';
+      eventBus.emit('fullscreenToggled');
     });
+  }
+
+  _bindKeyboard() {
+    window.addEventListener('keydown', (e) => {
+      // 3.禁用Tab/Alt浏览器默认行为
+      if (e.key === 'Tab' || e.key === 'Alt') {
+        e.preventDefault();
+      }
+      // 空格键暂停/继续（3.空格键快捷键）
+      if (e.key === ' ' && e.target === document.body) {
+        e.preventDefault();
+        const paused = this.systems.time.togglePause();
+        this._updatePauseIndicator(paused);
+      }
+    });
+  }
+
+  _updatePauseIndicator(paused) {
+    let el = document.getElementById('pause-indicator');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'pause-indicator';
+      document.body.appendChild(el);
+    }
+    if (paused) {
+      el.className = 'visible';
+      el.textContent = '⏸ 已暂停';
+      this.btnPause.textContent = '▶';
+    } else {
+      el.className = '';
+      this.btnPause.textContent = '⏸';
+    }
   }
 
   _subscribeStore() {
@@ -135,8 +183,8 @@ export class HUD {
     store.subscribe('timeSpeed', () => this._refreshSpeedBtn());
     store.subscribe('timeUserPaused', () => this._refreshPauseBtn());
     store.subscribe('placingState', (state) => this._refreshPlacingMode(state));
-    store.subscribe('roadEditMode', (enabled) => this._refreshRoadEditMode(enabled));
     store.subscribe('deployTamedMode', (mode) => this._refreshDeployTamedMode(mode));
+    store.subscribe('roadEditMode', (enabled) => this._refreshRoadEditMode(enabled));
     store.subscribe('expeditionState', (state) => this._refreshExpeditionStatus(state));
     store.subscribe('buildingVersion', () => {
       this._refreshPopulation();
@@ -169,6 +217,55 @@ export class HUD {
     eventBus.on('expeditionComplete', (result) => {
       this._showExpeditionResult(result);
     });
+    eventBus.on('moveModeChanged', ({ enabled }) => {
+      this.btnMoveMode.textContent = enabled ? '🖐️ 挪动模式' : '✋ 常时模式';
+      if (enabled) {
+        this.btnMoveMode.classList.add('active');
+      } else {
+        this.btnMoveMode.classList.remove('active');
+      }
+    });
+    eventBus.on('questUpdated', ({ quest }) => this._updateQuestWidget(quest));
+    store.subscribe('buildingVersion', () => this._checkAdvancedUnlocks());
+  }
+
+  _checkAdvancedUnlocks() {
+    const hasIndustrial = this.systems.building?.hasBuilding('industrial_warehouse');
+    this.btnAlchemy.style.display = hasIndustrial ? 'flex' : 'none';
+  }
+
+  _updateQuestWidget(quest) {
+    const widget = document.getElementById('quest-widget');
+    const icon = document.getElementById('quest-widget-icon');
+    const text = document.getElementById('quest-widget-text');
+    if (!widget || !icon || !text) return;
+
+    if (!quest) {
+      widget.classList.add('hidden');
+      return;
+    }
+
+    widget.classList.remove('hidden');
+    icon.textContent = quest.icon || '📋';
+    const p = quest.progress || { current: 0, target: 1 };
+    const done = p.current >= p.target;
+    text.innerHTML = `<div class="qw-name">${quest.name}</div><div class="qw-progress">${done ? '✓ 完成' : `${p.current}/${p.target}`}</div>`;
+
+    // 红点：新任务或未完成
+    if (!done && !widget.querySelector('.qw-dot')) {
+      const dot = document.createElement('div');
+      dot.className = 'qw-dot';
+      widget.appendChild(dot);
+    } else if (done) {
+      const dot = widget.querySelector('.qw-dot');
+      if (dot) dot.remove();
+    }
+
+    widget.onclick = () => {
+      const qs = window.__game?.systems?.quest;
+      const q = qs ? qs.getActiveQuest() : null;
+      window.__game?.popupManager?.open('quest_panel', { quest: q });
+    };
   }
 
   refresh() {
@@ -178,6 +275,7 @@ export class HUD {
     this._refreshSpeedBtn();
     this._refreshPauseBtn();
     this._refreshWeather();
+    this._checkAdvancedUnlocks();
   }
 
   _refreshResources() {
@@ -243,11 +341,12 @@ export class HUD {
   _refreshPopulation() {
     const current = this.systems.population.current;
     const housing = this.systems.population.getHousingCapacity();
+    const idle = this.systems.population.getAvailableWorkers();
 
     const housingClass = current >= housing ? ' class="bottleneck"' : '';
 
     this.populationDisplay.innerHTML =
-      `👥 ${current} / <span${housingClass}>${housing}</span>`;
+      `👥 ${idle}/${current}/<span${housingClass}>${housing}</span>`;
 
     // 人口变化弹跳动画
     if (this._prevPopulation !== 0 && this._prevPopulation !== current && window.gsap) {
@@ -259,6 +358,7 @@ export class HUD {
     this._prevPopulation = current;
 
     this.populationDisplay.onclick = (e) => {
+      window.__game?.systems?.quest?.onPlayerAction('click_population');
       const available = this.systems.population.getAvailableWorkers();
       const assigned = this.systems.population.getAssignedWorkers();
       const foodAmount = this.systems.resource ? this.systems.resource.getAmount('food') : 0;
@@ -318,14 +418,13 @@ export class HUD {
 
   _refreshPauseBtn() {
     const paused = store.getState('timeUserPaused');
-    this.btnPause.textContent = paused ? '▶' : '⏸';
+    this._updatePauseIndicator(paused);
   }
 
   _refreshPlacingMode(state) {
     if (state === 'PLACING') {
       this.btnBuild.style.display = 'none';
       this.btnCancelPlace.style.display = 'flex';
-      this.btnRoad.classList.add('disabled');
       this.btnFullscreen.classList.add('disabled');
       this.btnSettings.classList.add('disabled');
       this.btnSpeed.classList.add('disabled');
@@ -333,29 +432,6 @@ export class HUD {
     } else {
       this.btnBuild.style.display = 'flex';
       this.btnCancelPlace.style.display = 'none';
-      if (!store.getState('roadEditMode')) {
-        this.btnRoad.classList.remove('disabled');
-        this.btnFullscreen.classList.remove('disabled');
-        this.btnSettings.classList.remove('disabled');
-        this.btnSpeed.classList.remove('disabled');
-        this.btnPause.classList.remove('disabled');
-      }
-    }
-  }
-
-  _refreshRoadEditMode(enabled) {
-    if (enabled) {
-      this.btnRoad.style.background = 'rgba(91, 141, 239, 0.3)';
-      this.btnRoad.style.borderColor = 'var(--accent-blue)';
-      this.btnBuild.classList.add('disabled');
-      this.btnFullscreen.classList.add('disabled');
-      this.btnSettings.classList.add('disabled');
-      this.btnSpeed.classList.add('disabled');
-      this.btnPause.classList.add('disabled');
-    } else {
-      this.btnRoad.style.background = '';
-      this.btnRoad.style.borderColor = '';
-      this.btnBuild.classList.remove('disabled');
       this.btnFullscreen.classList.remove('disabled');
       this.btnSettings.classList.remove('disabled');
       this.btnSpeed.classList.remove('disabled');
@@ -376,6 +452,18 @@ export class HUD {
       this.btnBuild.classList.remove('disabled');
       this.btnFullscreen.classList.remove('disabled');
       this.btnSettings.classList.remove('disabled');
+    }
+  }
+
+  _refreshRoadEditMode(enabled) {
+    if (enabled) {
+      this.btnRoad.style.background = 'rgba(91, 141, 239, 0.3)';
+      this.btnRoad.style.borderColor = 'var(--accent-blue)';
+      this.btnRoad.innerHTML = '<span class="hud-btn-icon" style="font-size:22px">✕</span><span class="hud-btn-label">退出</span>';
+    } else {
+      this.btnRoad.style.background = '';
+      this.btnRoad.style.borderColor = '';
+      this.btnRoad.innerHTML = '<span class="hud-btn-icon">🛤️</span><span class="hud-btn-label">铺路</span>';
     }
   }
 

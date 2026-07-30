@@ -10,15 +10,35 @@ export class PopulationSystem {
   constructor() {
     const globalConfig = configRegistry.get('global');
     this.popConfig = globalConfig.population;
-    // { growthPerDay: {min, max}, declineDelayDays }
-
     this.current = 0;
-    this.declineCountdown = 0; // 人口减少倒计时天数
-    this._expeditionWorkers = 0; // 探险占用工人数
-    this._constructionWorkers = 0; // 建造占用工人数
-    this._buildingSystem = null; // 延迟注入
-    this._resourceSystem = null; // 延迟注入
-    this._weatherSystem = null; // 天气系统引用
+    this.declineCountdown = 0;
+    this._expeditionWorkers = 0;
+    this._constructionWorkers = 0;
+    this._buildingSystem = null;
+    this._resourceSystem = null;
+    this._weatherSystem = null;
+    // 流民系统：超过住宅的人口每3tick离开
+    this._overflowTicks = 0;
+    this._overflowLeaving = 0;
+
+    eventBus.on('tick', () => this._onOverflowTick());
+  }
+
+  _onOverflowTick() {
+    const housing = this.getHousingCapacity();
+    const overflow = Math.max(0, this.current - housing);
+    if (overflow <= 0) {
+      this._overflowTicks = 0;
+      return;
+    }
+    this._overflowTicks++;
+    if (this._overflowTicks >= 3) {
+      this._overflowTicks = 0;
+      this.current = Math.max(0, this.current - 1);
+      this._updateStore();
+      eventBus.emit('populationChanged', { current: this.current, direction: 'overflow' });
+      eventBus.emit('combatBroadcast', { message: `🚶 1名流民离开了营地（超出住宅上限）` });
+    }
   }
 
   setBuildingSystem(buildingSystem) {

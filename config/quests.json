@@ -1,0 +1,60 @@
+{
+  "tutorial": [
+    {
+      "id": "tutorial_road",
+      "name": "开路先锋",
+      "description": "欢迎你，年轻人！我是营地的向导。\n作为营地的领袖，通过路来连通起各个住所可是门规划必修课。现在，就请靠着仓库来修建你的第一条路吧。\n在界面左下角的🛤️铺路按钮，直接进入铺路模式，点击Esc或✕号结束。路需要紧邻路或建筑修建。\n每段路都需要1个人来修建。",
+      "type": "build_road",
+      "icon": "🛤️",
+      "target": { "count": 2 }
+    },
+    {
+      "id": "tutorial_food",
+      "name": "民以食为天",
+      "description": "我们的人手并不充裕，但好在每天都有新的冒险者会来到我们的营地，建造些工棚和狩猎小屋，也许能给他们提供所需的食物及住所。\n点击🏗️建设图标，即可打开修建栏目，有些建筑拥有特殊的修建要求，务必看清！",
+      "type": "build_building",
+      "icon": "🏗️",
+      "target": { "buildings": ["work_shed", "hunting_hut"] }
+    },
+    {
+      "id": "tutorial_expedition",
+      "name": "探索环境时间！",
+      "description": "入口？是的，这里的自然资源丰富，也许派几个人进去探探也不坏。\n点击地图上的任意入口标识，完成一次探索。\n注意：入口只在与路相连的情况下才能进入！",
+      "type": "complete_expedition",
+      "icon": "🚪",
+      "target": { "count": 1 }
+    },
+    {
+      "id": "tutorial_shortcuts",
+      "name": "快捷键大师",
+      "description": "掌握快捷键能让你事半功倍！\n\n• 按 F 键切换挪动模式/常时模式\n• 按 空格键 暂停/继续时间\n• 按住 Alt 键查看建筑和道路的光照范围\n\n分别尝试一次吧！",
+      "type": "shortcuts",
+      "icon": "⌨️",
+      "target": { "toggle_mode": 1, "toggle_pause": 1, "view_light": 1 }
+    },
+    {
+      "id": "tutorial_features",
+      "name": "熟悉更多功能",
+      "description": "营地管理还有更多实用功能等你发现：\n\n• 挪动一次建筑：进入挪动模式，拖动建筑到新位置\n• 删除一次道路：在铺路模式下点击已建成的道路\n• 开启一次全屏：点击右上角⛶按钮\n• 点击右上角人口信息 👥 x/y/z\n  x=空闲工人，y=总人口，z=住宅上限",
+      "type": "features",
+      "icon": "🛠️",
+      "target": { "move_building": 1, "remove_road": 1, "toggle_fullscreen": 1, "click_population": 1 }
+    },
+    {
+      "id": "tutorial_tech",
+      "name": "科技的力量",
+      "description": "点击底部🔬科技按钮，研究一项新技术吧！\n科技能解锁更高级的建筑和升级路径。",
+      "type": "research_tech",
+      "icon": "🔬",
+      "target": { "count": 1 }
+    },
+    {
+      "id": "tutorial_culture",
+      "name": "人文的智慧",
+      "description": "点击底部📜人文按钮，研究一项文化政策吧！\n政策能提供经济、战斗和人口加成。",
+      "type": "research_culture",
+      "icon": "📜",
+      "target": { "count": 1 }
+    }
+  ]
+}
