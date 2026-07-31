@@ -55,7 +55,7 @@ export function renderTutorialPromptPanel(data, body, pm) {
     pm.close();
 
     if (quest) {
-      setTimeout(() => pm.open('quest_panel', { quest }), 200);
+      setTimeout(() => pm.open('quest_panel', { quest, blocking: true }), 200);
     }
   });
 

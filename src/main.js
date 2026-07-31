@@ -249,7 +249,7 @@ class Game {
     // 任务完成后自动弹出下一个任务面板
     eventBus.on('questNewActive', ({ quest }) => {
       if (quest) {
-        setTimeout(() => this.popupManager.open('quest_panel', { quest }), 500);
+        setTimeout(() => this.popupManager.open('quest_panel', { quest, blocking: true }), 500);
       }
     });
 

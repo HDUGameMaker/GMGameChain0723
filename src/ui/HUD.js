@@ -164,10 +164,11 @@ export class HUD {
         e.preventDefault();
       }
       // 空格键暂停/继续（3.空格键快捷键）
-      if (e.key === ' ' && e.target === document.body) {
+      if ((e.key === ' ' || e.code === 'Space') && e.target === document.body) {
         e.preventDefault();
         const paused = this.systems.time.togglePause();
         this._updatePauseIndicator(paused);
+        window.__game?.systems?.quest?.onPlayerAction('toggle_pause');
       }
     });
   }
@@ -577,18 +578,21 @@ export class HUD {
       });
       const currentPeriod = state.currentPeriodIndex + 1;
       const occupiedWorkers = state.occupiedWorkers || 0;
-      const workerInfo = occupiedWorkers > 0 ? ` | 👥 ${occupiedWorkers}人` : '';
-      this.expeditionStatus.style.display = 'block';
+      const workerInfo = occupiedWorkers > 0 ? `👥 ${occupiedWorkers}人` : '👥 0人';
+      this.expeditionStatus.style.display = 'flex';
 
       if (!this._expeditionProgressFill) {
-        // 首次渲染：创建 DOM 并注册到统一进度管理器
+        // 当前系统只有一个探索队列；这里按列表结构渲染，后续可追加多个 expedition-card。
         this.expeditionStatus.innerHTML = `
-          <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:4px;">
-            <span class="expedition-label">🔍 探索中 | ${regionNames.join(' → ')} | 第 ${currentPeriod}/${totalPeriods} 时段${workerInfo}</span>
-            <span class="expedition-pct" style="font-size:11px;opacity:0.8;flex-shrink:0;margin-left:8px;">0%</span>
-          </div>
-          <div class="progress-bar" style="height:5px;">
-            <div class="progress-fill blue expedition-hud-fill" style="width:0%"></div>
+          <div class="expedition-card" data-expedition-index="0">
+            <div class="expedition-head">
+              <span class="expedition-label">🔍 探索中</span>
+              <span class="expedition-pct">0%</span>
+            </div>
+            <div class="expedition-meta">${regionNames.join(' → ')} · ${currentPeriod}/${totalPeriods} 时段 · ${workerInfo}</div>
+            <div class="progress-bar" style="height:4px;">
+              <div class="progress-fill blue expedition-hud-fill" style="width:0%"></div>
+            </div>
           </div>
         `;
         this._expeditionProgressFill = this.expeditionStatus.querySelector('.expedition-hud-fill');
@@ -609,9 +613,9 @@ export class HUD {
         );
       } else {
         // 后续调用：仅更新文本标签
-        const labelEl = this.expeditionStatus.querySelector('.expedition-label');
-        if (labelEl) {
-          labelEl.textContent = `🔍 探索中 | ${regionNames.join(' → ')} | 第 ${currentPeriod}/${totalPeriods} 时段${workerInfo}`;
+        const metaEl = this.expeditionStatus.querySelector('.expedition-meta');
+        if (metaEl) {
+          metaEl.textContent = `${regionNames.join(' → ')} · ${currentPeriod}/${totalPeriods} 时段 · ${workerInfo}`;
         }
       }
 

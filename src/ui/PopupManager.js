@@ -204,8 +204,13 @@ export class PopupManager {
   _isBlocking() {
     // 优先检查栈顶（_stack 在 _show() 之前已被设置），
     // 回退到 _currentType（兼容 _render() 中的 push 场景）
+    const current = this._stack.length > 0
+      ? this._stack[this._stack.length - 1]
+      : null;
+    if (current?.data?.blocking === true) return true;
+
     const type = this._stack.length > 0
-      ? this._stack[this._stack.length - 1].type
+      ? current.type
       : this._currentType;
     return type && BLOCKING_TYPES.includes(type);
   }
