@@ -139,6 +139,11 @@ main { grid-column: 2; display: flex; flex-direction: column; overflow: hidden; 
     <a data-tab="roads">🛤️ 道路配置</a>
     <a data-tab="techs">🔬 科技配置</a>
     <a data-tab="combat">⚔️ 战斗配置</a>
+    <a data-tab="adjacency">🔗 相邻加成</a>
+    <a data-tab="culture">📖 人文政策树</a>
+    <a data-tab="units">⚔️ 兵种配置</a>
+    <a data-tab="formations">🔱 阵型配置</a>
+    <a data-tab="doctrines">📜 文化配置</a>
     <div class="nav-label">数值工具</div>
     <a data-tab="analysis">📊 数值分析</a>
   </nav>
@@ -276,6 +281,9 @@ const CONFIG_FILES = {
   roads:       { path: 'roads.json',                  dir: '' },
   techs:       { path: 'techs.json',                  dir: '' },
   combat:      { path: 'enemies.json',                dir: '' },
+  doctrines:   { path: 'doctrines.json',              dir: '' },
+  adjacency_bonuses: { path: 'adjacency-bonuses.json', dir: '' },
+  culture:     { path: 'culture.json',                 dir: '' },
 };
 
 async function selectDir() {
@@ -364,7 +372,7 @@ const state = {
    ═══════════════════════════════════════════ */
 async function loadAllData() {
   try {
-    const [buildings, resources, items, eventsBase, eventsExp, regions, expGlobal, tags, baseMap, initial, roads, techs, combat] =
+    const [buildings, resources, items, eventsBase, eventsExp, regions, expGlobal, tags, baseMap, initial, roads, techs, combat, adjacencyBonuses, culture, doctrines] =
       await Promise.all([
         readFile('buildings'), readFile('resources'), readFile('items'),
         readFile('events_base'), readFile('events_exp'),
@@ -375,6 +383,9 @@ async function loadAllData() {
         readFile('roads').catch(() => JSON.stringify([])),
         readFile('techs').catch(() => JSON.stringify([])),
         readFile('combat').catch(() => JSON.stringify({ enemies: [], global: { humanHp: 2, clickAttack: 1 } })),
+        readFile('adjacency_bonuses').catch(() => JSON.stringify([])),
+        readFile('culture').catch(() => JSON.stringify([])),
+        readFile('doctrines').catch(() => JSON.stringify([])),
       ]);
     state.data.buildings = JSON.parse(buildings);
     state.data.resources = JSON.parse(resources);
@@ -408,6 +419,22 @@ async function loadAllData() {
       }
     }
     state.data.combat = JSON.parse(combat);
+    state.data.adjacency_bonuses = JSON.parse(adjacencyBonuses);
+    state.data.culture = JSON.parse(culture);
+    state.data.doctrines = JSON.parse(doctrines);
+    if (Array.isArray(state.data.culture)) {
+      for (const p of state.data.culture) {
+        const prereq = p.prerequisites;
+        if (!Array.isArray(prereq)) {
+          if (typeof prereq === 'string' && prereq.trim()) {
+            p.prerequisites = prereq.split(',').map(s => s.trim()).filter(Boolean);
+          } else {
+            p.prerequisites = [];
+          }
+        }
+      }
+    }
+    console.log('[Editor] culture data loaded:', state.data.culture ? state.data.culture.length + ' policies' : 'null');
     console.log('[Editor] combat data loaded:', state.data.combat ? state.data.combat.enemies.length + ' enemies' : 'null');
     refreshList();
   } catch(e) {
@@ -440,6 +467,11 @@ function currentData() {
     case 'techs':     return state.data.techs || [];
     case 'combat':    return state.data.combat ? [state.data.combat] : [{ enemies: [], units: [], global: { humanHp: 2, clickAttack: 1 } }];
     case 'analysis':  return []; // 只读分析，无编辑数据
+    case 'adjacency': return adjacencyCurrentData() || [];
+    case 'culture':   return state.data.culture || [];
+    case 'units':     return state.data.combat?.units || [];
+    case 'formations': return state.data.combat?.formations || [];
+    case 'doctrines':  return state.data.doctrines || [];
     default: return [];
   }
 }
@@ -458,6 +490,11 @@ function currentFileKeys() {
     case 'techs':     return ['techs'];
     case 'combat':    return ['combat'];
     case 'analysis':  return []; // 只读，无文件
+    case 'adjacency': return ['adjacency_bonuses'];
+    case 'culture':   return ['culture'];
+    case 'units':     return ['combat'];
+    case 'formations': return ['combat'];
+    case 'doctrines':  return ['doctrines'];
     default: return [];
   }
 }
@@ -592,6 +629,12 @@ async function doSave() {
     } else if (state.tab === 'combat') {
       // combat 是单例对象，保存整个 state.data.combat
       await writeFile('combat', JSON.stringify(state.data.combat, null, 2));
+    } else if (state.tab === 'units') {
+      // units 也保存在 enemies.json 中
+      await writeFile('combat', JSON.stringify(state.data.combat, null, 2));
+    } else if (state.tab === 'formations') {
+      // formations 也保存在 enemies.json 中
+      await writeFile('combat', JSON.stringify(state.data.combat, null, 2));
     } else {
       const key = keys[0];
       await writeFile(key, JSON.stringify(currentData(), null, 2));
@@ -711,6 +754,11 @@ function renderDetail() {
       case 'roads':     html = renderRoadForm(item); break;
       case 'techs':     html = renderTechForm(item); break;
       case 'combat':    html = renderCombatForm(item); break;
+      case 'adjacency': html = renderAdjacencyForm(item); break;
+      case 'culture':   html = renderCultureForm(item); break;
+      case 'units':     html = renderUnitForm(item); break;
+      case 'formations': html = renderFormationForm(item); break;
+      case 'doctrines':  html = renderDoctrineForm(item); break;
       case 'analysis':  html = renderAnalysisPanel(); break;
     }
     panel.innerHTML = html;
@@ -855,7 +903,8 @@ function renderBuildingForm(b) {
   // Production - 始终显示，空则视为无生产
   html += '<div class="section-title">生产配置</div>';
   const prod = b.production || {};
-  html += `<div class="form-row">${field('prod_perWorker', '按工人', prod.perWorker, { type: 'checkbox' })}</div>`;
+  html += `<div class="form-row">${field('productionCycle', '生产周期', b.productionCycle ?? 'tick', { type: 'select', options: ['tick', 'day'], optionLabels: { tick: '每 Tick 生产一次', day: '每天生产一次' } })}${field('prod_perWorker', '按工人', prod.perWorker, { type: 'checkbox' })}</div>`;
+  html += '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">💡 生产周期：每 Tick 或每天；傍晚和深夜不生产（有装置的建筑除外）</div>';
   html += subListEditor('prodInput', '生产输入', prod.input || [], (c, i) =>
     `${resSelectSub(i, c.resourceId)}
      <input class="amount" data-subidx="${i}" data-key="amount" type="number" value="${c.amount||0}" placeholder="数量" />`
@@ -1002,6 +1051,8 @@ function renderTechForm(t) {
   html += field('unlock_buildings', '解锁建筑', (t.unlocks?.buildings || []).join(', '));
   html += field('unlock_items', '解锁物品', (t.unlocks?.items || []).join(', '));
   html += field('unlock_regions', '解锁区域', (t.unlocks?.regions || []).join(', '));
+  html += field('unlock_units', '解锁单位', (t.unlocks?.units || []).join(', '));
+  html += field('unlock_formations', '解锁阵型', (t.unlocks?.formations || []).join(', '));
   html += '</div>';
 
   return html;
@@ -1046,23 +1097,463 @@ function renderCombatForm(c) {
   });
   html += `<div class="add-row"><button class="btn-secondary btn-sm sub-add" data-sub="enemies">+ 添加敌人</button></div></div>`;
 
-  // 我方战斗单位
-  html += '<div class="section-title">战斗单位</div>';
-  const units = c.units || [];
-  html += `<div class="sub-list" id="sl_units">`;
-  units.forEach((u, i) => {
-    html += `<div class="sub-row" data-subidx="${i}">
-      <input class="amount" data-subidx="${i}" data-key="name" value="${u.name||''}" placeholder="名称" style="width:80px" />
-      <input class="amount" data-subidx="${i}" data-key="hp" type="number" value="${u.hp||5}" placeholder="HP" style="width:50px" />
-      <input class="amount" data-subidx="${i}" data-key="attack" type="number" value="${u.attack||1}" placeholder="攻击" style="width:50px" />
-      <input class="amount" data-subidx="${i}" data-key="attackRange" type="number" value="${u.attackRange||1}" placeholder="攻击距离" style="width:60px" title="攻击距离" />
-      <input class="amount" data-subidx="${i}" data-key="attackCooldown" type="number" value="${u.attackCooldown||1}" placeholder="攻击间隔" style="width:60px" title="攻击间隔(tick)" />
-      <button class="btn-icon btn-sm sub-del" title="删除">×</button>
-    </div>`;
-  });
-  html += `<div class="add-row"><button class="btn-secondary btn-sm sub-add" data-sub="units">+ 添加单位</button></div></div>`;
+  // 入侵配置
+  html += '<div class="section-title">入侵配置</div>';
+  html += '<div class="form-row span-3">';
+  const inv = c.invasion || {};
+  html += field('invasionBaseA', '基础值 a', inv.baseA ?? 5, { type: 'number' });
+  html += field('invasionDayMulB', '天数倍率 b', inv.dayMulB ?? 1, { type: 'number', step: '0.1' });
+  html += field('invasionDaySqMulC', '天数²倍率 c', inv.daySqMulC ?? 0, { type: 'number', step: '0.01' });
+  html += '</div>';
+  html += '<div class="form-group full" style="font-size:11px;color:#808098;padding:4px 0;">';
+  html += '💡 入侵战斗力 = a + day×b + day²×c。每隔2~5天一波入侵，一天未消灭则损失50%人口和资源';
+  html += '</div>';
+
+ return html;
+}
+
+/* ═══════════════════════════════════════════
+   兵种配置 — 渲染
+   ═══════════════════════════════════════════ */
+function renderUnitForm(u) {
+  let html = '<div class="form-row span-3">';
+  html += field('id', '单位ID', u.id, { placeholder: 'warrior' });
+  html += field('name', '名称', u.name, { placeholder: '战士' });
+ html += field('combatPower', '战斗力', u.combatPower, { type: 'number' });
+ html += field('populationRequired', '需求人口', u.populationRequired, { type: 'number' });
+  html += field('commandPoints', '指挥点', u.commandPoints, { type: 'number' });
+  html += field('weight', '权重', u.weight, { type: 'number' });
+ html += field('unlocked', '是否解锁', u.unlocked, { type: 'checkbox' });
+  html += '</div>';
+
+  // 消耗资源
+  html += '<div class="section-title">消耗资源</div>';
+  html += subListEditor('unitCost', '资源消耗', u.cost || [], (c, i) =>
+    `<select data-subidx="${i}" data-key="resourceId">${resSelectOptions(c.resourceId||'', false)}</select>
+     <input class="amount" data-subidx="${i}" data-key="amount" type="number" value="${c.amount||0}" placeholder="数量" style="width:80px" />`
+  );
 
   return html;
+}
+
+function getUnitDefaultItem() {
+ return { id: 'new_unit', name: '新兵种', combatPower: 1, populationRequired: 0, commandPoints: 1, weight: 10, cost: [], unlocked: true };
+}
+
+/* ═══════════════════════════════════════════
+   战斗阵型 — 渲染
+   ═══════════════════════════════════════════ */
+function getFormationDefaultItem() {
+  return { id: 'new_formation', name: '新阵型', combatPowerBonus: 5, requiredUnits: [], unlocked: false };
+}
+
+function renderFormationForm(f) {
+  let html = '<div class="form-row span-3">';
+  html += field('id', '阵型ID', f.id, { placeholder: 'phalanx' });
+  html += field('name', '名称', f.name, { placeholder: '方阵' });
+  html += field('combatPowerBonus', '战斗力加成', f.combatPowerBonus, { type: 'number' });
+  html += field('unlocked', '是否解锁', f.unlocked, { type: 'checkbox' });
+  html += '</div>';
+
+  // 需求兵种子列表
+  html += '<div class="section-title">需求兵种</div>';
+  html += subListEditor('unitReq', '兵种需求', f.requiredUnits || [], (r, i) =>
+    `<select data-subidx="${i}" data-key="unitId">${unitSelectOptions(r.unitId||'', false)}</select>
+     <input class="amount" data-subidx="${i}" data-key="count" type="number" value="${r.count||1}" placeholder="数量" style="width:70px" />`
+  );
+
+  return html;
+}
+
+function unitSelectOptions(val, nullable) {
+  const all = (state.data.combat?.units || []).concat(state.data.combat?.enemies ? [] : []);
+  let opts = all.map(u => `<option value="${u.id}" ${val===u.id?'selected':''}>${u.name||u.id}</option>`).join('');
+  if (nullable) opts = '<option value="">(无)</option>' + opts;
+  return opts;
+}
+
+function unitSelectSub(idx, val) {
+  return `<select data-subidx="${idx}" data-key="unitId"><option value="">--</option>${unitSelectOptions(val, false)}</select>`;
+}
+
+/* ═══════════════════════════════════════════
+   信条配置 — 渲染
+   ═══════════════════════════════════════════ */
+function getDoctrineDefaultItem() {
+  return { id: 'new_doctrine', name: '新信条', tier: 0, researchTime: 0, pos: { x: 0 }, prerequisites: [], cost: [], unlocks: { buildings: [], units: [], formations: [] }, commandPointsBonus: 0, growthSpeedBonus: 0, description: '' };
+}
+
+function renderDoctrineForm(d) {
+  let html = '<div class="form-row span-3">';
+  html += field('id', '信条ID', d.id, { placeholder: 'martial_law' });
+  html += field('name', '名称', d.name, { placeholder: '军事管制' });
+  html += field('tier', '层级', d.tier, { type: 'number' });
+  html += field('researchTime', '研究时间(tick)', d.researchTime, { type: 'number' });
+  html += '</div>';
+  html += '<div class="form-row">';
+  html += field('pos_x', '位置X', d.pos?.x ?? 0, { type: 'number' });
+  html += field('commandPointsBonus', '指挥点增加', d.commandPointsBonus, { type: 'number' });
+  html += field('growthSpeedBonus', '人口增长速度增加', d.growthSpeedBonus, { type: 'number', step: '0.1' });
+  html += '</div>';
+  html += '<div class="form-group full">';
+  html += '<label for="f_description">描述</label>';
+  html += '<textarea id="f_description" data-field="description" rows="2">' + escapeHTML(d.description || '') + '</textarea></div>';
+
+  /* 前置科技（逗号分隔） */
+  html += '<div class="section-title">前置科技</div>';
+  html += '<div class="form-group full">';
+  html += '<textarea id="f_prerequisites" data-field="prerequisites" rows="2">' + (Array.isArray(d.prerequisites) ? d.prerequisites.join(', ') : (d.prerequisites || '')) + '</textarea>';
+  html += '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">多个前置科技用逗号分隔，如: logging, mining</div></div>';
+
+  /* 灵感消耗（子列表选择资源实际上是选择灵感数量） */
+  html += '<div class="section-title">灵感消耗</div>';
+  html += '<div class="form-row">';
+  html += field('cost_inspiration', '灵感消耗量', (d.cost && d.cost.length > 0) ? d.cost[0].amount : 0, { type: 'number' });
+  html += '<div style="font-size:10px;color:var(--text-muted);align-self:end;padding-bottom:6px;">💡 灵感是单独的货币，不消耗资源</div>';
+  html += '</div>';
+
+  /* 解锁内容 */
+  html += '<div class="section-title">解锁内容</div>';
+  html += '<div class="form-row span-3">';
+  html += field('unlock_buildings', '解锁建筑', (d.unlocks?.buildings || []).join(', '));
+  html += field('unlock_units', '解锁单位', (d.unlocks?.units || []).join(', '));
+  html += field('unlock_formations', '解锁阵型', (d.unlocks?.formations || []).join(', '));
+  html += '</div>';
+
+  html += '<div style="font-size:11px;color:var(--text-muted);padding:4px 0;">';
+  html += '📌 指挥点增加 和 人口增长速度增加 在效果预览中也会同时生效';
+  html += '</div>';
+
+  return html;
+}
+
+/* ═══════════════════════════════════════════
+   建筑相邻加成 — 渲染
+   ═══════════════════════════════════════════ */
+function adjacencyCurrentData() {
+  return state.data.adjacency_bonuses;
+}
+
+function getAdjacencyDefaultItem() {
+  return {
+    id: 'new_adjacency_rule',
+    name: '新增加成规则',
+    sourceBuildingId: (state.data.buildings && state.data.buildings.length > 0) ? state.data.buildings[0].id : '',
+    targetBuildingId: (state.data.buildings && state.data.buildings.length > 0) ? state.data.buildings[0].id : '',
+    maxDistance: 1,
+    effectType: 'multiplier',
+    effectValue: 1.5,
+    applyToField: 'production',
+    applyTo: 'all'
+  };
+}
+
+function renderAdjacencyForm(item) {
+  let html = '<div class="form-row">';
+  html += field('id', '规则ID', item.id, { placeholder: 'lumber_mill_near_logging_camp' });
+  html += field('name', '显示名称', item.name, { placeholder: '木材处理厂·伐木协同' });
+  html += '</div>';
+
+  html += '<div class="form-row">';
+  html += '<div class="form-group"><label for="f_sourceBuildingId">受益建筑 (source)</label>';
+  html += bldSelect('sourceBuildingId', item.sourceBuildingId, false);
+  html += '<span style="font-size:11px;color:var(--muted);margin-top:2px">谁获得加成</span></div>';
+  html += '<div class="form-group"><label for="f_targetBuildingId">提供建筑 (target)</label>';
+  html += bldSelect('targetBuildingId', item.targetBuildingId, false);
+  html += '<span style="font-size:11px;color:var(--muted);margin-top:2px">靠近谁才有加成</span></div>';
+  html += '</div>';
+
+  html += '<div class="form-row span-3">';
+  html += field('maxDistance', '最大距离', item.maxDistance, { type: 'number', placeholder: '1' });
+  html += field('effectType', '效果类型', item.effectType, { type: 'select', options: ['multiplier', 'flat'], optionLabels: { multiplier: '乘算 (×)', flat: '加算 (+)' } });
+  html += field('effectValue', '效果数值', item.effectValue, { type: 'number', placeholder: '1.5', step: '0.1' });
+  html += '</div>';
+
+  html += '<div class="form-row">';
+  html += field('applyToField', '作用于字段', item.applyToField, { type: 'select', options: ['production', 'foodCapacity', 'housingCapacity'], optionLabels: { production: '产出 (production)', foodCapacity: '食物产出 (foodCapacity)', housingCapacity: '住宅容量 (housingCapacity)' } });
+  html += field('applyTo', '作用于资源', item.applyTo, { type: 'select', options: ['all', ...(state.data.resources || []).map(r => r.id)], optionLabels: Object.fromEntries([ ['all', '全部产出'], ...(state.data.resources || []).map(r => [r.id, r.name]) ]) });
+  html += '</div>';
+
+  const bldNames = {};
+  (state.data.buildings || []).forEach(b => { bldNames[b.id] = b.name || b.id; });
+  const srcName = bldNames[item.sourceBuildingId] || item.sourceBuildingId || '?';
+  const tgtName = bldNames[item.targetBuildingId] || item.targetBuildingId || '?';
+  const effectDesc = item.effectType === 'multiplier' ? `产出 ×${item.effectValue}` : `产出 +${item.effectValue}`;
+  const effectClass = (item.effectValue >= (item.effectType === 'multiplier' ? 1 : 0)) ? 'positive' : 'negative';
+  html += '<div class="section-title">效果预览</div>';
+  html += '<div style="padding:12px;background:var(--bg);border-radius:8px;border:1px solid var(--border);font-size:13px;line-height:1.8">';
+  html += `<strong>${escapeHTML(srcName)}</strong> 靠近 <strong>${escapeHTML(tgtName)}</strong>（≤${item.maxDistance}格）时`;
+  html += `<br>→ <span style="color:${effectClass === 'positive' ? 'var(--good)' : 'var(--bad)'};font-weight:600">${escapeHTML(effectDesc)}</span>`;
+  html += `（作用于: ${item.applyToField === 'foodCapacity' ? '食物产出' : item.applyToField === 'housingCapacity' ? '住宅容量' : '生产产出'}${item.applyTo !== 'all' ? ' · ' + item.applyTo : ''}）`;
+  html += '</div>';
+
+  html += '<div class="section-title">加成关系图</div>';
+  html += '<div class="event-graph" id="adjGraph">' + renderAdjacencyGraph() + '</div>';
+  return html;
+}
+
+const _adjNodePositions = {};
+
+function renderAdjacencyGraph() {
+  const rules = adjacencyCurrentData() || [];
+  if (rules.length === 0) return '<div style="padding:16px;text-align:center;color:var(--muted)">暂无加成规则</div>';
+  const buildingSet = new Set();
+  rules.forEach(r => { buildingSet.add(r.sourceBuildingId); buildingSet.add(r.targetBuildingId); });
+  const bldNames = {};
+  (state.data.buildings || []).forEach(b => { bldNames[b.id] = b.name || b.id; });
+  const buildings = [...buildingSet];
+  const cols = Math.min(buildings.length, 4);
+  const rows = Math.ceil(buildings.length / cols);
+  const cellW = 210, cellH = 150, padX = 70, padY = 70;
+  const svgW = cols * cellW + padX * 2;
+  const svgH = Math.max(rows * cellH + padY * 2, 280);
+
+  const nodePos = {};
+  buildings.forEach((bid, i) => {
+    if (_adjNodePositions[bid]) {
+      nodePos[bid] = { x: Math.max(padX, Math.min(svgW - padX, _adjNodePositions[bid].x)), y: Math.max(padY, Math.min(svgH - padY, _adjNodePositions[bid].y)) };
+    } else {
+      const col = i % cols, row = Math.floor(i / cols);
+      nodePos[bid] = { x: padX + col * cellW + cellW / 2, y: padY + row * cellH + cellH / 2 };
+    }
+  });
+
+  let svg = `<svg width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" style="display:block;max-width:100%;height:auto;cursor:default" id="adjSvg">
+    <defs>
+      <marker id="arrowPos" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#4ecb71"/></marker>
+      <marker id="arrowNeg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#ff6b6b"/></marker>
+    </defs>`;
+
+  rules.forEach(r => {
+    if (!nodePos[r.sourceBuildingId] || !nodePos[r.targetBuildingId]) return;
+    const sp = nodePos[r.sourceBuildingId], tp = nodePos[r.targetBuildingId];
+    const dx = sp.x - tp.x, dy = sp.y - tp.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const nx = dx / (dist || 1), ny = dy / (dist || 1);
+    const nodeR = 62;
+    const sx = sp.x - nx * nodeR, sy = sp.y - ny * nodeR;
+    const ex = tp.x + nx * nodeR, ey = tp.y + ny * nodeR;
+    const isPositive = r.effectType === 'multiplier' ? r.effectValue >= 1 : r.effectValue >= 0;
+    const color = isPositive ? '#4ecb71' : '#ff6b6b';
+    const marker = isPositive ? 'url(#arrowPos)' : 'url(#arrowNeg)';
+    const dash = r.maxDistance > 1 ? 'stroke-dasharray:6,4' : '';
+    const mx = (sx + ex) / 2, my = (sy + ey) / 2;
+    const label = r.effectType === 'multiplier' ? `×${r.effectValue}` : `${r.effectValue >= 0 ? '+' : ''}${r.effectValue}`;
+    svg += `<line x1="${sx}" y1="${sy}" x2="${ex}" y2="${ey}" stroke="${color}" stroke-width="2.5" ${dash} marker-end="${marker}" opacity="0.8"/>`;
+    svg += `<rect x="${mx - 26}" y="${my - 12}" width="52" height="20" rx="5" fill="#1a1a2e" stroke="${color}" stroke-width="1.2" opacity="0.92"/>`;
+    svg += `<text x="${mx}" y="${my}" text-anchor="middle" dominant-baseline="central" font-size="11" fill="${color}" font-weight="600">d≤${r.maxDistance} ${label}</text>`;
+  });
+
+  buildings.forEach(bid => {
+    const p = nodePos[bid];
+    const name = bldNames[bid] || bid;
+    const ruleCount = rules.filter(r => r.sourceBuildingId === bid || r.targetBuildingId === bid).length;
+    svg += `<g class="adj-node" data-bld="${escapeHTML(bid)}" data-x="${p.x}" data-y="${p.y}" style="cursor:grab">
+      <rect x="${p.x - 60}" y="${p.y - 22}" width="120" height="44" rx="10" fill="#222238" stroke="#3a3a55" stroke-width="2"/>
+      <text x="${p.x}" y="${p.y - 1}" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#e0e0e8">${escapeHTML(name)}</text>
+      <text x="${p.x}" y="${p.y + 13}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#6a6a88">${ruleCount}条规则</text>
+    </g>`;
+  });
+
+  svg += `<line x1="20" y1="${svgH - 20}" x2="55" y2="${svgH - 20}" stroke="#4ecb71" stroke-width="2.5" marker-end="url(#arrowPos)"/>`;
+  svg += '<text x="62" y="${svgH - 17}" font-size="11" fill="#808098">正加成</text>';
+  svg += '<line x1="118" y1="${svgH - 20}" x2="153" y2="${svgH - 20}" stroke="#ff6b6b" stroke-width="2.5" marker-end="url(#arrowNeg)"/>';
+  svg += '<text x="160" y="${svgH - 17}" font-size="11" fill="#808098">负加成</text>';
+  svg += '<text x="340" y="${svgH - 17}" font-size="10" fill="#5a5a77">💡 拖拽节点可自由排列</text>';
+  svg += '</svg>';
+  return svg;
+}
+
+function bindAdjacencyFormEvents() {
+  const panel = document.getElementById('detailPanel');
+  panel.querySelectorAll('input[data-field], textarea[data-field], select[data-field]').forEach(el => {
+    el.addEventListener('change', () => applyAdjacencyFieldChange(el));
+    if (el.type !== 'checkbox') el.addEventListener('blur', () => applyAdjacencyFieldChange(el));
+  });
+  ['f_sourceBuildingId', 'f_targetBuildingId', 'f_effectType', 'f_effectValue', 'f_applyToField', 'f_applyTo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('change', () => {
+        applyAdjacencyFieldChange(el);
+        const data = adjacencyCurrentData();
+        if (data && state.selectedIdx >= 0 && state.selectedIdx < data.length) {
+          const item = data[state.selectedIdx];
+          document.getElementById('detailPanel').innerHTML = renderAdjacencyForm(item);
+          bindAdjacencyFormEvents();
+          bindAdjacencyGraphEvents();
+        }
+      });
+    }
+  });
+  bindAdjacencyGraphEvents();
+}
+
+function bindAdjacencyGraphEvents() {
+  const graph = document.getElementById('adjGraph');
+  if (!graph) return;
+  graph.querySelectorAll('.adj-node').forEach(node => {
+    let dragging = null, dragged = false;
+    node.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      const g = e.currentTarget;
+      const origX = parseFloat(g.dataset.x), origY = parseFloat(g.dataset.y);
+      dragging = { node: g, startX: e.clientX, startY: e.clientY, origX, origY };
+      dragged = false;
+      g.style.cursor = 'grabbing';
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - dragging.startX, dy = e.clientY - dragging.startY;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) dragged = true;
+      const svgEl = graph.querySelector('svg');
+      if (!svgEl) return;
+      const pt = svgEl.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      const ctm = svgEl.getScreenCTM();
+      if (!ctm) return;
+      const svgPt = pt.matrixTransform(ctm.inverse());
+      const newX = dragging.origX + (svgPt.x - dragging.origX);
+      const newY = dragging.origY + (svgPt.y - dragging.origY);
+      const rect = dragging.node.querySelector('rect');
+      const texts = dragging.node.querySelectorAll('text');
+      if (rect) { rect.setAttribute('x', newX - 60); rect.setAttribute('y', newY - 22); }
+      texts.forEach((t, i) => {
+        if (i === 0) { t.setAttribute('x', newX); t.setAttribute('y', newY - 1); }
+        if (i === 1) { t.setAttribute('x', newX); t.setAttribute('y', newY + 13); }
+      });
+      dragging.node.dataset.x = newX; dragging.node.dataset.y = newY;
+    });
+    window.addEventListener('mouseup', () => {
+      if (!dragging) return;
+      dragging.node.style.cursor = 'grab';
+      if (dragged) {
+        const bid = dragging.node.dataset.bld;
+        _adjNodePositions[bid] = { x: parseFloat(dragging.node.dataset.x), y: parseFloat(dragging.node.dataset.y) };
+        if (state.selectedIdx >= 0) {
+          const data = adjacencyCurrentData();
+          const item = data[state.selectedIdx];
+          const detailPanel = document.getElementById('detailPanel');
+          if (detailPanel && item) {
+            detailPanel.innerHTML = renderAdjacencyForm(item);
+            bindAdjacencyFormEvents();
+            bindAdjacencyGraphEvents();
+          }
+        }
+      }
+      dragging = null; dragged = false;
+    });
+  });
+}
+
+function applyAdjacencyFieldChange(el) {
+  if (state.selectedIdx < 0) return;
+  const data = adjacencyCurrentData();
+  if (!data || state.selectedIdx >= data.length) return;
+  const item = data[state.selectedIdx];
+  const fieldName = el.dataset.field;
+  let value;
+  if (el.type === 'checkbox') { value = el.checked; }
+  else if (el.type === 'number' || el.type === 'select-one') {
+    const numVal = Number(el.value);
+    value = isNaN(numVal) ? el.value : numVal;
+  } else { value = el.value; }
+  item[fieldName] = value;
+  markDirty();
+}
+
+/* ═══════════════════════════════════════════
+   人文/政策树 — 渲染
+   ═══════════════════════════════════════════ */
+function getCultureDefaultItem() {
+  return { id: 'new_policy', name: '新政策', tier: 0, policyType: 'policy', cost: [{ resourceId: 'wood', amount: 30 }], researchTime: 8, prerequisites: [], pos: { x: 0 }, effects: {}, description: '' };
+}
+
+function renderCultureForm(item) {
+  let html = '<div class="form-row span-3">';
+  html += field('id', '政策ID', item.id, { placeholder: 'survival_doctrine' });
+  html += field('name', '名称', item.name, { placeholder: '生存信条' });
+  html += field('tier', '层级', item.tier, { type: 'number' });
+  html += field('researchTime', '研究时间(tick)', item.researchTime, { type: 'number' });
+  html += '</div>';
+  html += '<div class="form-row">';
+  html += field('policyType', '政策类型', item.policyType, { type: 'select', options: ['policy', 'government', 'doctrine'], optionLabels: { policy: '政策', government: '政体', doctrine: '信条' } });
+  html += field('pos_x', '位置X', item.pos?.x ?? 0, { type: 'number' });
+  html += '</div>';
+  html += '<div class="form-group full">';
+  html += '<label for="f_description">描述</label>';
+  html += '<textarea id="f_description" data-field="description" rows="2">' + escapeHTML(item.description || '') + '</textarea></div>';
+  /* 解锁内容 */
+  html += '<div class="section-title">解锁内容</div>';
+  html += '<div class="form-row">';
+  html += field('unlock_formations', '解锁阵型', (item.unlocks?.formations || []).join(', '));
+  html += '</div>';
+  html += '<div class="section-title">前置政策</div>';
+  html += '<div class="form-group full">';
+  const prereqs = Array.isArray(item.prerequisites) ? item.prerequisites : (item.prerequisites ? [item.prerequisites] : []);
+  html += '<textarea id="f_prerequisites" data-field="prerequisites" rows="2">' + prereqs.join(', ') + '</textarea>';
+  html += '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">多个前置用逗号分隔</div></div>';
+  html += '<div class="section-title">研究消耗</div>';
+  html += subListEditor('cultureCost', '资源消耗', item.cost || [], (c, i) =>
+    '<select data-subidx="' + i + '" data-key="resourceId">' + resSelectOptions(c.resourceId||'', false) + '</select>' +
+    ' <input class="amount" data-subidx="' + i + '" data-key="amount" type="number" value="' + (c.amount||0) + '" placeholder="数量" style="width:80px" />'
+  );
+  /* 指挥点加成 */
+  html += '<div class="section-title">指挥点加成</div>';
+  html += '<div class="form-row">';
+  const cpBonus = item.cp_bonus ?? item.effects?.economy?.commandPointsBonus ?? 0;
+  html += field('cp_bonus', '指挥点上限 +', cpBonus, { type: 'number' });
+  html += '</div>';
+  html += '<div class="section-title">效果 (JSON)</div>';
+  html += '<div class="form-group full">';
+  html += '<textarea id="f_effects_json" data-field="effects_json" rows="4" placeholder=\'{"economy": {"productionMul": 1.05}}\'>' + escapeHTML(JSON.stringify(item.effects || {}, null, 2)) + '</textarea>';
+  html += '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">直接编辑JSON，格式: {"类别": {"属性": 数值}}</div></div>';
+  return html;
+}
+
+function applyCultureFieldChange(el) {
+  if (state.selectedIdx < 0) return;
+  const data = state.data.culture;
+  if (!data || state.selectedIdx >= data.length) return;
+  const item = data[state.selectedIdx];
+  const fieldName = el.dataset.field;
+  if (fieldName === 'effects_json') {
+    try { item.effects = JSON.parse(el.value); markDirty(); } catch(e) { showToast('JSON 解析失败', 'error'); }
+    return;
+  }
+  if (fieldName === 'unlock_formations') {
+    if (!item.unlocks) item.unlocks = {};
+    item.unlocks.formations = el.value ? el.value.split(',').map(s => s.trim()).filter(Boolean) : [];
+    markDirty(); return;
+  }
+  if (fieldName === 'prerequisites') {
+    item.prerequisites = el.value ? el.value.split(',').map(s => s.trim()).filter(Boolean) : [];
+    markDirty(); return;
+  }
+  if (fieldName === 'pos_x') {
+    const v = parseInt(el.value) || 0;
+    if (!item.pos) item.pos = { x: v }; else item.pos.x = v;
+   markDirty(); return;
+  }
+  if (fieldName === 'cp_bonus') {
+    const v = parseInt(el.value) || 0;
+    if (!item.effects) item.effects = {};
+    if (!item.effects.economy) item.effects.economy = {};
+    item.effects.economy.commandPointsBonus = v;
+    markDirty(); return;
+  }
+  let value = el.value;
+  if (el.type === 'number') value = value === '' ? null : parseFloat(value);
+  else if (el.type === 'checkbox') value = el.checked;
+  item[fieldName] = value;
+  markDirty();
+}
+
+function bindCultureFormEvents() {
+  const panel = document.getElementById('detailPanel');
+  panel.querySelectorAll('input[data-field], textarea[data-field], select[data-field]').forEach(el => {
+    el.addEventListener('change', () => applyCultureFieldChange(el));
+    if (el.type !== 'checkbox') el.addEventListener('blur', () => applyCultureFieldChange(el));
+  });
 }
 
 function renderItemForm(item) {
@@ -1248,6 +1739,14 @@ function renderInitialForm(i) {
   html += '<div class="form-row span-3">';
   html += field('pop_initial', '初始人口', pop.initial || 2, { type: 'number' });
   html += '</div>';
+
+  html += '<div class="section-title">人口增长 & 灵感</div>';
+  html += '<div class="form-row span-3">';
+  html += field('pop_growthMin', '每日增长下限', i.populationGrowth?.min ?? 2, { type: 'number' });
+  html += field('pop_growthMax', '每日增长上限', i.populationGrowth?.max ?? 4, { type: 'number' });
+  html += field('pop_inspirationPerPerson', '每人每日灵感', i.inspirationPerPerson ?? 1, { type: 'number', step: '0.1' });
+  html += '</div>';
+  html += '<div style="font-size:11px;color:var(--muted);padding:4px 0;">💡 人口每日随机增长 min~max；每人每天产生指定灵感数</div>';
 
   html += '<div class="section-title">探险容量</div>';
   const caps = i.capacities || {};
@@ -1626,6 +2125,7 @@ function bindFormEvents() {
       if (!item.pos) item.pos = { x: 0, y: 0 };
       if (el.dataset.field === 'pos_x') item.pos.x = parseInt(el.value) || 0;
       else item.pos.y = parseInt(el.value) || 0;
+      markDirty();
     });
     el.addEventListener('change', () => {
       const data = currentData();
@@ -1721,6 +2221,9 @@ function bindFormEvents() {
   const btnAddEnt = document.getElementById('btnAddEntrance');
   if (btnAddEnt) btnAddEnt.addEventListener('click', addEntrance);
 }
+// ── Adjacency & Culture: use tab-specific form handlers ──
+if (state.tab === 'adjacency') { bindAdjacencyFormEvents(); }
+if (state.tab === 'culture') { bindCultureFormEvents(); }
 
 function getItem() {
   const data = currentData();
@@ -1860,9 +2363,23 @@ function applyFieldChange(el) {
   } else if (fieldName === 'pos_x') {
     if (!item.pos) item.pos = { x: 0, y: 0 };
     item.pos.x = parseInt(value) || 0;
+    markDirty();
   } else if (fieldName === 'pos_y') {
     if (!item.pos) item.pos = { x: 0, y: 0 };
     item.pos.y = parseInt(value) || 0;
+    markDirty();
+  } else if (fieldName === 'cost_inspiration') {
+    const v = parseInt(value) || 0;
+    item.cost = v > 0 ? [{ resourceId: 'inspiration', amount: v }] : [];
+  } else if (fieldName === 'invasionBaseA') {
+    if (!item.invasion) item.invasion = {};
+    item.invasion.baseA = parseInt(value) || 0;
+  } else if (fieldName === 'invasionDayMulB') {
+    if (!item.invasion) item.invasion = {};
+    item.invasion.dayMulB = parseFloat(value) || 0;
+  } else if (fieldName === 'invasionDaySqMulC') {
+    if (!item.invasion) item.invasion = {};
+    item.invasion.daySqMulC = parseFloat(value) || 0;
   } else if (fieldName === 'prerequisites') {
     // 科技前置：逗号分隔字符串 → 数组
     item.prerequisites = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
@@ -1875,6 +2392,12 @@ function applyFieldChange(el) {
   } else if (fieldName === 'unlock_regions') {
     if (!item.unlocks) item.unlocks = {};
     item.unlocks.regions = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+  } else if (fieldName === 'unlock_units') {
+    if (!item.unlocks) item.unlocks = {};
+    item.unlocks.units = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+  } else if (fieldName === 'unlock_formations') {
+    if (!item.unlocks) item.unlocks = {};
+    item.unlocks.formations = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
   } else if (fieldName === 'global_humanHp') {
     if (!state.data.combat) state.data.combat = { enemies: [], global: {} };
     if (!state.data.combat.global) state.data.combat.global = {};
@@ -1885,7 +2408,12 @@ function applyFieldChange(el) {
     state.data.combat.global.clickAttack = parseInt(value) || 1;
   } else if (state.tab === 'initial') {
     // 初始配置 - 处理嵌套字段
-    if (fieldName.startsWith('pop_')) {
+    if (fieldName === 'pop_growthMin' || fieldName === 'pop_growthMax') {
+      if (!state.data.initial.populationGrowth) state.data.initial.populationGrowth = {};
+      state.data.initial.populationGrowth[fieldName.replace('pop_growth', '').toLowerCase()] = parseInt(value) || 0;
+    } else if (fieldName === 'pop_inspirationPerPerson') {
+      state.data.initial.inspirationPerPerson = parseFloat(value) || 0;
+    } else if (fieldName.startsWith('pop_')) {
       if (!state.data.initial.population) state.data.initial.population = {};
       state.data.initial.population[fieldName.replace('pop_', '')] = value;
     } else if (fieldName.startsWith('cap_')) {
@@ -1959,8 +2487,13 @@ function addSubEntry(subName) {
       if (!state.data.combat) state.data.combat = { enemies: [], units: [], global: { humanHp: 2, clickAttack: 1 } };
       if (!state.data.combat.units) state.data.combat.units = [];
       targetArray = state.data.combat.units;
-      newEntry = { id: 'new_unit', name: '新单位', hp: 5, attack: 2, attackRange: 1, attackCooldown: 1 };
+      newEntry = { id: 'new_unit', name: '新单位', combatPower: 1, populationRequired: 0, cost: [], unlocked: true };
       break;
+    case 'techCost':
+    case 'cultureCost': targetArray = item.cost; if (!targetArray) { item.cost = []; targetArray = item.cost; } break;
+    case 'roadCost': targetArray = item.buildCost; if (!targetArray) { item.buildCost = []; targetArray = item.buildCost; } break;
+    case 'unitCost': targetArray = item.cost; if (!targetArray) { item.cost = []; targetArray = item.cost; } break;
+    case 'unitReq': targetArray = item.requiredUnits; if (!targetArray) { item.requiredUnits = []; targetArray = item.requiredUnits; } newEntry = { unitId: '', count: 1 }; break;
       // Check for recipe cost or option effects
       if (subName.startsWith('recipe_') && subName.endsWith('_cost')) {
         const ri = parseInt(subName.split('_')[1]);
@@ -1999,6 +2532,11 @@ function removeSubEntry(subName, idx) {
     case 'initialItems': targetArray = state.data.initial.items; break;
     case 'enemies': targetArray = state.data.combat?.enemies; break;
     case 'units': targetArray = state.data.combat?.units; break;
+    case 'techCost':
+    case 'cultureCost': targetArray = item.cost; break;
+    case 'roadCost': targetArray = item.buildCost; break;
+    case 'unitCost': targetArray = item.cost; break;
+    case 'unitReq': targetArray = item.requiredUnits; break;
     default:
       if (subName.startsWith('recipe_') && subName.endsWith('_cost')) {
         const ri = parseInt(subName.split('_')[1]);
@@ -2024,6 +2562,13 @@ function applySubChange(el) {
 
   let value = el.value;
   if (el.type === 'number') value = value === '' ? 0 : parseFloat(value);
+  if (el.type === 'checkbox') value = el.checked;
+  if (key === 'cost' && subName === 'units' && typeof value === 'string') {
+    value = value ? value.split(',').map(s => s.trim()).filter(Boolean).map(s => {
+      const parts = s.split(':');
+      return { resourceId: parts[0].trim(), amount: parseInt(parts[1]) || 0 };
+    }) : [];
+  }
 
   const item = getItem();
   if (!item) return;
@@ -2042,6 +2587,11 @@ function applySubChange(el) {
     case 'initialItems': targetArray = state.data.initial.items; break;
     case 'enemies': targetArray = state.data.combat?.enemies; break;
     case 'units': targetArray = state.data.combat?.units; break;
+    case 'techCost':
+    case 'cultureCost': targetArray = item.cost; break;
+    case 'roadCost': targetArray = item.buildCost; break;
+    case 'unitCost': targetArray = item.cost; break;
+    case 'unitReq': targetArray = item.requiredUnits; break;
     default:
       if (subName.startsWith('recipe_') && subName.endsWith('_cost')) {
         const ri = parseInt(subName.split('_')[1]);
@@ -2204,7 +2754,7 @@ function deleteItem() {
 function getDefaultItem() {
   switch(state.tab) {
     case 'buildings':
-      return { id: 'new_building', name: '新建筑', description: '', icon: '', mapIcon: '', imageDetail: '', tags: [], mapIconLayout: { scaleX: 1.0, scaleY: 1.0, offsetX: 0, offsetY: 0 }, animation: { spriteSheet: '', frameCount: 8, fps: 8, frameWidth: 256, frameHeight: 256, pingpong: false }, footprint: { width: 1, height: 1 }, maxCount: null, initialBuilding: false, housingCapacity: 0, maxWorkers: 0, buildCost: [], buildTime: 1, upgradesTo: null, production: null, synthesisRecipes: [], labelLayout: { nameOffsetY: 0, progressBarOffsetY: 0, workersOffsetY: 0 } };
+      return { id: 'new_building', name: '新建筑', description: '', icon: '', mapIcon: '', imageDetail: '', tags: [], mapIconLayout: { scaleX: 1.0, scaleY: 1.0, offsetX: 0, offsetY: 0 }, animation: { spriteSheet: '', frameCount: 8, fps: 8, frameWidth: 256, frameHeight: 256, pingpong: false }, footprint: { width: 1, height: 1 }, maxCount: null, initialBuilding: false, housingCapacity: 0, maxWorkers: 0, buildCost: [], buildTime: 1, upgradesTo: null, production: null, productionCycle: 'tick', synthesisRecipes: [], labelLayout: { nameOffsetY: 0, progressBarOffsetY: 0, workersOffsetY: 0 } };
     case 'resources':
       return { id: 'new_resource', name: '新资源', icon: '', initial: 0, max: 1000, rare: false, showInHUD: true, tags: [] };
     case 'items':
@@ -2218,9 +2768,19 @@ function getDefaultItem() {
     case 'roads':
       return { id: 'new_road', name: '新道路', description: '', buildCost: [{ resourceId: 'stone', amount: 5 }], buildTime: 1, color: '#8B7355', alpha: 0.8 };
     case 'techs':
-      return { id: 'new_tech', name: '新科技', description: '', tier: 1, icon: '', cost: [{ resourceId: 'wood', amount: 50 }], researchTime: 3, prerequisites: [], pos: { x: 0, y: 0 }, unlocks: { buildings: [], items: [], regions: [], roadTypes: [] } };
+      return { id: 'new_tech', name: '新科技', description: '', tier: 1, icon: '', cost: [{ resourceId: 'wood', amount: 50 }], researchTime: 3, prerequisites: [], pos: { x: 0, y: 0 }, unlocks: { buildings: [], items: [], regions: [], roadTypes: [], units: [], formations: [] } };
     case 'combat':
       return { enemies: [], global: { humanHp: 2, clickAttack: 1 } };
+    case 'adjacency':
+      return getAdjacencyDefaultItem();
+    case 'culture':
+      return getCultureDefaultItem();
+    case 'units':
+      return getUnitDefaultItem();
+    case 'formations':
+      return getFormationDefaultItem();
+    case 'doctrines':
+      return getDoctrineDefaultItem();
     default: return {};
   }
 }
@@ -2232,6 +2792,10 @@ const tabTitles = {
   initial: '初始配置', buildings: '建筑配置', resources: '资源配置', items: '物品配置',
   events: '事件配置', expeditions: '探险配置', tags: '标签配置', map: '地图配置',
   roads: '道路配置', techs: '科技配置', combat: '战斗配置',
+  adjacency: '相邻加成',
+  culture: '人文政策树', units: '兵种配置',
+  formations: '阵型配置',
+  doctrines: '文化配置',
   analysis: '数值分析',
 };
 const tabFiles = {
@@ -2241,6 +2805,10 @@ const tabFiles = {
   roads: 'roads.json',
   techs: 'techs.json',
   combat: 'enemies.json',
+  adjacency: 'adjacency-bonuses.json',
+  culture: 'culture.json', units: 'enemies.json',
+  formations: 'enemies.json',
+  doctrines: 'doctrines.json',
   analysis: '自动分析（只读）',
 };
 
