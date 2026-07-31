@@ -26,6 +26,11 @@ function _techName(id) {
   return tech ? tech.name : id;
 }
 
+function _unitName(id) {
+  const unit = _units().find(u => u.id === id);
+  return unit ? unit.name : id;
+}
+
 function _branchOrder(branch) {
   return ['infantry', 'cavalry', 'artillery', 'navy'].indexOf(branch);
 }
@@ -87,7 +92,9 @@ export function renderUnitResearchPanel(data, body, pm) {
       const done = researched.includes(unit.id);
       const check = techSystem.canResearchUnit(unit.id);
       const prereqs = Array.isArray(unit.prerequisiteTechs) ? unit.prerequisiteTechs : [];
+      const unitPrereqs = Array.isArray(unit.prerequisiteUnits) ? unit.prerequisiteUnits : [];
       const missing = prereqs.filter(id => !techSystem.isResearched(id));
+      const missingUnits = unitPrereqs.filter(id => !techSystem.isUnitUnlockedByTech(id));
       const canClick = !done && check.valid;
 
       const card = document.createElement('div');
@@ -109,6 +116,11 @@ export function renderUnitResearchPanel(data, body, pm) {
       prereq.style.cssText = 'font-size:11px;color:' + (missing.length ? '#f0a040' : '#808098') + ';line-height:1.4;min-height:30px;';
       prereq.textContent = prereqs.length ? ('前置: ' + prereqs.map(_techName).join(' / ')) : '前置: 无';
       card.appendChild(prereq);
+
+      const unitPrereq = document.createElement('div');
+      unitPrereq.style.cssText = 'font-size:11px;color:' + (missingUnits.length ? '#f0a040' : '#808098') + ';line-height:1.4;min-height:18px;';
+      unitPrereq.textContent = unitPrereqs.length ? ('兵种链: ' + unitPrereqs.map(_unitName).join(' / ')) : '兵种链: 起始兵种';
+      card.appendChild(unitPrereq);
 
       const actionRow = document.createElement('div');
       actionRow.style.cssText = 'margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px;';

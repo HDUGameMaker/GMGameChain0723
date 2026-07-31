@@ -192,6 +192,7 @@ export class PopupManager {
       'game_over': '游戏结束',
       'tech_tree': '科技树',
       'culture_tree': '人文树',
+      'military_tradition': '军事传统',
       'alchemy_lab': '炼金实验室',
       'potion_inventory': '药剂库存',
       'tamed_pool': '驯养管理',
@@ -284,6 +285,7 @@ export class PopupManager {
     });
     import('./panels/doctrine-panel.js').then(m => {
       this.register('doctrine_panel', m.renderDoctrinePanel);
+      this.register('military_tradition', m.renderMilitaryTraditionPanel);
     });
   }
 }

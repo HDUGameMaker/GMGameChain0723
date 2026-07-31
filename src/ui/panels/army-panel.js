@@ -43,8 +43,6 @@ function _isFormationUnlocked(fId) {
   const f = _formations().find(x => x.id === fId);
   if (!f) return false;
   if (f.unlocked !== false) return true;
-  var tech = _techSys();
-  if (tech && tech.isFormationUnlockedByTech && tech.isFormationUnlockedByTech(fId)) return true;
   var culture = window.__game?.systems?.culture;
   if (culture && culture.isFormationUnlockedByCulture && culture.isFormationUnlockedByCulture(fId)) return true;
   return false;

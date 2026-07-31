@@ -163,6 +163,7 @@ class Game {
     this.systems.culture.setBuildingSystem(this.systems.building);
     this.systems.culture.setPopulationSystem(this.systems.population);
     this.systems.culture.setTimeSystem(this.systems.time);
+    this.systems.culture.setTechSystem(this.systems.tech);
     this.systems.culture.init();
     this.systems.alchemy.setResourceSystem(this.systems.resource);
     this.systems.alchemy.setItemSystem(this.systems.item);
@@ -402,7 +403,7 @@ class Game {
     // 初始化事件标记状态（新游戏 = 无已移除标记）
     store.setState({ removedEventMarkers: [] });
     /* 初始化文化系统 */
-    store.setState({ doctrineResearched: [], inspiration: 0 });
+    store.setState({ doctrineResearched: [], inspiration: 0, formationResearch: [] });
   }
 
   restoreFromSave(saveData) {

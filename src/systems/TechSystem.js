@@ -143,6 +143,10 @@ export class TechSystem {
     for (const techId of prereqs) {
       if (!this._researched.has(techId)) return { valid: false, reason: '前置科技未完成' };
     }
+    const unitPrereqs = Array.isArray(unit.prerequisiteUnits) ? unit.prerequisiteUnits : [];
+    for (const preUnitId of unitPrereqs) {
+      if (!this._unitResearch.has(preUnitId)) return { valid: false, reason: '前置兵种未研发' };
+    }
     const cost = unit.researchCost || 0;
     const inspiration = store.getState('inspiration') || 0;
     if (inspiration < cost) return { valid: false, reason: '灵感不足' };
@@ -220,12 +224,6 @@ export class TechSystem {
       }
     }
 
-    // 解锁阵型
-    if (tech.unlocks.formations) {
-      for (const fId of tech.unlocks.formations) {
-        console.log('[Tech] Unlocked formation:', fId);
-      }
-    }
   }
 
   /** 检查建筑是否被科技解锁 */
@@ -242,16 +240,6 @@ export class TechSystem {
   isUnitUnlockedByTech(unitId) {
     this._ensureBaseUnitResearch();
     return this._unitResearch.has(unitId);
-  }
-
-  /** 检查阵型是否被科技解锁 */
-  isFormationUnlockedByTech(formationId) {
-    const allTechs = this._getAllTechs();
-    for (const tech of allTechs) {
-      if (!this._researched.has(tech.id)) continue;
-      if (tech.unlocks?.formations?.includes(formationId)) return true;
-    }
-    return false;
   }
 
   // ===== Store =====

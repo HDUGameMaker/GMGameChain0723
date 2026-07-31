@@ -95,13 +95,11 @@
     "unlocks": {
       "buildings": [],
       "units": [],
-      "formations": [
-        "infantry_pair"
-      ]
+      "formations": []
     },
     "commandPointsBonus": 0,
     "growthSpeedBonus": 0,
-    "description": "解锁步兵互援阵型"
+    "description": "建立军事传统，开放阵型研发方向"
   },
   {
     "id": "tactics",
@@ -123,13 +121,11 @@
     "unlocks": {
       "buildings": [],
       "units": [],
-      "formations": [
-        "infantry_cavalry"
-      ]
+      "formations": []
     },
     "commandPointsBonus": 0,
     "growthSpeedBonus": 0,
-    "description": "解锁步骑协同阵型"
+    "description": "提升战术理解，为军事传统研发提供背景"
   },
   {
     "id": "commander",
@@ -178,9 +174,7 @@
     "unlocks": {
       "buildings": [],
       "units": [],
-      "formations": [
-        "infantry_artillery"
-      ]
+      "formations": []
     },
     "commandPointsBonus": 2,
     "growthSpeedBonus": 0,
@@ -206,9 +200,7 @@
     "unlocks": {
       "buildings": [],
       "units": [],
-      "formations": [
-        "cavalry_wedge"
-      ]
+      "formations": []
     },
     "commandPointsBonus": 0,
     "growthSpeedBonus": 0,
@@ -287,9 +279,7 @@
     "unlocks": {
       "buildings": [],
       "units": [],
-      "formations": [
-        "combined_arms"
-      ]
+      "formations": []
     },
     "commandPointsBonus": 5,
     "growthSpeedBonus": 0,

@@ -36,6 +36,7 @@
       "commandPoints": 3,
       "weight": 10,
       "researchCost": 40,
+      "prerequisiteUnits": ["warrior"],
       "prerequisiteTechs": ["smelting", "military_training"],
       "cost": [
         { "resourceId": "iron_ingot", "amount": 12 },
@@ -57,6 +58,7 @@
       "commandPoints": 5,
       "weight": 25,
       "researchCost": 90,
+      "prerequisiteUnits": ["swordsman"],
       "prerequisiteTechs": ["firearm"],
       "cost": [
         { "resourceId": "gear", "amount": 8 },
@@ -79,6 +81,7 @@
       "commandPoints": 7,
       "weight": 55,
       "researchCost": 180,
+      "prerequisiteUnits": ["musketeer"],
       "prerequisiteTechs": ["modern_firearms"],
       "cost": [
         { "resourceId": "steel", "amount": 25 },
@@ -123,6 +126,7 @@
       "commandPoints": 6,
       "weight": 35,
       "researchCost": 110,
+      "prerequisiteUnits": ["knight"],
       "prerequisiteTechs": ["precision_manufacturing"],
       "cost": [
         { "resourceId": "steel", "amount": 22 },
@@ -145,6 +149,7 @@
       "commandPoints": 9,
       "weight": 70,
       "researchCost": 220,
+      "prerequisiteUnits": ["armored_cavalry"],
       "prerequisiteTechs": ["aeronautics"],
       "cost": [
         { "resourceId": "steel", "amount": 45 },
@@ -167,6 +172,7 @@
       "commandPoints": 12,
       "weight": 110,
       "researchCost": 420,
+      "prerequisiteUnits": ["biplane"],
       "prerequisiteTechs": ["modern_aeronautics"],
       "cost": [
         { "resourceId": "steel", "amount": 90 },
@@ -211,6 +217,7 @@
       "commandPoints": 10,
       "weight": 80,
       "researchCost": 260,
+      "prerequisiteUnits": ["cannon"],
       "prerequisiteTechs": ["internal_combustion", "precision_manufacturing"],
       "cost": [
         { "resourceId": "steel", "amount": 70 },
@@ -234,6 +241,7 @@
       "commandPoints": 13,
       "weight": 120,
       "researchCost": 460,
+      "prerequisiteUnits": ["tank"],
       "prerequisiteTechs": ["modern_ballistics"],
       "cost": [
         { "resourceId": "steel", "amount": 120 },
@@ -277,6 +285,7 @@
       "commandPoints": 5,
       "weight": 32,
       "researchCost": 95,
+      "prerequisiteUnits": ["raft"],
       "prerequisiteTechs": ["sail"],
       "cost": [
         { "resourceId": "plank", "amount": 80 },
@@ -299,6 +308,7 @@
       "commandPoints": 11,
       "weight": 90,
       "researchCost": 300,
+      "prerequisiteUnits": ["sailing_ship"],
       "prerequisiteTechs": ["steam_engine"],
       "cost": [
         { "resourceId": "steel", "amount": 120 },
@@ -322,6 +332,7 @@
       "commandPoints": 14,
       "weight": 130,
       "researchCost": 520,
+      "prerequisiteUnits": ["battleship"],
       "prerequisiteTechs": ["modern_ballistics", "precision_manufacturing"],
       "cost": [
         { "resourceId": "steel", "amount": 180 },
@@ -338,6 +349,7 @@
       "name": "步兵互援",
       "bonusRate": 0.5,
       "modernBonusRate": 0.3,
+      "researchCost": 20,
       "description": "2 名任意步兵互相掩护。现代单位出现前约提升参与单位 50% 战力，现代单位出现后约 30%。",
       "requiredUnits": [
         { "branch": "infantry", "count": 2 }
@@ -349,6 +361,7 @@
       "name": "步骑协同",
       "bonusRate": 0.5,
       "modernBonusRate": 0.3,
+      "researchCost": 55,
       "description": "2 名任意步兵与 1 名任意骑兵协同推进。现代单位出现前约提升参与单位 50% 战力，现代单位出现后约 30%。",
       "requiredUnits": [
         { "branch": "infantry", "count": 2 },
@@ -361,6 +374,7 @@
       "name": "骑兵楔阵",
       "bonusRate": 0.5,
       "modernBonusRate": 0.3,
+      "researchCost": 75,
       "description": "3 名任意骑兵组成冲击队形。现代单位出现前约提升参与单位 50% 战力，现代单位出现后约 30%。",
       "requiredUnits": [
         { "branch": "cavalry", "count": 3 }
@@ -372,6 +386,7 @@
       "name": "步炮协同",
       "bonusRate": 0.5,
       "modernBonusRate": 0.3,
+      "researchCost": 80,
       "description": "2 名任意步兵保护 1 个任意炮兵单位。现代单位出现前约提升参与单位 50% 战力，现代单位出现后约 30%。",
       "requiredUnits": [
         { "branch": "infantry", "count": 2 },
@@ -384,6 +399,7 @@
       "name": "诸兵种协同",
       "bonusRate": 0.5,
       "modernBonusRate": 0.3,
+      "researchCost": 140,
       "description": "2 名任意步兵、1 名任意骑兵与 1 个任意炮兵单位组成完整陆军战斗群。现代单位出现前约提升参与单位 50% 战力，现代单位出现后约 30%。",
       "requiredUnits": [
         { "branch": "infantry", "count": 2 },

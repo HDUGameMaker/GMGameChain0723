@@ -19,6 +19,8 @@ export class CultureSystem {
     this._activatedPolicies = new Set();
     /** @type {string | null} 当前政体ID（选定不可改） */
     this._government = null;
+    /** @type {Set<string>} 已研发的军事传统/阵型ID */
+    this._formationResearch = new Set();
     /** 政策卡切换冷却：下次可切换的游戏日 */
     this._policyCooldownUntilDay = 0;
 
@@ -35,6 +37,7 @@ export class CultureSystem {
   setBuildingSystem(bs) { this._buildingSystem = bs; }
   setPopulationSystem(ps) { this._populationSystem = ps; }
   setTimeSystem(ts) { this._timeSystem = ts; }
+  setTechSystem(ts) { this._techSystem = ts; }
 
   init() {
     // tier 0 自动完成
@@ -62,6 +65,8 @@ export class CultureSystem {
   getDoctrineResearched() { return store.getState('doctrineResearched') || []; }
 
   _getDoctrineConfigs() { return configRegistry.get('doctrines') || []; }
+  _getFormationConfigs() { return configRegistry.get('enemies')?.formations || []; }
+  _getUnitConfigs() { return configRegistry.get('enemies')?.units || []; }
 
   getCurrentResearch() { return this._currentResearch ? { ...this._currentResearch } : null; }
 
@@ -135,37 +140,76 @@ export class CultureSystem {
     if (c && c.policyType === 'government') {
       // 政体研究完成即选定，不可改
       this._government = id;
-      this._unlockFormationsFrom(c);
       eventBus.emit('combatBroadcast', { message: `🏛️ 选定政体：${c.name}` });
     } else if (c && c.policyType === 'policy') {
       // 政策卡研究完成默认激活
       this._activatedPolicies.add(id);
-      this._unlockFormationsFrom(c);
     }
     this._updateStore();
     eventBus.emit('cultureResearched', { id });
   }
 
-  /** 激活政策/政体时解锁阵型 */
-  _unlockFormationsFrom(c) {
-    if (!c || !c.unlocks || !c.unlocks.formations) return;
-    for (const fId of c.unlocks.formations) {
-      console.log('[Culture] Unlocked formation:', fId);
-    }
-  }
-
   /** 检查阵型是否被文化政策解锁 */
   isFormationUnlockedByCulture(formationId) {
-    const researchedDoctrines = this.getDoctrineResearched();
-    for (const d of this._getDoctrineConfigs()) {
-      if (researchedDoctrines.includes(d.id) && d.unlocks?.formations?.includes(formationId)) return true;
+    const f = this._getFormationConfigs().find(x => x.id === formationId);
+    if (f?.unlocked === true) return true;
+    return this._formationResearch.has(formationId);
+  }
+
+  getFormationResearch() {
+    return [...this._formationResearch];
+  }
+
+  _getLowestUnitForReq(req) {
+    const units = this._getUnitConfigs().filter(u => {
+      if (req.unitId) return u.id === req.unitId;
+      if (req.branch && u.branch !== req.branch) return false;
+      if (req.domain && (u.domain || 'land') !== req.domain) return false;
+      return true;
+    });
+    units.sort((a, b) => (a.tier || 0) - (b.tier || 0) || (a.combatPower || 0) - (b.combatPower || 0));
+    return units[0] || null;
+  }
+
+  getFormationRequirements(formationId) {
+    const f = this._getFormationConfigs().find(x => x.id === formationId);
+    if (!f) return [];
+    const seen = new Set();
+    const result = [];
+    for (const req of f.requiredUnits || []) {
+      const unit = this._getLowestUnitForReq(req);
+      if (!unit || seen.has(unit.id)) continue;
+      seen.add(unit.id);
+      result.push(unit);
     }
-    const all = this._getAll();
-    for (const p of all) {
-      if (!this._researched.has(p.id)) continue;
-      if (p.unlocks?.formations?.includes(formationId)) return true;
+    return result;
+  }
+
+  canResearchFormation(formationId) {
+    const f = this._getFormationConfigs().find(x => x.id === formationId);
+    if (!f) return { valid: false, reason: '阵型不存在' };
+    if (this.isFormationUnlockedByCulture(formationId)) return { valid: false, reason: '已研发完成' };
+    const unitResearch = store.getState('unitResearch') || [];
+    const requiredUnits = this.getFormationRequirements(formationId);
+    for (const unit of requiredUnits) {
+      if (!unitResearch.includes(unit.id)) return { valid: false, reason: '前置兵种未研发: ' + unit.name };
     }
-    return false;
+    const cost = f.researchCost || 0;
+    if ((store.getState('inspiration') || 0) < cost) return { valid: false, reason: '灵感不足' };
+    return { valid: true };
+  }
+
+  researchFormation(formationId) {
+    const check = this.canResearchFormation(formationId);
+    if (!check.valid) return false;
+    const f = this._getFormationConfigs().find(x => x.id === formationId);
+    const cost = f?.researchCost || 0;
+    this._formationResearch.add(formationId);
+    store.setState({ inspiration: Math.max(0, (store.getState('inspiration') || 0) - cost) });
+    this._updateStore();
+    eventBus.emit('formationResearched', { formationId });
+    eventBus.emit('combatBroadcast', { message: '📜 完成军事传统研发: ' + (f?.name || formationId) });
+    return true;
   }
 
   /** 总指挥点上限加成 */
@@ -275,6 +319,7 @@ export class CultureSystem {
       cultureCurrent: this._currentResearch ? { ...this._currentResearch } : null,
       cultureActivated: [...this._activatedPolicies],
       cultureGovernment: this._government,
+      formationResearch: [...this._formationResearch],
       cultureVersion: Date.now()
     });
   }
@@ -286,7 +331,8 @@ export class CultureSystem {
       currentResearch: this._currentResearch ? { ...this._currentResearch } : null,
       activatedPolicies: [...this._activatedPolicies],
       government: this._government,
-      policyCooldownUntilDay: this._policyCooldownUntilDay
+      policyCooldownUntilDay: this._policyCooldownUntilDay,
+      formationResearch: [...this._formationResearch]
     };
   }
 
@@ -297,6 +343,7 @@ export class CultureSystem {
     this._activatedPolicies = new Set(state.activatedPolicies || []);
     this._government = state.government || null;
     this._policyCooldownUntilDay = state.policyCooldownUntilDay || 0;
+    this._formationResearch = new Set(state.formationResearch || []);
     this._updateStore();
   }
 }
