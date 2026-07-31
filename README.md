@@ -177,7 +177,8 @@ GMGameChain0723/
 ├── index.html                          # 游戏主入口
 ├── artist-config.html                  # 美术配置编辑器
 ├── planner-config.html                 # 策划配置编辑器
-├── 接龙活动_末世小木屋.html             # 社区接龙活动页
+├── docs/pages/接龙活动_末世小木屋.html  # 社区接龙活动页
+├── docs/pages/新手教程.html             # 新手教程页
 │
 ├── config/                             # JSON 配置（所有游戏数值）
 │   ├── global.json                     # 全局参数（时段/速度/人口/事件概率）
