@@ -104,6 +104,39 @@ export class PopulationSystem {
   }
 
   /**
+   * 获取人口增长倍率。人文与炼金按加算规则叠加：
+   * 基础 100% + 各来源相对 100% 的增量。
+   */
+  getGrowthMultiplier() {
+    const aEffPop = this._alchemySystem ? (this._alchemySystem.getEffects().population || {}) : {};
+    let growthMul = 1;
+    if (this._cultureSystem) {
+      const cEff = this._cultureSystem.getEffects();
+      growthMul += (cEff.growthMul || 1) - 1;
+    }
+    if (aEffPop.growthMul) growthMul += aEffPop.growthMul - 1;
+    return Math.max(0, growthMul);
+  }
+
+  /**
+   * 预览下一次日结算最多能新增的人口范围。
+   * 实际增长仍会被住宅上限截断，且会先经过食物不足导致的死亡检查。
+   */
+  getDailyGrowthPreview() {
+    const housing = this.getHousingCapacity();
+    const room = Math.max(0, housing - this.current);
+    const minBase = this.growthConfig?.min ?? 0;
+    const maxBase = this.growthConfig?.max ?? minBase;
+    const multiplier = this.getGrowthMultiplier();
+    if (room <= 0 || maxBase <= 0 || multiplier <= 0) {
+      return { min: 0, max: 0, room, multiplier };
+    }
+    const min = Math.min(room, Math.max(1, Math.round(minBase * multiplier)));
+    const max = Math.min(room, Math.max(min, Math.round(maxBase * multiplier)));
+    return { min, max, room, multiplier };
+  }
+
+  /**
    * 建造/修路时占用工人
    */
   occupyForConstruction(count) {
@@ -220,14 +253,7 @@ export class PopulationSystem {
     if (this.current < housing) {
       // 增长（受人文政策影响）
       this.declineCountdown = 0;
-      const aEffPop = this._alchemySystem ? (this._alchemySystem.getEffects().population || {}) : {};
-      /* 加算规则：基础 100% + 文化/信条加成 + 炼金加成 */
-      let growthMul = 1;
-      if (this._cultureSystem) {
-        const cEff = this._cultureSystem.getEffects();
-        growthMul += (cEff.growthMul || 1) - 1;
-      }
-      if (aEffPop.growthMul) growthMul += aEffPop.growthMul - 1;
+      const growthMul = this.getGrowthMultiplier();
       const growth = Math.max(1, Math.round(this._randomInt(this.growthConfig.min, this.growthConfig.max) * growthMul));
       this.current = Math.min(this.current + growth, housing);
       eventBus.emit('populationChanged', { current: this.current, direction: 'grow' });

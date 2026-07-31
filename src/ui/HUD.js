@@ -476,13 +476,19 @@ export class HUD {
     const landDeployed = deployedUnits.filter(u => u.source !== 'tamed').length;
     const navyUnits = 0;
     const total = idle + assigned + armyPop;
+    const growthPreview = this.systems.population.getDailyGrowthPreview
+      ? this.systems.population.getDailyGrowthPreview()
+      : { min: 0, max: 0, room: 0, multiplier: 1 };
+    const growthText = growthPreview.min === growthPreview.max
+      ? `+${growthPreview.max}`
+      : `+${growthPreview.min}~${growthPreview.max}`;
 
     const housingClass = total >= housing ? ' class="bottleneck"' : '';
 
     this.populationDisplay.innerHTML =
       `<div class="population-line">` +
         `<span class="hud-info-main">👥 <span style="color:#4ecb71">${idle}</span>+<span style="color:#5b8def">${assigned}</span>+<span style="color:#c98500">${armyPop}</span>/<span${housingClass}>${housing}</span></span>` +
-        `<span class="hud-info-sub">空+建+陆</span>` +
+        `<span class="hud-info-sub">日增 ${growthText}</span>` +
       `</div>` +
       `<div class="military-line">` +
         `<span class="hud-info-main">⚔️${armies.length}</span><span class="hud-info-sub">陆${armyPop + landDeployed}</span>` +
@@ -518,8 +524,14 @@ export class HUD {
       const totalAvail = Object.values(availUnits).reduce((s, v) => s + v, 0);
       const totalArmyUnits = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
       const armyDetail = armies.map(a => a.name + ':' + (a.unitIds||[]).length + '单位').join(' · ');
+      const growth = this.systems.population.getDailyGrowthPreview
+        ? this.systems.population.getDailyGrowthPreview()
+        : growthPreview;
+      const growthDetail = growth.min === growth.max
+        ? `每日可新增: ${growth.max}`
+        : `每日可新增: ${growth.min}~${growth.max}`;
       this._showPopover(e.target,
-        `总人口: ${total} = 空闲${idle} + 建筑${assigned} + 陆军${armyPop}\n住宅上限: ${housing}\n可用工人: ${available}\n已分配: ${assigned}\n地图部署: ${deployedText}\n陆军编制: ${armies.length}支 · ${totalArmyUnits}单位\n训练储备: ${totalAvail}\n海军: ${navyUnits}（殖民地战斗预留）\n${armyDetail || ''}\n食物储备: ${foodAmount}`
+        `总人口: ${total} = 空闲${idle} + 建筑${assigned} + 陆军${armyPop}\n住宅上限: ${housing}\n${growthDetail}（剩余住宅 ${growth.room}，倍率 ×${growth.multiplier.toFixed(2)}）\n可用工人: ${available}\n已分配: ${assigned}\n地图部署: ${deployedText}\n陆军编制: ${armies.length}支 · ${totalArmyUnits}单位\n训练储备: ${totalAvail}\n海军: ${navyUnits}（殖民地战斗预留）\n${armyDetail || ''}\n食物储备: ${foodAmount}`
       );
     };
   }
