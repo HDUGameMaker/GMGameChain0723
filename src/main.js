@@ -23,6 +23,7 @@ import { CombatSystem } from './systems/CombatSystem.js';
 import { WeatherSystem } from './systems/WeatherSystem.js';
 import { QuestSystem } from './systems/QuestSystem.js';
 import { InvasionSystem } from './systems/InvasionSystem.js';
+import { ColonySystem } from './systems/ColonySystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
@@ -115,6 +116,8 @@ class Game {
     this.systems.combat = new CombatSystem();
     // 入侵系统
     this.systems.invasion = new InvasionSystem();
+    // 殖民地系统
+    this.systems.colony = new ColonySystem();
 
     // 天气与季节系统
     this.systems.weather = new WeatherSystem();
@@ -202,6 +205,11 @@ class Game {
       building: this.systems.building,
       population: this.systems.population,
       alchemy: this.systems.alchemy
+    });
+    this.systems.colony.setSystems({
+      popupManager: this.popupManager,
+      population: this.systems.population,
+      resource: this.systems.resource
     });
 
     // 注册人口每日结算
@@ -396,6 +404,8 @@ class Game {
     this.systems.weather.initNew();
     // 初始化入侵系统
     this.systems.invasion.initNew();
+    // 初始化殖民地系统
+    this.systems.colony.initNew();
 
     // 初始化炼金系统
     this.systems.alchemy.init();
@@ -442,6 +452,11 @@ class Game {
     }
     if (saveData.invasion) {
       this.systems.invasion.restoreState(saveData.invasion);
+    }
+    if (saveData.colony) {
+      this.systems.colony.restoreState(saveData.colony);
+    } else {
+      this.systems.colony.initNew();
     }
     if (saveData.quest) {
       this.systems.quest.restoreState(saveData.quest);
@@ -501,6 +516,7 @@ class Game {
       quest: this.systems.quest.getState(),
       weather: this.systems.weather.getState(),
       invasion: this.systems.invasion.getState(),
+      colony: this.systems.colony.getState(),
       audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
       armies: store.getState('armies'),
@@ -532,6 +548,7 @@ class Game {
       audio: this.systems.audio.getAllStates(),
       weather: this.systems.weather.getState(),
       invasion: this.systems.invasion.getState(),
+      colony: this.systems.colony.getState(),
       tech: this.systems.tech.getState(),
       culture: this.systems.culture.getState(),
       alchemy: this.systems.alchemy.getState(),

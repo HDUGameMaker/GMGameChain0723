@@ -1153,6 +1153,17 @@ export class MapRenderer {
     canvas.addEventListener('pointerdown', (e) => {
       const gridPos = this._clientToGrid(e.clientX, e.clientY);
 
+      // 放置建筑模式：优先于道路编辑，避免选中建筑后点击地图误铺道路
+      if (this.buildingSystem.placingState === 'PLACING') {
+        this.isDragging = true;
+        this.hasMoved = false;
+        this.dragStartX = e.clientX;
+        this.dragStartY = e.clientY;
+        this.dragStartCamX = this.camX;
+        this.dragStartCamY = this.camY;
+        return;
+      }
+
       // 道路编辑模式
       if (this._roadSystem && this._roadSystem.isEditMode() && gridPos) {
         const existing = this._roadSystem.getRoadAt(gridPos.col, gridPos.row);
@@ -1163,17 +1174,6 @@ export class MapRenderer {
         }
         this._drawRoads();
         this._updateFogTexture();
-        return;
-      }
-
-      // 放置建筑模式：禁止切换挪动模式，保持常时行为
-      if (this.buildingSystem.placingState === 'PLACING') {
-        this.isDragging = true;
-        this.hasMoved = false;
-        this.dragStartX = e.clientX;
-        this.dragStartY = e.clientY;
-        this.dragStartCamX = this.camX;
-        this.dragStartCamY = this.camY;
         return;
       }
 

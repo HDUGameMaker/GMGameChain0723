@@ -32,6 +32,7 @@ class ConfigRegistry {
       'culture': 'config/culture.json',
       'alchemy': 'config/alchemy.json',
       'quests': 'config/quests.json',
+      'colonies': 'config/colonies.json',
       'doctrines': 'config/doctrines.json'
     };
 

@@ -63,6 +63,9 @@ export class BuildingSystem {
   // ===== 放置模式 =====
 
   enterPlacingMode(buildingId) {
+    if (this._roadSystem?.isEditMode?.()) {
+      this._roadSystem.exitEditMode();
+    }
     this.placingState = 'PLACING';
     this.placingBuildingId = buildingId;
     store.setState({ placingState: 'PLACING', placingBuildingId: buildingId });
@@ -156,8 +159,8 @@ export class BuildingSystem {
 
     // 道路依赖建筑：必须邻接道路
     if (config.roadRequired && this._roadSystem) {
-      if (!this._roadSystem.hasAdjacentRoad(gridX, gridY, w, h)) {
-        return { valid: false, reason: '该建筑需要紧邻道路（道路依赖）' };
+      if (!this._satisfiesRoadDependency(gridX, gridY, w, h, buildingId)) {
+        return { valid: false, reason: buildingId === 'work_shed' ? '工棚需要紧邻道路、工棚或仓库' : '该建筑需要紧邻道路（道路依赖）' };
       }
     }
 
@@ -593,8 +596,8 @@ export class BuildingSystem {
 
     // 道路依赖建筑：必须邻接道路
     if (config.roadRequired && this._roadSystem) {
-      if (!this._roadSystem.hasAdjacentRoad(newGridX, newGridY, w, h)) {
-        return { valid: false, reason: '该建筑需要紧邻道路（道路依赖）' };
+      if (!this._satisfiesRoadDependency(newGridX, newGridY, w, h, building.buildingId, buildingIndex)) {
+        return { valid: false, reason: building.buildingId === 'work_shed' ? '工棚需要紧邻道路、工棚或仓库' : '该建筑需要紧邻道路（道路依赖）' };
       }
     }
 
@@ -629,11 +632,45 @@ export class BuildingSystem {
     if (!config) return { valid: true };
     // 道路依赖建筑检查
     if (config.roadRequired && this._roadSystem) {
-      if (!this._roadSystem.hasAdjacentRoad(building.gridX, building.gridY, config.footprint.width, config.footprint.height)) {
-        return { valid: false, reason: '需要紧邻道路' };
+      if (!this._satisfiesRoadDependency(building.gridX, building.gridY, config.footprint.width, config.footprint.height, building.buildingId, buildingIndex)) {
+        return { valid: false, reason: building.buildingId === 'work_shed' ? '需要紧邻道路、工棚或仓库' : '需要紧邻道路' };
       }
     }
     return { valid: true };
+  }
+
+  _satisfiesRoadDependency(gridX, gridY, w, h, buildingId, ignoreIndex = -1) {
+    if (this._roadSystem?.hasAdjacentRoad(gridX, gridY, w, h)) return true;
+    if (buildingId !== 'work_shed') return false;
+    return this._hasAdjacentWorkShedAnchor(gridX, gridY, w, h, ignoreIndex);
+  }
+
+  _hasAdjacentWorkShedAnchor(gridX, gridY, w, h, ignoreIndex = -1) {
+    for (let i = 0; i < this.buildings.length; i++) {
+      if (i === ignoreIndex) continue;
+      const other = this.buildings[i];
+      const otherConfig = configRegistry.getBuilding(other.buildingId);
+      if (!otherConfig) continue;
+      const isAnchor = other.buildingId === 'work_shed' || otherConfig.storageMultiplier || otherConfig.tags?.includes('warehouse');
+      if (!isAnchor) continue;
+      if (this._areRectsSideAdjacent(
+        gridX, gridY, w, h,
+        other.gridX, other.gridY, otherConfig.footprint.width, otherConfig.footprint.height
+      )) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  _areRectsSideAdjacent(ax, ay, aw, ah, bx, by, bw, bh) {
+    const ax2 = ax + aw - 1;
+    const ay2 = ay + ah - 1;
+    const bx2 = bx + bw - 1;
+    const by2 = by + bh - 1;
+    const horizontalAdj = (ax2 + 1 === bx || bx2 + 1 === ax) && !(ay2 < by || by2 < ay);
+    const verticalAdj = (ay2 + 1 === by || by2 + 1 === ay) && !(ax2 < bx || bx2 < ax);
+    return horizontalAdj || verticalAdj;
   }
 
   /** 检查所有建筑有效性，更新_invalid标记并重绘 */

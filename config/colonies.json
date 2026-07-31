@@ -1,0 +1,63 @@
+{
+    "global": {
+    "minPopulation": 12,
+    "minTotalArmyPower": 18,
+    "offerIntervalDays": { "min": 5, "max": 8 },
+    "offerChanceOnCheck": 0.6,
+    "invasionIntervalDays": { "min": 7, "max": 12 },
+    "invasionChanceOnCheck": 0.35,
+    "nativePowerMinMultiplier": 0.5,
+    "nativePowerMaxMultiplier": 2,
+    "populationIncomePowerWeight": 8,
+    "resourceIncomePowerWeight": 1.5
+  },
+  "colonies": [
+    {
+      "id": "salt_marsh_outpost",
+      "name": "盐沼哨站",
+      "description": "斥候在海岸盐沼发现了一处低矮聚落。当地人依靠浅滩与木栅自保，若能夺取这里，营地将获得一处面向海面的前哨。",
+      "dailyIncome": {
+        "population": 1,
+        "resources": [
+          { "resourceId": "food", "amount": 12 }
+        ]
+      }
+    },
+    {
+      "id": "red_clay_delta",
+      "name": "红陶河口",
+      "description": "河口两岸布满红色黏土与旧船坞残骸。原住民人数不多，但熟悉潮汐，如果要占领，需要派出足够的军力快速压制。",
+      "dailyIncome": {
+        "population": 0,
+        "resources": [
+          { "resourceId": "brick", "amount": 10 },
+          { "resourceId": "food", "amount": 8 }
+        ]
+      }
+    },
+    {
+      "id": "mist_isle_harbor",
+      "name": "雾岛港",
+      "description": "远处雾岛上仍有可用的天然港湾。岛民在礁石间布置了火把与拒马，海军可以发挥更大作用，但登陆部队很难全身而退。",
+      "dailyIncome": {
+        "population": 1,
+        "resources": [
+          { "resourceId": "plank", "amount": 8 },
+          { "resourceId": "coal", "amount": 6 }
+        ]
+      }
+    },
+    {
+      "id": "blackstone_highland",
+      "name": "黑石高地",
+      "description": "高地上有一片围绕黑色岩脉建立的寨堡。地势险要，原住民战力浮动很大，攻下后可成为外线防御据点。",
+      "dailyIncome": {
+        "population": 0,
+        "resources": [
+          { "resourceId": "hematite", "amount": 14 },
+          { "resourceId": "stone", "amount": 10 }
+        ]
+      }
+    }
+  ]
+}
