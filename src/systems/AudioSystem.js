@@ -41,9 +41,6 @@ export class AudioSystem {
     /** @type {Object<string, HTMLAudioElement>} 预创建的 BGM 元素 */
     this._bgmElements = {};
 
-    /** @type {boolean} BGM 在暂停前是否在播放 */
-    this._wasPlayingBeforePause = false;
-
     /** @type {boolean} 用户手动静音标记（区别于 tab 隐藏自动静音） */
     this._userMuted = false;
 
@@ -345,7 +342,7 @@ export class AudioSystem {
       }
     } else {
       // 取消静音：恢复 BGM
-      if (this._currentBGM && !gameLoop.isPaused()) {
+      if (this._currentBGM) {
         this._currentBGM.element.play().catch(() => {});
       }
     }
@@ -439,8 +436,6 @@ export class AudioSystem {
         }
 
         eventBus.on(binding.event, (payload) => {
-          if (gameLoop.isPaused()) return;
-
           // periods 过滤器：仅在指定时段触发（用于 periodChange 等事件）
           if (binding.periods && Array.isArray(binding.periods) && binding.periods.length > 0) {
             if (!payload || !payload.period) return;
@@ -457,11 +452,7 @@ export class AudioSystem {
    * 游戏暂停时的处理
    */
   _onPause() {
-    if (this._currentBGM && !this._currentBGM.element.paused) {
-      this._wasPlayingBeforePause = true;
-      this._currentBGM.element.pause();
-    }
-    // 暂停 AudioContext
+    // 游戏逻辑暂停不影响 BGM。BGM 只由静音、页面可见性和时段切换控制。
     if (this._audioContext && this._audioContext.state === 'running') {
       this._audioContext.suspend().catch(() => {});
     }
@@ -474,11 +465,6 @@ export class AudioSystem {
     // 恢复 AudioContext
     if (this._audioContext && this._audioContext.state === 'suspended') {
       this._audioContext.resume().catch(() => {});
-    }
-    // 恢复 BGM
-    if (this._wasPlayingBeforePause && this._currentBGM && !this._muted) {
-      this._currentBGM.element.play().catch(() => {});
-      this._wasPlayingBeforePause = false;
     }
   }
 
@@ -494,8 +480,8 @@ export class AudioSystem {
         this._currentBGM.element.pause();
       }
     } else {
-      // tab 可见：恢复 BGM（仅在未被用户手动静音且非暂停状态）
-      if (this._visibilityMuted && this._currentBGM && !this._muted && !gameLoop.isPaused()) {
+      // tab 可见：恢复 BGM（仅在未被用户手动静音时）
+      if (this._visibilityMuted && this._currentBGM && !this._muted) {
         this._currentBGM.element.play().catch(() => {});
         this._visibilityMuted = false;
       }

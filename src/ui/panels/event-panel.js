@@ -10,8 +10,10 @@ export function renderEventPanel(data, body, pm) {
   const evt = data.event;
   if (!evt) return;
 
+  body.style.cssText = 'padding:28px 24px;display:flex;justify-content:center;';
+
   const container = document.createElement('div');
-  container.style.cssText = 'display:flex;flex-direction:column;';
+  container.style.cssText = 'display:flex;flex-direction:column;width:min(640px,100%);margin:0 auto;';
 
   // === 事件标题 ===
   const header = document.createElement('div');

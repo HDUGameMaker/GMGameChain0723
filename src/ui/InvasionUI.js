@@ -80,6 +80,7 @@ export class InvasionUI {
 
   _showIdle() {
     if (!this._widget) return;
+    this._widget.classList.remove('active');
     this._widget.classList.remove('alarm');
     this._widget.classList.add('idle');
     this._powerEl.textContent = '暂无入侵';
@@ -97,6 +98,7 @@ export class InvasionUI {
 
   _showAlert(inv) {
     if (!this._widget) return;
+    this._widget.classList.add('active');
     this._widget.classList.remove('idle');
     this._widget.classList.add('alarm');
     this._powerEl.textContent = inv.combatPower;

@@ -324,11 +324,7 @@ class Game {
     // 7.05 新存档询问是否开启新手教程
     if (!saveData) {
       setTimeout(() => {
-        if (confirm('您是否第一次游玩本游戏？\n\n选择"确定"开启新手教程，选择"取消"跳过。\n\n之后可在设置中"启动"新手教程。')) {
-          this.systems.quest.enable();
-          const q = this.systems.quest.getActiveQuest();
-          if (q) setTimeout(() => this.popupManager.open('quest_panel', { quest: q }), 300);
-        }
+        this.popupManager.open('tutorial_prompt', { questSystem: this.systems.quest });
       }, 600);
     }
 
@@ -467,6 +463,9 @@ class Game {
   update(delta) {
     // 时间系统更新（内部处理速度倍率）
     this.systems.time.update(delta);
+    // 建造进度按各自开始时间推进，避免同一 tick 内新建对象共享全局进度
+    this.systems.building.updateConstructionProgress();
+    this.systems.road.updateConstructionProgress();
   }
 
   registerAutoSave() {

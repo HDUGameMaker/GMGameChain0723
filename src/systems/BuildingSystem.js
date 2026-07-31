@@ -167,7 +167,7 @@ export class BuildingSystem {
   /**
    * 确认放置建筑
    */
-  placeBuilding(gridX, gridY, buildingId) {
+  placeBuilding(gridX, gridY, buildingId, options = {}) {
     const config = configRegistry.getBuilding(buildingId);
     if (!config) return false;
 
@@ -198,7 +198,9 @@ export class BuildingSystem {
     };
 
     this.buildings.push(building);
-    this.exitPlacingMode();
+    if (!options.keepPlacing) {
+      this.exitPlacingMode();
+    }
     this._updateStore();
     eventBus.emit('buildingPlaced', { building });
     return true;
@@ -263,9 +265,12 @@ export class BuildingSystem {
     this._resourceSystem.consumeAll(scaledUpgradeCost);
 
     // 变为目标建筑，进入建造状态
+    const state = store.getState();
     building.buildingId = check.targetId;
     building.status = 'constructing';
     building.buildProgress = 0;
+    building.startTick = state.timeTick ?? 0;
+    building.startTimeProgress = state.timeProgress ?? 0;
     building.currentWorkers = 0; // 工人遣返
     // 清除遗留的合成进度（升级后建筑变体可能无对应合成配方，残留进度会导致 UI/逻辑异常）
     building.synthesisProgress = null;
@@ -651,21 +656,7 @@ export class BuildingSystem {
 
     for (const building of this.buildings) {
       if (building.status === 'constructing') {
-        building.buildProgress++;
-        const config = configRegistry.getBuilding(building.buildingId);
-        if (building.buildProgress >= config.buildTime) {
-          building.status = 'active';
-          building.buildProgress = null;
-          // 自动填充可用工人
-          if (config.maxWorkers && config.maxWorkers > 0 && this._populationSystem) {
-            const available = this._populationSystem.getAvailableWorkers();
-            const toAssign = Math.min(config.maxWorkers, available);
-            building.currentWorkers = toAssign;
-          }
-          eventBus.emit('buildingComplete', { building });
-          this._updateStorageMultiplier();
-          this._checkNewUnlocks(building.buildingId);
-        }
+        continue;
       } else if (building.status === 'active' && isWorkPeriod) {
         const cfgTick = configRegistry.getBuilding(building.buildingId);
         const cycle = cfgTick?.productionCycle || 'tick';
@@ -693,6 +684,64 @@ export class BuildingSystem {
 
     this._updateStore();
     this._updateProgressStore();
+  }
+
+  /**
+   * 按每个建筑自己的开始时间推进建造，避免同一 tick 内新放置建筑共享全局进度。
+   */
+  updateConstructionProgress() {
+    const state = store.getState();
+    const now = (state.timeTick ?? 0) + (state.timeProgress ?? 0);
+    let changed = false;
+
+    for (const building of this.buildings) {
+      if (building.status !== 'constructing') continue;
+
+      const config = configRegistry.getBuilding(building.buildingId);
+      if (!config) continue;
+
+      if (building.startTick === undefined || building.startTimeProgress === undefined) {
+        const existingProgress = building.buildProgress ?? 0;
+        building.startTick = Math.max(0, Math.floor(now - existingProgress));
+        building.startTimeProgress = 0;
+      }
+
+      const start = (building.startTick ?? 0) + (building.startTimeProgress ?? 0);
+      const elapsed = Math.max(0, now - start);
+      const buildTime = Math.max(0, config.buildTime || 0);
+      const nextProgress = buildTime > 0 ? Math.min(buildTime, Math.floor(elapsed)) : 0;
+
+      if ((building.buildProgress ?? 0) !== nextProgress) {
+        building.buildProgress = nextProgress;
+        changed = true;
+      }
+
+      if (elapsed >= buildTime) {
+        this._completeConstruction(building, config);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      this._updateStore();
+      this._updateProgressStore();
+    }
+  }
+
+  _completeConstruction(building, config) {
+    building.status = 'active';
+    building.buildProgress = null;
+    building.startTick = undefined;
+    building.startTimeProgress = undefined;
+    // 自动填充可用工人
+    if (config.maxWorkers && config.maxWorkers > 0 && this._populationSystem) {
+      const available = this._populationSystem.getAvailableWorkers();
+      const toAssign = Math.min(config.maxWorkers, available);
+      building.currentWorkers = toAssign;
+    }
+    eventBus.emit('buildingComplete', { building });
+    this._updateStorageMultiplier();
+    this._checkNewUnlocks(building.buildingId);
   }
 
   /**
@@ -1247,6 +1296,8 @@ export class BuildingSystem {
       status: b.status,
       currentWorkers: b.currentWorkers,
       buildProgress: b.buildProgress,
+      startTick: b.startTick,
+      startTimeProgress: b.startTimeProgress,
       synthesisProgress: b.synthesisProgress,
       _attachmentType: b._attachmentType
     }));
@@ -1260,7 +1311,9 @@ export class BuildingSystem {
       gridY: s.gridY,
       status: s.status,
       currentWorkers: s.currentWorkers || 0,
-      buildProgress: s.buildProgress || null,
+      buildProgress: s.buildProgress !== undefined ? s.buildProgress : null,
+      startTick: s.startTick,
+      startTimeProgress: s.startTimeProgress,
       synthesisProgress: s.synthesisProgress || null,
       _attachmentType: s._attachmentType || null
     }));

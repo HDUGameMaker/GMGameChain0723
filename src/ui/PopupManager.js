@@ -3,9 +3,10 @@
  * 统一外壳 + 导航栈 + 注册式面板渲染函数
  */
 import { eventBus } from '../core/EventBus.js';
+import { renderTutorialPromptPanel } from './panels/tutorial-prompt-panel.js';
 
 // 阻塞时间的面板类型
-const BLOCKING_TYPES = ['event', 'expedition_prep', 'game_over'];
+const BLOCKING_TYPES = ['event', 'expedition_prep', 'game_over', 'tutorial_prompt'];
 
 export class PopupManager {
   constructor(gameLoop, techSystem, cultureSystem, alchemySystem, combatSystem) {
@@ -166,6 +167,7 @@ export class PopupManager {
     // 清理旧面板的动画定时器，然后清空 body
     this._cleanupAnimations();
     this.body.innerHTML = '';
+    this.body.style.cssText = '';
     this.footer.innerHTML = '';
     this.footer.style.display = 'none';
 
@@ -193,6 +195,7 @@ export class PopupManager {
       'alchemy_lab': '炼金实验室',
       'potion_inventory': '药剂库存',
       'tamed_pool': '驯养管理',
+      'tutorial_prompt': '新手教程',
       'quest_panel': '任务'
     };
     return titles[type] || '';
@@ -211,6 +214,8 @@ export class PopupManager {
    * 注册内置面板
    */
   _registerBuiltinPanels() {
+    this.register('tutorial_prompt', renderTutorialPromptPanel);
+
     // 延迟导入避免循环依赖，使用动态注册
     import('./panels/building-select-panel.js').then(m => {
       this.register('building_select', m.renderBuildingSelectPanel);

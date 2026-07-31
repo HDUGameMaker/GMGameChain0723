@@ -129,6 +129,7 @@ kbd {
 
 <nav id="toc">
   <a href="#quickstart">🚀 快速启动</a>
+  <a href="#gameplay">🧱 基础玩法</a>
   <a href="#config-editor">🎛️ 配置编辑器</a>
   <a href="#f12">🔍 F12 调试</a>
   <a href="#git">🔄 Git 版本管理</a>
@@ -145,15 +146,40 @@ kbd {
 <p>双击项目根目录的 <code>启动游戏.bat</code>，会自动：</p>
 <ol>
   <li>检测 Node.js 是否安装（没装会引导下载）</li>
+  <li>关闭旧的残留游戏服务</li>
   <li>启动 HTTP 服务器</li>
-  <li>打开浏览器访问 <code>http://127.0.0.1:8080</code></li>
+  <li>打开浏览器访问 <code>http://127.0.0.1:18763</code></li>
 </ol>
 
 <p>或者手动在终端里跑：</p>
 <pre><span class="copy-btn">复制</span>cd 项目目录
-npx http-server -p 8080 -c-1 --cors</pre>
+npx http-server -p 18763 -c-1 --cors</pre>
 
 <div class="warn">必须通过 HTTP 服务器访问！直接用浏览器打开 <code>index.html</code>（file:// 协议）会报错，因为游戏需要 fetch 加载 JSON 配置文件。</div>
+
+<!-- ============================================================ -->
+<h2 id="gameplay">🧱 基础玩法</h2>
+
+<h3>开始菜单</h3>
+<p>游戏打开后会先进入开始菜单。点击<strong>新游戏</strong>会清空旧存档并重新开始；点击<strong>继续游戏</strong>才会读取已有存档进入正式游戏。</p>
+
+<h3>道路建设</h3>
+<ul>
+  <li>点击底部 <strong>🛤️铺路</strong> 进入道路编辑模式，再点击地格铺设道路。</li>
+  <li>道路必须紧邻已有道路或建筑，不能直接铺到孤立位置。</li>
+  <li>道路会消耗配置中的资源；缺少空闲工人时仍可放置，但进度会停滞。</li>
+  <li>一旦有空闲工人，道路会自动分配工人并继续建造，完成后释放该工人。</li>
+  <li>在铺路模式下点击已建成道路可拆除；按 <kbd>Esc</kbd> 或再次点击按钮退出。</li>
+</ul>
+
+<h3>建筑建造</h3>
+<ul>
+  <li>点击底部 <strong>🏗️建设</strong> 打开建筑列表，选择建筑后在地图上放置。</li>
+  <li>建筑放下后会显示目标建筑本体，覆盖灰色遮罩，并在遮罩上显示建造进度条。</li>
+  <li>每个建筑和道路都独立计算建造时间，不会因为同一时刻放置而共享进度。</li>
+  <li>按住 <kbd>Ctrl</kbd> 点击可以连续建造同一种建筑；不按 Ctrl 时，成功放置后会退出建造模式。</li>
+  <li>每次连续建造仍会单独检查资源、地形、道路依赖、数量上限等条件。</li>
+</ul>
 
 <!-- ============================================================ -->
 <h2 id="config-editor">🎛️ 配置编辑器（策划 & 美术）</h2>
@@ -184,11 +210,11 @@ npx http-server -p 8080 -c-1 --cors</pre>
 <h3>使用步骤（首次）</h3>
 
 <div class="card">
-  <p><span class="step">1</span> <strong>先启动游戏服务器</strong>（双击 <code>启动游戏.bat</code> 或手动 <code>npx http-server</code>），保证 8080 端口开着。</p>
+  <p><span class="step">1</span> <strong>先启动游戏服务器</strong>（双击 <code>启动游戏.bat</code> 或手动 <code>npx http-server</code>），保证 18763 端口开着。</p>
 
   <p><span class="step">2</span> <strong>打开配置编辑器</strong></p>
   <p>方式 A：双击 <code>打开配置编辑器.bat</code> → 选择策划或美术编辑器</p>
-  <p>方式 B：浏览器直接打开 <code>http://127.0.0.1:8080/planner-config.html</code> 或 <code>artist-config.html</code></p>
+  <p>方式 B：浏览器直接打开 <code>http://127.0.0.1:18763/editor/planner-config.html</code> 或 <code>http://127.0.0.1:18763/editor/artist-config.html</code></p>
 
   <p><span class="step">3</span> <strong>授权写入权限（仅首次）</strong></p>
   <p>点击顶部 <strong>"选择目录"</strong> 按钮 → 在系统弹窗中选择项目的 <code>config/</code> 文件夹 → 确认。</p>
@@ -374,7 +400,7 @@ npx http-server -p 8080 -c-1 --cors</pre>
 
 <hr style="border-color:var(--border);margin:40px 0 20px;">
 <p style="color:var(--muted);font-size:13px;">
-  最后更新：2026-07-23 &nbsp;|&nbsp;
+  最后更新：2026-07-31 &nbsp;|&nbsp;
   <a href="CLAUDE.md">CLAUDE.md</a>（开发者技术文档）&nbsp;|&nbsp;
   <a href="README.md">README.md</a>（项目总览）
 </p>

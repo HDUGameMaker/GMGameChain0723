@@ -10,7 +10,7 @@ import { isAreaInBounds } from '../utils/gridUtils.js';
 
 export class RoadSystem {
   constructor() {
-    /** @type {Array<{gridX: number, gridY: number, roadId: string, buildProgress: number|null, buildTime: number}>} */
+    /** @type {Array<{gridX: number, gridY: number, roadId: string, buildProgress: number|null, buildTime: number, workerAssigned?: boolean}>} */
     this.roads = [];
     this._mapConfig = null;
     this._roadConfigs = [];
@@ -246,7 +246,7 @@ export class RoadSystem {
   }
 
   /**
-   * 铺路（消耗资源+占用工人，进入建造状态）
+   * 铺路（消耗资源，进入建造状态；无空闲工人时等待自动分配）
    */
   buildRoad(gridX, gridY) {
     const check = this.canBuildRoad(gridX, gridY);
@@ -263,13 +263,7 @@ export class RoadSystem {
       if (!this._resourceSystem.consumeAll(roadConfig.buildCost)) return false;
     }
 
-    // 建造工人占用
-    if (this._populationSystem) {
-      if (this._populationSystem.getAvailableWorkers() <= 0) {
-        return false;
-      }
-      this._populationSystem.occupyForConstruction(1);
-    }
+    const workerAssigned = this._tryAssignConstructionWorker();
 
     // 创建道路（建造中状态）
     const buildTime = roadConfig.buildTime || 1;
@@ -283,8 +277,9 @@ export class RoadSystem {
       roadId,
       buildProgress: 0,
       buildTime,
-      startTick: currentTick,
-      startTimeProgress: currentT
+      workerAssigned,
+      startTick: workerAssigned ? currentTick : undefined,
+      startTimeProgress: workerAssigned ? currentT : undefined
     });
 
     this._notifyChange();
@@ -296,16 +291,46 @@ export class RoadSystem {
    * Tick 处理：推进道路建造进度
    */
   onTick(data) {
+    this.updateConstructionProgress();
+  }
+
+  /**
+   * 按每条道路自己的开始时间推进建造，避免同一 tick 内新铺道路共享全局进度。
+   */
+  updateConstructionProgress() {
+    const state = store.getState();
+    const now = (state.timeTick ?? 0) + (state.timeProgress ?? 0);
     let changed = false;
+
     for (const road of this.roads) {
-      // 跳过已建成的道路
       if (road.buildProgress === null) continue;
 
-      road.buildProgress++;
-      if (road.buildProgress >= road.buildTime) {
-        // 建造完成
+      if (!road.workerAssigned) {
+        if (!this._tryAssignConstructionWorker()) continue;
+        road.workerAssigned = true;
+        const existingProgress = road.buildProgress ?? 0;
+        this._setConstructionStartFromElapsed(road, now, existingProgress);
+        changed = true;
+      } else if (road.startTick === undefined || road.startTimeProgress === undefined) {
+        const existingProgress = road.buildProgress ?? 0;
+        this._setConstructionStartFromElapsed(road, now, existingProgress);
+      }
+
+      const start = (road.startTick ?? 0) + (road.startTimeProgress ?? 0);
+      const elapsed = Math.max(0, now - start);
+      const buildTime = Math.max(0, road.buildTime || 0);
+      const nextProgress = buildTime > 0 ? Math.min(buildTime, Math.floor(elapsed)) : 0;
+
+      if ((road.buildProgress ?? 0) !== nextProgress) {
+        road.buildProgress = nextProgress;
+        changed = true;
+      }
+
+      if (elapsed >= buildTime) {
         road.buildProgress = null;
-        // 释放建造工人
+        road.workerAssigned = false;
+        road.startTick = undefined;
+        road.startTimeProgress = undefined;
         if (this._populationSystem) {
           this._populationSystem.releaseFromConstruction(1);
         }
@@ -318,6 +343,7 @@ export class RoadSystem {
         });
       }
     }
+
     if (changed) {
       this._notifyChange();
     }
@@ -363,7 +389,7 @@ export class RoadSystem {
     }
 
     // 如果正在建造中，释放工人
-    if (road.buildProgress !== null && this._populationSystem) {
+    if (road.buildProgress !== null && road.workerAssigned && this._populationSystem) {
       this._populationSystem.releaseFromConstruction(1);
     }
 
@@ -489,6 +515,19 @@ export class RoadSystem {
     store.setState({ roadVersion: Date.now() });
   }
 
+  _tryAssignConstructionWorker() {
+    if (!this._populationSystem) return true;
+    if (this._populationSystem.getAvailableWorkers() <= 0) return false;
+    this._populationSystem.occupyForConstruction(1);
+    return true;
+  }
+
+  _setConstructionStartFromElapsed(road, now, elapsed) {
+    const start = Math.max(0, now - elapsed);
+    road.startTick = Math.floor(start);
+    road.startTimeProgress = start - road.startTick;
+  }
+
   // ===== 存档接口 =====
 
   getAllStates() {
@@ -497,7 +536,10 @@ export class RoadSystem {
       gridY: r.gridY,
       roadId: r.roadId,
       buildProgress: r.buildProgress,
-      buildTime: r.buildTime
+      buildTime: r.buildTime,
+      workerAssigned: r.workerAssigned === true,
+      startTick: r.startTick,
+      startTimeProgress: r.startTimeProgress
     }));
   }
 
@@ -509,15 +551,20 @@ export class RoadSystem {
     }
     const state = store.getState();
     const currentTick = state.timeTick ?? 0;
-    this.roads = states.map(s => ({
-      gridX: s.gridX,
-      gridY: s.gridY,
-      roadId: s.roadId || this._getDefaultRoadId(),
-      buildProgress: s.buildProgress !== undefined ? s.buildProgress : null,
-      buildTime: s.buildTime || 1,
-      startTick: s.buildProgress != null ? (s.startTick ?? currentTick) : undefined,
-      startTimeProgress: s.buildProgress != null ? (s.startTimeProgress ?? 0) : undefined
-    }));
+    this.roads = states.map(s => {
+      const constructing = s.buildProgress != null;
+      const workerAssigned = constructing && s.workerAssigned === true;
+      return {
+        gridX: s.gridX,
+        gridY: s.gridY,
+        roadId: s.roadId || this._getDefaultRoadId(),
+        buildProgress: s.buildProgress !== undefined ? s.buildProgress : null,
+        buildTime: s.buildTime || 1,
+        workerAssigned,
+        startTick: workerAssigned ? (s.startTick ?? currentTick) : undefined,
+        startTimeProgress: workerAssigned ? (s.startTimeProgress ?? 0) : undefined
+      };
+    });
     this._notifyChange();
   }
 }
