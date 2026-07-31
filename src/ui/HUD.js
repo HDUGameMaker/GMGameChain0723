@@ -290,29 +290,18 @@ export class HUD {
 
   _refreshResources() {
     const resources = this.systems.resource.getHUDResources();
-    const rates = this.systems.building.getProductionRates();
+    const dailyFlow = this._getDailyResourceFlow();
     const byId = {};
     for (const res of resources) {
       byId[res.id] = res;
     }
-
-    // 计算食物每日净变化（产出 - 消耗）
-    const foodProduction = this.systems.building.getTotalFoodProduction();
-    const idle = this.systems.population.getAvailableWorkers();
-    const assigned = this.systems.population.getAssignedWorkers();
-    const armies = store.getState('armies') || [];
-    const armyPop = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
-    const foodConsumption = idle + assigned + armyPop;
-    const foodDailyRate = foodProduction - foodConsumption;
 
     this.resourceBar.innerHTML = '';
 
     /* 灵感显示 */
     const inspiration = store.getState('inspiration') || 0;
     const inspPerPerson = this.systems.population.inspirationPerPerson || 1;
-    const populationInsp = Math.round(this.systems.population.current * inspPerPerson);
-    const buildingInsp = rates['inspiration'] || 0;
-    const inspRate = populationInsp;
+    const buildingInsp = dailyFlow.inspiration?.produced || 0;
 
     const specialResources = {
       icon_inspiration: {
@@ -321,9 +310,8 @@ export class HUD {
         icon: byId.icon_inspiration?.icon || '',
         current: inspiration,
         max: byId.icon_inspiration?.max || 100000,
-        rate: inspRate,
-        rateUnit: '天',
-        popover: '灵感: ' + inspiration + '\n每人每日: +' + inspPerPerson + (buildingInsp ? '\n酒馆每Tick: +' + buildingInsp : '')
+        flowId: 'inspiration',
+        popoverExtra: '每人每日: +' + inspPerPerson + (buildingInsp ? '\n建筑每日: +' + buildingInsp : '')
       }
     };
 
@@ -342,10 +330,8 @@ export class HUD {
       for (const id of group.ids) {
         const res = specialResources[id] || byId[id];
         if (!res) continue;
-        const isFood = id === 'food';
-        const rate = res.rate !== undefined ? res.rate : (isFood ? foodDailyRate : (rates[id] || 0));
-        const rateUnit = res.rateUnit || (isFood ? '天' : 'Tick');
-        const item = this._createResourceItem(res, rate, rateUnit, res.popover);
+        const flow = dailyFlow[res.flowId || id] || { produced: 0, consumed: 0, net: 0 };
+        const item = this._createResourceItem(res, flow);
         items.appendChild(item);
       }
       cluster.appendChild(items);
@@ -353,7 +339,59 @@ export class HUD {
     }
   }
 
-  _createResourceItem(res, rate, rateUnit, popoverText) {
+  _getDailyResourceFlow() {
+    const flow = this.systems.building.getDailyResourceFlow ? this.systems.building.getDailyResourceFlow() : {};
+    const clone = {};
+    for (const [id, entry] of Object.entries(flow)) {
+      clone[id] = {
+        produced: Math.round(entry.produced || 0),
+        consumed: Math.round(entry.consumed || 0),
+        net: Math.round(entry.net || 0)
+      };
+    }
+
+    const add = (id, produced, consumed) => {
+      if (!clone[id]) clone[id] = { produced: 0, consumed: 0, net: 0 };
+      clone[id].produced += produced || 0;
+      clone[id].consumed += consumed || 0;
+      clone[id].net = clone[id].produced - clone[id].consumed;
+    };
+
+    // 食物每日产出和消耗来自人口系统的日结算口径。
+    let foodProduction = this.systems.building.getTotalFoodProduction();
+    if (foodProduction > 0 && this.systems.weather) {
+      foodProduction = Math.round(foodProduction * this.systems.weather.getFoodModifier());
+      const rainBonus = this.systems.weather.getRainBonus();
+      if (rainBonus > 0) {
+        foodProduction += rainBonus * Math.max(1, this.systems.population.current);
+      }
+    }
+    const idle = this.systems.population.getAvailableWorkers();
+    const assigned = this.systems.population.getAssignedWorkers();
+    const armies = store.getState('armies') || [];
+    const armyPop = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
+    const aEffPop = this.systems.alchemy ? (this.systems.alchemy.getEffects().population || {}) : {};
+    const cultureMul = this.systems.culture ? (this.systems.culture.getEffects().foodConsumeMul || 1) : 1;
+    const foodConsumeMul = cultureMul * (aEffPop.foodConsumeMul || 1);
+    const foodConsumption = Math.ceil((idle + assigned + armyPop) * foodConsumeMul);
+    add('food', foodProduction, foodConsumption);
+
+    // 人口每日灵感。
+    const inspPerPerson = this.systems.population.inspirationPerPerson || 1;
+    add('inspiration', Math.round(this.systems.population.current * inspPerPerson), 0);
+
+    // 殖民地每日资源收益。
+    const colonies = store.getState('colonies') || [];
+    for (const colony of colonies) {
+      for (const r of colony.dailyIncome?.resources || []) {
+        add(r.resourceId, r.amount || 0, 0);
+      }
+    }
+
+    return clone;
+  }
+
+  _createResourceItem(res, flow) {
     const isFull = res.current >= res.max;
     const item = document.createElement('div');
     item.className = 'resource-item' + (isFull ? ' full' : '');
@@ -362,21 +400,20 @@ export class HUD {
       ? `<img src="${res.icon}" alt="${res.name}" class="res-icon" onerror="this.replaceWith(document.createTextNode('${this._getResourceEmoji(res.id)}'))" />`
       : this._getResourceEmoji(res.id);
 
-    let innerHTML = `<span class="res-main"><span class="res-icon-wrap">${iconHtml}</span><span class="res-value">${res.current}</span></span>`;
-    if (rate !== 0) {
-      const sign = rate > 0 ? '+' : '';
-      const rateClass = rate > 0 ? 'positive' : 'negative';
-      innerHTML += `<span class="res-delta"><span class="res-rate ${rateClass}">${sign}${rate}</span></span>`;
-    } else {
-      innerHTML += '<span class="res-delta"></span>';
-    }
+    const netClass = flow.net >= 0 ? 'positive' : 'negative';
+    const netText = flow.net > 0 ? '+' + flow.net : String(flow.net);
+    const innerHTML =
+      `<span class="res-main"><span class="res-icon-wrap">${iconHtml}</span><span class="res-value">${res.current}</span></span>` +
+      `<span class="res-delta"><span class="res-rate ${netClass}" title="每日结余">余 ${netText}</span></span>`;
     item.innerHTML = innerHTML;
 
-    const rateText = rate !== 0
-      ? `\n每${rateUnit}: ${rate > 0 ? '+' : ''}${rate}`
-      : '';
     item.addEventListener('click', (e) => {
-      this._showPopover(e.currentTarget, popoverText || `${res.name}: ${res.current} / ${res.max}${rateText}`);
+      const text = `${res.name}: ${res.current} / ${res.max}` +
+        `\n每日产出: ${flow.produced}` +
+        `\n每日消耗: ${flow.consumed}` +
+        `\n每日结余: ${netText}` +
+        (res.popoverExtra ? '\n' + res.popoverExtra : '');
+      this._showPopover(e.currentTarget, text);
     });
 
     const prevVal = this._prevResourceValues[res.id];

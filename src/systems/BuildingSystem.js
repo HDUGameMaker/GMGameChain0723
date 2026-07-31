@@ -813,19 +813,7 @@ export class BuildingSystem {
     }
 
     const prod = config.production;
-    let effectiveWorkers = building.currentWorkers || 0;
-
-    // 装置逻辑：替代工人
-    if (building._attachmentType && effectiveWorkers <= 0 && prod.perWorker) {
-      effectiveWorkers = 1; // 装置算1个"工人"
-      // 应用天气效率加成
-      if (this._weatherSystem) {
-        const mod = this._weatherSystem.getAttachmentModifier();
-        if (mod.efficiency > 1) {
-          effectiveWorkers = Math.ceil(effectiveWorkers * mod.efficiency);
-        }
-      }
-    }
+    const effectiveWorkers = this._getEffectiveProductionWorkers(building, config);
 
     // 获取相邻加成
     const bIndex = this.buildings.indexOf(building);
@@ -847,7 +835,7 @@ export class BuildingSystem {
     // 产出（应用相邻加成 + 人文政策产出倍率）
     if (prod.output) {
       const outputMultiplier = prod.perWorker ? effectiveWorkers : 1;
-      const cultureProdMul = (this._cultureSystem ? (this._cultureSystem.getEffects().productionMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).productionMul || 1) : 1);
+      const cultureProdMul = this._getProductionMultiplier();
       for (const out of prod.output) {
         const baseAmount = out.amount * outputMultiplier * cultureProdMul;
         const adjusted = this.applyAdjacencyToProduction(
@@ -944,12 +932,12 @@ export class BuildingSystem {
   }
 
   /**
-   * 计算所有活跃建筑的每Tick净资源产量
-   * @returns {Object} { resourceId: netAmountPerTick }
-   *   正数 = 净产出，负数 = 净消耗，0 不出现在结果中
+   * 计算所有活跃建筑折算到每日的资源产出/消耗。
+   * 显示层统一使用日口径；底层 tick 建筑按一天内实际工作次数折算。
+   * @returns {Object} { resourceId: { produced, consumed, net } }
    */
-  getProductionRates() {
-    const rates = {};
+  getDailyResourceFlow() {
+    const flow = {};
 
     for (let i = 0; i < this.buildings.length; i++) {
       const building = this.buildings[i];
@@ -959,37 +947,146 @@ export class BuildingSystem {
       if (!config || !config.production) continue;
 
       const prod = config.production;
-      const multiplier = prod.perWorker ? (building.currentWorkers || 0) : 1;
+      const cyclesPerDay = this._getProductionCyclesPerDay(building, config);
+      const effectiveWorkers = this._getEffectiveProductionWorkers(building, config);
+      const multiplier = prod.perWorker ? effectiveWorkers : 1;
+      const cultureProdMul = this._getProductionMultiplier();
       if (multiplier <= 0) continue;
 
       // 获取相邻加成
       const bonuses = this.getAdjacencyBonuses(i);
 
-      // 消耗（负数）
+      // 消耗
       if (prod.input) {
         for (const inp of prod.input) {
-          rates[inp.resourceId] = (rates[inp.resourceId] || 0) - inp.amount * multiplier;
+          this._addResourceFlow(flow, inp.resourceId, 0, inp.amount * multiplier * cyclesPerDay);
         }
       }
 
-      // 产出（正数，应用相邻加成）
+      // 产出（应用相邻加成）
       if (prod.output) {
         for (const out of prod.output) {
-          const baseAmount = out.amount * multiplier;
+          const baseAmount = out.amount * multiplier * cultureProdMul;
           const adjusted = this.applyAdjacencyToProduction(
             building.buildingId, out.resourceId, baseAmount, 'production', bonuses
           );
-          const amount = Math.round(adjusted);
-          if (out.resourceId === 'icon_inspiration') {
-            rates['inspiration'] = (rates['inspiration'] || 0) + amount;
-          } else {
-            rates[out.resourceId] = (rates[out.resourceId] || 0) + amount;
-          }
+          const amount = Math.round(adjusted) * cyclesPerDay;
+          const resourceId = out.resourceId === 'icon_inspiration' ? 'inspiration' : out.resourceId;
+          this._addResourceFlow(flow, resourceId, amount, 0);
         }
       }
     }
 
+    return flow;
+  }
+
+  _addResourceFlow(flow, resourceId, produced, consumed) {
+    if (!resourceId) return;
+    if (!flow[resourceId]) flow[resourceId] = { produced: 0, consumed: 0, net: 0 };
+    flow[resourceId].produced += produced || 0;
+    flow[resourceId].consumed += consumed || 0;
+    flow[resourceId].net = flow[resourceId].produced - flow[resourceId].consumed;
+  }
+
+  /**
+   * @deprecated HUD 统一使用 getDailyResourceFlow() 的日口径。
+   */
+  getProductionRates() {
+    const daily = this.getDailyResourceFlow();
+    const rates = {};
+    for (const [resourceId, entry] of Object.entries(daily)) {
+      rates[resourceId] = entry.net;
+    }
     return rates;
+  }
+
+  getBuildingDailyProductionPreview(buildingIndex) {
+    const building = this.buildings[buildingIndex];
+    if (!building) return null;
+    const config = configRegistry.getBuilding(building.buildingId);
+    if (!config || !config.production) return null;
+
+    const prod = config.production;
+    const cyclesPerDay = this._getProductionCyclesPerDay(building, config);
+    const effectiveWorkers = building.status === 'active' ? this._getEffectiveProductionWorkers(building, config) : 0;
+    const multiplier = prod.perWorker ? effectiveWorkers : 1;
+    const bonuses = this.getAdjacencyBonuses(buildingIndex);
+    const cultureProdMul = this._getProductionMultiplier();
+
+    const inputStandard = (prod.input || []).map(inp => ({
+      resourceId: inp.resourceId,
+      amount: inp.amount
+    }));
+    const outputStandard = (prod.output || []).map(out => ({
+      resourceId: out.resourceId === 'icon_inspiration' ? 'inspiration' : out.resourceId,
+      amount: out.amount
+    }));
+
+    const dailyInput = inputStandard.map(inp => ({
+      resourceId: inp.resourceId,
+      amount: Math.round(inp.amount * multiplier * cyclesPerDay)
+    }));
+    const dailyOutput = (prod.output || []).map(out => {
+      const baseAmount = out.amount * multiplier * cultureProdMul;
+      const adjusted = this.applyAdjacencyToProduction(
+        building.buildingId, out.resourceId, baseAmount, 'production', bonuses
+      );
+      return {
+        resourceId: out.resourceId === 'icon_inspiration' ? 'inspiration' : out.resourceId,
+        amount: Math.round(adjusted) * cyclesPerDay
+      };
+    });
+
+    return {
+      perWorker: !!prod.perWorker,
+      cycle: config.productionCycle || 'tick',
+      cyclesPerDay,
+      currentWorkers: building.currentWorkers || 0,
+      effectiveWorkers,
+      hasAttachment: !!building._attachmentType,
+      inputStandard,
+      outputStandard,
+      dailyInput,
+      dailyOutput
+    };
+  }
+
+  _getEffectiveProductionWorkers(building, config) {
+    const prod = config?.production;
+    if (!prod?.perWorker) return 1;
+    let effectiveWorkers = building.currentWorkers || 0;
+    if (building._attachmentType && effectiveWorkers <= 0) {
+      effectiveWorkers = 1;
+      if (this._weatherSystem) {
+        const mod = this._weatherSystem.getAttachmentModifier();
+        if (mod.efficiency > 1) {
+          effectiveWorkers = Math.ceil(effectiveWorkers * mod.efficiency);
+        }
+      }
+    }
+    return effectiveWorkers;
+  }
+
+  _getProductionCyclesPerDay(building, config) {
+    const cycle = config?.productionCycle || 'tick';
+    if (cycle === 'day') return 1;
+    const ticksPerPeriod = this._getTicksPerPeriod();
+    const globalConfig = configRegistry.get('global') || {};
+    const periodNames = globalConfig.PERIOD_NAMES || ['morning', 'afternoon', 'evening', 'night'];
+    const workPeriods = globalConfig.WORK_PERIODS || ['morning', 'afternoon'];
+    return ticksPerPeriod * (building._attachmentType ? periodNames.length : workPeriods.length);
+  }
+
+  _getTicksPerPeriod() {
+    const globalConfig = configRegistry.get('global') || {};
+    const periodDuration = globalConfig.PERIOD_DURATION || 30;
+    const tickInterval = globalConfig.TICK_INTERVAL || 10;
+    return Math.max(1, Math.floor(periodDuration / tickInterval));
+  }
+
+  _getProductionMultiplier() {
+    return (this._cultureSystem ? (this._cultureSystem.getEffects().productionMul || 1) : 1)
+      * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).productionMul || 1) : 1);
   }
 
   getBuildingCount(buildingId) {
