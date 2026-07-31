@@ -1,174 +1,21 @@
 [
   {
-    "id": "survival_doctrine",
-    "name": "生存信条",
+    "id": "new_policy",
+    "name": "新政策",
     "tier": 0,
     "policyType": "policy",
-    "cost": [],
-    "researchTime": 0,
-    "prerequisites": [],
-    "pos": { "x": 0 },
-    "effects": {
-      "economy": { "productionMul": 1.05 }
-    },
-    "description": "基础生存哲学。所有资源产出 +5%。"
-  },
-  {
-    "id": "military_drill",
-    "name": "军事训练",
-    "tier": 1,
-    "policyType": "policy",
-    "cost": [{ "resourceId": "wood", "amount": 40 }],
-    "researchTime": 10,
-    "prerequisites": ["survival_doctrine"],
-    "pos": { "x": 0 },
-    "effects": {
-      "combat": { "warriorDamageMul": 1.2, "archerDamageMul": 1.2 }
-    },
-    "description": "战士与弓箭手攻击力 +20%。"
-  },
-  {
-    "id": "logistics",
-    "name": "后勤改革",
-    "tier": 1,
-    "policyType": "policy",
-    "cost": [{ "resourceId": "stone", "amount": 40 }],
-    "researchTime": 10,
-    "prerequisites": ["survival_doctrine"],
-    "pos": { "x": 2 },
-    "effects": {
-      "economy": { "buildCostMul": 0.9 }
-    },
-    "description": "建筑建造成本 -10%。"
-  },
-  {
-    "id": "agricultural_policy",
-    "name": "农业政策",
-    "tier": 1,
-    "policyType": "policy",
-    "cost": [{ "resourceId": "wood", "amount": 30 }],
+    "cost": [
+      {
+        "resourceId": "wood",
+        "amount": 30
+      }
+    ],
     "researchTime": 8,
-    "prerequisites": ["survival_doctrine"],
-    "pos": { "x": 4 },
-    "effects": {
-      "population": { "growthMul": 1.2, "foodConsumeMul": 0.95 }
+    "prerequisites": [],
+    "pos": {
+      "x": 0
     },
-    "description": "人口增长率 +20%，食物消耗 -5%。"
-  },
-  {
-    "id": "advanced_tactics",
-    "name": "进阶战术",
-    "tier": 2,
-    "policyType": "policy",
-    "cost": [{ "resourceId": "iron_ingot", "amount": 20 }],
-    "researchTime": 14,
-    "prerequisites": ["military_drill"],
-    "pos": { "x": 0 },
-    "effects": {
-      "combat": { "warriorDamageMul": 1.15, "archerDamageMul": 1.15, "unitHpMul": 1.2 }
-    },
-    "description": "单位攻击力再 +15%，生命值 +20%。"
-  },
-  {
-    "id": "trade_network",
-    "name": "贸易网络",
-    "tier": 2,
-    "policyType": "policy",
-    "cost": [{ "resourceId": "plank", "amount": 50 }],
-    "researchTime": 14,
-    "prerequisites": ["logistics"],
-    "pos": { "x": 2 },
-    "effects": {
-      "economy": { "productionMul": 1.1 }
-    },
-    "description": "资源产出 +10%。"
-  },
-  {
-    "id": "population_plan",
-    "name": "人口规划",
-    "tier": 2,
-    "policyType": "policy",
-    "cost": [{ "resourceId": "food", "amount": 60 }],
-    "researchTime": 12,
-    "prerequisites": ["agricultural_policy"],
-    "pos": { "x": 4 },
-    "effects": {
-      "population": { "maxPopBonus": 4, "growthMul": 1.1 }
-    },
-    "description": "最大人口 +4，增长率再 +10%。"
-  },
-  {
-    "id": "scientific_bureaucracy",
-    "name": "科研官僚化",
-    "tier": 2,
-    "policyType": "policy",
-    "cost": [{ "resourceId": "gear", "amount": 15 }],
-    "researchTime": 16,
-    "prerequisites": ["logistics"],
-    "pos": { "x": 6 },
-    "effects": {
-      "economy": { "researchSpeedMul": 1.5 }
-    },
-    "description": "科技研究速度 +50%。"
-  },
-  {
-    "id": "government_centralized",
-    "name": "政体：集权",
-    "tier": 3,
-    "policyType": "government",
-    "cost": [{ "resourceId": "stone", "amount": 80 }],
-    "researchTime": 20,
-    "prerequisites": ["advanced_tactics", "trade_network"],
-    "pos": { "x": 1 },
-    "effects": {
-      "economy": { "productionMul": 1.2 },
-      "population": { "growthMul": 0.7 }
-    },
-    "description": "政体（选定不可改）。工人效率 +20%，但人口增长 -30%。"
-  },
-  {
-    "id": "government_commune",
-    "name": "政体：公社",
-    "tier": 3,
-    "policyType": "government",
-    "cost": [{ "resourceId": "food", "amount": 100 }],
-    "researchTime": 20,
-    "prerequisites": ["population_plan", "agricultural_policy"],
-    "pos": { "x": 4 },
-    "effects": {
-      "population": { "growthMul": 1.3 },
-      "economy": { "buildCostMul": 1.15 }
-    },
-    "description": "政体（选定不可改）。人口增长 +30%，但建筑成本 +15%。"
-  },
-  {
-    "id": "government_technocracy",
-    "name": "政体：技术官僚",
-    "tier": 3,
-    "policyType": "government",
-    "cost": [{ "resourceId": "gear", "amount": 40 }],
-    "researchTime": 20,
-    "prerequisites": ["scientific_bureaucracy", "trade_network"],
-    "pos": { "x": 6 },
-    "effects": {
-      "economy": { "researchSpeedMul": 1.5 },
-      "population": { "foodConsumeMul": 1.15 }
-    },
-    "description": "政体（选定不可改）。研究速度 +50%，但食物消耗 +15%。"
-  },
-  {
-    "id": "government_junta",
-    "name": "政体：军政府",
-    "tier": 3,
-    "policyType": "government",
-    "cost": [{ "resourceId": "iron_ingot", "amount": 60 }],
-    "researchTime": 20,
-    "prerequisites": ["advanced_tactics"],
-    "pos": { "x": 0 },
-    "effects": {
-      "combat": { "warriorDamageMul": 1.4, "archerDamageMul": 1.4, "unitHpMul": 1.2 },
-      "economy": { "productionMul": 0.9 }
-    },
-    "description": "政体（选定不可改）。军队攻击力 +40%、生命 +20%，但资源产出 -10%。"
+    "effects": {},
+    "description": ""
   }
 ]

@@ -34,7 +34,7 @@
   {
     "id": "farming",
     "name": "农耕技术",
-    "tier": 1,
+    "tier": 0,
     "cost": [
       {
         "resourceId": "wood",
@@ -253,7 +253,7 @@
   {
     "id": "fishing",
     "name": "渔业技术",
-    "tier": 2,
+    "tier": 1,
     "cost": [
       {
         "resourceId": "wood",
@@ -276,7 +276,7 @@
   {
     "id": "hunting",
     "name": "狩猎技术",
-    "tier": 2,
+    "tier": 1,
     "cost": [
       {
         "resourceId": "wood",
@@ -396,7 +396,7 @@
   {
     "id": "military_training",
     "name": "军事训练",
-    "tier": 4,
+    "tier": 2,
     "cost": [
       {
         "resourceId": "wood",
@@ -412,18 +412,20 @@
       "hunting"
     ],
     "pos": {
-      "x": 6
+      "x": 6,
+      "y": 0
     },
     "unlocks": {
-      "buildings": [
-        "training_ground"
+      "buildings": [],
+      "units": [
+        "archer"
       ]
     }
   },
   {
     "id": "advanced_military",
     "name": "高级军事训练",
-    "tier": 5,
+    "tier": 3,
     "cost": [
       {
         "resourceId": "iron_ingot",
@@ -437,41 +439,15 @@
     "researchTime": 48,
     "prerequisites": [
       "military_training",
-      "mechanical_engineering"
+      "smelting"
     ],
     "pos": {
-      "x": 6
+      "x": 5
     },
     "unlocks": {
-      "buildings": [
-        "advanced_training_ground"
-      ]
-    }
-  },
-  {
-    "id": "military_medicine",
-    "name": "军事医疗",
-    "tier": 5,
-    "cost": [
-      {
-        "resourceId": "wood",
-        "amount": 60
-      },
-      {
-        "resourceId": "stone",
-        "amount": 40
-      }
-    ],
-    "researchTime": 48,
-    "prerequisites": [
-      "military_training"
-    ],
-    "pos": {
-      "x": 7
-    },
-    "unlocks": {
-      "buildings": [
-        "medical_station"
+      "buildings": [],
+      "units": [
+        "knight"
       ]
     }
   },
@@ -579,7 +555,7 @@
   {
     "id": "grain_storage",
     "name": "粮食储备",
-    "tier": 2,
+    "tier": 1,
     "cost": [
       {
         "resourceId": "plank",
@@ -728,6 +704,116 @@
     },
     "unlocks": {
       "buildings": []
+    }
+  },
+  {
+    "id": "domesticate_horses",
+    "name": "驯化野马",
+    "description": "",
+    "tier": 3,
+    "icon": "",
+    "cost": [
+      {
+        "resourceId": "food",
+        "amount": 200
+      },
+      {
+        "resourceId": "plank",
+        "amount": 100
+      }
+    ],
+    "researchTime": 36,
+    "prerequisites": [
+      "military_training"
+    ],
+    "pos": {
+      "x": 6,
+      "y": 0
+    },
+    "unlocks": {
+      "buildings": [],
+      "items": [],
+      "regions": [],
+      "roadTypes": [],
+      "units": [
+        "cavalry"
+      ]
+    }
+  },
+  {
+    "id": "vehicles",
+    "name": "大型载具",
+    "description": "",
+    "tier": 4,
+    "icon": "",
+    "cost": [
+      {
+        "resourceId": "wood",
+        "amount": 150
+      },
+      {
+        "resourceId": "stone",
+        "amount": 50
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 30
+      }
+    ],
+    "researchTime": 24,
+    "prerequisites": [
+      "advanced_military",
+      "steelmaking"
+    ],
+    "pos": {
+      "x": 5,
+      "y": 0
+    },
+    "unlocks": {
+      "buildings": [],
+      "items": [],
+      "regions": [],
+      "roadTypes": [],
+      "units": [
+        "chariot"
+      ],
+      "formations": []
+    }
+  },
+  {
+    "id": "firearm",
+    "name": "火器",
+    "description": "",
+    "tier": 5,
+    "icon": "",
+    "cost": [
+      {
+        "resourceId": "gear",
+        "amount": 20
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 20
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "domesticate_horses",
+      "precision_molding"
+    ],
+    "pos": {
+      "x": 6,
+      "y": 0
+    },
+    "unlocks": {
+      "buildings": [],
+      "items": [],
+      "regions": [],
+      "roadTypes": [],
+      "units": [
+        "musket"
+      ],
+      "formations": []
     }
   }
 ]

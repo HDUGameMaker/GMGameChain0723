@@ -1,0 +1,298 @@
+[
+  {
+    "id": "order",
+    "name": "秩序",
+    "tier": 0,
+    "researchTime": 8,
+    "pos": {
+      "x": 1
+    },
+    "prerequisites": [],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 5
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": []
+    },
+    "commandPointsBonus": 5,
+    "growthSpeedBonus": 0,
+    "description": "指挥点上限 +5"
+  },
+  {
+    "id": "adaptation",
+    "name": "适应",
+    "tier": 1,
+    "researchTime": 12,
+    "pos": {
+      "x": 3
+    },
+    "prerequisites": [],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 5
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": []
+    },
+    "commandPointsBonus": 0,
+    "growthSpeedBonus": 0.5,
+    "description": "人口增长速度 +1~2"
+  },
+  {
+    "id": "wine",
+    "name": "酒馆",
+    "tier": 2,
+    "researchTime": 12,
+    "pos": {
+      "x": 3
+    },
+    "prerequisites": [
+      "adaptation"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 10
+      }
+    ],
+    "unlocks": {
+      "buildings": [
+        "pub"
+      ],
+      "units": [],
+      "formations": []
+    },
+    "commandPointsBonus": 0,
+    "growthSpeedBonus": 0,
+    "description": "建造酒馆增加灵感"
+  },
+  {
+    "id": "unlock_phalanx",
+    "name": "方阵",
+    "tier": 1,
+    "researchTime": 8,
+    "pos": {
+      "x": 1
+    },
+    "prerequisites": [
+      "order"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 15
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": [
+        "phalanx"
+      ]
+    },
+    "commandPointsBonus": 0,
+    "growthSpeedBonus": 0,
+    "description": "解锁方阵战斗阵型"
+  },
+  {
+    "id": "tactics",
+    "name": "战斗策略",
+    "tier": 2,
+    "researchTime": 12,
+    "pos": {
+      "x": 1
+    },
+    "prerequisites": [
+      "unlock_phalanx"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 25
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": [
+        "basic_formation"
+      ]
+    },
+    "commandPointsBonus": 0,
+    "growthSpeedBonus": 0,
+    "description": "解锁基础战阵"
+  },
+  {
+    "id": "commander",
+    "name": "指挥官",
+    "tier": 2,
+    "researchTime": 24,
+    "pos": {
+      "x": 0
+    },
+    "prerequisites": [
+      "unlock_phalanx"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 40
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": []
+    },
+    "commandPointsBonus": 8,
+    "growthSpeedBonus": 0,
+    "description": "派遣指挥官，增加军队的指挥上限"
+  },
+  {
+    "id": "cover",
+    "name": "交叉掩护",
+    "tier": 3,
+    "researchTime": 24,
+    "pos": {
+      "x": 0
+    },
+    "prerequisites": [
+      "tactics",
+      "commander"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 60
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": [
+        "cross_cover"
+      ]
+    },
+    "commandPointsBonus": 2,
+    "growthSpeedBonus": 0,
+    "description": "训练骑兵和步兵交替推进，解锁新的阵型"
+  },
+  {
+    "id": "legion",
+    "name": "骑兵团",
+    "tier": 3,
+    "researchTime": 32,
+    "pos": {
+      "x": 1
+    },
+    "prerequisites": [
+      "tactics"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 80
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": [
+        "charge"
+      ]
+    },
+    "commandPointsBonus": 0,
+    "growthSpeedBonus": 0,
+    "description": "解锁新的战阵，我说打不过就是骑兵不够多）"
+  },
+  {
+    "id": "settle_down",
+    "name": "安居",
+    "tier": 3,
+    "researchTime": 12,
+    "pos": {
+      "x": 3
+    },
+    "prerequisites": [
+      "wine"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 40
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": []
+    },
+    "commandPointsBonus": 0,
+    "growthSpeedBonus": 1,
+    "description": "人口增长速度 +2~4"
+  },
+  {
+    "id": "reform",
+    "name": "军队改革",
+    "tier": 4,
+    "researchTime": 36,
+    "pos": {
+      "x": 2
+    },
+    "prerequisites": [
+      "settle_down",
+      "tactics"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 200
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": []
+    },
+    "commandPointsBonus": 15,
+    "growthSpeedBonus": 0,
+    "description": "改革军队编制，指挥点上限+15"
+  },
+  {
+    "id": "new_doctrine",
+    "name": "协同作战",
+    "tier": 5,
+    "researchTime": 48,
+    "pos": {
+      "x": 2
+    },
+    "prerequisites": [
+      "reform"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 300
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": [
+        "operation"
+      ]
+    },
+    "commandPointsBonus": 5,
+    "growthSpeedBonus": 0,
+    "description": "多兵种协同作战，解锁新的战阵"
+  }
+]

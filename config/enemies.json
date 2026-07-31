@@ -1,108 +1,234 @@
 {
-  "enemies": [
-    {
-      "id": "wild_animal",
-      "name": "野生动物",
-      "description": "饥饿的野兽，在夜晚出没攻击人口。",
-      "maxHp": 5,
-      "attack": 1,
-      "attackTarget": "population",
-      "spawnConditions": {
-        "timePeriods": [
-          "night"
-        ],
-        "minDay": 1
-      },
-      "drops": [
-        { "resourceId": "fur", "amount": 2, "chance": 0.8 },
-        { "resourceId": "food", "amount": 1, "chance": 0.4 }
-      ],
-      "tameChance": 0.25,
-      "tamedUnit": {
-        "name": "驯服野兽",
-        "icon": "🐺",
-        "maxHp": 5,
-        "attack": 1,
-        "attackRange": 1,
-        "attackCooldown": 2
-      }
-    },
-    {
-      "id": "robot_scout",
-      "name": "侦察机器人",
-      "description": "旧时代遗留的自动机械，敌我不分。",
-      "maxHp": 5,
-      "attack": 1,
-      "attackTarget": "both",
-      "spawnConditions": {
-        "timePeriods": [
-          "night"
-        ],
-        "minDay": 5
-      },
-      "drops": [
-        { "resourceId": "gear", "amount": 1, "chance": 0.6 },
-        { "resourceId": "machine_part", "amount": 1, "chance": 0.3 }
-      ],
-      "tameChance": 0.15,
-      "tamedUnit": {
-        "name": "驯服机器人",
-        "icon": "🤖",
-        "maxHp": 5,
-        "attack": 1,
-        "attackRange": 1,
-        "attackCooldown": 2
-      }
-    },
-    {
-      "id": "robot_raider",
-      "name": "袭击者机器人",
-      "description": "配备武器的战斗机器人，对基地有系统性破坏能力。",
-      "maxHp": 5,
-      "attack": 1,
-      "attackTarget": "both",
-      "spawnConditions": {
-        "timePeriods": [
-          "night"
-        ],
-        "minDay": 10
-      },
-      "drops": [
-        { "resourceId": "gear", "amount": 2, "chance": 0.8 },
-        { "resourceId": "machine_part", "amount": 1, "chance": 0.5 },
-        { "resourceId": "hematite", "amount": 1, "chance": 0.2 }
-      ],
-      "tameChance": 0.10,
-      "tamedUnit": {
-        "name": "驯服袭击者",
-        "icon": "🤖",
-        "maxHp": 5,
-        "attack": 2,
-        "attackRange": 1,
-        "attackCooldown": 2
-      }
-    }
-  ],
+  "enemies": [],
   "units": [
     {
       "id": "warrior",
       "name": "战士",
-      "hp": 5,
-      "attack": 2,
-      "attackRange": 1,
-      "attackCooldown": 2
+      "combatPower": 2,
+      "populationRequired": 1,
+      "commandPoints": 2,
+      "weight": 5,
+      "cost": [
+        {
+          "resourceId": "wood",
+          "amount": 10
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        }
+      ],
+      "unlocked": true
     },
     {
       "id": "archer",
       "name": "弓箭手",
-      "hp": 5,
-      "attack": 2,
-      "attackRange": 2,
-      "attackCooldown": 1
+      "combatPower": 5,
+      "populationRequired": 1,
+      "commandPoints": 3,
+      "weight": 10,
+      "cost": [
+        {
+          "resourceId": "wood",
+          "amount": 15
+        },
+        {
+          "resourceId": "stone",
+          "amount": 10
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "cavalry",
+      "name": "骑兵",
+      "combatPower": 10,
+      "populationRequired": 1,
+      "commandPoints": 5,
+      "weight": 15,
+      "cost": [
+        {
+          "resourceId": "iron_ingot",
+          "amount": 10
+        },
+        {
+          "resourceId": "plank",
+          "amount": 10
+        },
+        {
+          "resourceId": "food",
+          "amount": 50
+        }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "knight",
+      "name": "重甲骑士",
+      "combatPower": 12,
+      "populationRequired": 1,
+      "commandPoints": 4,
+      "weight": 20,
+      "cost": [
+        {
+          "resourceId": "iron_ingot",
+          "amount": 40
+        },
+        {
+          "resourceId": "food",
+          "amount": 20
+        },
+        {
+          "resourceId": "stone",
+          "amount": 20
+        }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "chariot",
+      "name": "战车",
+      "combatPower": 30,
+      "populationRequired": 3,
+      "commandPoints": 8,
+      "weight": 30,
+      "cost": [
+        {
+          "resourceId": "steel",
+          "amount": 20
+        },
+        {
+          "resourceId": "plank",
+          "amount": 50
+        },
+        {
+          "resourceId": "food",
+          "amount": 150
+        }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "musket",
+      "name": "火枪",
+      "combatPower": 25,
+      "populationRequired": 1,
+      "commandPoints": 5,
+      "weight": 40,
+      "cost": [
+        {
+          "resourceId": "gear",
+          "amount": 5
+        },
+        {
+          "resourceId": "food",
+          "amount": 20
+        },
+        {
+          "resourceId": "iron_ingot",
+          "amount": 10
+        }
+      ],
+      "unlocked": false
     }
   ],
+  "formations": [
+    {
+      "id": "phalanx",
+      "name": "方阵",
+      "combatPowerBonus": 5,
+      "description": "5 名战士结成方阵，每满 5 名触发一次，提升正面战斗力。",
+      "requiredUnits": [
+        {
+          "unitId": "warrior",
+          "count": 5
+        }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "basic_formation",
+      "name": "基础战阵",
+      "combatPowerBonus": 4,
+      "description": "1 名弓箭手搭配任意 1 名单位，每 2 单位一组触发，适合前期过渡。",
+      "requiredUnits": [
+        {
+          "unitId": "archer",
+          "count": 1
+        },
+        {
+          "unitId": "",
+          "count": 1
+        }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "cross_cover",
+      "name": "交叉掩护",
+      "combatPowerBonus": 10,
+      "description": "2 名战士与 1 名骑兵组成交叉掩护，攻防兼备，每 3 单位一组触发。",
+      "requiredUnits": [
+        {
+          "unitId": "warrior",
+          "count": 2
+        },
+        {
+          "unitId": "cavalry",
+          "count": 1
+        }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "charge",
+      "name": "骑兵冲锋",
+      "combatPowerBonus": 30,
+      "description": "5 名骑兵编成冲锋队列，每满 5 名触发一次，爆发力强。",
+      "requiredUnits": [
+        {
+          "unitId": "cavalry",
+          "count": 5
+        }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "operation",
+      "name": "协同作战",
+      "combatPowerBonus": 30,
+      "description": "火枪、重甲骑士、骑兵各 1 名协同作战，每 3 单位一组触发。",
+      "requiredUnits": [
+        {
+          "unitId": "musket",
+          "count": 1
+        },
+        {
+          "unitId": "knight",
+          "count": 1
+        },
+        {
+          "unitId": "cavalry",
+          "count": 1
+        }
+      ],
+      "unlocked": false
+    }
+  ],
+  "invasion": {
+    "baseA": 2,
+    "dayMulB": 1,
+    "daySqMulC": 0.1
+  },
   "global": {
     "humanHp": 2,
     "clickAttack": 1
-  }
+  },
+  "invasionBaseA": 2,
+  "invasionDayMulB": 1,
+  "invasionDaySqMulC": 0.1
 }

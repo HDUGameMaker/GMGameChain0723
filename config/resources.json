@@ -160,5 +160,15 @@
     "max": 200,
     "rare": false,
     "showInHUD": false
+  },
+  {
+    "id": "icon_inspiration",
+    "name": "灵感",
+    "icon": "assets/icon/icon_inspiration.png",
+    "initial": 0,
+    "max": 100000,
+    "rare": false,
+    "showInHUD": true,
+    "tags": []
   }
 ]
