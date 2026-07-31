@@ -448,12 +448,16 @@ export class HUD {
       window.__game?.systems?.quest?.onPlayerAction('click_population');
       const available = this.systems.population.getAvailableWorkers();
       const foodAmount = this.systems.resource ? this.systems.resource.getAmount('food') : 0;
-      // 获取战士/弓箭手数量
-      let warriorCount = 0, archerCount = 0;
+      // 获取地图部署单位数量
+      let deployedText = '无';
       if (this.systems.combat) {
-       const units = this.systems.combat.getAllUnits();
-        warriorCount = units.filter(u => u.type === 'warrior').length;
-        archerCount = units.filter(u => u.type === 'archer').length;
+        const unitConfigs = configRegistry.get('enemies')?.units || [];
+        const unitNames = {};
+        unitConfigs.forEach(u => { unitNames[u.id] = u.name; });
+        const counts = {};
+        const units = this.systems.combat.getAllUnits().filter(u => u.source !== 'tamed');
+        units.forEach(u => { counts[u.type] = (counts[u.type] || 0) + 1; });
+        deployedText = Object.entries(counts).map(([id, n]) => (unitNames[id] || id) + n).join(' / ') || '无';
       }
       const armies = store.getState('armies') || [];
       const availUnits = store.getState('availableUnits') || {};
@@ -461,7 +465,7 @@ export class HUD {
       const totalArmyUnits = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
       const armyDetail = armies.map(a => a.name + ':' + (a.unitIds||[]).length + '单位').join(' · ');
       this._showPopover(e.target,
-        `总人口: ${total} = 空闲${idle} + 建筑${assigned} + 陆军${armyPop}\n住宅上限: ${housing}\n可用工人: ${available}\n已分配: ${assigned}\n陆军部署: 战士${warriorCount} / 弓箭手${archerCount}\n陆军编制: ${armies.length}支 · ${totalArmyUnits}单位\n训练储备: ${totalAvail}\n海军: ${navyUnits}（系统预留）\n${armyDetail || ''}\n食物储备: ${foodAmount}`
+        `总人口: ${total} = 空闲${idle} + 建筑${assigned} + 陆军${armyPop}\n住宅上限: ${housing}\n可用工人: ${available}\n已分配: ${assigned}\n地图部署: ${deployedText}\n陆军编制: ${armies.length}支 · ${totalArmyUnits}单位\n训练储备: ${totalAvail}\n海军: ${navyUnits}（殖民地战斗预留）\n${armyDetail || ''}\n食物储备: ${foodAmount}`
       );
     };
   }

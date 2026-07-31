@@ -12,6 +12,8 @@ export class TechSystem {
     this._researched = new Set();
     /** @type {{ techId: string, progressTicks: number } | null} */
     this._currentResearch = null;
+    /** @type {Set<string>} 已完成专项研发的兵种ID */
+    this._unitResearch = new Set();
     this._resourceSystem = null;
     this._buildingSystem = null;
     this._itemSystem = null;
@@ -33,6 +35,7 @@ export class TechSystem {
         this._applyUnlocks(tech);
       }
     }
+    this._ensureBaseUnitResearch();
     this._updateStore();
   }
 
@@ -44,6 +47,10 @@ export class TechSystem {
   /** 获取科技配置 */
   getTech(id) {
     return this._getAllTechs().find(t => t.id === id) || null;
+  }
+
+  _getAllUnits() {
+    return configRegistry.get('enemies')?.units || [];
   }
 
   /** 获取已研究列表 */
@@ -59,6 +66,16 @@ export class TechSystem {
   /** 获取当前研究进度 */
   getCurrentResearch() {
     return this._currentResearch ? { ...this._currentResearch } : null;
+  }
+
+  getUnitResearch() {
+    this._ensureBaseUnitResearch();
+    return [...this._unitResearch];
+  }
+
+  getAvailableUnitResearch() {
+    this._ensureBaseUnitResearch();
+    return this._getAllUnits().filter(u => this.canResearchUnit(u.id).valid);
   }
 
   /** 获取可研究的科技（前置满足且未研究） */
@@ -115,6 +132,42 @@ export class TechSystem {
     this._updateStore();
     eventBus.emit('techResearchStarted', { techId });
     return true;
+  }
+
+  canResearchUnit(unitId) {
+    this._ensureBaseUnitResearch();
+    const unit = this._getAllUnits().find(u => u.id === unitId);
+    if (!unit) return { valid: false, reason: '兵种不存在' };
+    if (this._unitResearch.has(unitId)) return { valid: false, reason: '已研发完成' };
+    const prereqs = Array.isArray(unit.prerequisiteTechs) ? unit.prerequisiteTechs : [];
+    for (const techId of prereqs) {
+      if (!this._researched.has(techId)) return { valid: false, reason: '前置科技未完成' };
+    }
+    const cost = unit.researchCost || 0;
+    const inspiration = store.getState('inspiration') || 0;
+    if (inspiration < cost) return { valid: false, reason: '灵感不足' };
+    return { valid: true };
+  }
+
+  researchUnit(unitId) {
+    const check = this.canResearchUnit(unitId);
+    if (!check.valid) return false;
+    const unit = this._getAllUnits().find(u => u.id === unitId);
+    const cost = unit?.researchCost || 0;
+    this._unitResearch.add(unitId);
+    store.setState({ inspiration: Math.max(0, (store.getState('inspiration') || 0) - cost) });
+    this._updateStore();
+    eventBus.emit('unitResearched', { unitId });
+    eventBus.emit('combatBroadcast', { message: '⚔️ 完成兵种研发: ' + (unit?.name || unitId) });
+    return true;
+  }
+
+  _ensureBaseUnitResearch() {
+    for (const unit of this._getAllUnits()) {
+      if (unit.unlocked === true || unit.researchCost === 0) {
+        this._unitResearch.add(unit.id);
+      }
+    }
   }
 
   /** Tick推进 */
@@ -187,12 +240,8 @@ export class TechSystem {
 
   /** 检查单位是否被科技解锁 */
   isUnitUnlockedByTech(unitId) {
-    const allTechs = this._getAllTechs();
-    for (const tech of allTechs) {
-      if (!this._researched.has(tech.id)) continue;
-      if (tech.unlocks?.units?.includes(unitId)) return true;
-    }
-    return false;
+    this._ensureBaseUnitResearch();
+    return this._unitResearch.has(unitId);
   }
 
   /** 检查阵型是否被科技解锁 */
@@ -210,7 +259,8 @@ export class TechSystem {
   _updateStore() {
     store.setState({
       techResearched: [...this._researched],
-      techCurrent: this._currentResearch ? { ...this._currentResearch } : null
+      techCurrent: this._currentResearch ? { ...this._currentResearch } : null,
+      unitResearch: [...this._unitResearch]
     });
   }
 
@@ -219,7 +269,8 @@ export class TechSystem {
   getState() {
     return {
       researched: [...this._researched],
-      currentResearch: this._currentResearch ? { ...this._currentResearch } : null
+      currentResearch: this._currentResearch ? { ...this._currentResearch } : null,
+      unitResearch: [...this._unitResearch]
     };
   }
 
@@ -227,6 +278,8 @@ export class TechSystem {
     if (!state) return;
     this._researched = new Set(state.researched || []);
     this._currentResearch = state.currentResearch || null;
+    this._unitResearch = new Set(state.unitResearch || []);
+    this._ensureBaseUnitResearch();
     this._updateStore();
   }
 }

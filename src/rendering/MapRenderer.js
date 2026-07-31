@@ -495,11 +495,12 @@ export class MapRenderer {
       const container = new PIXI.Container();
 
       const isTamed = unit.source === 'tamed';
-      const isArcher = unit.type === 'archer';
+      const unitCfg = window.__game?.configRegistry?.get('enemies')?.units?.find(u => u.id === unit.type);
+      const isRanged = (unitCfg?.attackRange || unit.attackRange || 1) > 1;
 
-      // 底色：驯化单位紫色，战士绿色，弓箭手蓝色
+      // 底色：驯化单位紫色，近战绿色，远程蓝色
       const bg = new PIXI.Graphics();
-      const color = isTamed ? 0xcc88cc : (isArcher ? 0x4488cc : 0x44cc88);
+      const color = isTamed ? 0xcc88cc : (isRanged ? 0x4488cc : 0x44cc88);
       const strokeColor = isTamed ? 0xff88ff : 0x44ffaa;
       bg.rect(x + 2, y + 2, ts - 4, ts - 4);
       bg.fill({ color, alpha: 0.8 });
@@ -1514,7 +1515,8 @@ export class MapRenderer {
       if (this._combatSystem) {
         const unit = this._combatSystem.getUnitAt(gridPos.col, gridPos.row);
         if (unit) {
-          const unitName = unit.source === 'tamed' ? (unit.tamedInfo?.name || '驯化单位') : (unit.type === 'archer' ? '弓箭手' : '战士');
+          const unitCfg = window.__game?.configRegistry?.get('enemies')?.units?.find(u => u.id === unit.type);
+          const unitName = unit.source === 'tamed' ? (unit.tamedInfo?.name || '驯化单位') : (unitCfg?.name || unit.type || '战斗单位');
           const hpText = `💙 ${unitName} HP ${unit.hp}/${unit.maxHp}`;
           eventBus.emit('combatBroadcast', { message: hpText });
           return;

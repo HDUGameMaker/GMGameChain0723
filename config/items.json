@@ -210,7 +210,7 @@
     "id": "potion_swiftness",
     "name": "迅捷药剂",
     "icon": "",
-    "description": "提升建造速度与弓箭手伤害。",
+    "description": "提升建造速度与远程单位伤害。",
     "unique": false,
     "consumable": true,
     "capacityCost": 0,

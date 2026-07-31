@@ -195,6 +195,7 @@ export class PopupManager {
       'alchemy_lab': '炼金实验室',
       'potion_inventory': '药剂库存',
       'tamed_pool': '驯养管理',
+      'unit_research': '兵种研发',
       'tutorial_prompt': '新手教程',
       'quest_panel': '任务'
     };
@@ -277,6 +278,9 @@ export class PopupManager {
     });
     import('./panels/training-panel.js').then(m => {
       this.register('training_panel', m.renderTrainingPanel);
+    });
+    import('./panels/unit-research-panel.js').then(m => {
+      this.register('unit_research', m.renderUnitResearchPanel);
     });
     import('./panels/doctrine-panel.js').then(m => {
       this.register('doctrine_panel', m.renderDoctrinePanel);

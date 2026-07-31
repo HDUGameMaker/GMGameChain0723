@@ -228,8 +228,8 @@ export class CultureSystem {
    */
   getEffects() {
     const e = {
-      warriorDamageMul: 1,
-      archerDamageMul: 1,
+      meleeDamageMul: 1,
+      rangedDamageMul: 1,
       unitHpMul: 1,
       productionMul: 1,
       buildCostMul: 1,
@@ -244,8 +244,10 @@ export class CultureSystem {
       const ce = cfg.effects.combat || {};
       const ee = cfg.effects.economy || {};
       const pe = cfg.effects.population || {};
-      if (ce.warriorDamageMul) e.warriorDamageMul *= ce.warriorDamageMul;
-      if (ce.archerDamageMul) e.archerDamageMul *= ce.archerDamageMul;
+      const meleeDamageMul = ce.meleeDamageMul || ce.warriorDamageMul;
+      const rangedDamageMul = ce.rangedDamageMul || ce.archerDamageMul;
+      if (meleeDamageMul) e.meleeDamageMul *= meleeDamageMul;
+      if (rangedDamageMul) e.rangedDamageMul *= rangedDamageMul;
       if (ce.unitHpMul) e.unitHpMul *= ce.unitHpMul;
       if (ee.productionMul) e.productionMul *= ee.productionMul;
       if (ee.buildCostMul) e.buildCostMul *= ee.buildCostMul;

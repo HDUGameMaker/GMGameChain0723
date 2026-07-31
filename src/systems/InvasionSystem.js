@@ -13,6 +13,7 @@ export class InvasionSystem {
     this._lastPunishDay = 0;       // 上次惩罚在哪天
     this._nextDay = 0;             // 下次入侵在哪天
     this._invasionHistory = [];    // 历史记录
+    this._pendingRevives = [];     // { unitIds, reviveDay }
 
     eventBus.on('dayStart', (data) => this._onDayStart(data));
   }
@@ -51,6 +52,7 @@ export class InvasionSystem {
   /* ===== 每日触发 ===== */
   _onDayStart(data) {
     const day = data?.day || store.getState('timeDay') || 1;
+    this._processPendingRevives(day);
 
     // 入侵持续中 → 每24小时循环惩罚
     if (this._activeInvasion && day > this._lastPunishDay) {
@@ -126,38 +128,32 @@ export class InvasionSystem {
     if (!army || !army.unitIds || army.unitIds.length === 0) return { ok: false, msg: '该军团没有单位' };
 
     const armies = store.getState('armies') || [];
-    const avail = store.getState('availableUnits') || {};
     const unitMap = {};
     this._unitConfigs.forEach(u => unitMap[u.id] = u);
 
     // 计算军团总战斗力（含阵型按完整组数触发的加成）
-    const armyPower = getArmyCombatPower(army);
+    const landUnitIds = army.unitIds.filter(uid => {
+      const cfg = this._unitConfigs.find(u => u.id === uid);
+      return (cfg?.domain || 'land') === 'land';
+    });
+    if (landUnitIds.length === 0) return { ok: false, msg: '陆地入侵无法使用海军单位防御' };
+
+    const combatArmy = { ...army, unitIds: landUnitIds };
+    const armyPower = getArmyCombatPower(combatArmy, { domain: 'land' });
     const formationStatus = army.formationId ? getFormationStatusText(army.formationId, army) : '';
 
     const invPower = this._activeInvasion.combatPower;
 
-    if (armyPower >= invPower) {
+    if (armyPower > invPower) {
       /* ===== 胜利 ===== */
-      const winnerPower = armyPower;
-      const loserPower = invPower;
-      const remainingPower = Math.sqrt(winnerPower * winnerPower - loserPower * loserPower);
-      const lossRatio = 1 - remainingPower / winnerPower;
-
-      // 按权重（低优先）排序，移除单位
-      const sorted = [...army.unitIds].sort((a, b) => {
-        const ca = unitMap[a], cb = unitMap[b];
-        return (ca ? (ca.weight || 100) : 100) - (cb ? (cb.weight || 100) : 100);
-      });
-
-      const toRemoveCount = Math.floor(army.unitIds.length * lossRatio);
-      const survived = sorted.slice(toRemoveCount);
-
-      // 移除的归还到可用池
-      const newAvail = { ...avail };
-      for (let i = 0; i < toRemoveCount; i++) {
-        const uid = sorted[i];
-        // 不归还（阵亡）
-      }
+      const sorted = this._sortUnitIdsForCasualty(landUnitIds, unitMap);
+      const powerRatio = armyPower / Math.max(1, invPower);
+      const lossRatio = powerRatio >= 2 ? 0 : (armyPower - invPower) / Math.max(1, invPower);
+      const toRemoveCount = Math.min(Math.floor(landUnitIds.length * lossRatio), Math.max(0, landUnitIds.length - 1));
+      const lostUnitIds = sorted.slice(0, toRemoveCount);
+      const survivedLand = sorted.slice(toRemoveCount);
+      const survived = army.unitIds.filter(uid => (unitMap[uid]?.domain || 'land') !== 'land');
+      survived.push(...survivedLand);
 
       // 更新军团
       const armyIdx = armies.findIndex(a => a.id === army.id);
@@ -165,30 +161,118 @@ export class InvasionSystem {
         armies[armyIdx].unitIds = survived;
         store.setState({ armies });
       }
+      this._applyUnitDeaths(lostUnitIds);
 
       this._activeInvasion = null;
       this._updateUI();
       eventBus.emit('combatBroadcast', { message: `🎉 击退入侵！军团损失 ${toRemoveCount} 单位，剩余 ${survived.length} 单位` + (formationStatus ? ' · ' + formationStatus : '') });
       return { ok: true, victory: true, survived: survived.length, lost: toRemoveCount };
+    } else if (armyPower === invPower) {
+      /* ===== 平局：按失败处理单位，但清除入侵，不触发后续资源惩罚 ===== */
+      const lostUnitIds = [...landUnitIds];
+      const reviveCount = this._scheduleRevive(lostUnitIds);
+      const armyIdx = armies.findIndex(a => a.id === army.id);
+      if (armyIdx >= 0) {
+        armies[armyIdx].unitIds = army.unitIds.filter(uid => (unitMap[uid]?.domain || 'land') !== 'land');
+        store.setState({ armies });
+      }
+      this._applyUnitDeaths(lostUnitIds);
+
+      this._activeInvasion = null;
+      this._updateUI();
+      eventBus.emit('combatBroadcast', { message: `⚔️ 惨烈平局！军团全员倒下，${reviveCount} 单位将在72小时后复归；入侵已被阻止` + (formationStatus ? ' · ' + formationStatus : '') });
+      return { ok: true, draw: true, lost: lostUnitIds.length, reviveCount };
     } else {
       /* ===== 失败 ===== */
       const winnerPower = invPower;
       const loserPower = armyPower;
       const remainingPower = Math.sqrt(winnerPower * winnerPower - loserPower * loserPower);
-      const lossRatio = 1 - remainingPower / winnerPower;
+      const lostUnitIds = [...landUnitIds];
+      const reviveCount = this._scheduleRevive(lostUnitIds);
 
       // 军团全灭
       const armyIdx = armies.findIndex(a => a.id === army.id);
       if (armyIdx >= 0) {
-        armies[armyIdx].unitIds = [];
+        armies[armyIdx].unitIds = army.unitIds.filter(uid => (unitMap[uid]?.domain || 'land') !== 'land');
         store.setState({ armies });
       }
+      this._applyUnitDeaths(lostUnitIds);
 
       // 入侵战斗力削弱
       this._activeInvasion.combatPower = Math.round(remainingPower);
       this._updateUI();
-      eventBus.emit('combatBroadcast', { message: `💥 军团被击溃！入侵残余战斗力 ${Math.round(remainingPower)}` + (formationStatus ? ' · ' + formationStatus : '') });
-      return { ok: true, victory: false, remainingInvasionPower: Math.round(remainingPower) };
+      eventBus.emit('combatBroadcast', { message: `💥 军团被击溃！全员倒下，${reviveCount} 单位将在72小时后复归；入侵残余战斗力 ${Math.round(remainingPower)}` + (formationStatus ? ' · ' + formationStatus : '') });
+      return { ok: true, victory: false, remainingInvasionPower: Math.round(remainingPower), lost: lostUnitIds.length, reviveCount };
+    }
+  }
+
+  _sortUnitIdsForCasualty(unitIds, unitMap) {
+    return [...unitIds].sort((a, b) => {
+      const ca = unitMap[a], cb = unitMap[b];
+      return (ca ? (ca.weight || 100) : 100) - (cb ? (cb.weight || 100) : 100);
+    });
+  }
+
+  _getUnitPopulationRequired(unitId) {
+    const cfg = this._unitConfigs.find(u => u.id === unitId);
+    return cfg ? (cfg.populationRequired || 1) : 1;
+  }
+
+  _applyUnitDeaths(unitIds) {
+    if (!unitIds || unitIds.length === 0) return;
+    const popSys = window.__game?.systems?.population;
+    if (!popSys) return;
+    const loss = unitIds.reduce((s, uid) => s + this._getUnitPopulationRequired(uid), 0);
+    popSys.releaseFromConstruction(loss);
+    popSys.current = Math.max(0, popSys.current - loss);
+    popSys.refresh();
+    eventBus.emit('populationChanged', { current: popSys.current, direction: 'combat_loss', lost: loss });
+  }
+
+  _scheduleRevive(unitIds) {
+    if (!unitIds || unitIds.length === 0) return 0;
+    const reviveCount = Math.ceil(unitIds.length / 2);
+    const reviveUnitIds = unitIds.slice(0, reviveCount);
+    const day = store.getState('timeDay') || 1;
+    this._pendingRevives.push({
+      unitIds: reviveUnitIds,
+      reviveDay: day + 3
+    });
+    return reviveUnitIds.length;
+  }
+
+  _processPendingRevives(day) {
+    if (this._pendingRevives.length === 0) return;
+    const due = [];
+    this._pendingRevives = this._pendingRevives.filter(item => {
+      if (day >= item.reviveDay) {
+        due.push(item);
+        return false;
+      }
+      return true;
+    });
+    if (due.length === 0) return;
+
+    const avail = { ...(store.getState('availableUnits') || {}) };
+    const popSys = window.__game?.systems?.population;
+    let revivedPeople = 0;
+    let revivedUnits = 0;
+    for (const item of due) {
+      for (const uid of item.unitIds || []) {
+        avail[uid] = (avail[uid] || 0) + 1;
+        revivedPeople += this._getUnitPopulationRequired(uid);
+        revivedUnits++;
+      }
+    }
+    store.setState({ availableUnits: avail });
+    if (popSys && revivedPeople > 0) {
+      popSys.current += revivedPeople;
+      popSys.occupyForConstruction(revivedPeople);
+      popSys.refresh();
+      eventBus.emit('populationChanged', { current: popSys.current, direction: 'combat_revive', revived: revivedPeople });
+    }
+    if (revivedUnits > 0) {
+      eventBus.emit('combatBroadcast', { message: `🕯️ ${revivedUnits} 名倒下的战斗单位复归，可重新编入军团` });
     }
   }
 
@@ -212,6 +296,7 @@ export class InvasionSystem {
       nextDay: this._nextDay,
       activeInvasion: this._activeInvasion ? { ...this._activeInvasion } : null,
       history: this._invasionHistory,
+      pendingRevives: this._pendingRevives.map(r => ({ ...r, unitIds: [...(r.unitIds || [])] })),
     };
   }
 
@@ -221,12 +306,14 @@ export class InvasionSystem {
     this._lastPunishDay = state.lastPunishDay || 0;
     this._activeInvasion = state.activeInvasion || null;
     this._invasionHistory = state.history || [];
+    this._pendingRevives = (state.pendingRevives || []).map(r => ({ ...r, unitIds: [...(r.unitIds || [])] }));
     this._updateUI();
   }
 
   initNew() {
     this._scheduleNext();
     this._activeInvasion = null;
+    this._pendingRevives = [];
     this._updateUI();
   }
 }

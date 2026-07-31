@@ -439,7 +439,7 @@ export function renderBuildingDetailPanel(data, body, pm) {
     container.appendChild(upgradeSection);
   }
 
-  // ===== 训练营：训练战士/弓箭手 =====
+  // ===== 训练营：部署早期地图单位 =====
   if ((config.id === 'training_ground' || config.id === 'advanced_training_ground') && building.status === 'active') {
     const trainSection = section('训练', '⚔️');
 
@@ -448,11 +448,12 @@ export function renderBuildingDetailPanel(data, body, pm) {
     trainInfo.textContent = `可用工人: ${populationSystem.getAvailableWorkers()}`;
     trainSection.appendChild(trainInfo);
 
-    // 训练营可训练战士
+    // 训练营可部署战士
     const trainWarriorBtn = actionButton('训练战士 (消耗1工人)', 'rgba(78, 203, 113, 0.25)', () => {
       const game = window.__game;
       if (!game || !game.systems.combat) return;
       if (populationSystem.getAvailableWorkers() <= 0) return;
+      if (!game.systems.tech?.isUnitUnlockedByTech('warrior')) return;
       // 在地图上生成战士单位
       const result = game.systems.combat.spawnUnit('warrior', building.gridX, building.gridY);
       if (result) {
@@ -462,13 +463,14 @@ export function renderBuildingDetailPanel(data, body, pm) {
     });
     trainSection.appendChild(trainWarriorBtn);
 
-    // 高级训练营可额外训练弓箭手
+    // 高级训练营可额外部署剑士
     if (config.id === 'advanced_training_ground') {
-      const trainArcherBtn = actionButton('训练弓箭手 (消耗1工人)', 'rgba(91, 141, 239, 0.25)', () => {
+      const trainArcherBtn = actionButton('训练剑士 (消耗1工人)', 'rgba(91, 141, 239, 0.25)', () => {
         const game = window.__game;
         if (!game || !game.systems.combat) return;
         if (populationSystem.getAvailableWorkers() <= 0) return;
-        const result = game.systems.combat.spawnUnit('archer', building.gridX, building.gridY);
+        if (!game.systems.tech?.isUnitUnlockedByTech('swordsman')) return;
+        const result = game.systems.combat.spawnUnit('swordsman', building.gridX, building.gridY);
         if (result) {
           populationSystem.occupyForConstruction(1);
           pm.refresh({ buildingIndex });

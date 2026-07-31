@@ -4,217 +4,386 @@
     {
       "id": "warrior",
       "name": "战士",
+      "domain": "land",
+      "branch": "infantry",
+      "tier": 0,
       "combatPower": 2,
+      "hp": 6,
+      "attack": 2,
+      "attackRange": 1,
       "populationRequired": 1,
       "commandPoints": 2,
       "weight": 5,
+      "researchCost": 0,
+      "prerequisiteTechs": [],
       "cost": [
-        {
-          "resourceId": "wood",
-          "amount": 10
-        },
-        {
-          "resourceId": "food",
-          "amount": 10
-        }
+        { "resourceId": "wood", "amount": 10 },
+        { "resourceId": "food", "amount": 10 }
       ],
       "unlocked": true
     },
     {
-      "id": "archer",
-      "name": "弓箭手",
-      "combatPower": 5,
+      "id": "swordsman",
+      "name": "剑士",
+      "domain": "land",
+      "branch": "infantry",
+      "tier": 1,
+      "combatPower": 6,
+      "hp": 9,
+      "attack": 4,
+      "attackRange": 1,
       "populationRequired": 1,
       "commandPoints": 3,
       "weight": 10,
+      "researchCost": 40,
+      "prerequisiteTechs": ["smelting", "military_training"],
       "cost": [
-        {
-          "resourceId": "wood",
-          "amount": 15
-        },
-        {
-          "resourceId": "stone",
-          "amount": 10
-        },
-        {
-          "resourceId": "food",
-          "amount": 10
-        }
+        { "resourceId": "iron_ingot", "amount": 12 },
+        { "resourceId": "food", "amount": 15 }
       ],
       "unlocked": false
     },
     {
-      "id": "cavalry",
-      "name": "骑兵",
-      "combatPower": 10,
+      "id": "musketeer",
+      "name": "火枪手",
+      "domain": "land",
+      "branch": "infantry",
+      "tier": 2,
+      "combatPower": 18,
+      "hp": 10,
+      "attack": 8,
+      "attackRange": 3,
       "populationRequired": 1,
       "commandPoints": 5,
-      "weight": 15,
+      "weight": 25,
+      "researchCost": 90,
+      "prerequisiteTechs": ["firearm"],
       "cost": [
-        {
-          "resourceId": "iron_ingot",
-          "amount": 10
-        },
-        {
-          "resourceId": "plank",
-          "amount": 10
-        },
-        {
-          "resourceId": "food",
-          "amount": 50
-        }
+        { "resourceId": "gear", "amount": 8 },
+        { "resourceId": "iron_ingot", "amount": 18 },
+        { "resourceId": "food", "amount": 25 }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "modern_infantry",
+      "name": "现代步兵",
+      "domain": "land",
+      "branch": "infantry",
+      "tier": 3,
+      "combatPower": 42,
+      "hp": 14,
+      "attack": 16,
+      "attackRange": 4,
+      "populationRequired": 1,
+      "commandPoints": 7,
+      "weight": 55,
+      "researchCost": 180,
+      "prerequisiteTechs": ["modern_firearms"],
+      "cost": [
+        { "resourceId": "steel", "amount": 25 },
+        { "resourceId": "electronic_part", "amount": 4 },
+        { "resourceId": "food", "amount": 40 }
       ],
       "unlocked": false
     },
     {
       "id": "knight",
-      "name": "重甲骑士",
-      "combatPower": 12,
+      "name": "骑士",
+      "domain": "land",
+      "branch": "cavalry",
+      "tier": 1,
+      "combatPower": 10,
+      "hp": 12,
+      "attack": 6,
+      "attackRange": 1,
       "populationRequired": 1,
       "commandPoints": 4,
-      "weight": 20,
+      "weight": 18,
+      "researchCost": 55,
+      "prerequisiteTechs": ["domesticate_horses"],
       "cost": [
-        {
-          "resourceId": "iron_ingot",
-          "amount": 40
-        },
-        {
-          "resourceId": "food",
-          "amount": 20
-        },
-        {
-          "resourceId": "stone",
-          "amount": 20
-        }
+        { "resourceId": "iron_ingot", "amount": 18 },
+        { "resourceId": "plank", "amount": 10 },
+        { "resourceId": "food", "amount": 45 }
       ],
       "unlocked": false
     },
     {
-      "id": "chariot",
-      "name": "战车",
-      "combatPower": 30,
-      "populationRequired": 3,
-      "commandPoints": 8,
-      "weight": 30,
-      "cost": [
-        {
-          "resourceId": "steel",
-          "amount": 20
-        },
-        {
-          "resourceId": "plank",
-          "amount": 50
-        },
-        {
-          "resourceId": "food",
-          "amount": 150
-        }
-      ],
-      "unlocked": false
-    },
-    {
-      "id": "musket",
-      "name": "火枪",
-      "combatPower": 25,
+      "id": "armored_cavalry",
+      "name": "重甲骑兵",
+      "domain": "land",
+      "branch": "cavalry",
+      "tier": 2,
+      "combatPower": 24,
+      "hp": 18,
+      "attack": 10,
+      "attackRange": 1,
       "populationRequired": 1,
-      "commandPoints": 5,
-      "weight": 40,
+      "commandPoints": 6,
+      "weight": 35,
+      "researchCost": 110,
+      "prerequisiteTechs": ["precision_manufacturing"],
       "cost": [
-        {
-          "resourceId": "gear",
-          "amount": 5
-        },
-        {
-          "resourceId": "food",
-          "amount": 20
-        },
-        {
-          "resourceId": "iron_ingot",
-          "amount": 10
-        }
+        { "resourceId": "steel", "amount": 22 },
+        { "resourceId": "machine_part", "amount": 6 },
+        { "resourceId": "food", "amount": 70 }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "biplane",
+      "name": "双翼机",
+      "domain": "land",
+      "branch": "cavalry",
+      "tier": 3,
+      "combatPower": 55,
+      "hp": 20,
+      "attack": 18,
+      "attackRange": 5,
+      "populationRequired": 2,
+      "commandPoints": 9,
+      "weight": 70,
+      "researchCost": 220,
+      "prerequisiteTechs": ["aeronautics"],
+      "cost": [
+        { "resourceId": "steel", "amount": 45 },
+        { "resourceId": "machine_part", "amount": 18 },
+        { "resourceId": "gear", "amount": 16 }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "jet_fighter",
+      "name": "喷气式战机",
+      "domain": "land",
+      "branch": "cavalry",
+      "tier": 4,
+      "combatPower": 120,
+      "hp": 28,
+      "attack": 34,
+      "attackRange": 6,
+      "populationRequired": 2,
+      "commandPoints": 12,
+      "weight": 110,
+      "researchCost": 420,
+      "prerequisiteTechs": ["modern_aeronautics"],
+      "cost": [
+        { "resourceId": "steel", "amount": 90 },
+        { "resourceId": "machine_part", "amount": 36 },
+        { "resourceId": "electronic_part", "amount": 16 }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "cannon",
+      "name": "加农炮",
+      "domain": "land",
+      "branch": "artillery",
+      "tier": 1,
+      "combatPower": 16,
+      "hp": 10,
+      "attack": 12,
+      "attackRange": 4,
+      "populationRequired": 2,
+      "commandPoints": 6,
+      "weight": 30,
+      "researchCost": 80,
+      "prerequisiteTechs": ["smelting", "gunpowder"],
+      "cost": [
+        { "resourceId": "iron_ingot", "amount": 35 },
+        { "resourceId": "gear", "amount": 6 },
+        { "resourceId": "food", "amount": 40 }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "tank",
+      "name": "坦克",
+      "domain": "land",
+      "branch": "artillery",
+      "tier": 2,
+      "combatPower": 60,
+      "hp": 30,
+      "attack": 24,
+      "attackRange": 3,
+      "populationRequired": 3,
+      "commandPoints": 10,
+      "weight": 80,
+      "researchCost": 260,
+      "prerequisiteTechs": ["internal_combustion", "precision_manufacturing"],
+      "cost": [
+        { "resourceId": "steel", "amount": 70 },
+        { "resourceId": "machine_part", "amount": 24 },
+        { "resourceId": "gear", "amount": 20 },
+        { "resourceId": "food", "amount": 90 }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "rocket_artillery",
+      "name": "火箭炮",
+      "domain": "land",
+      "branch": "artillery",
+      "tier": 3,
+      "combatPower": 140,
+      "hp": 24,
+      "attack": 42,
+      "attackRange": 6,
+      "populationRequired": 3,
+      "commandPoints": 13,
+      "weight": 120,
+      "researchCost": 460,
+      "prerequisiteTechs": ["modern_ballistics"],
+      "cost": [
+        { "resourceId": "steel", "amount": 120 },
+        { "resourceId": "machine_part", "amount": 45 },
+        { "resourceId": "electronic_part", "amount": 18 }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "raft",
+      "name": "木筏",
+      "domain": "naval",
+      "branch": "navy",
+      "tier": 1,
+      "combatPower": 4,
+      "hp": 8,
+      "attack": 2,
+      "attackRange": 1,
+      "populationRequired": 1,
+      "commandPoints": 2,
+      "weight": 12,
+      "researchCost": 25,
+      "prerequisiteTechs": ["wood_processing"],
+      "cost": [
+        { "resourceId": "plank", "amount": 20 },
+        { "resourceId": "food", "amount": 10 }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "sailing_ship",
+      "name": "帆船",
+      "domain": "naval",
+      "branch": "navy",
+      "tier": 2,
+      "combatPower": 18,
+      "hp": 16,
+      "attack": 8,
+      "attackRange": 3,
+      "populationRequired": 2,
+      "commandPoints": 5,
+      "weight": 32,
+      "researchCost": 95,
+      "prerequisiteTechs": ["sail"],
+      "cost": [
+        { "resourceId": "plank", "amount": 80 },
+        { "resourceId": "fur", "amount": 20 },
+        { "resourceId": "food", "amount": 35 }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "battleship",
+      "name": "战列舰",
+      "domain": "naval",
+      "branch": "navy",
+      "tier": 3,
+      "combatPower": 70,
+      "hp": 36,
+      "attack": 26,
+      "attackRange": 5,
+      "populationRequired": 4,
+      "commandPoints": 11,
+      "weight": 90,
+      "researchCost": 300,
+      "prerequisiteTechs": ["steam_engine"],
+      "cost": [
+        { "resourceId": "steel", "amount": 120 },
+        { "resourceId": "machine_part", "amount": 35 },
+        { "resourceId": "coal", "amount": 120 },
+        { "resourceId": "food", "amount": 120 }
+      ],
+      "unlocked": false
+    },
+    {
+      "id": "missile_destroyer",
+      "name": "导弹驱逐舰",
+      "domain": "naval",
+      "branch": "navy",
+      "tier": 4,
+      "combatPower": 160,
+      "hp": 42,
+      "attack": 48,
+      "attackRange": 7,
+      "populationRequired": 4,
+      "commandPoints": 14,
+      "weight": 130,
+      "researchCost": 520,
+      "prerequisiteTechs": ["modern_ballistics", "precision_manufacturing"],
+      "cost": [
+        { "resourceId": "steel", "amount": 180 },
+        { "resourceId": "machine_part", "amount": 60 },
+        { "resourceId": "electronic_part", "amount": 28 },
+        { "resourceId": "food", "amount": 160 }
       ],
       "unlocked": false
     }
   ],
   "formations": [
     {
-      "id": "phalanx",
-      "name": "方阵",
-      "combatPowerBonus": 5,
-      "description": "5 名战士结成方阵，每满 5 名触发一次，提升正面战斗力。",
+      "id": "infantry_pair",
+      "name": "步兵互援",
+      "combatPowerBonus": 2,
+      "description": "2 名任意步兵互相掩护，每组提供少量额外战力。",
       "requiredUnits": [
-        {
-          "unitId": "warrior",
-          "count": 5
-        }
+        { "branch": "infantry", "count": 2 }
       ],
       "unlocked": false
     },
     {
-      "id": "basic_formation",
-      "name": "基础战阵",
-      "combatPowerBonus": 4,
-      "description": "1 名弓箭手搭配任意 1 名单位，每 2 单位一组触发，适合前期过渡。",
+      "id": "infantry_cavalry",
+      "name": "步骑协同",
+      "combatPowerBonus": 8,
+      "description": "2 名任意步兵与 1 名任意骑兵协同推进。",
       "requiredUnits": [
-        {
-          "unitId": "archer",
-          "count": 1
-        },
-        {
-          "unitId": "",
-          "count": 1
-        }
+        { "branch": "infantry", "count": 2 },
+        { "branch": "cavalry", "count": 1 }
       ],
       "unlocked": false
     },
     {
-      "id": "cross_cover",
-      "name": "交叉掩护",
-      "combatPowerBonus": 10,
-      "description": "2 名战士与 1 名骑兵组成交叉掩护，攻防兼备，每 3 单位一组触发。",
+      "id": "cavalry_wedge",
+      "name": "骑兵楔阵",
+      "combatPowerBonus": 16,
+      "description": "3 名任意骑兵组成冲击队形。",
       "requiredUnits": [
-        {
-          "unitId": "warrior",
-          "count": 2
-        },
-        {
-          "unitId": "cavalry",
-          "count": 1
-        }
+        { "branch": "cavalry", "count": 3 }
       ],
       "unlocked": false
     },
     {
-      "id": "charge",
-      "name": "骑兵冲锋",
-      "combatPowerBonus": 30,
-      "description": "5 名骑兵编成冲锋队列，每满 5 名触发一次，爆发力强。",
+      "id": "infantry_artillery",
+      "name": "步炮协同",
+      "combatPowerBonus": 12,
+      "description": "2 名任意步兵保护 1 个任意炮兵单位。",
       "requiredUnits": [
-        {
-          "unitId": "cavalry",
-          "count": 5
-        }
+        { "branch": "infantry", "count": 2 },
+        { "branch": "artillery", "count": 1 }
       ],
       "unlocked": false
     },
     {
-      "id": "operation",
-      "name": "协同作战",
-      "combatPowerBonus": 30,
-      "description": "火枪、重甲骑士、骑兵各 1 名协同作战，每 3 单位一组触发。",
+      "id": "combined_arms",
+      "name": "诸兵种协同",
+      "combatPowerBonus": 20,
+      "description": "2 名任意步兵、1 名任意骑兵与 1 个任意炮兵单位组成完整陆军战斗群。",
       "requiredUnits": [
-        {
-          "unitId": "musket",
-          "count": 1
-        },
-        {
-          "unitId": "knight",
-          "count": 1
-        },
-        {
-          "unitId": "cavalry",
-          "count": 1
-        }
+        { "branch": "infantry", "count": 2 },
+        { "branch": "cavalry", "count": 1 },
+        { "branch": "artillery", "count": 1 }
       ],
       "unlocked": false
     }

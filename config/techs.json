@@ -417,9 +417,7 @@
     },
     "unlocks": {
       "buildings": [],
-      "units": [
-        "archer"
-      ]
+      "units": []
     }
   },
   {
@@ -446,9 +444,7 @@
     },
     "unlocks": {
       "buildings": [],
-      "units": [
-        "knight"
-      ]
+      "units": []
     }
   },
   {
@@ -735,9 +731,7 @@
       "items": [],
       "regions": [],
       "roadTypes": [],
-      "units": [
-        "cavalry"
-      ]
+      "units": []
     }
   },
   {
@@ -774,9 +768,7 @@
       "items": [],
       "regions": [],
       "roadTypes": [],
-      "units": [
-        "chariot"
-      ],
+      "units": [],
       "formations": []
     }
   },
@@ -810,9 +802,269 @@
       "items": [],
       "regions": [],
       "roadTypes": [],
-      "units": [
-        "musket"
-      ],
+      "units": [],
+      "formations": []
+    }
+  },
+  {
+    "id": "gunpowder",
+    "name": "火药",
+    "description": "稳定制造黑火药，为火炮和早期枪械提供基础。",
+    "tier": 4,
+    "icon": "",
+    "cost": [
+      {
+        "resourceId": "coal",
+        "amount": 80
+      },
+      {
+        "resourceId": "iron_ingot",
+        "amount": 40
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "smelting",
+      "precision_molding"
+    ],
+    "pos": {
+      "x": 7,
+      "y": 0
+    },
+    "unlocks": {
+      "buildings": [],
+      "items": [],
+      "regions": [],
+      "roadTypes": [],
+      "units": [],
+      "formations": []
+    }
+  },
+  {
+    "id": "steam_engine",
+    "name": "蒸汽机",
+    "description": "将煤炭转化为持续动力，支撑重型舰船和工业设备。",
+    "tier": 6,
+    "icon": "",
+    "cost": [
+      {
+        "resourceId": "steel",
+        "amount": 60
+      },
+      {
+        "resourceId": "machine_part",
+        "amount": 25
+      },
+      {
+        "resourceId": "coal",
+        "amount": 120
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "waterwheel",
+      "mechanical_engineering"
+    ],
+    "pos": {
+      "x": 4,
+      "y": 0
+    },
+    "unlocks": {
+      "buildings": [],
+      "items": [],
+      "regions": [],
+      "roadTypes": [],
+      "units": [],
+      "formations": []
+    }
+  },
+  {
+    "id": "internal_combustion",
+    "name": "内燃机",
+    "description": "高功率机动平台的前置技术。",
+    "tier": 6,
+    "icon": "",
+    "cost": [
+      {
+        "resourceId": "steel",
+        "amount": 80
+      },
+      {
+        "resourceId": "machine_part",
+        "amount": 35
+      },
+      {
+        "resourceId": "gear",
+        "amount": 35
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "steam_engine",
+      "precision_manufacturing"
+    ],
+    "pos": {
+      "x": 5,
+      "y": 0
+    },
+    "unlocks": {
+      "buildings": [],
+      "items": [],
+      "regions": [],
+      "roadTypes": [],
+      "units": [],
+      "formations": []
+    }
+  },
+  {
+    "id": "aeronautics",
+    "name": "航空学",
+    "description": "让军队从地面机动扩展到空中支援。",
+    "tier": 7,
+    "icon": "",
+    "cost": [
+      {
+        "resourceId": "steel",
+        "amount": 90
+      },
+      {
+        "resourceId": "machine_part",
+        "amount": 40
+      },
+      {
+        "resourceId": "fur",
+        "amount": 40
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "internal_combustion",
+      "sail"
+    ],
+    "pos": {
+      "x": 5,
+      "y": 0
+    },
+    "unlocks": {
+      "buildings": [],
+      "items": [],
+      "regions": [],
+      "roadTypes": [],
+      "units": [],
+      "formations": []
+    }
+  },
+  {
+    "id": "modern_firearms",
+    "name": "现代火器",
+    "description": "标准化枪械、弹药与小队火力体系。",
+    "tier": 7,
+    "icon": "",
+    "cost": [
+      {
+        "resourceId": "steel",
+        "amount": 80
+      },
+      {
+        "resourceId": "machine_part",
+        "amount": 30
+      },
+      {
+        "resourceId": "electronic_part",
+        "amount": 8
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "firearm",
+      "precision_manufacturing"
+    ],
+    "pos": {
+      "x": 6,
+      "y": 0
+    },
+    "unlocks": {
+      "buildings": [],
+      "items": [],
+      "regions": [],
+      "roadTypes": [],
+      "units": [],
+      "formations": []
+    }
+  },
+  {
+    "id": "modern_ballistics",
+    "name": "现代弹道学",
+    "description": "远程火力、导弹舰艇和火箭炮的核心理论。",
+    "tier": 8,
+    "icon": "",
+    "cost": [
+      {
+        "resourceId": "steel",
+        "amount": 120
+      },
+      {
+        "resourceId": "machine_part",
+        "amount": 50
+      },
+      {
+        "resourceId": "electronic_part",
+        "amount": 20
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "modern_firearms",
+      "electronic_engineering"
+    ],
+    "pos": {
+      "x": 6,
+      "y": 0
+    },
+    "unlocks": {
+      "buildings": [],
+      "items": [],
+      "regions": [],
+      "roadTypes": [],
+      "units": [],
+      "formations": []
+    }
+  },
+  {
+    "id": "modern_aeronautics",
+    "name": "现代航空学",
+    "description": "喷气动力、航空电子与现代空战平台。",
+    "tier": 8,
+    "icon": "",
+    "cost": [
+      {
+        "resourceId": "steel",
+        "amount": 140
+      },
+      {
+        "resourceId": "machine_part",
+        "amount": 60
+      },
+      {
+        "resourceId": "electronic_part",
+        "amount": 24
+      }
+    ],
+    "researchTime": 48,
+    "prerequisites": [
+      "aeronautics",
+      "electronic_engineering"
+    ],
+    "pos": {
+      "x": 5,
+      "y": 0
+    },
+    "unlocks": {
+      "buildings": [],
+      "items": [],
+      "regions": [],
+      "roadTypes": [],
+      "units": [],
       "formations": []
     }
   }
