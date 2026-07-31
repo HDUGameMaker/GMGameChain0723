@@ -5,6 +5,7 @@
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
+import { applyFlatAndMultiplier, collectExpeditionBonuses } from '../utils/BonusUtils.js';
 
 export class ExpeditionSystem {
   constructor() {
@@ -197,28 +198,9 @@ export class ExpeditionSystem {
     let resourceCapacity = expConfig.baseResourceCapacity;
 
     const expeditionItems = this._itemSystem ? this._itemSystem.getExpeditionInstances() : [];
-    for (const item of expeditionItems) {
-      for (const effect of (item.expeditionEffects || [])) {
-        if (effect.type === 'backpack_capacity_bonus') backpackCapacity += effect.value;
-        if (effect.type === 'resource_capacity_bonus') resourceCapacity += effect.value;
-      }
-    }
-
-    // 计算产出倍率和固定加成
-    const yieldMultipliers = {};
-    const yieldFlatBonuses = {};
-    for (const item of expeditionItems) {
-      for (const effect of (item.expeditionEffects || [])) {
-        if (effect.type === 'yield_multiplier') {
-          const key = effect.resourceId || '_all';
-          yieldMultipliers[key] = (yieldMultipliers[key] || 0) + (effect.value - 1);
-        }
-        if (effect.type === 'yield_flat_bonus') {
-          const key = effect.resourceId || '_all';
-          yieldFlatBonuses[key] = (yieldFlatBonuses[key] || 0) + effect.value;
-        }
-      }
-    }
+    const itemBonuses = collectExpeditionBonuses(expeditionItems);
+    backpackCapacity += itemBonuses.backpackCapacityBonus;
+    resourceCapacity += itemBonuses.resourceCapacityBonus;
 
     this._expedition = {
       status: 'active',
@@ -230,8 +212,8 @@ export class ExpeditionSystem {
       materialPool: {},
       totalDiscarded: {},
       triggeredEvents: [],
-      yieldMultipliers,
-      yieldFlatBonuses,
+      yieldMultipliers: itemBonuses.yieldMultipliers,
+      yieldFlatBonuses: itemBonuses.yieldFlatBonuses,
       backpackCapacity,
       resourceCapacity,
       occupiedWorkers
@@ -272,6 +254,13 @@ export class ExpeditionSystem {
     const regionId = exp.regions[exp.currentPeriodIndex];
     const region = configRegistry.getRegion(regionId);
     if (!region) return;
+    const expeditionItems = this._itemSystem ? this._itemSystem.getExpeditionInstances() : [];
+    const regionBonuses = expeditionItems.length > 0
+      ? collectExpeditionBonuses(expeditionItems, { regionId })
+      : {
+          yieldMultipliers: exp.yieldMultipliers || {},
+          yieldFlatBonuses: exp.yieldFlatBonuses || {}
+        };
 
     // 确定时段名
     const periodNames = ['morning', 'afternoon', 'evening', 'night'];
@@ -286,17 +275,9 @@ export class ExpeditionSystem {
     for (const [resourceId, baseAmount] of Object.entries(baseYields)) {
       if (baseAmount <= 0) continue;
 
-      // 计算实际产量
-      let multiplier = 1;
-      let flatBonus = 0;
-
-      // 全局倍率
-      if (exp.yieldMultipliers['_all']) multiplier += exp.yieldMultipliers['_all'];
-      if (exp.yieldMultipliers[resourceId]) multiplier += exp.yieldMultipliers[resourceId];
-      if (exp.yieldFlatBonuses['_all']) flatBonus += exp.yieldFlatBonuses['_all'];
-      if (exp.yieldFlatBonuses[resourceId]) flatBonus += exp.yieldFlatBonuses[resourceId];
-
-      const actualYield = Math.floor(baseAmount * multiplier + flatBonus);
+      const actualYield = Math.floor(applyFlatAndMultiplier(
+        baseAmount, resourceId, regionBonuses.yieldMultipliers, regionBonuses.yieldFlatBonuses
+      ));
       if (actualYield <= 0) continue;
 
       // 容量截断
@@ -389,23 +370,12 @@ export class ExpeditionSystem {
     const periodNames = ['morning', 'afternoon', 'evening'];
 
     // 计算物品加成
-    let multipliers = {};
-    let flatBonuses = {};
+    let itemBonuses = { yieldMultipliers: {}, yieldFlatBonuses: {} };
+    let selectedItems = [];
     if (this._itemSystem) {
       const allItems = this._itemSystem.getOwnedInstances();
-      const selectedItems = allItems.filter(i => instanceIds.includes(i.instanceId));
-      for (const item of selectedItems) {
-        for (const effect of (item.expeditionEffects || [])) {
-          if (effect.type === 'yield_multiplier') {
-            const key = effect.resourceId || '_all';
-            multipliers[key] = (multipliers[key] || 0) + (effect.value - 1);
-          }
-          if (effect.type === 'yield_flat_bonus') {
-            const key = effect.resourceId || '_all';
-            flatBonuses[key] = (flatBonuses[key] || 0) + effect.value;
-          }
-        }
-      }
+      selectedItems = allItems.filter(i => instanceIds.includes(i.instanceId));
+      itemBonuses = collectExpeditionBonuses(selectedItems);
     }
 
     for (let i = 0; i < regionIds.length; i++) {
@@ -413,19 +383,17 @@ export class ExpeditionSystem {
       if (!regionId) continue; // 跳过 null（未选择的阶段）
       const region = configRegistry.getRegion(regionId);
       if (!region) continue;
+      const regionBonuses = this._itemSystem
+        ? collectExpeditionBonuses(selectedItems, { regionId })
+        : itemBonuses;
       const periodName = periodNames[i] || 'morning';
       const baseYields = region.baseYields[periodName];
       if (!baseYields) continue;
 
       for (const [resourceId, baseAmount] of Object.entries(baseYields)) {
-        let multiplier = 1;
-        let flatBonus = 0;
-        if (multipliers['_all']) multiplier += multipliers['_all'];
-        if (multipliers[resourceId]) multiplier += multipliers[resourceId];
-        if (flatBonuses['_all']) flatBonus += flatBonuses['_all'];
-        if (flatBonuses[resourceId]) flatBonus += flatBonuses[resourceId];
-
-        const actual = Math.floor(baseAmount * multiplier + flatBonus);
+        const actual = Math.floor(applyFlatAndMultiplier(
+          baseAmount, resourceId, regionBonuses.yieldMultipliers, regionBonuses.yieldFlatBonuses
+        ));
         yields[resourceId] = (yields[resourceId] || 0) + actual;
       }
     }

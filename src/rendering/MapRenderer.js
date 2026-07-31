@@ -66,6 +66,9 @@ export class MapRenderer {
     this.dragStartCamX = 0;
     this.dragStartCamY = 0;
     this.hasMoved = false;
+    this._cameraKeys = new Set();
+    this._keyboardPanSpeed = 720;
+    this._keyboardPanTicker = null;
 
     // 虚影状态
     this.ghostGraphic = null;
@@ -1359,6 +1362,8 @@ export class MapRenderer {
 
     // Esc 取消放置
     window.addEventListener('keydown', (e) => {
+      if (this._handleCameraKeyDown(e)) return;
+
       if (e.key === 'Escape' && this._roadSystem && this._roadSystem.isEditMode()) {
         this._roadSystem.exitEditMode();
         this._clearRoadGhost();
@@ -1396,6 +1401,8 @@ export class MapRenderer {
     });
 
     window.addEventListener('keyup', (e) => {
+      this._handleCameraKeyUp(e);
+
       if (e.key === 'Alt') {
         this.lightOverlay.visible = false;
         this.lightOverlay.removeChildren();
@@ -1427,6 +1434,68 @@ export class MapRenderer {
       this._recreateFogCanvas();
       this._drawTerrainChunk();
     }, { passive: false });
+
+    this._keyboardPanTicker = (ticker) => {
+      this._updateKeyboardCameraPan(ticker.deltaMS / 1000);
+    };
+    this.app.ticker.add(this._keyboardPanTicker);
+  }
+
+  _handleCameraKeyDown(e) {
+    const key = e.key?.toLowerCase();
+    if (!['w', 'a', 's', 'd'].includes(key)) return false;
+    if (e.ctrlKey || e.metaKey || e.altKey || this._shouldIgnoreKeyboardCamera(e)) return false;
+
+    e.preventDefault();
+    this._cameraKeys.add(key);
+    return true;
+  }
+
+  _handleCameraKeyUp(e) {
+    const key = e.key?.toLowerCase();
+    if (!['w', 'a', 's', 'd'].includes(key)) return;
+    this._cameraKeys.delete(key);
+  }
+
+  _shouldIgnoreKeyboardCamera(e) {
+    const target = e.target;
+    if (target && target !== document.body) {
+      const tag = target.tagName;
+      if (target.isContentEditable || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+        return true;
+      }
+    }
+    return window.__game?.popupManager?._isOpen === true;
+  }
+
+  _updateKeyboardCameraPan(dt) {
+    if (!this._cameraKeys.size || this._shouldIgnoreKeyboardCamera({ target: document.activeElement })) return;
+
+    const up = this._cameraKeys.has('w') ? -1 : 0;
+    const down = this._cameraKeys.has('s') ? 1 : 0;
+    const left = this._cameraKeys.has('a') ? -1 : 0;
+    const right = this._cameraKeys.has('d') ? 1 : 0;
+    let dx = left + right;
+    let dy = up + down;
+    if (dx === 0 && dy === 0) return;
+
+    if (dx !== 0 && dy !== 0) {
+      const invLen = 1 / Math.sqrt(2);
+      dx *= invLen;
+      dy *= invLen;
+    }
+
+    const oldX = this.camX;
+    const oldY = this.camY;
+    const step = this._keyboardPanSpeed * dt / this.zoom;
+    this.camX += dx * step;
+    this.camY += dy * step;
+    this._clampCamera();
+
+    if (this.camX === oldX && this.camY === oldY) return;
+    this._updateWorldContainerPosition();
+    this._drawTerrainChunk();
+    this._updateFogTexture();
   }
 
   _onClick(e) {
@@ -2745,6 +2814,10 @@ export class MapRenderer {
    */
   destroy() {
     this._stopTintTransition();
+    if (this._keyboardPanTicker) {
+      this.app.ticker.remove(this._keyboardPanTicker);
+      this._keyboardPanTicker = null;
+    }
     // ... existing destroy logic would be here
   }
 

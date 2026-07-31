@@ -6,6 +6,7 @@
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
+import { mergeModifierTree } from '../utils/BonusUtils.js';
 
 export class AlchemySystem {
   constructor() {
@@ -742,16 +743,7 @@ export class AlchemySystem {
   getEffects() {
     const result = {};
     for (const active of this._activeEffects) {
-      for (const [category, mods] of Object.entries(active.modifiers)) {
-        if (!result[category]) result[category] = {};
-        for (const [key, value] of Object.entries(mods)) {
-          if (typeof value === 'boolean') {
-            result[category][key] = value;
-          } else {
-            result[category][key] = (result[category][key] || 1) * value;
-          }
-        }
-      }
+      mergeModifierTree(result, active.modifiers);
     }
     return result;
   }

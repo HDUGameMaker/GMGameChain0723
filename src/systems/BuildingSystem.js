@@ -6,6 +6,7 @@ import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
 import { isAreaInBounds, isAreaOverlap } from '../utils/gridUtils.js';
+import { formatBonusEffect } from '../utils/BonusUtils.js';
 
 export class BuildingSystem {
   constructor() {
@@ -1241,6 +1242,54 @@ export class BuildingSystem {
   }
 
   /**
+   * 获取某建筑当前提供给其他建筑的相邻加成。
+   * @returns {Array} [{ rule, receiverBuilding, otherName, distance, isPositive, bonusDesc }]
+   */
+  getProvidedAdjacencyBonuses(buildingIndex) {
+    const building = this.buildings[buildingIndex];
+    if (!building || building.status !== 'active') return [];
+    const config = configRegistry.getBuilding(building.buildingId);
+    if (!config) return [];
+
+    const results = [];
+    for (const rule of this._adjacencyConfig) {
+      if (rule.targetBuildingId !== building.buildingId) continue;
+
+      for (const other of this.buildings) {
+        if (other.buildingId !== rule.sourceBuildingId) continue;
+        if (other.status !== 'active') continue;
+        const otherConfig = configRegistry.getBuilding(other.buildingId);
+        if (!otherConfig) continue;
+
+        const dist = this._chebyshevDistance(
+          building.gridX, building.gridY,
+          config.footprint.width, config.footprint.height,
+          other.gridX, other.gridY,
+          otherConfig.footprint.width, otherConfig.footprint.height
+        );
+        if (dist > rule.maxDistance) continue;
+
+        const isPositive = rule.effectType === 'multiplier'
+          ? rule.effectValue >= 1
+          : rule.effectValue >= 0;
+        const otherName = otherConfig.name || other.buildingId;
+        const effectDesc = formatBonusEffect(rule);
+
+        results.push({
+          rule,
+          receiverBuilding: other,
+          otherName,
+          distance: dist,
+          isPositive,
+          bonusDesc: `提供给${otherName} (${dist}格): ${effectDesc}`
+        });
+      }
+    }
+
+    return results;
+  }
+
+  /**
    * 计算假设位置下的相邻加成（用于放置预览/拖动预览）
    * @param {string} buildingId 建筑配置ID
    * @param {number} gridX 假设的X坐标
@@ -1292,9 +1341,7 @@ export class BuildingSystem {
             ? rule.effectValue >= 1
             : rule.effectValue >= 0;
           const otherName = otherConfig.name || other.buildingId;
-          const effectDesc = rule.effectType === 'multiplier'
-            ? `×${rule.effectValue}`
-            : `${rule.effectValue >= 0 ? '+' : ''}${rule.effectValue}`;
+          const effectDesc = formatBonusEffect(rule);
 
           results.push({
             rule, otherBuilding: other, otherName,
@@ -1325,9 +1372,7 @@ export class BuildingSystem {
             ? rule.effectValue >= 1
             : rule.effectValue >= 0;
           const otherName = otherConfig.name || other.buildingId;
-          const effectDesc = rule.effectType === 'multiplier'
-            ? `×${rule.effectValue}`
-            : `${rule.effectValue >= 0 ? '+' : ''}${rule.effectValue}`;
+          const effectDesc = formatBonusEffect(rule);
 
           results.push({
             rule, otherBuilding: other, otherName,
@@ -1372,9 +1417,7 @@ export class BuildingSystem {
             : rule.effectValue >= 0;
 
           const otherName = otherConfig.name || other.buildingId;
-          const effectDesc = rule.effectType === 'multiplier'
-            ? `产出 ×${rule.effectValue}`
-            : `产出 ${rule.effectValue >= 0 ? '+' : ''}${rule.effectValue}`;
+          const effectDesc = formatBonusEffect(rule);
 
           results.push({
             rule,

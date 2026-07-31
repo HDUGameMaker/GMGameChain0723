@@ -140,6 +140,14 @@ Certain popups **block the game loop** (pause) while open: `event`, `expedition_
 
 ## Adding Features (Quick Reference)
 
+### Agent Tools
+
+```bash
+node scripts/verify_bonus_interfaces.js
+```
+
+Run this after editing adjacency bonuses, expedition item effects, alchemy effects, or formations. It validates cross-config bonus references and catches unknown building/resource/region/unit IDs plus unsupported bonus types.
+
 | Task | Where |
 |------|-------|
 | New building type | `config/buildings.json` only |

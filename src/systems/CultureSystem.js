@@ -6,6 +6,7 @@
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
+import { mergeModifierValue } from '../utils/BonusUtils.js';
 
 const POLICY_COOLDOWN_DAYS = 3; // 政策卡切换冷却（游戏日）
 
@@ -290,16 +291,16 @@ export class CultureSystem {
       const pe = cfg.effects.population || {};
       const meleeDamageMul = ce.meleeDamageMul || ce.warriorDamageMul;
       const rangedDamageMul = ce.rangedDamageMul || ce.archerDamageMul;
-      if (meleeDamageMul) e.meleeDamageMul *= meleeDamageMul;
-      if (rangedDamageMul) e.rangedDamageMul *= rangedDamageMul;
-      if (ce.unitHpMul) e.unitHpMul *= ce.unitHpMul;
-      if (ee.productionMul) e.productionMul *= ee.productionMul;
-      if (ee.buildCostMul) e.buildCostMul *= ee.buildCostMul;
-      if (ee.researchSpeedMul) e.researchSpeedMul *= ee.researchSpeedMul;
-      if (ee.commandPointsBonus) e.commandPointsBonus += ee.commandPointsBonus;
-      if (pe.growthMul) e.growthMul *= pe.growthMul;
-      if (pe.foodConsumeMul) e.foodConsumeMul *= pe.foodConsumeMul;
-      if (pe.maxPopBonus) e.maxPopBonus += pe.maxPopBonus;
+      if (meleeDamageMul) mergeModifierValue(e, 'meleeDamageMul', meleeDamageMul);
+      if (rangedDamageMul) mergeModifierValue(e, 'rangedDamageMul', rangedDamageMul);
+      if (ce.unitHpMul) mergeModifierValue(e, 'unitHpMul', ce.unitHpMul);
+      if (ee.productionMul) mergeModifierValue(e, 'productionMul', ee.productionMul);
+      if (ee.buildCostMul) mergeModifierValue(e, 'buildCostMul', ee.buildCostMul);
+      if (ee.researchSpeedMul) mergeModifierValue(e, 'researchSpeedMul', ee.researchSpeedMul);
+      if (ee.commandPointsBonus) mergeModifierValue(e, 'commandPointsBonus', ee.commandPointsBonus, 'add');
+      if (pe.growthMul) mergeModifierValue(e, 'growthMul', pe.growthMul);
+      if (pe.foodConsumeMul) mergeModifierValue(e, 'foodConsumeMul', pe.foodConsumeMul);
+      if (pe.maxPopBonus) mergeModifierValue(e, 'maxPopBonus', pe.maxPopBonus, 'add');
     };
     for (const id of this._activatedPolicies) apply(this.get(id));
     if (this._government) apply(this.get(this._government));
@@ -307,8 +308,8 @@ export class CultureSystem {
     const researchedDoctrines = this.getDoctrineResearched();
     for (const d of this._getDoctrineConfigs()) {
       if (!researchedDoctrines.includes(d.id)) continue;
-      if (d.commandPointsBonus) e.commandPointsBonus += d.commandPointsBonus;
-      if (d.growthSpeedBonus) e.growthMul += d.growthSpeedBonus;
+      if (d.commandPointsBonus) mergeModifierValue(e, 'commandPointsBonus', d.commandPointsBonus, 'add');
+      if (d.growthSpeedBonus) mergeModifierValue(e, 'growthMul', d.growthSpeedBonus, 'add');
     }
     return e;
   }

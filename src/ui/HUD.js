@@ -79,13 +79,7 @@ export class HUD {
     });
 
     // 道路编辑
-    this.btnRoad.addEventListener('click', () => {
-      if (this.systems.road) {
-        const mr = window.__game?.mapRenderer;
-        if (mr && mr._moveMode) mr.exitMoveMode();
-        this.systems.road.toggleEditMode();
-      }
-    });
+    this.btnRoad.addEventListener('click', () => this._toggleRoadEditMode());
 
     // 任务面板
     this.btnQuest.addEventListener('click', () => {
@@ -170,7 +164,30 @@ export class HUD {
         this._updatePauseIndicator(paused);
         window.__game?.systems?.quest?.onPlayerAction('toggle_pause');
       }
+      if ((e.key === 'e' || e.key === 'E') && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (this._shouldIgnoreShortcut(e)) return;
+        e.preventDefault();
+        this._toggleRoadEditMode();
+      }
     });
+  }
+
+  _toggleRoadEditMode() {
+    if (!this.systems.road) return;
+    const mr = window.__game?.mapRenderer;
+    if (mr && mr._moveMode) mr.exitMoveMode();
+    this.systems.road.toggleEditMode();
+  }
+
+  _shouldIgnoreShortcut(e) {
+    const target = e.target;
+    if (target && target !== document.body) {
+      const tag = target.tagName;
+      if (target.isContentEditable || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+        return true;
+      }
+    }
+    return this.popupManager?._isOpen === true;
   }
 
   _updatePauseIndicator(paused) {

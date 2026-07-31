@@ -29,7 +29,7 @@
     "maxDistance": 0,
     "effectType": "flat",
     "effectValue": 1,
-    "applyToField": "foodCapacity",
+    "applyToField": "production",
     "applyTo": "food"
   },
   {

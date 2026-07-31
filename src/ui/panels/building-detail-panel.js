@@ -331,7 +331,10 @@ export function renderBuildingDetailPanel(data, body, pm) {
   // ===== 相邻加成 =====
   if (building.status === 'active') {
     const bonuses = buildingSystem.getAdjacencyBonuses(buildingIndex);
-    if (bonuses && bonuses.length > 0) {
+    const providedBonuses = buildingSystem.getProvidedAdjacencyBonuses
+      ? buildingSystem.getProvidedAdjacencyBonuses(buildingIndex)
+      : [];
+    if ((bonuses && bonuses.length > 0) || (providedBonuses && providedBonuses.length > 0)) {
       const adjSection = section('相邻加成', '🔗');
 
       for (const bonus of bonuses) {
@@ -343,7 +346,22 @@ export function renderBuildingDetailPanel(data, body, pm) {
           padding:6px 0;font-size:12px;
         `;
         row.innerHTML = `
-          <span style="color:#a0a0ba;">${icon} ${bonus.otherName}（${bonus.distance}格）</span>
+          <span style="color:#a0a0ba;">${icon} 获得自 ${bonus.otherName}（${bonus.distance}格）</span>
+          <span style="color:${color};font-weight:600;">${bonus.bonusDesc.split(': ')[1]}</span>
+        `;
+        adjSection.appendChild(row);
+      }
+
+      for (const bonus of providedBonuses) {
+        const color = bonus.isPositive ? '#4ecb71' : '#ff6b6b';
+        const icon = bonus.isPositive ? '↑' : '↓';
+        const row = document.createElement('div');
+        row.style.cssText = `
+          display:flex;justify-content:space-between;align-items:center;
+          padding:6px 0;font-size:12px;
+        `;
+        row.innerHTML = `
+          <span style="color:#a0a0ba;">${icon} 提供给 ${bonus.otherName}（${bonus.distance}格）</span>
           <span style="color:${color};font-weight:600;">${bonus.bonusDesc.split(': ')[1]}</span>
         `;
         adjSection.appendChild(row);

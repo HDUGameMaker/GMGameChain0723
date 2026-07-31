@@ -89,6 +89,14 @@ new PIXI.Text({
 | 炼金 | `config/alchemy.json`、`src/systems/AlchemySystem.js` |
 | 人文/教义 | `config/culture.json`、`config/doctrines.json` |
 
+## Agent 工具
+
+| 工具 | 命令 | 用途 |
+|------|------|------|
+| 加成接口验证 | `node scripts/verify_bonus_interfaces.js` | 修改相邻加成、探险物品加成、炼金效果、阵型需求后运行；检查未知建筑/资源/区域/单位 ID、未知加成类型和非法数值类型 |
+
+修改 `config/adjacency-bonuses.json`、`config/items.json` 的 `expeditionEffects`、`config/alchemy.json` 的效果或 `config/enemies.json` 的阵型后，优先跑上面的验证脚本，再做游戏内数值抽样。
+
 ## 设计文档索引
 
 - `docs/architecture-plan.md`：总体架构与路线图
