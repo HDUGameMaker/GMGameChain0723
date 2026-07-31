@@ -48,11 +48,18 @@ function _matchesReq(unitId, req, unitMap) {
   return true;
 }
 
-/** 计算阵型已满足的完整组数：数量不足返回 0，数量翻倍则组数翻倍 */
-export function calcFormationGroups(formationId, army) {
+function _isModernUnit(unit) {
+  if (!unit) return false;
+  if (unit.id && unit.id.startsWith('modern_')) return true;
+  const prereqs = unit.prerequisiteTechs || [];
+  return prereqs.some(id => id.startsWith('modern_'));
+}
+
+function _calcFormationUsage(formationId, army) {
   const f = getFormation(formationId);
   const reqs = _formationReqs(f);
-  if (reqs.length === 0) return f ? 1 : 0;
+  if (!f) return { groups: 0, basePower: 0, hasModern: false };
+  if (reqs.length === 0) return { groups: 1, basePower: 0, hasModern: false };
 
   const counts = getArmyUnitCounts(army);
   const units = configRegistry.get('enemies')?.units || [];
@@ -70,6 +77,8 @@ export function calcFormationGroups(formationId, army) {
 
   for (let groups = maxGroups; groups >= 1; groups--) {
     const remaining = { ...counts };
+    let basePower = 0;
+    let hasModern = false;
     let ok = true;
     for (const r of reqs) {
       let need = groups * r.count;
@@ -82,20 +91,48 @@ export function calcFormationGroups(formationId, army) {
       for (const unitId of unitIds) {
         if (need <= 0) break;
         const take = Math.min(remaining[unitId] || 0, need);
+        const unit = unitMap[unitId];
+        basePower += take * (unit?.combatPower || 1);
+        if (_isModernUnit(unit)) hasModern = true;
         remaining[unitId] -= take;
         need -= take;
       }
       if (need > 0) { ok = false; break; }
     }
-    if (ok) return groups;
+    if (ok) return { groups, basePower, hasModern };
   }
-  return 0;
+  return { groups: 0, basePower: 0, hasModern: false };
+}
+
+/** 计算阵型已满足的完整组数：数量不足返回 0，数量翻倍则组数翻倍 */
+export function calcFormationGroups(formationId, army) {
+  return _calcFormationUsage(formationId, army).groups;
 }
 
 export function calcFormationBonus(formationId, army) {
   const f = getFormation(formationId);
   if (!f) return 0;
-  return calcFormationGroups(formationId, army) * (f.combatPowerBonus || 0);
+  const usage = _calcFormationUsage(formationId, army);
+  if (usage.groups <= 0) return 0;
+  if (typeof f.bonusRate === 'number') {
+    const rate = usage.hasModern ? (f.modernBonusRate ?? f.bonusRate) : f.bonusRate;
+    return Math.floor(usage.basePower * rate);
+  }
+  return usage.groups * (f.combatPowerBonus || 0);
+}
+
+export function getFormationBonusText(formationId, army = null) {
+  const f = getFormation(formationId);
+  if (!f) return '';
+  if (typeof f.bonusRate === 'number') {
+    if (army) {
+      const usage = _calcFormationUsage(formationId, army);
+      const rate = usage.hasModern ? (f.modernBonusRate ?? f.bonusRate) : f.bonusRate;
+      return '+' + Math.round(rate * 100) + '%';
+    }
+    return '+' + Math.round((f.bonusRate || 0) * 100) + '% / 现代+' + Math.round((f.modernBonusRate ?? f.bonusRate) * 100) + '%';
+  }
+  return '+' + (f.combatPowerBonus || 0);
 }
 
 export function getFormationRequirementText(formationId) {
@@ -119,7 +156,7 @@ export function getFormationStatusText(formationId, army) {
   if (groups <= 0) {
     return '阵型未触发（需要 ' + getFormationRequirementText(formationId) + '）';
   }
-  return '阵型触发 ×' + groups + ' (+' + (groups * (f.combatPowerBonus || 0)) + ')';
+  return '阵型触发 ×' + groups + ' (+' + calcFormationBonus(formationId, army) + ' · ' + getFormationBonusText(formationId, army) + ')';
 }
 
 export function getArmyCombatPower(army, options = {}) {

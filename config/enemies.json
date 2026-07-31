@@ -336,8 +336,9 @@
     {
       "id": "infantry_pair",
       "name": "步兵互援",
-      "combatPowerBonus": 2,
-      "description": "2 名任意步兵互相掩护，每组提供少量额外战力。",
+      "bonusRate": 0.5,
+      "modernBonusRate": 0.3,
+      "description": "2 名任意步兵互相掩护。现代单位出现前约提升参与单位 50% 战力，现代单位出现后约 30%。",
       "requiredUnits": [
         { "branch": "infantry", "count": 2 }
       ],
@@ -346,8 +347,9 @@
     {
       "id": "infantry_cavalry",
       "name": "步骑协同",
-      "combatPowerBonus": 8,
-      "description": "2 名任意步兵与 1 名任意骑兵协同推进。",
+      "bonusRate": 0.5,
+      "modernBonusRate": 0.3,
+      "description": "2 名任意步兵与 1 名任意骑兵协同推进。现代单位出现前约提升参与单位 50% 战力，现代单位出现后约 30%。",
       "requiredUnits": [
         { "branch": "infantry", "count": 2 },
         { "branch": "cavalry", "count": 1 }
@@ -357,8 +359,9 @@
     {
       "id": "cavalry_wedge",
       "name": "骑兵楔阵",
-      "combatPowerBonus": 16,
-      "description": "3 名任意骑兵组成冲击队形。",
+      "bonusRate": 0.5,
+      "modernBonusRate": 0.3,
+      "description": "3 名任意骑兵组成冲击队形。现代单位出现前约提升参与单位 50% 战力，现代单位出现后约 30%。",
       "requiredUnits": [
         { "branch": "cavalry", "count": 3 }
       ],
@@ -367,8 +370,9 @@
     {
       "id": "infantry_artillery",
       "name": "步炮协同",
-      "combatPowerBonus": 12,
-      "description": "2 名任意步兵保护 1 个任意炮兵单位。",
+      "bonusRate": 0.5,
+      "modernBonusRate": 0.3,
+      "description": "2 名任意步兵保护 1 个任意炮兵单位。现代单位出现前约提升参与单位 50% 战力，现代单位出现后约 30%。",
       "requiredUnits": [
         { "branch": "infantry", "count": 2 },
         { "branch": "artillery", "count": 1 }
@@ -378,8 +382,9 @@
     {
       "id": "combined_arms",
       "name": "诸兵种协同",
-      "combatPowerBonus": 20,
-      "description": "2 名任意步兵、1 名任意骑兵与 1 个任意炮兵单位组成完整陆军战斗群。",
+      "bonusRate": 0.5,
+      "modernBonusRate": 0.3,
+      "description": "2 名任意步兵、1 名任意骑兵与 1 个任意炮兵单位组成完整陆军战斗群。现代单位出现前约提升参与单位 50% 战力，现代单位出现后约 30%。",
       "requiredUnits": [
         { "branch": "infantry", "count": 2 },
         { "branch": "cavalry", "count": 1 },
@@ -389,15 +394,15 @@
     }
   ],
   "invasion": {
-    "baseA": 2,
-    "dayMulB": 1,
-    "daySqMulC": 0.1
+    "baseA": 4,
+    "dayMulB": 2,
+    "daySqMulC": 0.18
   },
   "global": {
     "humanHp": 2,
     "clickAttack": 1
   },
-  "invasionBaseA": 2,
-  "invasionDayMulB": 1,
-  "invasionDaySqMulC": 0.1
+  "invasionBaseA": 4,
+  "invasionDayMulB": 2,
+  "invasionDaySqMulC": 0.18
 }

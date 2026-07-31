@@ -6,7 +6,8 @@ import {
   calcFormationGroups,
   getFormationRequirementText,
   getFormationStatusText,
-  getArmyCombatPower
+  getArmyCombatPower,
+  getFormationBonusText
 } from '../../utils/FormationUtils.js';
 
 const MAX_CP = 20;
@@ -149,7 +150,7 @@ export function renderArmyPanel(data, body, pm) {
       row.style.cssText = 'padding:8px 0;' + (fi === 0 ? '' : 'border-top:1px solid rgba(255,255,255,0.06);');
       const name = document.createElement('div');
       name.style.cssText = 'font-size:12px;font-weight:600;color:#ececf0;margin-bottom:2px;';
-      name.textContent = f.name + '（每组 +' + (f.combatPowerBonus || 0) + ' 战斗力）';
+      name.textContent = f.name + '（' + getFormationBonusText(f.id) + '）';
       const req = document.createElement('div');
       req.style.cssText = 'font-size:11px;color:#5b8def;margin-bottom:2px;';
       req.textContent = '触发需求: ' + getFormationRequirementText(f.id);
@@ -214,7 +215,7 @@ export function renderArmyPanel(data, body, pm) {
     formations.forEach(f => {
       const opt = document.createElement('option');
       const groups = calcFormationGroups(f.id, army);
-      opt.value = f.id; opt.textContent = f.name + ' (+' + (f.combatPowerBonus||0) + '/组)' + (groups > 0 ? '' : ' · 未满足');
+      opt.value = f.id; opt.textContent = f.name + ' (' + getFormationBonusText(f.id, army) + ')' + (groups > 0 ? '' : ' · 未满足');
       opt.title = '需求: ' + getFormationRequirementText(f.id);
       if (army.formationId === f.id) opt.selected = true;
       formationSelect.appendChild(opt);
