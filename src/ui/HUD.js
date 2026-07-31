@@ -42,6 +42,8 @@ export class HUD {
     this.btnSpeed = document.getElementById('btn-speed');
     this.btnPause = document.getElementById('btn-pause');
     this.btnMoveMode = document.getElementById('btn-move-mode');
+    this.btnArmy = document.getElementById('btn-army');
+    this.btnTraining = document.getElementById('btn-training');
     this.weatherDisplay = document.getElementById('weather-display');
     this.expeditionStatus = document.getElementById('expedition-status');
     // 进度条元素（懒初始化）
@@ -57,7 +59,7 @@ export class HUD {
 
     // 人文树
     this.btnCulture.addEventListener('click', () => {
-      this.popupManager.open('culture_tree', {});
+      this.popupManager.open('doctrine_panel', {});
     });
 
     // 炼金
@@ -84,6 +86,12 @@ export class HUD {
       const qs = window.__game?.systems?.quest;
       const quest = qs ? qs.getActiveQuest() : null;
       this.popupManager.open('quest_panel', { quest });
+    });
+    this.btnArmy.addEventListener('click', () => {
+      this.popupManager.open('army_panel', {});
+    });
+    this.btnTraining.addEventListener('click', () => {
+      this.popupManager.open('training_panel', {});
     });
     this.btnBuild.addEventListener('click', () => {
       this.popupManager.open('building_select', {});
@@ -177,10 +185,13 @@ export class HUD {
 
   _subscribeStore() {
     store.subscribe('resourceVersion', () => this._refreshResources());
+    store.subscribe('inspiration', () => this._refreshResources());
     store.subscribe('populationCurrent', () => this._refreshPopulation());
     store.subscribe('timePeriod', () => this._refreshTime());
     store.subscribe('timeDay', () => this._refreshTime());
     store.subscribe('timeSpeed', () => this._refreshSpeedBtn());
+    store.subscribe('armies', () => this._refreshPopulation());
+    store.subscribe('availableUnits', () => this._refreshPopulation());
     store.subscribe('timeUserPaused', () => this._refreshPauseBtn());
     store.subscribe('placingState', (state) => this._refreshPlacingMode(state));
     store.subscribe('deployTamedMode', (mode) => this._refreshDeployTamedMode(mode));
@@ -214,6 +225,7 @@ export class HUD {
   _subscribeEvents() {
     eventBus.on('resourceChanged', () => this._refreshResources());
     eventBus.on('populationChanged', () => this._refreshPopulation());
+    eventBus.on('tick', () => this._refreshPopulation());
     eventBus.on('expeditionComplete', (result) => {
       this._showExpeditionResult(result);
     });
@@ -284,12 +296,19 @@ export class HUD {
 
     // 计算食物每日净变化（产出 - 消耗）
     const foodProduction = this.systems.building.getTotalFoodProduction();
-    const foodConsumption = this.systems.population.current;
+    const idle = this.systems.population.getAvailableWorkers();
+    const assigned = this.systems.population.getAssignedWorkers();
+    const armies = store.getState('armies') || [];
+    const armyPop = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
+    const foodConsumption = idle + assigned + armyPop;
     const foodDailyRate = foodProduction - foodConsumption;
 
     this.resourceBar.innerHTML = '';
+    this.resourceBar.querySelectorAll('[data-res-id="inspiration"]').forEach(el => el.remove());
 
     for (const res of resources) {
+      // 灵感统一在下方单独显示，避免与 icon_inspiration 重复
+      if (res.id === 'icon_inspiration') continue;
       // 食物使用每日速率，其他资源使用 per-tick 速率
       const isFood = res.id === 'food';
       let rate = isFood ? foodDailyRate : (rates[res.id] || 0);
@@ -331,6 +350,25 @@ export class HUD {
       }
       this._prevResourceValues[res.id] = res.current;
     }
+
+    /* 灵感显示 */
+    const inspiration = store.getState('inspiration') || 0;
+    const inspPerPerson = this.systems.population.inspirationPerPerson || 1;
+    const populationInsp = Math.round(this.systems.population.current * inspPerPerson);
+    const buildingInsp = rates['inspiration'] || 0;
+    const inspRate = populationInsp;
+    const inspItem = document.createElement('div');
+    inspItem.className = 'resource-item';
+    inspItem.setAttribute('data-res-id', 'inspiration');
+    let inspHTML = '<span>💡</span><span class="res-value">' + inspiration + '</span>';
+    if (inspRate !== 0) {
+      inspHTML += '<span class="res-rate positive">+' + inspRate + '</span>';
+    }
+    inspItem.innerHTML = inspHTML;
+    inspItem.addEventListener('click', (e) => {
+      this._showPopover(e.target, '灵感: ' + inspiration + '\n每人每日: +' + inspPerPerson + (buildingInsp ? '\n酒馆每Tick: +' + buildingInsp : ''));
+    });
+    this.resourceBar.appendChild(inspItem);
   }
 
   _getResourceEmoji(id) {
@@ -339,38 +377,48 @@ export class HUD {
   }
 
   _refreshPopulation() {
-    const current = this.systems.population.current;
-    const housing = this.systems.population.getHousingCapacity();
     const idle = this.systems.population.getAvailableWorkers();
+    const assigned = this.systems.population.getAssignedWorkers();
+    const housing = this.systems.population.getHousingCapacity();
+    /* 部队人数：所有军团中的单位总数 */
+    const armies = store.getState('armies') || [];
+    const armyPop = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
+    const total = idle + assigned + armyPop;
 
-    const housingClass = current >= housing ? ' class="bottleneck"' : '';
+    const housingClass = total >= housing ? ' class="bottleneck"' : '';
 
     this.populationDisplay.innerHTML =
-      `👥 ${idle}/${current}/<span${housingClass}>${housing}</span>`;
+      `👥 <span style="color:#4ecb71">${idle}</span>+<span style="color:#5b8def">${assigned}</span>+<span style="color:#c98500">${armyPop}</span>/<span${housingClass}>${housing}</span>` +
+      ` <span style="font-size:10px;color:#808098;margin-left:4px;">空+建+军</span>` +
+      ` <span style="font-size:11px;color:#808098;margin-left:6px;">⚔️${armies.length}军</span>`;
 
     // 人口变化弹跳动画
-    if (this._prevPopulation !== 0 && this._prevPopulation !== current && window.gsap) {
+    if (this._prevPopulation !== 0 && this._prevPopulation !== total && window.gsap) {
       gsap.fromTo(this.populationDisplay,
         { scale: 1.2 },
         { scale: 1, duration: 0.4, ease: 'back.out(3)' }
       );
     }
-    this._prevPopulation = current;
+    this._prevPopulation = total;
 
     this.populationDisplay.onclick = (e) => {
       window.__game?.systems?.quest?.onPlayerAction('click_population');
       const available = this.systems.population.getAvailableWorkers();
-      const assigned = this.systems.population.getAssignedWorkers();
       const foodAmount = this.systems.resource ? this.systems.resource.getAmount('food') : 0;
       // 获取战士/弓箭手数量
       let warriorCount = 0, archerCount = 0;
       if (this.systems.combat) {
-        const units = this.systems.combat.getAllUnits();
+       const units = this.systems.combat.getAllUnits();
         warriorCount = units.filter(u => u.type === 'warrior').length;
         archerCount = units.filter(u => u.type === 'archer').length;
       }
+      const armies = store.getState('armies') || [];
+      const availUnits = store.getState('availableUnits') || {};
+      const totalAvail = Object.values(availUnits).reduce((s, v) => s + v, 0);
+      const totalArmyUnits = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
+      const armyDetail = armies.map(a => a.name + ':' + (a.unitIds||[]).length + '单位').join(' · ');
       this._showPopover(e.target,
-        `当前人口: ${current}\n住宅上限: ${housing}\n可用工人: ${available}\n已分配: ${assigned}\n战士: ${warriorCount}\n弓箭手: ${archerCount}\n食物储备: ${foodAmount}`
+        `总人口: ${total} = 空闲${idle} + 建筑${assigned} + 部队${armyPop}\n住宅上限: ${housing}\n可用工人: ${available}\n已分配: ${assigned}\n战士(部署): ${warriorCount}\n弓箭手(部署): ${archerCount}\n训练储备: ${totalAvail}\n军队: ${armies.length}支 · ${totalArmyUnits}单位\n${armyDetail || ''}\n食物储备: ${foodAmount}`
       );
     };
   }

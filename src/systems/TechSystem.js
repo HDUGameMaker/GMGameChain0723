@@ -159,6 +159,20 @@ export class TechSystem {
         console.log('[Tech] Unlocked item:', itemId);
       }
     }
+
+    // 解锁单位
+    if (tech.unlocks.units) {
+      for (const unitId of tech.unlocks.units) {
+        console.log('[Tech] Unlocked unit:', unitId);
+      }
+    }
+
+    // 解锁阵型
+    if (tech.unlocks.formations) {
+      for (const fId of tech.unlocks.formations) {
+        console.log('[Tech] Unlocked formation:', fId);
+      }
+    }
   }
 
   /** 检查建筑是否被科技解锁 */
@@ -167,6 +181,26 @@ export class TechSystem {
     for (const tech of allTechs) {
       if (!this._researched.has(tech.id)) continue;
       if (tech.unlocks?.buildings?.includes(buildingId)) return true;
+    }
+    return false;
+  }
+
+  /** 检查单位是否被科技解锁 */
+  isUnitUnlockedByTech(unitId) {
+    const allTechs = this._getAllTechs();
+    for (const tech of allTechs) {
+      if (!this._researched.has(tech.id)) continue;
+      if (tech.unlocks?.units?.includes(unitId)) return true;
+    }
+    return false;
+  }
+
+  /** 检查阵型是否被科技解锁 */
+  isFormationUnlockedByTech(formationId) {
+    const allTechs = this._getAllTechs();
+    for (const tech of allTechs) {
+      if (!this._researched.has(tech.id)) continue;
+      if (tech.unlocks?.formations?.includes(formationId)) return true;
     }
     return false;
   }

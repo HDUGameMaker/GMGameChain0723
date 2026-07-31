@@ -22,9 +22,11 @@ import { AlchemySystem } from './systems/AlchemySystem.js';
 import { CombatSystem } from './systems/CombatSystem.js';
 import { WeatherSystem } from './systems/WeatherSystem.js';
 import { QuestSystem } from './systems/QuestSystem.js';
+import { InvasionSystem } from './systems/InvasionSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
+import { InvasionUI } from './ui/InvasionUI.js';
 import { SaveManager } from './core/SaveManager.js';
 import { cheatManager } from './utils/CheatManager.js';
 import { messageLog } from './ui/MessageLog.js';
@@ -71,6 +73,8 @@ class Game {
 
     // 战斗系统
     this.systems.combat = new CombatSystem();
+    // 入侵系统
+    this.systems.invasion = new InvasionSystem();
 
     // 天气与季节系统
     this.systems.weather = new WeatherSystem();
@@ -268,6 +272,8 @@ class Game {
 
     // 7. 初始化 HUD
     this.hud = new HUD(this.systems, this.popupManager);
+    // 7.01 初始化入侵 UI
+    this.invasionUI = new InvasionUI(this.systems.invasion);
 
     // 7.03 有存档时恢复任务悬浮窗显示
     if (saveData) {
@@ -351,12 +357,16 @@ class Game {
     // 初始化道路
     // 初始化天气
     this.systems.weather.initNew();
+    // 初始化入侵系统
+    this.systems.invasion.initNew();
 
     // 初始化炼金系统
     this.systems.alchemy.init();
 
     // 初始化事件标记状态（新游戏 = 无已移除标记）
     store.setState({ removedEventMarkers: [] });
+    /* 初始化文化系统 */
+    store.setState({ doctrineResearched: [], inspiration: 0 });
   }
 
   restoreFromSave(saveData) {
@@ -393,9 +403,22 @@ class Game {
     if (saveData.weather) {
       this.systems.weather.restoreState(saveData.weather);
     }
+    if (saveData.invasion) {
+      this.systems.invasion.restoreState(saveData.invasion);
+    }
     if (saveData.quest) {
       this.systems.quest.restoreState(saveData.quest);
     }
+    if (saveData.armies) {
+      store.setState({ armies: saveData.armies });
+    }
+    if (saveData.availableUnits) {
+      store.setState({ availableUnits: saveData.availableUnits });
+    }
+    store.setState({
+      doctrineResearched: saveData.doctrineResearched || [],
+      inspiration: saveData.inspiration || 0
+    });
     // 恢复相机位置（后续 MapRenderer 初始化后应用）
     this._savedCamera = saveData.camera || null;
     this._savedRemovedEventMarkers = saveData.removedEventMarkers || null;
@@ -437,8 +460,13 @@ class Game {
       combat: this.systems.combat.getState(),
       quest: this.systems.quest.getState(),
       weather: this.systems.weather.getState(),
+      invasion: this.systems.invasion.getState(),
       audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
+      armies: store.getState('armies'),
+      availableUnits: store.getState('availableUnits'),
+      doctrineResearched: store.getState('doctrineResearched') || [],
+      inspiration: store.getState('inspiration') || 0,
       removedEventMarkers: this.mapRenderer ? this.mapRenderer.getMarkerState() : []
     };
     await SaveManager.save(state);
@@ -463,12 +491,17 @@ class Game {
       roads: this.systems.road.getAllStates(),
       audio: this.systems.audio.getAllStates(),
       weather: this.systems.weather.getState(),
+      invasion: this.systems.invasion.getState(),
       tech: this.systems.tech.getState(),
       culture: this.systems.culture.getState(),
       alchemy: this.systems.alchemy.getState(),
       combat: this.systems.combat.getState(),
+      doctrineResearched: store.getState('doctrineResearched') || [],
+      inspiration: store.getState('inspiration') || 0,
       quest: this.systems.quest.getState(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
+      armies: store.getState('armies'),
+      availableUnits: store.getState('availableUnits'),
       removedEventMarkers: this.mapRenderer ? this.mapRenderer.getMarkerState() : []
     };
     try {
@@ -496,6 +529,13 @@ game.init().catch(err => {
 
 // 导出到全局（调试用）
 window.__game = game;
+window.__game.store = store;
+window.__game.configRegistry = configRegistry;
+// 控制台指令: window.invasion(50) 或 invasion:50 自动解析
+window.invasion = function(power) {
+  const p = parseInt(power);
+  if (!isNaN(p) && game.systems.invasion) game.systems.invasion.spawnInvasion(p);
+};
 window.__cheatManager = cheatManager;
 // debugPanel 在 init() 完成后才可用，通过 getter 懒访问
 Object.defineProperty(window, '__debugPanel', {

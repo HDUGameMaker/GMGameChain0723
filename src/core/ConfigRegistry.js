@@ -13,6 +13,7 @@ class ConfigRegistry {
   async loadAll() {
     const configFiles = {
       'global': 'config/global.json',
+      'initial': 'config/initial.json',
       'buildings': 'config/buildings.json',
       'resources': 'config/resources.json',
       'items': 'config/items.json',
@@ -29,7 +30,8 @@ class ConfigRegistry {
       'enemies': 'config/enemies.json',
       'culture': 'config/culture.json',
       'alchemy': 'config/alchemy.json',
-      'quests': 'config/quests.json'
+      'quests': 'config/quests.json',
+      'doctrines': 'config/doctrines.json'
     };
 
     const loadPromises = Object.entries(configFiles).map(async ([key, path]) => {

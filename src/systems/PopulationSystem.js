@@ -10,6 +10,9 @@ export class PopulationSystem {
   constructor() {
     const globalConfig = configRegistry.get('global');
     this.popConfig = globalConfig.population;
+    const initConfig = configRegistry.get('initial') || {};
+    this.growthConfig = initConfig.populationGrowth || this.popConfig.growthPerDay;
+    this.inspirationPerPerson = initConfig.inspirationPerPerson ?? 1;
     this.current = 0;
     this.declineCountdown = 0;
     this._expeditionWorkers = 0;
@@ -165,17 +168,31 @@ export class PopulationSystem {
       this._resourceSystem.addClamped('food', foodProduction);
     }
 
+    // ===== 1.5 灵感产出：每人每天 N 灵感 =====
+    const totalPeople = this.current;
+    const curInspiration = store.getState('inspiration') || 0;
+    const inspPer = (typeof this.inspirationPerPerson === 'number' && isFinite(this.inspirationPerPerson)) ? this.inspirationPerPerson : 1;
+    const added = Math.round(totalPeople * inspPer);
+    store.setState({ inspiration: curInspiration + added });
+    console.log('[Population] Day start: +' + added + ' inspiration (total=' + (curInspiration + added) + ')');
+
     // ===== 2. 食物消耗（受人文政策影响） =====
     const aEffPop = this._alchemySystem ? (this._alchemySystem.getEffects().population || {}) : {};
     const foodConsumeMul = (this._cultureSystem ? (this._cultureSystem.getEffects().foodConsumeMul || 1) : 1) * (aEffPop.foodConsumeMul || 1);
+    /* 总人口 = 可用工人 + 已分配工人 + 部队人数 */
+    const idle = this.getAvailableWorkers();
+    const assigned = this.getAssignedWorkers();
+    const armies = store.getState('armies') || [];
+    const armyPop = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
+    const foodPeople = idle + assigned + armyPop;
     const foodAvailable = this._resourceSystem.getAmount('food');
-    const consumeAmount = Math.min(foodAvailable, Math.ceil(this.current * foodConsumeMul));
+    const consumeAmount = Math.min(foodAvailable, Math.ceil(foodPeople * foodConsumeMul));
     if (consumeAmount > 0) {
       this._resourceSystem.tryConsume('food', consumeAmount);
     }
 
     // ===== 3. 饥饿死亡 =====
-    const deficit = Math.ceil(this.current * foodConsumeMul) - consumeAmount;
+    const deficit = Math.ceil(foodPeople * foodConsumeMul) - consumeAmount;
     if (deficit > 0) {
       const starvedBefore = this.current;
       this.current -= deficit;
@@ -204,8 +221,14 @@ export class PopulationSystem {
       // 增长（受人文政策影响）
       this.declineCountdown = 0;
       const aEffPop = this._alchemySystem ? (this._alchemySystem.getEffects().population || {}) : {};
-      const growthMul = (this._cultureSystem ? (this._cultureSystem.getEffects().growthMul || 1) : 1) * (aEffPop.growthMul || 1);
-      const growth = Math.max(1, Math.round(this._randomInt(this.popConfig.growthPerDay.min, this.popConfig.growthPerDay.max) * growthMul));
+      /* 加算规则：基础 100% + 文化/信条加成 + 炼金加成 */
+      let growthMul = 1;
+      if (this._cultureSystem) {
+        const cEff = this._cultureSystem.getEffects();
+        growthMul += (cEff.growthMul || 1) - 1;
+      }
+      if (aEffPop.growthMul) growthMul += aEffPop.growthMul - 1;
+      const growth = Math.max(1, Math.round(this._randomInt(this.growthConfig.min, this.growthConfig.max) * growthMul));
       this.current = Math.min(this.current + growth, housing);
       eventBus.emit('populationChanged', { current: this.current, direction: 'grow' });
     } else if (this.current > housing) {
@@ -218,7 +241,7 @@ export class PopulationSystem {
       }
       // 倒计时结束后开始减少
       if (this.declineCountdown === 0) {
-        const decline = this._randomInt(this.popConfig.growthPerDay.min, this.popConfig.growthPerDay.max);
+        const decline = this._randomInt(this.growthConfig.min, this.growthConfig.max);
         this.current = Math.max(this.current - decline, housing);
         eventBus.emit('populationChanged', { current: this.current, direction: 'decline' });
       }

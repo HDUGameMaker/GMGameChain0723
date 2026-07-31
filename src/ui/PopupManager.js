@@ -260,5 +260,16 @@ export class PopupManager {
     import('./panels/quest-panel.js').then(m => {
       this.register('quest_panel', m.renderQuestPanel);
     });
+    import('./panels/army-panel.js').then(m => {
+      this.register('army_panel', (data, body, pm) => {
+        m.renderArmyPanel({ ...data, combatSystem: this._combatSystem }, body, pm);
+      });
+    });
+    import('./panels/training-panel.js').then(m => {
+      this.register('training_panel', m.renderTrainingPanel);
+    });
+    import('./panels/doctrine-panel.js').then(m => {
+      this.register('doctrine_panel', m.renderDoctrinePanel);
+    });
   }
 }

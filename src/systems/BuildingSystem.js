@@ -21,6 +21,28 @@ export class BuildingSystem {
 
     // 订阅 tick 事件处理建造和生产
     eventBus.on('tick', (data) => this.onTick(data));
+    // 订阅 dayStart 处理每天生产一次的建筑
+    eventBus.on('dayStart', () => this._processDayCycleProduction());
+  }
+
+  /** 每天生产一次的建筑（productionCycle === 'day'） */
+  _processDayCycleProduction() {
+    for (let i = 0; i < this.buildings.length; i++) {
+      const building = this.buildings[i];
+      if (building.status !== 'active') continue;
+      const config = configRegistry.getBuilding(building.buildingId);
+      if (!config || !config.production) continue;
+      const cycle = config.productionCycle || 'tick';
+      if (cycle !== 'day') continue;
+      // 有装置的建筑不受时段限制，没有装置的建筑仅在工作时段产出
+      if (!building._attachmentType && !this._isWorkPeriodNow()) continue;
+      this._processProduction(building);
+    }
+  }
+
+  _isWorkPeriodNow() {
+    const period = store.getState('timePeriod');
+    return period === 'morning' || period === 'afternoon';
   }
 
   setResourceSystem(rs) { this._resourceSystem = rs; }
@@ -645,11 +667,15 @@ export class BuildingSystem {
           this._checkNewUnlocks(building.buildingId);
         }
       } else if (building.status === 'active' && isWorkPeriod) {
-        this._processProduction(building);
+        const cfgTick = configRegistry.getBuilding(building.buildingId);
+        const cycle = cfgTick?.productionCycle || 'tick';
+        if (cycle === 'tick') this._processProduction(building);
         this._processSynthesis(building);
       } else if (building.status === 'active' && !isWorkPeriod && building._attachmentType) {
         // 有装置的建筑不受时段限制，全天24小时工作
-        this._processProduction(building);
+        const cfgAtt = configRegistry.getBuilding(building.buildingId);
+        const cycleAtt = cfgAtt?.productionCycle || 'tick';
+        if (cycleAtt === 'tick') this._processProduction(building);
         this._processSynthesis(building);
       }
 
@@ -741,7 +767,13 @@ export class BuildingSystem {
         const adjusted = this.applyAdjacencyToProduction(
           building.buildingId, out.resourceId, baseAmount, 'production', bonuses
         );
-        this._resourceSystem.addClamped(out.resourceId, Math.round(adjusted));
+        const amount = Math.round(adjusted);
+        if (out.resourceId === 'icon_inspiration') {
+          // 酒馆产出的灵感走独立的灵感储备，供文化研究使用
+          store.setState({ inspiration: (store.getState('inspiration') || 0) + amount });
+        } else {
+          this._resourceSystem.addClamped(out.resourceId, amount);
+        }
       }
     }
 
@@ -861,7 +893,12 @@ export class BuildingSystem {
           const adjusted = this.applyAdjacencyToProduction(
             building.buildingId, out.resourceId, baseAmount, 'production', bonuses
           );
-          rates[out.resourceId] = (rates[out.resourceId] || 0) + Math.round(adjusted);
+          const amount = Math.round(adjusted);
+          if (out.resourceId === 'icon_inspiration') {
+            rates['inspiration'] = (rates['inspiration'] || 0) + amount;
+          } else {
+            rates[out.resourceId] = (rates[out.resourceId] || 0) + amount;
+          }
         }
       }
     }

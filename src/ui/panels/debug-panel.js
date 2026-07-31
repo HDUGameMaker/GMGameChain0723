@@ -77,7 +77,8 @@ export class DebugPanel {
             <button class="debug-btn" data-action="instant-build">🏗️ 立即完成所有建造</button>
             <button class="debug-btn" data-action="skip-day">⏭️ 跳过一天</button>
             <button class="debug-btn" data-action="toggle-pause">⏯️ 切换暂停</button>
-            <button class="debug-btn" data-action="toggle-terrain-labels">🏷️ 标注地块地形</button>
+    <button class="debug-btn" data-action="toggle-terrain-labels">🏷️ 标注地块地形</button>
+            <button class="debug-btn" data-action="spawn-invasion">⚠️ 生成入侵</button>
           </div>
         </div>
       </div>
@@ -318,6 +319,13 @@ export class DebugPanel {
       case 'toggle-pause':
         this._systems.time.togglePause();
         break;
+      case 'spawn-invasion': {
+        const power = prompt('输入入侵战斗力:', '20');
+        if (power !== null && this._systems.invasion) {
+          this._systems.invasion.spawnInvasion(parseInt(power) || 20);
+        }
+        break;
+      }
       case 'toggle-terrain-labels':
         this._toggleTerrainLabels();
         break;

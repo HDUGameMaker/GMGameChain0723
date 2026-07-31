@@ -58,6 +58,11 @@ export class CultureSystem {
   isResearched(id) { return this._researched.has(id); }
   isActivated(id) { return this._activatedPolicies.has(id); }
 
+  /** 已通过灵感研究的信条（doctrines.json） */
+  getDoctrineResearched() { return store.getState('doctrineResearched') || []; }
+
+  _getDoctrineConfigs() { return configRegistry.get('doctrines') || []; }
+
   getCurrentResearch() { return this._currentResearch ? { ...this._currentResearch } : null; }
 
   /** 可研究：前置满足且未研究 */
@@ -130,13 +135,53 @@ export class CultureSystem {
     if (c && c.policyType === 'government') {
       // 政体研究完成即选定，不可改
       this._government = id;
+      this._unlockFormationsFrom(c);
       eventBus.emit('combatBroadcast', { message: `🏛️ 选定政体：${c.name}` });
     } else if (c && c.policyType === 'policy') {
       // 政策卡研究完成默认激活
       this._activatedPolicies.add(id);
+      this._unlockFormationsFrom(c);
     }
     this._updateStore();
     eventBus.emit('cultureResearched', { id });
+  }
+
+  /** 激活政策/政体时解锁阵型 */
+  _unlockFormationsFrom(c) {
+    if (!c || !c.unlocks || !c.unlocks.formations) return;
+    for (const fId of c.unlocks.formations) {
+      console.log('[Culture] Unlocked formation:', fId);
+    }
+  }
+
+  /** 检查阵型是否被文化政策解锁 */
+  isFormationUnlockedByCulture(formationId) {
+    const researchedDoctrines = this.getDoctrineResearched();
+    for (const d of this._getDoctrineConfigs()) {
+      if (researchedDoctrines.includes(d.id) && d.unlocks?.formations?.includes(formationId)) return true;
+    }
+    const all = this._getAll();
+    for (const p of all) {
+      if (!this._researched.has(p.id)) continue;
+      if (p.unlocks?.formations?.includes(formationId)) return true;
+    }
+    return false;
+  }
+
+  /** 总指挥点上限加成 */
+  getCommandPointsBonus() {
+    var e = this.getEffects();
+    var total = e.commandPointsBonus || 0;
+    /* 兼容旧格式：直接从政策数据的 cp_bonus 字段读取 */
+    for (const id of this._activatedPolicies) {
+      var c = this.get(id);
+      if (c && c.cp_bonus) total += c.cp_bonus;
+    }
+    if (this._government) {
+      var g = this.get(this._government);
+      if (g && g.cp_bonus) total += g.cp_bonus;
+    }
+    return total;
   }
 
   _onDayStart(data) {
@@ -191,7 +236,8 @@ export class CultureSystem {
       growthMul: 1,
       maxPopBonus: 0,
       foodConsumeMul: 1,
-      researchSpeedMul: 1
+      researchSpeedMul: 1,
+      commandPointsBonus: 0
     };
     const apply = (cfg) => {
       if (!cfg || !cfg.effects) return;
@@ -204,12 +250,20 @@ export class CultureSystem {
       if (ee.productionMul) e.productionMul *= ee.productionMul;
       if (ee.buildCostMul) e.buildCostMul *= ee.buildCostMul;
       if (ee.researchSpeedMul) e.researchSpeedMul *= ee.researchSpeedMul;
+      if (ee.commandPointsBonus) e.commandPointsBonus += ee.commandPointsBonus;
       if (pe.growthMul) e.growthMul *= pe.growthMul;
       if (pe.foodConsumeMul) e.foodConsumeMul *= pe.foodConsumeMul;
       if (pe.maxPopBonus) e.maxPopBonus += pe.maxPopBonus;
     };
     for (const id of this._activatedPolicies) apply(this.get(id));
     if (this._government) apply(this.get(this._government));
+    /* 灵感研究的信条：直接加算到对应效果 */
+    const researchedDoctrines = this.getDoctrineResearched();
+    for (const d of this._getDoctrineConfigs()) {
+      if (!researchedDoctrines.includes(d.id)) continue;
+      if (d.commandPointsBonus) e.commandPointsBonus += d.commandPointsBonus;
+      if (d.growthSpeedBonus) e.growthMul += d.growthSpeedBonus;
+    }
     return e;
   }
 

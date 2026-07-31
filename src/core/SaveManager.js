@@ -79,7 +79,8 @@ export class SaveManager {
           const emergencyData = JSON.parse(emergency);
           if (!saved || (emergencyData.timestamp > saved.timestamp)) {
             localStorage.removeItem('gmgc_emergency_save');
-            return emergencyData;
+            // 旧版紧急存档可能缺少灵感/文化字段，用普通存档补全
+            return { ...(saved || {}), ...emergencyData };
           }
         } catch (e) {
           // ignore parse error
