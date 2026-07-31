@@ -14,6 +14,7 @@ class ConfigRegistry {
     const configFiles = {
       'global': 'config/global.json',
       'initial': 'config/initial.json',
+      'ui_main_menu': 'config/ui_main_menu.json',
       'buildings': 'config/buildings.json',
       'resources': 'config/resources.json',
       'items': 'config/items.json',

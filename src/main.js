@@ -27,6 +27,7 @@ import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
 import { InvasionUI } from './ui/InvasionUI.js';
+import { MainMenu } from './ui/MainMenu.js';
 import { SaveManager } from './core/SaveManager.js';
 import { cheatManager } from './utils/CheatManager.js';
 import { messageLog } from './ui/MessageLog.js';
@@ -36,10 +37,49 @@ class Game {
   constructor() {
     this.app = null;
     this.systems = {};
+    this.mainMenu = null;
+    this._started = false;
     this._resetting = false; // 重置标记，防止 beforeunload 重新保存
   }
 
-  async init() {
+  async boot() {
+    console.log('[Game] Booting...');
+    await configRegistry.loadAll();
+
+    const menuConfig = configRegistry.get('ui_main_menu');
+    if (menuConfig && menuConfig.enabled !== false) {
+      this.mainMenu = new MainMenu();
+      this.mainMenu.init({
+        onNewGame: () => this.startNewGame(),
+        onContinueGame: () => this.startContinueGame(),
+        onSettings: () => alert('进入游戏后可在右上角设置中调整选项。'),
+        onExit: () => window.close()
+      });
+      console.log('[Game] Main menu shown');
+      return;
+    }
+
+    await this.init();
+  }
+
+  async startNewGame() {
+    if (this._started) return;
+    this._resetting = true;
+    await SaveManager.reset();
+    this._resetting = false;
+    this.mainMenu?.hide();
+    await this.init({ forceNew: true });
+  }
+
+  async startContinueGame() {
+    if (this._started) return;
+    this.mainMenu?.hide();
+    await this.init();
+  }
+
+  async init(options = {}) {
+    if (this._started) return;
+    this._started = true;
     console.log('[Game] Initializing...');
 
     // 1. 加载配置
@@ -233,7 +273,7 @@ class Game {
     });
 
     // 5. 尝试加载存档
-    const saveData = await SaveManager.load();
+    const saveData = options.forceNew ? null : await SaveManager.load();
     if (saveData) {
       this.restoreFromSave(saveData);
       console.log('[Game] Save data restored');
@@ -523,7 +563,7 @@ class Game {
 
 // 启动游戏
 const game = new Game();
-game.init().catch(err => {
+game.boot().catch(err => {
   console.error('[Game] Fatal error during initialization:', err);
 });
 
