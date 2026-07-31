@@ -5,10 +5,12 @@
 import { store } from '../../core/Store.js';
 import { eventBus } from '../../core/EventBus.js';
 import { configRegistry } from '../../core/ConfigRegistry.js';
+import { getFormationBonusText, getFormationRequirementText } from '../../utils/FormationUtils.js';
 
 function _dcfg() { return configRegistry.get('doctrines') || []; }
 function _researched() { return store.getState('doctrineResearched') || []; }
 function _inspiration() { return store.getState('inspiration') || 0; }
+function _culture() { return window.__game?.systems?.culture; }
 
 function _canResearch(d) {
   if (!d) return false;
@@ -32,8 +34,16 @@ export function renderDoctrinePanel(data, body, pm) {
   /* 头部 */
   var header = document.createElement('div');
   header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;';
-  header.innerHTML = '<span style="font-size:18px;font-weight:700;color:#ececf0;">📜 文化</span>' +
-    '<span style="font-size:13px;color:#c98500;">💡 灵感: ' + inspiration + '</span>';
+  header.innerHTML = '<span style="font-size:18px;font-weight:700;color:#ececf0;">📜 文化</span>';
+  var headerRight = document.createElement('div');
+  headerRight.style.cssText = 'display:flex;align-items:center;gap:10px;';
+  headerRight.innerHTML = '<span style="font-size:13px;color:#c98500;">💡 灵感: ' + inspiration + '</span>';
+  var militaryBtn = document.createElement('button');
+  militaryBtn.textContent = '军事传统';
+  militaryBtn.style.cssText = 'padding:7px 12px;border:none;border-radius:6px;background:rgba(91,141,239,0.18);color:#8fb1ff;cursor:pointer;font-size:12px;font-weight:600;';
+  militaryBtn.addEventListener('click', function() { pm.push('military_tradition', {}); });
+  headerRight.appendChild(militaryBtn);
+  header.appendChild(headerRight);
   body.appendChild(header);
 
   if (doctrines.length === 0) {
@@ -160,4 +170,92 @@ export function renderDoctrinePanel(data, body, pm) {
       renderDoctrinePanel(data, body, pm);
     });
   });
+}
+
+export function renderMilitaryTraditionPanel(data, body, pm) {
+  body.innerHTML = '';
+  body.style.cssText = 'padding:20px 24px;max-height:70vh;overflow-y:auto;';
+
+  var culture = _culture();
+  if (!culture) {
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:#808098;">文化系统未加载</div>';
+    return;
+  }
+
+  var formations = configRegistry.get('enemies')?.formations || [];
+  var inspiration = _inspiration();
+  var researched = culture.getFormationResearch ? culture.getFormationResearch() : [];
+
+  var header = document.createElement('div');
+  header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;';
+  header.innerHTML = '<span style="font-size:18px;font-weight:700;color:#ececf0;">📜 军事传统</span>' +
+    '<span style="font-size:13px;color:#c98500;">💡 灵感: ' + inspiration + '</span>';
+  body.appendChild(header);
+
+  var note = document.createElement('div');
+  note.style.cssText = 'font-size:12px;color:#a0a0ba;line-height:1.5;margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;';
+  note.textContent = '阵型需要单独研发。每个阵型要求先研发其需求分支中的最低级兵种，然后消耗灵感完成军事传统。';
+  body.appendChild(note);
+
+  var grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;';
+
+  formations.forEach(function(f) {
+    var done = researched.includes(f.id) || f.unlocked === true;
+    var check = culture.canResearchFormation ? culture.canResearchFormation(f.id) : { valid: false, reason: '不可研发' };
+    var reqUnits = culture.getFormationRequirements ? culture.getFormationRequirements(f.id) : [];
+    var unitResearch = store.getState('unitResearch') || [];
+    var canClick = !done && check.valid;
+
+    var card = document.createElement('div');
+    card.style.cssText = 'background:rgba(255,255,255,0.035);border:1px solid ' + (done ? '#4ecb71' : canClick ? '#5b8def' : 'rgba(255,255,255,0.08)') + ';border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:7px;min-height:170px;';
+
+    var title = document.createElement('div');
+    title.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;';
+    title.innerHTML = '<span style="font-size:14px;font-weight:700;color:' + (done ? '#4ecb71' : '#ececf0') + ';">' + (done ? '✅ ' : '') + f.name + '</span>' +
+      '<span style="font-size:11px;color:#8fb1ff;">' + getFormationBonusText(f.id) + '</span>';
+    card.appendChild(title);
+
+    var req = document.createElement('div');
+    req.style.cssText = 'font-size:11px;color:#5b8def;line-height:1.4;';
+    req.textContent = '触发需求: ' + getFormationRequirementText(f.id);
+    card.appendChild(req);
+
+    var unitReq = document.createElement('div');
+    unitReq.style.cssText = 'font-size:11px;color:#a0a0ba;line-height:1.45;';
+    unitReq.innerHTML = '研发前置: ' + (reqUnits.length ? reqUnits.map(function(u) {
+      var ok = unitResearch.includes(u.id);
+      return '<span style="color:' + (ok ? '#4ecb71' : '#f0a040') + ';">' + (ok ? '✅' : '🔒') + u.name + '</span>';
+    }).join(' / ') : '无');
+    card.appendChild(unitReq);
+
+    var desc = document.createElement('div');
+    desc.style.cssText = 'font-size:11px;color:#808098;line-height:1.4;';
+    desc.textContent = f.description || '';
+    card.appendChild(desc);
+
+    var action = document.createElement('div');
+    action.style.cssText = 'margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px;';
+    var cost = document.createElement('span');
+    cost.style.cssText = 'font-size:12px;color:' + (inspiration >= (f.researchCost || 0) ? '#c98500' : '#f0a040') + ';';
+    cost.textContent = '💡 ' + (f.researchCost || 0);
+    action.appendChild(cost);
+
+    var btn = document.createElement('button');
+    btn.textContent = done ? '已完成' : (canClick ? '研发' : check.reason || '暂不可研发');
+    btn.style.cssText = 'padding:6px 12px;border:none;border-radius:6px;background:' + (canClick ? 'rgba(91,141,239,0.22)' : 'rgba(128,128,152,0.14)') + ';color:' + (canClick ? '#8fb1ff' : '#808098') + ';cursor:' + (canClick ? 'pointer' : 'default') + ';font-size:12px;font-weight:600;';
+    btn.addEventListener('click', function() {
+      if (!canClick) {
+        if (!done) alert(check.reason || '暂不可研发');
+        return;
+      }
+      if (culture.researchFormation(f.id)) renderMilitaryTraditionPanel(data, body, pm);
+    });
+    action.appendChild(btn);
+    card.appendChild(action);
+
+    grid.appendChild(card);
+  });
+
+  body.appendChild(grid);
 }

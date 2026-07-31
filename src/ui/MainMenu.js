@@ -224,7 +224,7 @@ class MainMenu {
   renderLogo() {
     const logo = this.config.logo;
     // 文字（上方）
-    if (logo.type === 'text' || logo.type === 'both') {
+    if (logo.type === 'text' || logo.type === 'both' || logo.text?.content) {
       this.container.appendChild(this._makeTextElement(logo.text, true));
     }
     // 图片（下方）

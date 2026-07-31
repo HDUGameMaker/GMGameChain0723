@@ -41,11 +41,17 @@ export class AudioSystem {
     /** @type {Object<string, HTMLAudioElement>} 预创建的 BGM 元素 */
     this._bgmElements = {};
 
-    /** @type {boolean} BGM 在暂停前是否在播放 */
-    this._wasPlayingBeforePause = false;
-
     /** @type {boolean} 用户手动静音标记（区别于 tab 隐藏自动静音） */
     this._userMuted = false;
+
+    /** @type {boolean} 页面是否已经通过用户手势解锁音频播放 */
+    this._userGestureUnlocked = false;
+
+    /** @type {boolean} 用户手势早于异步初始化完成时，初始化后补启动 BGM */
+    this._pendingInitialBGM = false;
+
+    /** @type {boolean} BGM 被浏览器策略拦截后，是否已挂起下一次手势重试 */
+    this._initialBGMRetryArmed = false;
 
     /** @type {boolean} tab 隐藏引起的静音 */
     this._visibilityMuted = false;
@@ -106,8 +112,9 @@ export class AudioSystem {
 
       this._initialized = true;
       console.log('[AudioSystem] Initialized');
-      // BGM 通过 _setupUserGestureResume() 在用户首次交互时启动
-      // （浏览器自动播放策略要求用户手势后才能播放音频）
+      // BGM 通过 _setupUserGestureResume() 在用户首次交互时启动；
+      // 如果用户手势发生在异步预加载完成之前，这里补一次启动。
+      this._startInitialBGMIfAllowed();
     } catch (e) {
       console.warn('[AudioSystem] Init failed:', e.message);
     }
@@ -165,12 +172,17 @@ export class AudioSystem {
     if (playPromise && typeof playPromise.catch === 'function') {
       playPromise.catch(e => {
         console.debug('[AudioSystem] BGM play blocked:', e.message);
+        if (e && e.name === 'NotAllowedError' && this._currentBGM && this._currentBGM.id === id) {
+          this._applyBGMVolume(element, 0);
+          this._currentBGM = null;
+          this._pendingInitialBGM = true;
+          this._armInitialBGMRetry();
+        }
       });
     }
 
-    this._fadeIn(element, 500);
-
     this._currentBGM = { id, element };
+    this._fadeIn(element, 500);
     this._notifyChange();
   }
 
@@ -330,7 +342,7 @@ export class AudioSystem {
       }
     } else {
       // 取消静音：恢复 BGM
-      if (this._currentBGM && !gameLoop.isPaused()) {
+      if (this._currentBGM) {
         this._currentBGM.element.play().catch(() => {});
       }
     }
@@ -424,8 +436,6 @@ export class AudioSystem {
         }
 
         eventBus.on(binding.event, (payload) => {
-          if (gameLoop.isPaused()) return;
-
           // periods 过滤器：仅在指定时段触发（用于 periodChange 等事件）
           if (binding.periods && Array.isArray(binding.periods) && binding.periods.length > 0) {
             if (!payload || !payload.period) return;
@@ -442,11 +452,7 @@ export class AudioSystem {
    * 游戏暂停时的处理
    */
   _onPause() {
-    if (this._currentBGM && !this._currentBGM.element.paused) {
-      this._wasPlayingBeforePause = true;
-      this._currentBGM.element.pause();
-    }
-    // 暂停 AudioContext
+    // 游戏逻辑暂停不影响 BGM。BGM 只由静音、页面可见性和时段切换控制。
     if (this._audioContext && this._audioContext.state === 'running') {
       this._audioContext.suspend().catch(() => {});
     }
@@ -459,11 +465,6 @@ export class AudioSystem {
     // 恢复 AudioContext
     if (this._audioContext && this._audioContext.state === 'suspended') {
       this._audioContext.resume().catch(() => {});
-    }
-    // 恢复 BGM
-    if (this._wasPlayingBeforePause && this._currentBGM && !this._muted) {
-      this._currentBGM.element.play().catch(() => {});
-      this._wasPlayingBeforePause = false;
     }
   }
 
@@ -479,8 +480,8 @@ export class AudioSystem {
         this._currentBGM.element.pause();
       }
     } else {
-      // tab 可见：恢复 BGM（仅在未被用户手动静音且非暂停状态）
-      if (this._visibilityMuted && this._currentBGM && !this._muted && !gameLoop.isPaused()) {
+      // tab 可见：恢复 BGM（仅在未被用户手动静音时）
+      if (this._visibilityMuted && this._currentBGM && !this._muted) {
         this._currentBGM.element.play().catch(() => {});
         this._visibilityMuted = false;
       }
@@ -497,31 +498,74 @@ export class AudioSystem {
     const kickstart = () => {
       if (_fired) return;
       _fired = true;
+      this._userGestureUnlocked = true;
 
       // 恢复 AudioContext（首次交互后浏览器允许）
       if (this._audioContext && this._audioContext.state === 'suspended') {
         this._audioContext.resume().catch(() => {});
       }
 
-      // 在用户手势的同步调用链中启动 BGM —— playBGM() 内部直接调用
-      // element.play()，无异步回调，确保 play() 在用户手势同步上下文中执行，
-      // 满足浏览器自动播放策略要求。
-      // 优先按当前时段选择对应 BGM（白天 bgm_main / 夜晚 bgm_night）。
-      if (this._initialized && !this._currentBGM && !this._muted) {
-        const period = store.getState('timePeriod') || 'morning';
-        const isNight = period === 'evening' || period === 'night';
-        const targetId = this._getBGMConfig('bgm_night') && isNight ? 'bgm_night' : 'bgm_main';
-        this.playBGM(targetId);
-      }
+      this._startInitialBGMIfAllowed();
 
       // 无论 BGM 是否启动成功，首次交互后都清理监听器
+      document.removeEventListener('pointerdown', kickstart);
       document.removeEventListener('click', kickstart);
       document.removeEventListener('keydown', kickstart);
       document.removeEventListener('touchstart', kickstart);
     };
+    document.addEventListener('pointerdown', kickstart);
     document.addEventListener('click', kickstart);
     document.addEventListener('keydown', kickstart);
     document.addEventListener('touchstart', kickstart);
+  }
+
+  /**
+   * 若浏览器仍拦截补启动的 BGM，在下一次真实手势中重试。
+   */
+  _armInitialBGMRetry() {
+    if (this._initialBGMRetryArmed) return;
+    this._initialBGMRetryArmed = true;
+
+    const retry = () => {
+      this._initialBGMRetryArmed = false;
+      this._userGestureUnlocked = true;
+      this._startInitialBGMIfAllowed();
+
+      document.removeEventListener('pointerdown', retry);
+      document.removeEventListener('click', retry);
+      document.removeEventListener('keydown', retry);
+      document.removeEventListener('touchstart', retry);
+    };
+
+    document.addEventListener('pointerdown', retry);
+    document.addEventListener('click', retry);
+    document.addEventListener('keydown', retry);
+    document.addEventListener('touchstart', retry);
+  }
+
+  /**
+   * 用户已交互且音频初始化完成后启动初始 BGM。
+   * 两者可能任意一个先发生，避免首次点击被异步预加载消耗后 BGM 永不启动。
+   */
+  _startInitialBGMIfAllowed() {
+    if (!this._userGestureUnlocked) {
+      this._pendingInitialBGM = true;
+      return;
+    }
+    if (!this._initialized) {
+      this._pendingInitialBGM = true;
+      return;
+    }
+    if (this._currentBGM || this._muted) {
+      this._pendingInitialBGM = false;
+      return;
+    }
+
+    this._pendingInitialBGM = false;
+    const period = store.getState('timePeriod') || 'morning';
+    const isNight = period === 'evening' || period === 'night';
+    const targetId = this._getBGMConfig('bgm_night') && isNight ? 'bgm_night' : 'bgm_main';
+    this.playBGM(targetId);
   }
 
   /**

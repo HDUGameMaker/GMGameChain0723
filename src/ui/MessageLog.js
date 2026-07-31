@@ -9,6 +9,7 @@
  */
 import { eventBus } from '../core/EventBus.js';
 import { configRegistry } from '../core/ConfigRegistry.js';
+import { gameLoop } from '../GameLoop.js';
 
 const BROADCAST_KEY = 'gmgc_broadcast';
 
@@ -166,6 +167,15 @@ export class MessageLog {
     const msgEl = document.createElement('div');
     msgEl.className = `msg-item ${side}`;
     msgEl.textContent = text;
+    msgEl._viewPauseActive = false;
+    msgEl.addEventListener('mouseenter', () => {
+      if (msgEl._viewPauseActive) return;
+      msgEl._viewPauseActive = true;
+      gameLoop.pause();
+    });
+    msgEl.addEventListener('mouseleave', () => {
+      this._releaseViewPause(msgEl);
+    });
 
     // 添加到容器顶部
     container.insertBefore(msgEl, container.firstChild);
@@ -197,6 +207,8 @@ export class MessageLog {
   }
 
   _removeMessage(element, side) {
+    this._releaseViewPause(element);
+
     const messages = side === 'left' ? this.leftMessages : this.rightMessages;
     const index = messages.findIndex(m => m.element === element);
     if (index >= 0) {
@@ -216,6 +228,14 @@ export class MessageLog {
       });
     } else {
       element.remove();
+    }
+  }
+
+  _releaseViewPause(element) {
+    if (!element || !element._viewPauseActive) return;
+    element._viewPauseActive = false;
+    if (gameLoop.isPaused()) {
+      gameLoop.resume();
     }
   }
 

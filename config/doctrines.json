@@ -76,8 +76,8 @@
     "description": "建造酒馆增加灵感"
   },
   {
-    "id": "unlock_phalanx",
-    "name": "方阵",
+    "id": "unlock_infantry_pair",
+    "name": "步兵互援",
     "tier": 1,
     "researchTime": 8,
     "pos": {
@@ -95,13 +95,11 @@
     "unlocks": {
       "buildings": [],
       "units": [],
-      "formations": [
-        "phalanx"
-      ]
+      "formations": []
     },
     "commandPointsBonus": 0,
     "growthSpeedBonus": 0,
-    "description": "解锁方阵战斗阵型"
+    "description": "建立军事传统，开放阵型研发方向"
   },
   {
     "id": "tactics",
@@ -112,7 +110,7 @@
       "x": 1
     },
     "prerequisites": [
-      "unlock_phalanx"
+      "unlock_infantry_pair"
     ],
     "cost": [
       {
@@ -123,13 +121,11 @@
     "unlocks": {
       "buildings": [],
       "units": [],
-      "formations": [
-        "basic_formation"
-      ]
+      "formations": []
     },
     "commandPointsBonus": 0,
     "growthSpeedBonus": 0,
-    "description": "解锁基础战阵"
+    "description": "提升战术理解，为军事传统研发提供背景"
   },
   {
     "id": "commander",
@@ -140,7 +136,7 @@
       "x": 0
     },
     "prerequisites": [
-      "unlock_phalanx"
+      "unlock_infantry_pair"
     ],
     "cost": [
       {
@@ -178,13 +174,11 @@
     "unlocks": {
       "buildings": [],
       "units": [],
-      "formations": [
-        "cross_cover"
-      ]
+      "formations": []
     },
     "commandPointsBonus": 2,
     "growthSpeedBonus": 0,
-    "description": "训练骑兵和步兵交替推进，解锁新的阵型"
+    "description": "训练步兵、骑兵和炮兵协同推进，解锁新的阵型"
   },
   {
     "id": "legion",
@@ -206,9 +200,7 @@
     "unlocks": {
       "buildings": [],
       "units": [],
-      "formations": [
-        "charge"
-      ]
+      "formations": []
     },
     "commandPointsBonus": 0,
     "growthSpeedBonus": 0,
@@ -287,9 +279,7 @@
     "unlocks": {
       "buildings": [],
       "units": [],
-      "formations": [
-        "operation"
-      ]
+      "formations": []
     },
     "commandPointsBonus": 5,
     "growthSpeedBonus": 0,

@@ -96,6 +96,28 @@ export class SaveManager {
   }
 
   /**
+   * 是否存在可继续的存档
+   * @returns {Promise<boolean>}
+   */
+  static async hasSave() {
+    try {
+      if (localStorage.getItem('gmgc_emergency_save')) return true;
+
+      const db = await SaveManager._getDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.get(SAVE_KEY);
+        request.onsuccess = () => resolve(Boolean(request.result));
+        request.onerror = () => resolve(false);
+      });
+    } catch (e) {
+      console.error('[SaveManager] hasSave failed:', e);
+      return false;
+    }
+  }
+
+  /**
    * 重置存档
    */
   static async reset() {

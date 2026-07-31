@@ -37,6 +37,17 @@ function actionButton(text, color, onClick) {
   return btn;
 }
 
+function getResourceName(resourceId) {
+  if (resourceId === 'inspiration' || resourceId === 'icon_inspiration') return '灵感';
+  const cfg = configRegistry.getResource(resourceId);
+  return cfg ? cfg.name : resourceId;
+}
+
+function formatResourceList(items, emptyText = '无') {
+  if (!items || items.length === 0) return emptyText;
+  return items.map(item => `${getResourceName(item.resourceId)}×${item.amount}`).join(' + ');
+}
+
 export function renderBuildingDetailPanel(data, body, pm) {
   const game = window.__game;
   if (!game) return;
@@ -274,26 +285,45 @@ export function renderBuildingDetailPanel(data, body, pm) {
   // ===== 生产信息 =====
   if (config.production) {
     const prodSection = section('生产', '⚙️');
-    const prod = config.production;
-    const inputText = (prod.input || []).map(i => {
-      const r = configRegistry.getResource(i.resourceId);
-      return `${r ? r.name : i.resourceId}×${i.amount}`;
-    }).join(' + ') || '无';
-    const outputText = (prod.output || []).map(o => {
-      const r = configRegistry.getResource(o.resourceId);
-      return `${r ? r.name : o.resourceId}×${o.amount}`;
-    }).join(' + ');
+    const preview = buildingSystem.getBuildingDailyProductionPreview(buildingIndex);
+    const standardUnit = preview?.perWorker ? '/人' : '';
+    const inputText = formatResourceList(preview?.inputStandard, '无');
+    const outputText = formatResourceList(preview?.outputStandard, '无');
+    const dailyInputText = formatResourceList(preview?.dailyInput, '无');
+    const dailyOutputText = formatResourceList(preview?.dailyOutput, '无');
+    const workerText = preview?.perWorker
+      ? `当前 ${preview.currentWorkers} 人` + (preview.effectiveWorkers !== preview.currentWorkers ? `，有效 ${preview.effectiveWorkers} 人` : '')
+      : '固定产出，不随工人数变化';
+    const cycleText = preview?.cycle === 'day'
+      ? '每日结算 1 次'
+      : `每日折算 ${preview?.cyclesPerDay || 0} 次`;
 
     prodSection.innerHTML += `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
-        <div style="font-size:12px;color:#a0a0ba;">消耗</div>
-        <div style="font-size:12px;color:#ececf0;font-weight:500;">${inputText}</div>
+        <div style="font-size:12px;color:#a0a0ba;">消耗标准</div>
+        <div style="font-size:12px;color:#ececf0;font-weight:500;">${inputText}${inputText === '无' ? '' : standardUnit}</div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
-        <div style="font-size:12px;color:#a0a0ba;">产出</div>
-        <div style="font-size:12px;color:#4ecb71;font-weight:500;">${outputText}</div>
+        <div style="font-size:12px;color:#a0a0ba;">产出标准</div>
+        <div style="font-size:12px;color:#4ecb71;font-weight:500;">${outputText}${outputText === '无' ? '' : standardUnit}</div>
       </div>
-      <div style="font-size:11px;color:#6a6a82;text-align:right;">${prod.perWorker ? '每工人独立生产' : '固定产出'}</div>
+      <div style="height:1px;background:rgba(255,255,255,0.06);margin:6px 0;"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">
+        <div style="font-size:12px;color:#a0a0ba;">生产人力</div>
+        <div style="font-size:12px;color:#ececf0;font-weight:500;">${workerText}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">
+        <div style="font-size:12px;color:#a0a0ba;">结算频率</div>
+        <div style="font-size:12px;color:#ececf0;font-weight:500;">${cycleText}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">
+        <div style="font-size:12px;color:#a0a0ba;">每日消耗</div>
+        <div style="font-size:12px;color:#ffb347;font-weight:600;">${dailyInputText}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">
+        <div style="font-size:12px;color:#a0a0ba;">每日最终产量</div>
+        <div style="font-size:12px;color:#4ecb71;font-weight:700;">${dailyOutputText}</div>
+      </div>
     `;
     container.appendChild(prodSection);
   }
@@ -439,7 +469,7 @@ export function renderBuildingDetailPanel(data, body, pm) {
     container.appendChild(upgradeSection);
   }
 
-  // ===== 训练营：训练战士/弓箭手 =====
+  // ===== 训练营：部署早期地图单位 =====
   if ((config.id === 'training_ground' || config.id === 'advanced_training_ground') && building.status === 'active') {
     const trainSection = section('训练', '⚔️');
 
@@ -448,11 +478,12 @@ export function renderBuildingDetailPanel(data, body, pm) {
     trainInfo.textContent = `可用工人: ${populationSystem.getAvailableWorkers()}`;
     trainSection.appendChild(trainInfo);
 
-    // 训练营可训练战士
+    // 训练营可部署战士
     const trainWarriorBtn = actionButton('训练战士 (消耗1工人)', 'rgba(78, 203, 113, 0.25)', () => {
       const game = window.__game;
       if (!game || !game.systems.combat) return;
       if (populationSystem.getAvailableWorkers() <= 0) return;
+      if (!game.systems.tech?.isUnitUnlockedByTech('warrior')) return;
       // 在地图上生成战士单位
       const result = game.systems.combat.spawnUnit('warrior', building.gridX, building.gridY);
       if (result) {
@@ -462,13 +493,14 @@ export function renderBuildingDetailPanel(data, body, pm) {
     });
     trainSection.appendChild(trainWarriorBtn);
 
-    // 高级训练营可额外训练弓箭手
+    // 高级训练营可额外部署剑士
     if (config.id === 'advanced_training_ground') {
-      const trainArcherBtn = actionButton('训练弓箭手 (消耗1工人)', 'rgba(91, 141, 239, 0.25)', () => {
+      const trainArcherBtn = actionButton('训练剑士 (消耗1工人)', 'rgba(91, 141, 239, 0.25)', () => {
         const game = window.__game;
         if (!game || !game.systems.combat) return;
         if (populationSystem.getAvailableWorkers() <= 0) return;
-        const result = game.systems.combat.spawnUnit('archer', building.gridX, building.gridY);
+        if (!game.systems.tech?.isUnitUnlockedByTech('swordsman')) return;
+        const result = game.systems.combat.spawnUnit('swordsman', building.gridX, building.gridY);
         if (result) {
           populationSystem.occupyForConstruction(1);
           pm.refresh({ buildingIndex });

@@ -23,10 +23,12 @@ import { CombatSystem } from './systems/CombatSystem.js';
 import { WeatherSystem } from './systems/WeatherSystem.js';
 import { QuestSystem } from './systems/QuestSystem.js';
 import { InvasionSystem } from './systems/InvasionSystem.js';
+import { ColonySystem } from './systems/ColonySystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
 import { InvasionUI } from './ui/InvasionUI.js';
+import { MainMenu } from './ui/MainMenu.js';
 import { SaveManager } from './core/SaveManager.js';
 import { cheatManager } from './utils/CheatManager.js';
 import { messageLog } from './ui/MessageLog.js';
@@ -36,10 +38,49 @@ class Game {
   constructor() {
     this.app = null;
     this.systems = {};
+    this.mainMenu = null;
+    this._started = false;
     this._resetting = false; // 重置标记，防止 beforeunload 重新保存
   }
 
-  async init() {
+  async boot() {
+    console.log('[Game] Booting...');
+    await configRegistry.loadAll();
+
+    const menuConfig = configRegistry.get('ui_main_menu');
+    if (menuConfig && menuConfig.enabled !== false) {
+      this.mainMenu = new MainMenu();
+      this.mainMenu.init({
+        onNewGame: () => this.startNewGame(),
+        onContinueGame: () => this.startContinueGame(),
+        onSettings: () => alert('进入游戏后可在右上角设置中调整选项。'),
+        onExit: () => window.close()
+      });
+      console.log('[Game] Main menu shown');
+      return;
+    }
+
+    await this.init();
+  }
+
+  async startNewGame() {
+    if (this._started) return;
+    this._resetting = true;
+    await SaveManager.reset();
+    this._resetting = false;
+    this.mainMenu?.hide();
+    await this.init({ forceNew: true });
+  }
+
+  async startContinueGame() {
+    if (this._started) return;
+    this.mainMenu?.hide();
+    await this.init();
+  }
+
+  async init(options = {}) {
+    if (this._started) return;
+    this._started = true;
     console.log('[Game] Initializing...');
 
     // 1. 加载配置
@@ -75,6 +116,8 @@ class Game {
     this.systems.combat = new CombatSystem();
     // 入侵系统
     this.systems.invasion = new InvasionSystem();
+    // 殖民地系统
+    this.systems.colony = new ColonySystem();
 
     // 天气与季节系统
     this.systems.weather = new WeatherSystem();
@@ -123,6 +166,7 @@ class Game {
     this.systems.culture.setBuildingSystem(this.systems.building);
     this.systems.culture.setPopulationSystem(this.systems.population);
     this.systems.culture.setTimeSystem(this.systems.time);
+    this.systems.culture.setTechSystem(this.systems.tech);
     this.systems.culture.init();
     this.systems.alchemy.setResourceSystem(this.systems.resource);
     this.systems.alchemy.setItemSystem(this.systems.item);
@@ -161,6 +205,11 @@ class Game {
       building: this.systems.building,
       population: this.systems.population,
       alchemy: this.systems.alchemy
+    });
+    this.systems.colony.setSystems({
+      popupManager: this.popupManager,
+      population: this.systems.population,
+      resource: this.systems.resource
     });
 
     // 注册人口每日结算
@@ -209,7 +258,7 @@ class Game {
     // 任务完成后自动弹出下一个任务面板
     eventBus.on('questNewActive', ({ quest }) => {
       if (quest) {
-        setTimeout(() => this.popupManager.open('quest_panel', { quest }), 500);
+        setTimeout(() => this.popupManager.open('quest_panel', { quest, blocking: true }), 500);
       }
     });
 
@@ -233,7 +282,7 @@ class Game {
     });
 
     // 5. 尝试加载存档
-    const saveData = await SaveManager.load();
+    const saveData = options.forceNew ? null : await SaveManager.load();
     if (saveData) {
       this.restoreFromSave(saveData);
       console.log('[Game] Save data restored');
@@ -284,11 +333,7 @@ class Game {
     // 7.05 新存档询问是否开启新手教程
     if (!saveData) {
       setTimeout(() => {
-        if (confirm('您是否第一次游玩本游戏？\n\n选择"确定"开启新手教程，选择"取消"跳过。\n\n之后可在设置中"启动"新手教程。')) {
-          this.systems.quest.enable();
-          const q = this.systems.quest.getActiveQuest();
-          if (q) setTimeout(() => this.popupManager.open('quest_panel', { quest: q }), 300);
-        }
+        this.popupManager.open('tutorial_prompt', { questSystem: this.systems.quest });
       }, 600);
     }
 
@@ -359,6 +404,8 @@ class Game {
     this.systems.weather.initNew();
     // 初始化入侵系统
     this.systems.invasion.initNew();
+    // 初始化殖民地系统
+    this.systems.colony.initNew();
 
     // 初始化炼金系统
     this.systems.alchemy.init();
@@ -366,7 +413,7 @@ class Game {
     // 初始化事件标记状态（新游戏 = 无已移除标记）
     store.setState({ removedEventMarkers: [] });
     /* 初始化文化系统 */
-    store.setState({ doctrineResearched: [], inspiration: 0 });
+    store.setState({ doctrineResearched: [], inspiration: 0, formationResearch: [] });
   }
 
   restoreFromSave(saveData) {
@@ -406,6 +453,11 @@ class Game {
     if (saveData.invasion) {
       this.systems.invasion.restoreState(saveData.invasion);
     }
+    if (saveData.colony) {
+      this.systems.colony.restoreState(saveData.colony);
+    } else {
+      this.systems.colony.initNew();
+    }
     if (saveData.quest) {
       this.systems.quest.restoreState(saveData.quest);
     }
@@ -427,6 +479,9 @@ class Game {
   update(delta) {
     // 时间系统更新（内部处理速度倍率）
     this.systems.time.update(delta);
+    // 建造进度按各自开始时间推进，避免同一 tick 内新建对象共享全局进度
+    this.systems.building.updateConstructionProgress();
+    this.systems.road.updateConstructionProgress();
   }
 
   registerAutoSave() {
@@ -461,6 +516,7 @@ class Game {
       quest: this.systems.quest.getState(),
       weather: this.systems.weather.getState(),
       invasion: this.systems.invasion.getState(),
+      colony: this.systems.colony.getState(),
       audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
       armies: store.getState('armies'),
@@ -492,6 +548,7 @@ class Game {
       audio: this.systems.audio.getAllStates(),
       weather: this.systems.weather.getState(),
       invasion: this.systems.invasion.getState(),
+      colony: this.systems.colony.getState(),
       tech: this.systems.tech.getState(),
       culture: this.systems.culture.getState(),
       alchemy: this.systems.alchemy.getState(),
@@ -523,7 +580,7 @@ class Game {
 
 // 启动游戏
 const game = new Game();
-game.init().catch(err => {
+game.boot().catch(err => {
   console.error('[Game] Fatal error during initialization:', err);
 });
 

@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 >nul
 title GMGameChain Config editor Launcher
+set "PORT=18763"
 
 echo.
 echo ============================================
@@ -8,17 +9,17 @@ echo   GMGameChain -- Config editors
 echo ============================================
 echo.
 
-echo [1/2] Checking HTTP server on port 8080...
+echo [1/2] Checking HTTP server on port %PORT%...
 
-powershell -Command "if (Get-NetTCPConnection -LocalPort 8080 -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }" >nul 2>&1
+powershell -Command "if (Get-NetTCPConnection -LocalPort %PORT% -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }" >nul 2>&1
 if errorlevel 1 (
     echo.
     echo ============================================
-    echo   WARNING: No HTTP server on port 8080!
+    echo   WARNING: No HTTP server on port %PORT%!
     echo.
     echo   Please start the game server first:
     echo.
-    echo     npx http-server -p 8080 -c-1 --cors
+    echo     npx http-server -p %PORT% -c-1 --cors
     echo.
     echo   Then re-run this script.
     echo ============================================
@@ -27,14 +28,14 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo     OK: Server is listening on port 8080
+echo     OK: Server is listening on port %PORT%
 echo.
 
 echo [2/2] Opening config editors...
 
-start http://127.0.0.1:8080/editor/planner-config.html
-start http://127.0.0.1:8080/editor/artist-config.html
-start http://127.0.0.1:8080/editor/sound-config.html
+start http://127.0.0.1:%PORT%/editor/planner-config.html
+start http://127.0.0.1:%PORT%/editor/artist-config.html
+start http://127.0.0.1:%PORT%/editor/sound-config.html
 
 echo.
 echo ============================================

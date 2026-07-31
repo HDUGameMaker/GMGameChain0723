@@ -3,9 +3,10 @@
  * 统一外壳 + 导航栈 + 注册式面板渲染函数
  */
 import { eventBus } from '../core/EventBus.js';
+import { renderTutorialPromptPanel } from './panels/tutorial-prompt-panel.js';
 
 // 阻塞时间的面板类型
-const BLOCKING_TYPES = ['event', 'expedition_prep', 'game_over'];
+const BLOCKING_TYPES = ['event', 'expedition_prep', 'game_over', 'tutorial_prompt'];
 
 export class PopupManager {
   constructor(gameLoop, techSystem, cultureSystem, alchemySystem, combatSystem) {
@@ -166,6 +167,7 @@ export class PopupManager {
     // 清理旧面板的动画定时器，然后清空 body
     this._cleanupAnimations();
     this.body.innerHTML = '';
+    this.body.style.cssText = '';
     this.footer.innerHTML = '';
     this.footer.style.display = 'none';
 
@@ -190,9 +192,12 @@ export class PopupManager {
       'game_over': '游戏结束',
       'tech_tree': '科技树',
       'culture_tree': '人文树',
+      'military_tradition': '军事传统',
       'alchemy_lab': '炼金实验室',
       'potion_inventory': '药剂库存',
       'tamed_pool': '驯养管理',
+      'unit_research': '兵种研发',
+      'tutorial_prompt': '新手教程',
       'quest_panel': '任务'
     };
     return titles[type] || '';
@@ -201,8 +206,13 @@ export class PopupManager {
   _isBlocking() {
     // 优先检查栈顶（_stack 在 _show() 之前已被设置），
     // 回退到 _currentType（兼容 _render() 中的 push 场景）
+    const current = this._stack.length > 0
+      ? this._stack[this._stack.length - 1]
+      : null;
+    if (current?.data?.blocking === true) return true;
+
     const type = this._stack.length > 0
-      ? this._stack[this._stack.length - 1].type
+      ? current.type
       : this._currentType;
     return type && BLOCKING_TYPES.includes(type);
   }
@@ -211,6 +221,8 @@ export class PopupManager {
    * 注册内置面板
    */
   _registerBuiltinPanels() {
+    this.register('tutorial_prompt', renderTutorialPromptPanel);
+
     // 延迟导入避免循环依赖，使用动态注册
     import('./panels/building-select-panel.js').then(m => {
       this.register('building_select', m.renderBuildingSelectPanel);
@@ -268,8 +280,12 @@ export class PopupManager {
     import('./panels/training-panel.js').then(m => {
       this.register('training_panel', m.renderTrainingPanel);
     });
+    import('./panels/unit-research-panel.js').then(m => {
+      this.register('unit_research', m.renderUnitResearchPanel);
+    });
     import('./panels/doctrine-panel.js').then(m => {
       this.register('doctrine_panel', m.renderDoctrinePanel);
+      this.register('military_tradition', m.renderMilitaryTraditionPanel);
     });
   }
 }

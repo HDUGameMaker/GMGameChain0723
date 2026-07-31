@@ -284,9 +284,9 @@ export class MapRenderer {
       // 建造进度条
       if (constructing) {
         const barW = ts - 12;
-        const barH = 4;
+        const barH = 6;
         const barX = x + 6;
-        const barY = y + ts / 2 - 2;
+        const barY = y + ts / 2 - 5;
 
         const bg = new PIXI.Graphics();
         bg.rect(barX, barY, barW, barH);
@@ -300,12 +300,31 @@ export class MapRenderer {
 
         const total = r.buildTime || 1;
         const cur = r.buildProgress ?? 0;
-        const ratio = Math.min(1, cur / total);
+        const ratio = this._getConstructionRatio(r, total);
         fill.clear();
         fill.rect(barX, barY, barW * ratio, barH);
         fill.fill({ color: 0xffaa00, alpha: 0.9 });
 
-        this._roadBuildFills.push({ fill, gridX: r.gridX, gridY: r.gridY, barX, barY, barW, barH });
+        const displayCur = this._getConstructionDisplayProgress(r, total);
+        const progressText = new PIXI.Text({
+          text: `${displayCur}/${total}`,
+          style: { fontSize: 9, fill: 0xffffff }
+        });
+        progressText.anchor.set(0.5);
+        progressText.x = x + ts / 2;
+        progressText.y = barY + barH + 6;
+        this.roadLayer.addChild(progressText);
+
+        this._roadBuildFills.push({
+          fill,
+          label: progressText,
+          gridX: r.gridX,
+          gridY: r.gridY,
+          barX,
+          barY,
+          barWidth: barW,
+          barHeight: barH
+        });
       }
     }
   }
@@ -476,11 +495,12 @@ export class MapRenderer {
       const container = new PIXI.Container();
 
       const isTamed = unit.source === 'tamed';
-      const isArcher = unit.type === 'archer';
+      const unitCfg = window.__game?.configRegistry?.get('enemies')?.units?.find(u => u.id === unit.type);
+      const isRanged = (unitCfg?.attackRange || unit.attackRange || 1) > 1;
 
-      // 底色：驯化单位紫色，战士绿色，弓箭手蓝色
+      // 底色：驯化单位紫色，近战绿色，远程蓝色
       const bg = new PIXI.Graphics();
-      const color = isTamed ? 0xcc88cc : (isArcher ? 0x4488cc : 0x44cc88);
+      const color = isTamed ? 0xcc88cc : (isRanged ? 0x4488cc : 0x44cc88);
       const strokeColor = isTamed ? 0xff88ff : 0x44ffaa;
       bg.rect(x + 2, y + 2, ts - 4, ts - 4);
       bg.fill({ color, alpha: 0.8 });
@@ -783,7 +803,7 @@ export class MapRenderer {
     const cy = Math.round(worldY / ts);
     const el = document.getElementById('viewport-center-display');
     if (el) {
-      el.innerHTML = `<span class="vc-label">📍</span><span class="vc-coord">${cx}, ${cy}</span>`;
+      el.innerHTML = `<div class="vc-row"><span class="vc-label">X</span><span class="vc-coord">${cx}</span></div><div class="vc-row"><span class="vc-label">Y</span><span class="vc-coord">${cy}</span></div>`;
     }
   }
 
@@ -1133,6 +1153,17 @@ export class MapRenderer {
     canvas.addEventListener('pointerdown', (e) => {
       const gridPos = this._clientToGrid(e.clientX, e.clientY);
 
+      // 放置建筑模式：优先于道路编辑，避免选中建筑后点击地图误铺道路
+      if (this.buildingSystem.placingState === 'PLACING') {
+        this.isDragging = true;
+        this.hasMoved = false;
+        this.dragStartX = e.clientX;
+        this.dragStartY = e.clientY;
+        this.dragStartCamX = this.camX;
+        this.dragStartCamY = this.camY;
+        return;
+      }
+
       // 道路编辑模式
       if (this._roadSystem && this._roadSystem.isEditMode() && gridPos) {
         const existing = this._roadSystem.getRoadAt(gridPos.col, gridPos.row);
@@ -1143,17 +1174,6 @@ export class MapRenderer {
         }
         this._drawRoads();
         this._updateFogTexture();
-        return;
-      }
-
-      // 放置建筑模式：禁止切换挪动模式，保持常时行为
-      if (this.buildingSystem.placingState === 'PLACING') {
-        this.isDragging = true;
-        this.hasMoved = false;
-        this.dragStartX = e.clientX;
-        this.dragStartY = e.clientY;
-        this.dragStartCamX = this.camX;
-        this.dragStartCamY = this.camY;
         return;
       }
 
@@ -1315,7 +1335,7 @@ export class MapRenderer {
       }
 
       if (this.isDragging && !this.hasMoved) {
-        this._onClick(e.clientX, e.clientY);
+        this._onClick(e);
       }
       // 地形和迷雾已在 pointermove 中实时更新，无需在 pointerup 重复处理
       this.isDragging = false;
@@ -1409,7 +1429,9 @@ export class MapRenderer {
     }, { passive: false });
   }
 
-  _onClick(clientX, clientY) {
+  _onClick(e) {
+    const clientX = e.clientX;
+    const clientY = e.clientY;
     const gridPos = this._clientToGrid(clientX, clientY);
     if (!gridPos) return;
 
@@ -1444,9 +1466,14 @@ export class MapRenderer {
       if (!config) return;
 
       // 以点击位置为左上角
-      const success = this.buildingSystem.placeBuilding(gridPos.col, gridPos.row, buildingId);
+      const keepPlacing = e.ctrlKey || e.metaKey;
+      const success = this.buildingSystem.placeBuilding(gridPos.col, gridPos.row, buildingId, { keepPlacing });
       if (success) {
-        this._clearGhost();
+        if (keepPlacing) {
+          this._updateGhost(clientX, clientY);
+        } else {
+          this._clearGhost();
+        }
         this.refreshBuildings();
       }
     } else {
@@ -1488,7 +1515,8 @@ export class MapRenderer {
       if (this._combatSystem) {
         const unit = this._combatSystem.getUnitAt(gridPos.col, gridPos.row);
         if (unit) {
-          const unitName = unit.source === 'tamed' ? (unit.tamedInfo?.name || '驯化单位') : (unit.type === 'archer' ? '弓箭手' : '战士');
+          const unitCfg = window.__game?.configRegistry?.get('enemies')?.units?.find(u => u.id === unit.type);
+          const unitName = unit.source === 'tamed' ? (unit.tamedInfo?.name || '驯化单位') : (unitCfg?.name || unit.type || '战斗单位');
           const hpText = `💙 ${unitName} HP ${unit.hp}/${unit.maxHp}`;
           eventBus.emit('combatBroadcast', { message: hpText });
           return;
@@ -2204,42 +2232,6 @@ export class MapRenderer {
         // 存储引用便于后续清理
         container.__animSprite = animSprite;
 
-        if (isConstructing) {
-          // 灰色半透明遮罩（覆盖整个建筑精灵图）
-          const overlay = new PIXI.Graphics();
-          overlay.rect(x, y, w * this.tileSize, h * this.tileSize);
-          overlay.fill({ color: 0x888888, alpha: 0.55 });
-          container.addChild(overlay);
-
-          // 建造进度条（遮罩上方）
-          this._addBuildProgressBar(container, building, config, x, w, progressBaseY, layout, centerX);
-        }
-
-        // 建筑名称（精灵图上方，带阴影以提升可读性）
-        const nameFontSize = Math.min(14, this.tileSize * 0.22);
-        const nameMaxWidth = w * this.tileSize - 6;
-        const text = new PIXI.Text({
-          text: config.name,
-          style: {
-            fontSize: nameFontSize,
-            fill: 0xffffff,
-            align: 'center',
-            wordWrap: true,
-            wordWrapWidth: nameMaxWidth,
-            breakWords: true,
-            dropShadow: {
-              color: 0x000000,
-              alpha: 0.75,
-              blur: 3,
-              distance: 1
-            }
-          }
-        });
-        text.anchor.set(0.5);
-        text.x = centerX;
-        text.y = nameBaseY + (layout.nameOffsetY || 0);
-        container.addChild(text);
-
       } else if (texture) {
         // ===== 静态精灵图模式 =====
         const sprite = new PIXI.Sprite(texture);
@@ -2267,80 +2259,28 @@ export class MapRenderer {
 
         container.addChild(sprite);
 
-        if (isConstructing) {
-          // 灰色半透明遮罩（覆盖整个建筑精灵图）
-          const overlay = new PIXI.Graphics();
-          overlay.rect(x, y, w * this.tileSize, h * this.tileSize);
-          overlay.fill({ color: 0x888888, alpha: 0.55 });
-          container.addChild(overlay);
-
-          // 建造进度条（遮罩上方）
-          this._addBuildProgressBar(container, building, config, x, w, progressBaseY, layout, centerX);
-        }
-
-        // 建筑名称（精灵图上方，带阴影以提升可读性）
-        const nameFontSize = Math.min(14, this.tileSize * 0.22);
-        const nameMaxWidth = w * this.tileSize - 6;
-        const text = new PIXI.Text({
-          text: config.name,
-          style: {
-            fontSize: nameFontSize,
-            fill: 0xffffff,
-            align: 'center',
-            wordWrap: true,
-            wordWrapWidth: nameMaxWidth,
-            breakWords: true,
-            dropShadow: {
-              color: 0x000000,
-              alpha: 0.75,
-              blur: 3,
-              distance: 1
-            }
-          }
-        });
-        text.anchor.set(0.5);
-        text.x = centerX;
-        text.y = nameBaseY + (layout.nameOffsetY || 0);
-        container.addChild(text);
-
       } else {
         // ===== 文字回退模式（纯色矩形 + 名称）=====
         const graphics = new PIXI.Graphics();
         const color = this._getBuildingColor(building.buildingId);
-        const alpha = isConstructing ? 0.5 : 0.9;
 
         graphics.rect(x + 2, y + 2, w * this.tileSize - 4, h * this.tileSize - 4);
-        graphics.fill({ color, alpha });
+        graphics.fill({ color, alpha: 0.9 });
         graphics.rect(x + 2, y + 2, w * this.tileSize - 4, h * this.tileSize - 4);
         graphics.stroke({ color: 0xffffff, alpha: 0.3, width: 1 });
         container.addChild(graphics);
-
-        // 建筑名称
-        const nameFontSize = Math.min(14, this.tileSize * 0.22);
-        const nameMaxWidth = w * this.tileSize - 6;
-        const text = new PIXI.Text({
-          text: config.name,
-          style: {
-            fontSize: nameFontSize,
-            fill: 0xffffff,
-            align: 'center',
-            wordWrap: true,
-            wordWrapWidth: nameMaxWidth,
-            breakWords: true
-          }
-        });
-        text.anchor.set(0.5);
-        text.x = centerX;
-        text.y = nameBaseY + (layout.nameOffsetY || 0);
-        container.addChild(text);
-
-        // 建造进度条
-        if (isConstructing) {
-          this._addBuildProgressBar(container, building, config, x, w, progressBaseY, layout, centerX);
-        }
       }
 
-      // ===== 合成进度条（两种模式共用，琥珀色以区别于建造进度）=====
+      // ===== 建造状态（所有建筑共用）：本体贴图/矩形 → 遮罩 → 进度条 =====
+      if (isConstructing) {
+        this._addConstructionOverlay(container, x, y, w, h);
+        this._addBuildProgressBar(container, building, config, x, w, progressBaseY, layout, centerX);
+      }
+
+      // ===== 建筑名称（所有渲染模式共用）=====
+      this._addBuildingName(container, config.name, w, centerX, nameBaseY + (layout.nameOffsetY || 0));
+
+      // ===== 合成进度条（所有模式共用，琥珀色以区别于建造进度）=====
       if (building.status === 'active' && building.synthesisProgress) {
         this._addSynthProgressBar(container, building, x, w, progressBaseY, layout, centerX);
       }
@@ -2396,14 +2336,54 @@ export class MapRenderer {
   }
 
   /**
-   * 添加地图建造进度条（精灵图模式和文字回退模式共用）
+   * 添加建造遮罩。各建筑类型只负责画本体，建造态统一走这里。
+   */
+  _addConstructionOverlay(container, x, y, w, h) {
+    const overlay = new PIXI.Graphics();
+    overlay.rect(x, y, w * this.tileSize, h * this.tileSize);
+    overlay.fill({ color: 0x888888, alpha: 0.55 });
+    container.addChild(overlay);
+  }
+
+  /**
+   * 添加建筑名称（动画、静态贴图、文字回退共用）
+   */
+  _addBuildingName(container, name, w, centerX, y) {
+    const nameFontSize = Math.min(14, this.tileSize * 0.22);
+    const nameMaxWidth = w * this.tileSize - 6;
+    const text = new PIXI.Text({
+      text: name,
+      style: {
+        fontSize: nameFontSize,
+        fill: 0xffffff,
+        align: 'center',
+        wordWrap: true,
+        wordWrapWidth: nameMaxWidth,
+        breakWords: true,
+        dropShadow: {
+          color: 0x000000,
+          alpha: 0.75,
+          blur: 3,
+          distance: 1
+        }
+      }
+    });
+    text.anchor.set(0.5);
+    text.x = centerX;
+    text.y = y;
+    container.addChild(text);
+  }
+
+  /**
+   * 添加地图建造进度条（所有建筑渲染模式共用）
    */
   _addBuildProgressBar(container, building, config, x, w, progressBaseY, layout, centerX) {
     const barWidth = w * this.tileSize - 8;
     const barHeight = 6;
     const barX = x + 4;
     const barY = progressBaseY + (layout.progressBarOffsetY || 0);
-    const pct = Math.min((building.buildProgress || 0) / (config.buildTime || 1), 1);
+    const total = config.buildTime ?? 1;
+    const pct = this._getConstructionRatio(building, total);
 
     // 背景条
     const barBg = new PIXI.Graphics();
@@ -2417,17 +2397,8 @@ export class MapRenderer {
     barFill.fill({ color: 0xffaa00, alpha: 0.9 });
     container.addChild(barFill);
 
-    // 存储引用，供 ProgressManager 每帧重绘
-    const buildingIndex = this.buildingSystem.buildings.indexOf(building);
-    this._mapBuildFills.push({
-      fill: barFill,
-      buildingIndex,
-      barX, barY, barWidth, barHeight
-    });
-
     // 进度文字
-    const cur = building.buildProgress ?? 0;
-    const total = config.buildTime ?? 1;
+    const cur = this._getConstructionDisplayProgress(building, total);
     const progressText = new PIXI.Text({
       text: `${cur}/${total}`,
       style: { fontSize: 9, fill: 0xffffff }
@@ -2436,6 +2407,35 @@ export class MapRenderer {
     progressText.x = centerX;
     progressText.y = barY + barHeight + 5;
     container.addChild(progressText);
+
+    // 存储引用，供 ProgressManager 每帧重绘
+    const buildingIndex = this.buildingSystem.buildings.indexOf(building);
+    this._mapBuildFills.push({
+      fill: barFill,
+      label: progressText,
+      buildingIndex,
+      barX, barY, barWidth, barHeight
+    });
+  }
+
+  _getConstructionElapsed(entity) {
+    if (entity.startTick === undefined || entity.startTimeProgress === undefined) {
+      return Math.max(0, entity.buildProgress ?? 0);
+    }
+    const state = store.getState();
+    const now = (state.timeTick ?? 0) + (state.timeProgress ?? 0);
+    const start = (entity.startTick ?? 0) + (entity.startTimeProgress ?? 0);
+    return Math.max(0, now - start);
+  }
+
+  _getConstructionRatio(entity, total) {
+    const safeTotal = Math.max(1, total || 1);
+    return Math.max(0, Math.min(1, this._getConstructionElapsed(entity) / safeTotal));
+  }
+
+  _getConstructionDisplayProgress(entity, total) {
+    const safeTotal = Math.max(0, total || 0);
+    return Math.max(0, Math.min(safeTotal, Math.floor(this._getConstructionElapsed(entity))));
   }
 
   /**
@@ -2518,38 +2518,34 @@ export class MapRenderer {
    * 由 ProgressManager 每帧回调，重绘所有建造中的地图进度条
    */
   _updateMapBuildBars() {
-    const t = store.getState('timeProgress') || 0;
     for (const ref of this._mapBuildFills) {
       const b = this.buildingSystem.buildings[ref.buildingIndex];
       if (!b || b.status !== 'constructing') continue;
       const config = configRegistry.getBuilding(b.buildingId);
       if (!config) continue;
       const bt = config.buildTime || 1;
-      const cur = b.buildProgress ?? 0;
-      const base = cur / bt;
-      const next = (cur + 1) / bt;
-      let smooth = base + (next - base) * t;
-      smooth = Math.max(0, Math.min(1, smooth));
+      const smooth = this._getConstructionRatio(b, bt);
       ref.fill.clear();
       ref.fill.rect(ref.barX, ref.barY, ref.barWidth * smooth, ref.barHeight);
       ref.fill.fill({ color: 0xffaa00, alpha: 0.9 });
+      if (ref.label) {
+        ref.label.text = `${this._getConstructionDisplayProgress(b, bt)}/${bt}`;
+      }
     }
   }
 
   _updateRoadBuildBars() {
-    const t = store.getState('timeProgress') || 0;
     for (const ref of this._roadBuildFills) {
       const road = this._roadSystem.getRoadAt(ref.gridX, ref.gridY);
       if (!road || road.buildProgress === null) continue;
       const bt = road.buildTime || 1;
-      const cur = road.buildProgress ?? 0;
-      const base = cur / bt;
-      const next = (cur + 1) / bt;
-      let smooth = base + (next - base) * t;
-      smooth = Math.max(0, Math.min(1, smooth));
+      const smooth = this._getConstructionRatio(road, bt);
       ref.fill.clear();
       ref.fill.rect(ref.barX, ref.barY, ref.barWidth * smooth, ref.barHeight);
       ref.fill.fill({ color: 0xffaa00, alpha: 0.9 });
+      if (ref.label) {
+        ref.label.text = `${this._getConstructionDisplayProgress(road, bt)}/${bt}`;
+      }
     }
   }
 

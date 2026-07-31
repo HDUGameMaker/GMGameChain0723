@@ -63,6 +63,9 @@ export class BuildingSystem {
   // ===== 放置模式 =====
 
   enterPlacingMode(buildingId) {
+    if (this._roadSystem?.isEditMode?.()) {
+      this._roadSystem.exitEditMode();
+    }
     this.placingState = 'PLACING';
     this.placingBuildingId = buildingId;
     store.setState({ placingState: 'PLACING', placingBuildingId: buildingId });
@@ -156,8 +159,8 @@ export class BuildingSystem {
 
     // 道路依赖建筑：必须邻接道路
     if (config.roadRequired && this._roadSystem) {
-      if (!this._roadSystem.hasAdjacentRoad(gridX, gridY, w, h)) {
-        return { valid: false, reason: '该建筑需要紧邻道路（道路依赖）' };
+      if (!this._satisfiesRoadDependency(gridX, gridY, w, h, buildingId)) {
+        return { valid: false, reason: buildingId === 'work_shed' ? '工棚需要紧邻道路、工棚或仓库' : '该建筑需要紧邻道路（道路依赖）' };
       }
     }
 
@@ -167,7 +170,7 @@ export class BuildingSystem {
   /**
    * 确认放置建筑
    */
-  placeBuilding(gridX, gridY, buildingId) {
+  placeBuilding(gridX, gridY, buildingId, options = {}) {
     const config = configRegistry.getBuilding(buildingId);
     if (!config) return false;
 
@@ -198,7 +201,9 @@ export class BuildingSystem {
     };
 
     this.buildings.push(building);
-    this.exitPlacingMode();
+    if (!options.keepPlacing) {
+      this.exitPlacingMode();
+    }
     this._updateStore();
     eventBus.emit('buildingPlaced', { building });
     return true;
@@ -263,9 +268,12 @@ export class BuildingSystem {
     this._resourceSystem.consumeAll(scaledUpgradeCost);
 
     // 变为目标建筑，进入建造状态
+    const state = store.getState();
     building.buildingId = check.targetId;
     building.status = 'constructing';
     building.buildProgress = 0;
+    building.startTick = state.timeTick ?? 0;
+    building.startTimeProgress = state.timeProgress ?? 0;
     building.currentWorkers = 0; // 工人遣返
     // 清除遗留的合成进度（升级后建筑变体可能无对应合成配方，残留进度会导致 UI/逻辑异常）
     building.synthesisProgress = null;
@@ -588,8 +596,8 @@ export class BuildingSystem {
 
     // 道路依赖建筑：必须邻接道路
     if (config.roadRequired && this._roadSystem) {
-      if (!this._roadSystem.hasAdjacentRoad(newGridX, newGridY, w, h)) {
-        return { valid: false, reason: '该建筑需要紧邻道路（道路依赖）' };
+      if (!this._satisfiesRoadDependency(newGridX, newGridY, w, h, building.buildingId, buildingIndex)) {
+        return { valid: false, reason: building.buildingId === 'work_shed' ? '工棚需要紧邻道路、工棚或仓库' : '该建筑需要紧邻道路（道路依赖）' };
       }
     }
 
@@ -624,11 +632,45 @@ export class BuildingSystem {
     if (!config) return { valid: true };
     // 道路依赖建筑检查
     if (config.roadRequired && this._roadSystem) {
-      if (!this._roadSystem.hasAdjacentRoad(building.gridX, building.gridY, config.footprint.width, config.footprint.height)) {
-        return { valid: false, reason: '需要紧邻道路' };
+      if (!this._satisfiesRoadDependency(building.gridX, building.gridY, config.footprint.width, config.footprint.height, building.buildingId, buildingIndex)) {
+        return { valid: false, reason: building.buildingId === 'work_shed' ? '需要紧邻道路、工棚或仓库' : '需要紧邻道路' };
       }
     }
     return { valid: true };
+  }
+
+  _satisfiesRoadDependency(gridX, gridY, w, h, buildingId, ignoreIndex = -1) {
+    if (this._roadSystem?.hasAdjacentRoad(gridX, gridY, w, h)) return true;
+    if (buildingId !== 'work_shed') return false;
+    return this._hasAdjacentWorkShedAnchor(gridX, gridY, w, h, ignoreIndex);
+  }
+
+  _hasAdjacentWorkShedAnchor(gridX, gridY, w, h, ignoreIndex = -1) {
+    for (let i = 0; i < this.buildings.length; i++) {
+      if (i === ignoreIndex) continue;
+      const other = this.buildings[i];
+      const otherConfig = configRegistry.getBuilding(other.buildingId);
+      if (!otherConfig) continue;
+      const isAnchor = other.buildingId === 'work_shed' || otherConfig.storageMultiplier || otherConfig.tags?.includes('warehouse');
+      if (!isAnchor) continue;
+      if (this._areRectsSideAdjacent(
+        gridX, gridY, w, h,
+        other.gridX, other.gridY, otherConfig.footprint.width, otherConfig.footprint.height
+      )) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  _areRectsSideAdjacent(ax, ay, aw, ah, bx, by, bw, bh) {
+    const ax2 = ax + aw - 1;
+    const ay2 = ay + ah - 1;
+    const bx2 = bx + bw - 1;
+    const by2 = by + bh - 1;
+    const horizontalAdj = (ax2 + 1 === bx || bx2 + 1 === ax) && !(ay2 < by || by2 < ay);
+    const verticalAdj = (ay2 + 1 === by || by2 + 1 === ay) && !(ax2 < bx || bx2 < ax);
+    return horizontalAdj || verticalAdj;
   }
 
   /** 检查所有建筑有效性，更新_invalid标记并重绘 */
@@ -651,21 +693,7 @@ export class BuildingSystem {
 
     for (const building of this.buildings) {
       if (building.status === 'constructing') {
-        building.buildProgress++;
-        const config = configRegistry.getBuilding(building.buildingId);
-        if (building.buildProgress >= config.buildTime) {
-          building.status = 'active';
-          building.buildProgress = null;
-          // 自动填充可用工人
-          if (config.maxWorkers && config.maxWorkers > 0 && this._populationSystem) {
-            const available = this._populationSystem.getAvailableWorkers();
-            const toAssign = Math.min(config.maxWorkers, available);
-            building.currentWorkers = toAssign;
-          }
-          eventBus.emit('buildingComplete', { building });
-          this._updateStorageMultiplier();
-          this._checkNewUnlocks(building.buildingId);
-        }
+        continue;
       } else if (building.status === 'active' && isWorkPeriod) {
         const cfgTick = configRegistry.getBuilding(building.buildingId);
         const cycle = cfgTick?.productionCycle || 'tick';
@@ -693,6 +721,64 @@ export class BuildingSystem {
 
     this._updateStore();
     this._updateProgressStore();
+  }
+
+  /**
+   * 按每个建筑自己的开始时间推进建造，避免同一 tick 内新放置建筑共享全局进度。
+   */
+  updateConstructionProgress() {
+    const state = store.getState();
+    const now = (state.timeTick ?? 0) + (state.timeProgress ?? 0);
+    let changed = false;
+
+    for (const building of this.buildings) {
+      if (building.status !== 'constructing') continue;
+
+      const config = configRegistry.getBuilding(building.buildingId);
+      if (!config) continue;
+
+      if (building.startTick === undefined || building.startTimeProgress === undefined) {
+        const existingProgress = building.buildProgress ?? 0;
+        building.startTick = Math.max(0, Math.floor(now - existingProgress));
+        building.startTimeProgress = 0;
+      }
+
+      const start = (building.startTick ?? 0) + (building.startTimeProgress ?? 0);
+      const elapsed = Math.max(0, now - start);
+      const buildTime = Math.max(0, config.buildTime || 0);
+      const nextProgress = buildTime > 0 ? Math.min(buildTime, Math.floor(elapsed)) : 0;
+
+      if ((building.buildProgress ?? 0) !== nextProgress) {
+        building.buildProgress = nextProgress;
+        changed = true;
+      }
+
+      if (elapsed >= buildTime) {
+        this._completeConstruction(building, config);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      this._updateStore();
+      this._updateProgressStore();
+    }
+  }
+
+  _completeConstruction(building, config) {
+    building.status = 'active';
+    building.buildProgress = null;
+    building.startTick = undefined;
+    building.startTimeProgress = undefined;
+    // 自动填充可用工人
+    if (config.maxWorkers && config.maxWorkers > 0 && this._populationSystem) {
+      const available = this._populationSystem.getAvailableWorkers();
+      const toAssign = Math.min(config.maxWorkers, available);
+      building.currentWorkers = toAssign;
+    }
+    eventBus.emit('buildingComplete', { building });
+    this._updateStorageMultiplier();
+    this._checkNewUnlocks(building.buildingId);
   }
 
   /**
@@ -727,19 +813,7 @@ export class BuildingSystem {
     }
 
     const prod = config.production;
-    let effectiveWorkers = building.currentWorkers || 0;
-
-    // 装置逻辑：替代工人
-    if (building._attachmentType && effectiveWorkers <= 0 && prod.perWorker) {
-      effectiveWorkers = 1; // 装置算1个"工人"
-      // 应用天气效率加成
-      if (this._weatherSystem) {
-        const mod = this._weatherSystem.getAttachmentModifier();
-        if (mod.efficiency > 1) {
-          effectiveWorkers = Math.ceil(effectiveWorkers * mod.efficiency);
-        }
-      }
-    }
+    const effectiveWorkers = this._getEffectiveProductionWorkers(building, config);
 
     // 获取相邻加成
     const bIndex = this.buildings.indexOf(building);
@@ -761,7 +835,7 @@ export class BuildingSystem {
     // 产出（应用相邻加成 + 人文政策产出倍率）
     if (prod.output) {
       const outputMultiplier = prod.perWorker ? effectiveWorkers : 1;
-      const cultureProdMul = (this._cultureSystem ? (this._cultureSystem.getEffects().productionMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).productionMul || 1) : 1);
+      const cultureProdMul = this._getProductionMultiplier();
       for (const out of prod.output) {
         const baseAmount = out.amount * outputMultiplier * cultureProdMul;
         const adjusted = this.applyAdjacencyToProduction(
@@ -858,12 +932,12 @@ export class BuildingSystem {
   }
 
   /**
-   * 计算所有活跃建筑的每Tick净资源产量
-   * @returns {Object} { resourceId: netAmountPerTick }
-   *   正数 = 净产出，负数 = 净消耗，0 不出现在结果中
+   * 计算所有活跃建筑折算到每日的资源产出/消耗。
+   * 显示层统一使用日口径；底层 tick 建筑按一天内实际工作次数折算。
+   * @returns {Object} { resourceId: { produced, consumed, net } }
    */
-  getProductionRates() {
-    const rates = {};
+  getDailyResourceFlow() {
+    const flow = {};
 
     for (let i = 0; i < this.buildings.length; i++) {
       const building = this.buildings[i];
@@ -873,37 +947,146 @@ export class BuildingSystem {
       if (!config || !config.production) continue;
 
       const prod = config.production;
-      const multiplier = prod.perWorker ? (building.currentWorkers || 0) : 1;
+      const cyclesPerDay = this._getProductionCyclesPerDay(building, config);
+      const effectiveWorkers = this._getEffectiveProductionWorkers(building, config);
+      const multiplier = prod.perWorker ? effectiveWorkers : 1;
+      const cultureProdMul = this._getProductionMultiplier();
       if (multiplier <= 0) continue;
 
       // 获取相邻加成
       const bonuses = this.getAdjacencyBonuses(i);
 
-      // 消耗（负数）
+      // 消耗
       if (prod.input) {
         for (const inp of prod.input) {
-          rates[inp.resourceId] = (rates[inp.resourceId] || 0) - inp.amount * multiplier;
+          this._addResourceFlow(flow, inp.resourceId, 0, inp.amount * multiplier * cyclesPerDay);
         }
       }
 
-      // 产出（正数，应用相邻加成）
+      // 产出（应用相邻加成）
       if (prod.output) {
         for (const out of prod.output) {
-          const baseAmount = out.amount * multiplier;
+          const baseAmount = out.amount * multiplier * cultureProdMul;
           const adjusted = this.applyAdjacencyToProduction(
             building.buildingId, out.resourceId, baseAmount, 'production', bonuses
           );
-          const amount = Math.round(adjusted);
-          if (out.resourceId === 'icon_inspiration') {
-            rates['inspiration'] = (rates['inspiration'] || 0) + amount;
-          } else {
-            rates[out.resourceId] = (rates[out.resourceId] || 0) + amount;
-          }
+          const amount = Math.round(adjusted) * cyclesPerDay;
+          const resourceId = out.resourceId === 'icon_inspiration' ? 'inspiration' : out.resourceId;
+          this._addResourceFlow(flow, resourceId, amount, 0);
         }
       }
     }
 
+    return flow;
+  }
+
+  _addResourceFlow(flow, resourceId, produced, consumed) {
+    if (!resourceId) return;
+    if (!flow[resourceId]) flow[resourceId] = { produced: 0, consumed: 0, net: 0 };
+    flow[resourceId].produced += produced || 0;
+    flow[resourceId].consumed += consumed || 0;
+    flow[resourceId].net = flow[resourceId].produced - flow[resourceId].consumed;
+  }
+
+  /**
+   * @deprecated HUD 统一使用 getDailyResourceFlow() 的日口径。
+   */
+  getProductionRates() {
+    const daily = this.getDailyResourceFlow();
+    const rates = {};
+    for (const [resourceId, entry] of Object.entries(daily)) {
+      rates[resourceId] = entry.net;
+    }
     return rates;
+  }
+
+  getBuildingDailyProductionPreview(buildingIndex) {
+    const building = this.buildings[buildingIndex];
+    if (!building) return null;
+    const config = configRegistry.getBuilding(building.buildingId);
+    if (!config || !config.production) return null;
+
+    const prod = config.production;
+    const cyclesPerDay = this._getProductionCyclesPerDay(building, config);
+    const effectiveWorkers = building.status === 'active' ? this._getEffectiveProductionWorkers(building, config) : 0;
+    const multiplier = prod.perWorker ? effectiveWorkers : 1;
+    const bonuses = this.getAdjacencyBonuses(buildingIndex);
+    const cultureProdMul = this._getProductionMultiplier();
+
+    const inputStandard = (prod.input || []).map(inp => ({
+      resourceId: inp.resourceId,
+      amount: inp.amount
+    }));
+    const outputStandard = (prod.output || []).map(out => ({
+      resourceId: out.resourceId === 'icon_inspiration' ? 'inspiration' : out.resourceId,
+      amount: out.amount
+    }));
+
+    const dailyInput = inputStandard.map(inp => ({
+      resourceId: inp.resourceId,
+      amount: Math.round(inp.amount * multiplier * cyclesPerDay)
+    }));
+    const dailyOutput = (prod.output || []).map(out => {
+      const baseAmount = out.amount * multiplier * cultureProdMul;
+      const adjusted = this.applyAdjacencyToProduction(
+        building.buildingId, out.resourceId, baseAmount, 'production', bonuses
+      );
+      return {
+        resourceId: out.resourceId === 'icon_inspiration' ? 'inspiration' : out.resourceId,
+        amount: Math.round(adjusted) * cyclesPerDay
+      };
+    });
+
+    return {
+      perWorker: !!prod.perWorker,
+      cycle: config.productionCycle || 'tick',
+      cyclesPerDay,
+      currentWorkers: building.currentWorkers || 0,
+      effectiveWorkers,
+      hasAttachment: !!building._attachmentType,
+      inputStandard,
+      outputStandard,
+      dailyInput,
+      dailyOutput
+    };
+  }
+
+  _getEffectiveProductionWorkers(building, config) {
+    const prod = config?.production;
+    if (!prod?.perWorker) return 1;
+    let effectiveWorkers = building.currentWorkers || 0;
+    if (building._attachmentType && effectiveWorkers <= 0) {
+      effectiveWorkers = 1;
+      if (this._weatherSystem) {
+        const mod = this._weatherSystem.getAttachmentModifier();
+        if (mod.efficiency > 1) {
+          effectiveWorkers = Math.ceil(effectiveWorkers * mod.efficiency);
+        }
+      }
+    }
+    return effectiveWorkers;
+  }
+
+  _getProductionCyclesPerDay(building, config) {
+    const cycle = config?.productionCycle || 'tick';
+    if (cycle === 'day') return 1;
+    const ticksPerPeriod = this._getTicksPerPeriod();
+    const globalConfig = configRegistry.get('global') || {};
+    const periodNames = globalConfig.PERIOD_NAMES || ['morning', 'afternoon', 'evening', 'night'];
+    const workPeriods = globalConfig.WORK_PERIODS || ['morning', 'afternoon'];
+    return ticksPerPeriod * (building._attachmentType ? periodNames.length : workPeriods.length);
+  }
+
+  _getTicksPerPeriod() {
+    const globalConfig = configRegistry.get('global') || {};
+    const periodDuration = globalConfig.PERIOD_DURATION || 30;
+    const tickInterval = globalConfig.TICK_INTERVAL || 10;
+    return Math.max(1, Math.floor(periodDuration / tickInterval));
+  }
+
+  _getProductionMultiplier() {
+    return (this._cultureSystem ? (this._cultureSystem.getEffects().productionMul || 1) : 1)
+      * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).productionMul || 1) : 1);
   }
 
   getBuildingCount(buildingId) {
@@ -1247,6 +1430,8 @@ export class BuildingSystem {
       status: b.status,
       currentWorkers: b.currentWorkers,
       buildProgress: b.buildProgress,
+      startTick: b.startTick,
+      startTimeProgress: b.startTimeProgress,
       synthesisProgress: b.synthesisProgress,
       _attachmentType: b._attachmentType
     }));
@@ -1260,7 +1445,9 @@ export class BuildingSystem {
       gridY: s.gridY,
       status: s.status,
       currentWorkers: s.currentWorkers || 0,
-      buildProgress: s.buildProgress || null,
+      buildProgress: s.buildProgress !== undefined ? s.buildProgress : null,
+      startTick: s.startTick,
+      startTimeProgress: s.startTimeProgress,
       synthesisProgress: s.synthesisProgress || null,
       _attachmentType: s._attachmentType || null
     }));

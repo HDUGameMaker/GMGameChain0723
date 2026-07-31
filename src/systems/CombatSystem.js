@@ -1,6 +1,6 @@
 /**
  * CombatSystem - 战斗系统
- * 管理敌人 + 友方单位（战士/弓箭手）
+ * 管理敌人 + 友方地图部署单位
  * 敌人HP=5，攻击力=1，建筑生命=(长+1)*(宽+1)，人生命=2，点击攻击力=1
  */
 import { configRegistry } from '../core/ConfigRegistry.js';
@@ -10,7 +10,7 @@ import { store } from '../core/Store.js';
 export class CombatSystem {
   constructor() {
     this.enemies = [];
-    /** @type {Array<{id: string, type: 'warrior'|'archer', gridX: number, gridY: number, hp: number, maxHp: number, attack: number, attackRange: number}>} */
+    /** @type {Array<{id: string, type: string, gridX: number, gridY: number, hp: number, maxHp: number, attack: number, attackRange: number}>} */
     this.units = [];
     /** @type {Array<{id: string, enemyId: string, name: string, icon: string, hp: number, maxHp: number, attack: number, attackRange: number, attackCooldown: number}>} */
     this.tamed = [];
@@ -138,10 +138,13 @@ export class CombatSystem {
     const eff = this._cultureSystem ? this._cultureSystem.getEffects() : null;
     const aEff = this._alchemySystem ? this._alchemySystem.getEffects() : {};
     const aCombat = aEff.combat || {};
-    // 伤害乘性：按单位类型分别取对应乘性（战士=warriorDamageMul，弓箭手=archerDamageMul）
-    // 不再把战士专属乘性套到弓箭手身上
-    const cultureDmgMul = type === 'archer' ? (eff?.archerDamageMul || 1) : (eff?.warriorDamageMul || 1);
-    const alchemyDmgMul = type === 'archer' ? (aCombat.archerDamageMul || 1) : (aCombat.warriorDamageMul || 1);
+    const isRanged = (unitConfig.attackRange || 1) > 1;
+    const cultureDmgMul = isRanged
+      ? (eff?.rangedDamageMul || eff?.archerDamageMul || 1)
+      : (eff?.meleeDamageMul || eff?.warriorDamageMul || 1);
+    const alchemyDmgMul = isRanged
+      ? (aCombat.rangedDamageMul || aCombat.archerDamageMul || 1)
+      : (aCombat.meleeDamageMul || aCombat.warriorDamageMul || 1);
     const dmgMul = cultureDmgMul * alchemyDmgMul;
     // HP 乘性：unitHpMul 为生命加成（正面），unitDamageTakenMul 不应进 HP（它是"受到伤害放大"负面效果，
     // 应在敌人攻击单位时应用，见 _onTick 敌人攻击单位处）
@@ -306,7 +309,8 @@ export class CombatSystem {
 
       if (dist <= unit.attackRange) {
         nearestEnemy.hp -= unit.attack;
-        const unitLabel = unit.source === 'tamed' ? (unit.tamedInfo?.name || '驯化单位') : (unit.type === 'archer' ? '弓箭手' : '战士');
+        const unitConfig = this._getUnitConfig(unit.type);
+        const unitLabel = unit.source === 'tamed' ? (unit.tamedInfo?.name || '驯化单位') : (unitConfig?.name || unit.type || '战斗单位');
         this._broadcast(`⚔️ ${unitLabel} 攻击！${nearestEnemy.hp <= 0 ? '击杀敌人' : `敌人HP ${nearestEnemy.hp}`}`);
         if (nearestEnemy.hp <= 0) {
           const idx = this.enemies.indexOf(nearestEnemy);
@@ -336,7 +340,8 @@ export class CombatSystem {
         const aEffCombat = this._alchemySystem ? (this._alchemySystem.getEffects().combat || {}) : {};
         const takenMul = aEffCombat.unitDamageTakenMul || 1;
         nearestUnit.hp -= Math.round((cfg.attack || 1) * takenMul);
-        const unitLabel = nearestUnit.source === 'tamed' ? (nearestUnit.tamedInfo?.name || '驯化单位') : (nearestUnit.type === 'archer' ? '弓箭手' : '战士');
+        const unitConfig = this._getUnitConfig(nearestUnit.type);
+        const unitLabel = nearestUnit.source === 'tamed' ? (nearestUnit.tamedInfo?.name || '驯化单位') : (unitConfig?.name || nearestUnit.type || '战斗单位');
         this._broadcast(`💥 ${cfg.name} 攻击${unitLabel}！`);
         if (nearestUnit.hp <= 0) {
           const idx = this.units.indexOf(nearestUnit);

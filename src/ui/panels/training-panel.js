@@ -13,6 +13,13 @@ function _avail() { return _store()?.getState('availableUnits') || {}; }
 function _saveAvail(av) { _store()?.setState({ availableUnits: av }); }
 function _techSystem() { return window.__game?.systems?.tech; }
 
+function _releaseUnitWorker(unit) {
+  const popSys = _population();
+  if (!popSys || !unit) return;
+  const required = unit.populationRequired || 0;
+  if (required > 0) popSys.releaseFromConstruction(required);
+}
+
 /** 检查单位是否已解锁（配置 unlocked=true 或 被科技解锁） */
 function _isUnitUnlocked(u) {
   if (u.unlocked !== false) return true;
@@ -33,6 +40,11 @@ export function renderTrainingPanel(data, body, pm) {
   const header = document.createElement('div');
   header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;';
   header.innerHTML = '<span style="font-size:18px;font-weight:700;color:#ececf0;">🏋️ 军事训练</span>';
+  const researchBtn = document.createElement('button');
+  researchBtn.textContent = '兵种研发';
+  researchBtn.style.cssText = 'padding:7px 14px;border:none;border-radius:6px;background:rgba(91,141,239,0.18);color:#8fb1ff;cursor:pointer;font-size:12px;font-weight:600;';
+  researchBtn.addEventListener('click', () => pm.open('unit_research', {}));
+  header.appendChild(researchBtn);
   body.appendChild(header);
 
   /* 工人信息栏 */
@@ -58,14 +70,14 @@ export function renderTrainingPanel(data, body, pm) {
     const top = document.createElement('div');
     top.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:10px;';
     top.innerHTML = '<span style="font-size:15px;font-weight:600;color:#ececf0;">' + (_isUnitUnlocked(u) ? '' : '🔒 ') + u.name + '</span>' +
-      '<span style="font-size:12px;color:#808098;">⚔️' + u.combatPower + ' · CP' + (u.commandPoints||1) + ' · 👷需求' + (u.populationRequired||0) + '</span>';
+      '<span style="font-size:12px;color:#808098;">' + ((u.domain === 'naval') ? '海军' : '陆军') + ' · ⚔️' + u.combatPower + ' · CP' + (u.commandPoints||1) + ' · 👷需求' + (u.populationRequired||0) + '</span>';
     card.appendChild(top);
 
     /* 未解锁提示 */
     if (!_isUnitUnlocked(u)) {
       const lockMsg = document.createElement('div');
       lockMsg.style.cssText = 'font-size:11px;color:#f0a040;margin-bottom:8px;';
-      lockMsg.textContent = '🔒 需要研究对应科技解锁';
+      lockMsg.textContent = '🔒 需要在「兵种研发」中完成专项研发';
       card.appendChild(lockMsg);
     }
 
@@ -121,6 +133,23 @@ export function renderTrainingPanel(data, body, pm) {
       renderTrainingPanel(data, body, pm);
     });
     btnRow.appendChild(trainBtn);
+
+    const dismissBtn = document.createElement('button');
+    dismissBtn.textContent = '遣散 x1';
+    const canDismiss = availCount > 0 && _isUnitUnlocked(u);
+    dismissBtn.style.cssText = 'padding:6px 14px;border:none;border-radius:6px;background:' + (canDismiss ? 'rgba(240,160,64,0.16)' : 'rgba(128,128,152,0.12)') + ';color:' + (canDismiss ? '#f0a040' : '#808098') + ';cursor:' + (canDismiss ? 'pointer' : 'default') + ';font-size:12px;font-weight:600;';
+    dismissBtn.title = '遣散后返还该单位占用的工人';
+    dismissBtn.addEventListener('mouseenter', () => { if (canDismiss) dismissBtn.style.background = 'rgba(240,160,64,0.28)'; });
+    dismissBtn.addEventListener('mouseleave', () => { if (canDismiss) dismissBtn.style.background = 'rgba(240,160,64,0.16)'; });
+    dismissBtn.addEventListener('click', () => {
+      if (!canDismiss) return;
+      const av = { ..._avail() };
+      av[u.id] = Math.max(0, (av[u.id] || 0) - 1);
+      _saveAvail(av);
+      _releaseUnitWorker(u);
+      renderTrainingPanel(data, body, pm);
+    });
+    btnRow.appendChild(dismissBtn);
     card.appendChild(btnRow);
 
     body.appendChild(card);

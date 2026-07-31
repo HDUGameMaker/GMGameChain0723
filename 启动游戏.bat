@@ -4,7 +4,10 @@ setlocal enabledelayedexpansion
 cd /d "%~dp0"
 title GMGameChain
 
-> "%~dp0debug.log" echo [%time%] Script started
+if not exist "%~dp0log" mkdir "%~dp0log"
+set "LOG_FILE=%~dp0log\debug.log"
+
+> "%LOG_FILE%" echo [%time%] Script started
 
 REM ==========================================
 REM  Step 1: Node.js already installed?
@@ -13,13 +16,13 @@ where node >nul 2>&1
 if not errorlevel 1 (
     where npx >nul 2>&1
     if not errorlevel 1 (
-        >> "%~dp0debug.log" echo [%time%] Node.js + npx found in PATH
+        >> "%LOG_FILE%" echo [%time%] Node.js + npx found in PATH
         goto :launch
     )
 )
 
 REM Search common install directories
->> "%~dp0debug.log" echo [%time%] Searching common install dirs...
+>> "%LOG_FILE%" echo [%time%] Searching common install dirs...
 for %%d in (
     "C:\Program Files\nodejs"
     "C:\Program Files (x86)\nodejs"
@@ -29,7 +32,7 @@ for %%d in (
 ) do (
     if exist %%d\node.exe (
         set "PATH=%%d;%PATH%"
-        >> "%~dp0debug.log" echo [%time%] Found at %%d
+        >> "%LOG_FILE%" echo [%time%] Found at %%d
     )
 )
 
@@ -59,16 +62,16 @@ if errorlevel 1 goto :no_winget
 echo   Attempting automatic install via winget...
 echo   (this may take a few minutes)
 echo.
->> "%~dp0debug.log" echo [%time%] winget found, installing Node.js LTS...
+>> "%LOG_FILE%" echo [%time%] winget found, installing Node.js LTS...
 
 winget install --id OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements --silent
 if errorlevel 1 (
     echo   winget install failed.
-    >> "%~dp0debug.log" echo [%time%] winget install returned error
+    >> "%LOG_FILE%" echo [%time%] winget install returned error
     goto :install_failed
 )
 
->> "%~dp0debug.log" echo [%time%] winget install completed
+>> "%LOG_FILE%" echo [%time%] winget install completed
 
 REM ==========================================
 REM  Step 4: Find Node.js after install
@@ -90,7 +93,7 @@ for %%d in (
 ) do (
     if exist %%d\node.exe (
         set "PATH=%%d;%PATH%"
-        >> "%~dp0debug.log" echo [%time%] Found at %%d
+        >> "%LOG_FILE%" echo [%time%] Found at %%d
     )
 )
 
@@ -99,7 +102,7 @@ if not errorlevel 1 (
     where npx >nul 2>&1
     if not errorlevel 1 (
         echo   Node.js installed successfully!
-        >> "%~dp0debug.log" echo [%time%] Node.js OK after install
+        >> "%LOG_FILE%" echo [%time%] Node.js OK after install
         goto :launch
     )
 )
@@ -108,7 +111,7 @@ REM If we get here, install seemed to succeed but node not in PATH
 echo.
 echo   Installation may need a terminal restart.
 echo   Please close this window and double-click again.
->> "%~dp0debug.log" echo [%time%] Node.js installed but not found in PATH
+>> "%LOG_FILE%" echo [%time%] Node.js installed but not found in PATH
 pause
 exit /b 0
 
@@ -117,7 +120,7 @@ REM  Step 5: winget not available
 REM ==========================================
 :no_winget
 echo   winget is not available on this system.
->> "%~dp0debug.log" echo [%time%] winget not found
+>> "%LOG_FILE%" echo [%time%] winget not found
 goto :install_failed
 
 REM ==========================================
@@ -145,19 +148,35 @@ REM ==========================================
 REM  LAUNCH - start the game
 REM ==========================================
 :launch
+set "PORT=18763"
+
+REM Stop stale game http-server instances from previous launches.
+REM 8099 is the legacy port; %PORT% is the current fixed port.
+>> "%LOG_FILE%" echo [%time%] Stopping stale http-server processes...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ports=@(8099,%PORT%); foreach($port in $ports){ Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^node(\\.exe)?$' -and $_.CommandLine -match 'http-server' -and $_.CommandLine -match ('-p\s+' + $port + '\b') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue | ForEach-Object { $filter='ProcessId=' + $_.OwningProcess; $p=Get-CimInstance Win32_Process -Filter $filter -ErrorAction SilentlyContinue; if($p -and $p.Name -match '^node(\\.exe)?$' -and $p.CommandLine -match 'http-server'){ Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } } }" >> "%LOG_FILE%" 2>&1
+
+powershell -NoProfile -Command "if (Get-NetTCPConnection -LocalPort %PORT% -State Listen -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }" >nul 2>&1
+if errorlevel 1 (
+    echo   Port %PORT% is still occupied by another process.
+    >> "%LOG_FILE%" echo [%time%] Port %PORT% still occupied
+    pause
+    exit /b 1
+)
+
 echo.
 echo ============================================
 echo   GMGameChain - Web Game
 echo ============================================
 echo.
-echo   Server : http://127.0.0.1:8080
+echo   Server : http://127.0.0.1:%PORT%
 echo   Press  Ctrl+C to stop
 echo ============================================
 echo.
 
-start "" http://127.0.0.1:8080
+set "GAME_URL=http://127.0.0.1:%PORT%/?v=%RANDOM%"
+start "" powershell -NoProfile -WindowStyle Hidden -Command "$u='%GAME_URL%'; for ($i=0; $i -lt 40; $i++) { try { Invoke-WebRequest -Uri $u -UseBasicParsing -TimeoutSec 1 | Out-Null; break } catch { Start-Sleep -Milliseconds 500 } }; Start-Process $u"
 
->> "%~dp0debug.log" echo [%time%] Launching http-server via npx...
-npx --yes http-server . -p 8080 -c-1 --cors
+>> "%LOG_FILE%" echo [%time%] Launching http-server via npx on port %PORT%...
+npx --yes http-server . -p %PORT% -c-1 --cors
 
 pause

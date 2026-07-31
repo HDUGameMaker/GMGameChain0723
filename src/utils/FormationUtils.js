@@ -26,53 +26,127 @@ function _unitName(unitId) {
   return u ? u.name : unitId;
 }
 
+function _branchName(branch) {
+  const names = {
+    infantry: '步兵',
+    cavalry: '骑兵',
+    artillery: '炮兵',
+    navy: '海军'
+  };
+  return names[branch] || branch;
+}
+
 function _formationReqs(f) {
   return ((f && f.requiredUnits) || []).filter(r => (r.count || 0) > 0);
 }
 
-/** 计算阵型已满足的完整组数：数量不足返回 0，数量翻倍则组数翻倍 */
-export function calcFormationGroups(formationId, army) {
+function _matchesReq(unitId, req, unitMap) {
+  if (req.unitId) return unitId === req.unitId;
+  const unit = unitMap[unitId];
+  if (req.branch && unit?.branch !== req.branch) return false;
+  if (req.domain && (unit?.domain || 'land') !== req.domain) return false;
+  return true;
+}
+
+function _isModernUnit(unit) {
+  if (!unit) return false;
+  if (unit.id && unit.id.startsWith('modern_')) return true;
+  const prereqs = unit.prerequisiteTechs || [];
+  return prereqs.some(id => id.startsWith('modern_'));
+}
+
+function _calcFormationUsage(formationId, army) {
   const f = getFormation(formationId);
   const reqs = _formationReqs(f);
-  if (reqs.length === 0) return f ? 1 : 0;
+  if (!f) return { groups: 0, basePower: 0, hasModern: false };
+  if (reqs.length === 0) return { groups: 1, basePower: 0, hasModern: false };
 
   const counts = getArmyUnitCounts(army);
+  const units = configRegistry.get('enemies')?.units || [];
+  const unitMap = {};
+  units.forEach(u => { unitMap[u.id] = u; });
   const totalUnits = Object.values(counts).reduce((s, n) => s + n, 0);
-  const specific = reqs.filter(r => r.unitId);
-  const emptyCount = reqs.filter(r => !r.unitId).reduce((s, r) => s + r.count, 0);
 
   let maxGroups = totalUnits;
-  for (const r of specific) {
-    maxGroups = Math.min(maxGroups, Math.floor((counts[r.unitId] || 0) / r.count));
-  }
-  if (emptyCount > 0) {
-    maxGroups = Math.min(maxGroups, Math.floor(totalUnits / emptyCount));
+  for (const r of reqs) {
+    const matchingCount = Object.entries(counts).reduce((sum, [unitId, count]) => {
+      return sum + (_matchesReq(unitId, r, unitMap) ? count : 0);
+    }, 0);
+    maxGroups = Math.min(maxGroups, Math.floor(matchingCount / r.count));
   }
 
   for (let groups = maxGroups; groups >= 1; groups--) {
-    let specificConsumed = 0;
+    const remaining = { ...counts };
+    let basePower = 0;
+    let hasModern = false;
     let ok = true;
-    for (const r of specific) {
-      if ((counts[r.unitId] || 0) < groups * r.count) { ok = false; break; }
-      specificConsumed += groups * r.count;
+    for (const r of reqs) {
+      let need = groups * r.count;
+      const unitIds = Object.keys(remaining).filter(unitId => _matchesReq(unitId, r, unitMap));
+      unitIds.sort((a, b) => {
+        const wa = unitMap[a]?.weight || 100;
+        const wb = unitMap[b]?.weight || 100;
+        return wa - wb;
+      });
+      for (const unitId of unitIds) {
+        if (need <= 0) break;
+        const take = Math.min(remaining[unitId] || 0, need);
+        const unit = unitMap[unitId];
+        basePower += take * (unit?.combatPower || 1);
+        if (_isModernUnit(unit)) hasModern = true;
+        remaining[unitId] -= take;
+        need -= take;
+      }
+      if (need > 0) { ok = false; break; }
     }
-    if (!ok) continue;
-    if (totalUnits - specificConsumed >= groups * emptyCount) return groups;
+    if (ok) return { groups, basePower, hasModern };
   }
-  return 0;
+  return { groups: 0, basePower: 0, hasModern: false };
+}
+
+/** 计算阵型已满足的完整组数：数量不足返回 0，数量翻倍则组数翻倍 */
+export function calcFormationGroups(formationId, army) {
+  return _calcFormationUsage(formationId, army).groups;
 }
 
 export function calcFormationBonus(formationId, army) {
   const f = getFormation(formationId);
   if (!f) return 0;
-  return calcFormationGroups(formationId, army) * (f.combatPowerBonus || 0);
+  const usage = _calcFormationUsage(formationId, army);
+  if (usage.groups <= 0) return 0;
+  if (typeof f.bonusRate === 'number') {
+    const rate = usage.hasModern ? (f.modernBonusRate ?? f.bonusRate) : f.bonusRate;
+    return Math.floor(usage.basePower * rate);
+  }
+  return usage.groups * (f.combatPowerBonus || 0);
+}
+
+export function getFormationBonusText(formationId, army = null) {
+  const f = getFormation(formationId);
+  if (!f) return '';
+  if (typeof f.bonusRate === 'number') {
+    if (army) {
+      const usage = _calcFormationUsage(formationId, army);
+      const rate = usage.hasModern ? (f.modernBonusRate ?? f.bonusRate) : f.bonusRate;
+      return '+' + Math.round(rate * 100) + '%';
+    }
+    return '+' + Math.round((f.bonusRate || 0) * 100) + '% / 现代+' + Math.round((f.modernBonusRate ?? f.bonusRate) * 100) + '%';
+  }
+  return '+' + (f.combatPowerBonus || 0);
 }
 
 export function getFormationRequirementText(formationId) {
   const f = getFormation(formationId);
   const reqs = _formationReqs(f);
   if (reqs.length === 0) return '无数量需求';
-  return reqs.map(r => (r.unitId ? _unitName(r.unitId) : '任意单位') + '×' + r.count).join(' + ');
+  return reqs.map(r => {
+    let label = '任意单位';
+    if (r.unitId) label = _unitName(r.unitId);
+    else if (r.branch) label = _branchName(r.branch);
+    else if (r.domain === 'land') label = '陆军';
+    else if (r.domain === 'naval') label = '海军';
+    return label + '×' + r.count;
+  }).join(' + ');
 }
 
 export function getFormationStatusText(formationId, army) {
@@ -82,19 +156,25 @@ export function getFormationStatusText(formationId, army) {
   if (groups <= 0) {
     return '阵型未触发（需要 ' + getFormationRequirementText(formationId) + '）';
   }
-  return '阵型触发 ×' + groups + ' (+' + (groups * (f.combatPowerBonus || 0)) + ')';
+  return '阵型触发 ×' + groups + ' (+' + calcFormationBonus(formationId, army) + ' · ' + getFormationBonusText(formationId, army) + ')';
 }
 
-export function getArmyCombatPower(army) {
+export function getArmyCombatPower(army, options = {}) {
   const counts = getArmyUnitCounts(army);
   const units = configRegistry.get('enemies')?.units || [];
   const unitMap = {};
   for (const u of units) unitMap[u.id] = u;
 
   let base = 0;
+  const filteredUnitIds = [];
   for (const [unitId, n] of Object.entries(counts)) {
     const u = unitMap[unitId];
-    base += n * (u ? (u.combatPower || 1) : 1);
+    if (options.domain && (u?.domain || 'land') !== options.domain) continue;
+    const multiplier = (u?.domain === 'naval') ? (options.navalMultiplier || 1) : 1;
+    base += n * (u ? (u.combatPower || 1) : 1) * multiplier;
+    for (let i = 0; i < n; i++) filteredUnitIds.push(unitId);
   }
-  return base + calcFormationBonus(army?.formationId, army);
+  const formationArmy = options.domain ? { ...army, unitIds: filteredUnitIds } : army;
+  const formationBonus = options.includeFormation === false ? 0 : calcFormationBonus(army?.formationId, formationArmy);
+  return base + formationBonus;
 }

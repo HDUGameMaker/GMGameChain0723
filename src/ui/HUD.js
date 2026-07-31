@@ -7,6 +7,9 @@ import { eventBus } from '../core/EventBus.js';
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { progressManager } from '../utils/ProgressManager.js';
 
+const PRIMARY_RESOURCE_IDS = ['wood', 'stone', 'coal', 'hematite', 'food', 'fur'];
+const SECONDARY_RESOURCE_IDS = ['plank', 'iron_ingot', 'steel', 'brick', 'machine_part', 'electronic_part', 'gear', 'icon_inspiration'];
+
 export class HUD {
   constructor(systems, popupManager) {
     this.systems = systems;
@@ -46,6 +49,9 @@ export class HUD {
     this.btnTraining = document.getElementById('btn-training');
     this.weatherDisplay = document.getElementById('weather-display');
     this.expeditionStatus = document.getElementById('expedition-status');
+    if (this.weatherDisplay) {
+      this.weatherDisplay.style.display = 'none';
+    }
     // 进度条元素（懒初始化）
     this._tickProgressFill = null;
     this._expeditionProgressFill = null;
@@ -158,10 +164,11 @@ export class HUD {
         e.preventDefault();
       }
       // 空格键暂停/继续（3.空格键快捷键）
-      if (e.key === ' ' && e.target === document.body) {
+      if ((e.key === ' ' || e.code === 'Space') && e.target === document.body) {
         e.preventDefault();
         const paused = this.systems.time.togglePause();
         this._updatePauseIndicator(paused);
+        window.__game?.systems?.quest?.onPlayerAction('toggle_pause');
       }
     });
   }
@@ -210,16 +217,7 @@ export class HUD {
   }
 
   _refreshWeather() {
-    if (!this.weatherDisplay) return;
-    const weatherLabel = store.getState('weatherLabel') || '☀️ 晴天';
-    const seasonLabel = store.getState('seasonLabel') || '🌸 春';
-    const strength = store.getState('weatherStrength') ?? 0;
-    // 强度 >= 5 显示警告色
-    let color = '';
-    if (strength >= 5) color = 'color:#ff6b6b;';
-    else if (strength >= 3) color = 'color:#f0a040;';
-    this.weatherDisplay.innerHTML = `<span style="${color}">${seasonLabel} · ${weatherLabel}</span>`;
-    this.weatherDisplay.title = `强度: ${strength >= 0 ? '+' : ''}${strength} 级`;
+    this._refreshTime();
   }
 
   _subscribeEvents() {
@@ -292,87 +290,161 @@ export class HUD {
 
   _refreshResources() {
     const resources = this.systems.resource.getHUDResources();
-    const rates = this.systems.building.getProductionRates();
-
-    // 计算食物每日净变化（产出 - 消耗）
-    const foodProduction = this.systems.building.getTotalFoodProduction();
-    const idle = this.systems.population.getAvailableWorkers();
-    const assigned = this.systems.population.getAssignedWorkers();
-    const armies = store.getState('armies') || [];
-    const armyPop = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
-    const foodConsumption = idle + assigned + armyPop;
-    const foodDailyRate = foodProduction - foodConsumption;
+    const dailyFlow = this._getDailyResourceFlow();
+    const byId = {};
+    for (const res of resources) {
+      byId[res.id] = res;
+    }
 
     this.resourceBar.innerHTML = '';
-    this.resourceBar.querySelectorAll('[data-res-id="inspiration"]').forEach(el => el.remove());
-
-    for (const res of resources) {
-      // 灵感统一在下方单独显示，避免与 icon_inspiration 重复
-      if (res.id === 'icon_inspiration') continue;
-      // 食物使用每日速率，其他资源使用 per-tick 速率
-      const isFood = res.id === 'food';
-      let rate = isFood ? foodDailyRate : (rates[res.id] || 0);
-      const rateUnit = isFood ? '天' : 'Tick';
-
-      const isFull = res.current >= res.max;
-      const item = document.createElement('div');
-      item.className = 'resource-item' + (isFull ? ' full' : '');
-      const iconHtml = res.icon
-        ? `<img src="${res.icon}" alt="${res.name}" class="res-icon" style="width:22px;height:22px;object-fit:contain;vertical-align:middle" onerror="this.replaceWith(document.createTextNode('${this._getResourceEmoji(res.id)}'))" />`
-        : this._getResourceEmoji(res.id);
-
-      // 构建 HTML：图标 + 数值 + 产量速率标记
-      let innerHTML = `<span>${iconHtml}</span><span class="res-value">${res.current}</span>`;
-      if (rate !== 0) {
-        const sign = rate > 0 ? '+' : '';
-        const rateClass = rate > 0 ? 'positive' : 'negative';
-        innerHTML += `<span class="res-rate ${rateClass}">${sign}${rate}</span>`;
-      }
-      item.innerHTML = innerHTML;
-
-      // 点击弹窗：含产量速率信息
-      const rateText = rate !== 0
-        ? `\n每${rateUnit}: ${rate > 0 ? '+' : ''}${rate}`
-        : '';
-      item.addEventListener('click', (e) => {
-        this._showPopover(e.target, `${res.name}: ${res.current} / ${res.max}${rateText}`);
-      });
-      this.resourceBar.appendChild(item);
-
-      // 资源变化弹跳动画
-      const prevVal = this._prevResourceValues[res.id];
-      if (prevVal !== undefined && prevVal !== res.current && window.gsap) {
-        const valueEl = item.querySelector('.res-value');
-        gsap.fromTo(valueEl,
-          { scale: 1.4, color: res.current > prevVal ? '#88ff88' : '#ff8888' },
-          { scale: 1, color: '#ffffff', duration: 0.4, ease: 'back.out(2)' }
-        );
-      }
-      this._prevResourceValues[res.id] = res.current;
-    }
 
     /* 灵感显示 */
     const inspiration = store.getState('inspiration') || 0;
     const inspPerPerson = this.systems.population.inspirationPerPerson || 1;
-    const populationInsp = Math.round(this.systems.population.current * inspPerPerson);
-    const buildingInsp = rates['inspiration'] || 0;
-    const inspRate = populationInsp;
-    const inspItem = document.createElement('div');
-    inspItem.className = 'resource-item';
-    inspItem.setAttribute('data-res-id', 'inspiration');
-    let inspHTML = '<span>💡</span><span class="res-value">' + inspiration + '</span>';
-    if (inspRate !== 0) {
-      inspHTML += '<span class="res-rate positive">+' + inspRate + '</span>';
+    const buildingInsp = dailyFlow.inspiration?.produced || 0;
+
+    const specialResources = {
+      icon_inspiration: {
+        id: 'icon_inspiration',
+        name: '灵感',
+        icon: byId.icon_inspiration?.icon || '',
+        current: inspiration,
+        max: byId.icon_inspiration?.max || 100000,
+        flowId: 'inspiration',
+        popoverExtra: '每人每日: +' + inspPerPerson + (buildingInsp ? '\n建筑每日: +' + buildingInsp : '')
+      }
+    };
+
+    const groups = [
+      { className: 'primary', title: '建筑和采集直接获得的基础资源', ids: PRIMARY_RESOURCE_IDS },
+      { className: 'secondary', title: '依赖基础资源加工转化的生产资源', ids: SECONDARY_RESOURCE_IDS }
+    ];
+
+    for (const group of groups) {
+      const cluster = document.createElement('div');
+      cluster.className = `resource-cluster ${group.className}`;
+      cluster.title = group.title;
+
+      const items = document.createElement('div');
+      items.className = 'resource-cluster-items';
+      for (const id of group.ids) {
+        const res = specialResources[id] || byId[id];
+        if (!res) continue;
+        const flow = dailyFlow[res.flowId || id] || { produced: 0, consumed: 0, net: 0 };
+        const item = this._createResourceItem(res, flow);
+        items.appendChild(item);
+      }
+      cluster.appendChild(items);
+      this.resourceBar.appendChild(cluster);
     }
-    inspItem.innerHTML = inspHTML;
-    inspItem.addEventListener('click', (e) => {
-      this._showPopover(e.target, '灵感: ' + inspiration + '\n每人每日: +' + inspPerPerson + (buildingInsp ? '\n酒馆每Tick: +' + buildingInsp : ''));
+  }
+
+  _getDailyResourceFlow() {
+    const flow = this.systems.building.getDailyResourceFlow ? this.systems.building.getDailyResourceFlow() : {};
+    const clone = {};
+    for (const [id, entry] of Object.entries(flow)) {
+      clone[id] = {
+        produced: Math.round(entry.produced || 0),
+        consumed: Math.round(entry.consumed || 0),
+        net: Math.round(entry.net || 0)
+      };
+    }
+
+    const add = (id, produced, consumed) => {
+      if (!clone[id]) clone[id] = { produced: 0, consumed: 0, net: 0 };
+      clone[id].produced += produced || 0;
+      clone[id].consumed += consumed || 0;
+      clone[id].net = clone[id].produced - clone[id].consumed;
+    };
+
+    // 食物每日产出和消耗来自人口系统的日结算口径。
+    let foodProduction = this.systems.building.getTotalFoodProduction();
+    if (foodProduction > 0 && this.systems.weather) {
+      foodProduction = Math.round(foodProduction * this.systems.weather.getFoodModifier());
+      const rainBonus = this.systems.weather.getRainBonus();
+      if (rainBonus > 0) {
+        foodProduction += rainBonus * Math.max(1, this.systems.population.current);
+      }
+    }
+    const idle = this.systems.population.getAvailableWorkers();
+    const assigned = this.systems.population.getAssignedWorkers();
+    const armies = store.getState('armies') || [];
+    const armyPop = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
+    const aEffPop = this.systems.alchemy ? (this.systems.alchemy.getEffects().population || {}) : {};
+    const cultureMul = this.systems.culture ? (this.systems.culture.getEffects().foodConsumeMul || 1) : 1;
+    const foodConsumeMul = cultureMul * (aEffPop.foodConsumeMul || 1);
+    const foodConsumption = Math.ceil((idle + assigned + armyPop) * foodConsumeMul);
+    add('food', foodProduction, foodConsumption);
+
+    // 人口每日灵感。
+    const inspPerPerson = this.systems.population.inspirationPerPerson || 1;
+    add('inspiration', Math.round(this.systems.population.current * inspPerPerson), 0);
+
+    // 殖民地每日资源收益。
+    const colonies = store.getState('colonies') || [];
+    for (const colony of colonies) {
+      for (const r of colony.dailyIncome?.resources || []) {
+        add(r.resourceId, r.amount || 0, 0);
+      }
+    }
+
+    return clone;
+  }
+
+  _createResourceItem(res, flow) {
+    const isFull = res.current >= res.max;
+    const item = document.createElement('div');
+    item.className = 'resource-item' + (isFull ? ' full' : '');
+    item.setAttribute('data-res-id', res.id);
+    const iconHtml = res.icon
+      ? `<img src="${res.icon}" alt="${res.name}" class="res-icon" onerror="this.replaceWith(document.createTextNode('${this._getResourceEmoji(res.id)}'))" />`
+      : this._getResourceEmoji(res.id);
+
+    const netClass = flow.net >= 0 ? 'positive' : 'negative';
+    const netText = flow.net > 0 ? '+' + flow.net : String(flow.net);
+    const innerHTML =
+      `<span class="res-main"><span class="res-icon-wrap">${iconHtml}</span><span class="res-value">${res.current}</span></span>` +
+      `<span class="res-delta"><span class="res-rate ${netClass}" title="每日结余">余 ${netText}</span></span>`;
+    item.innerHTML = innerHTML;
+
+    item.addEventListener('click', (e) => {
+      const text = `${res.name}: ${res.current} / ${res.max}` +
+        `\n每日产出: ${flow.produced}` +
+        `\n每日消耗: ${flow.consumed}` +
+        `\n每日结余: ${netText}` +
+        (res.popoverExtra ? '\n' + res.popoverExtra : '');
+      this._showPopover(e.currentTarget, text);
     });
-    this.resourceBar.appendChild(inspItem);
+
+    const prevVal = this._prevResourceValues[res.id];
+    if (prevVal !== undefined && prevVal !== res.current && window.gsap) {
+      const valueEl = item.querySelector('.res-value');
+      gsap.fromTo(valueEl,
+        { scale: 1.4, color: res.current > prevVal ? '#88ff88' : '#ff8888' },
+        { scale: 1, color: '#ffffff', duration: 0.4, ease: 'back.out(2)' }
+      );
+    }
+    this._prevResourceValues[res.id] = res.current;
+    return item;
   }
 
   _getResourceEmoji(id) {
-    const emojis = { wood: '🪵', plank: '📐', stone: '🪨', iron_ore: '⛏️', coal: '⚫', iron_ingot: '🔩', food: '🍞', gear: '⚙️', fur: '🧶' };
+    const emojis = {
+      wood: '🪵',
+      plank: '📐',
+      stone: '🪨',
+      hematite: '⛏️',
+      coal: '⚫',
+      iron_ingot: '🔩',
+      steel: '▰',
+      brick: '🧱',
+      machine_part: '⚙️',
+      electronic_part: '🔌',
+      food: '🍞',
+      gear: '⚙️',
+      fur: '🧶',
+      icon_inspiration: '💡'
+    };
     return emojis[id] || '📦';
   }
 
@@ -383,14 +455,22 @@ export class HUD {
     /* 部队人数：所有军团中的单位总数 */
     const armies = store.getState('armies') || [];
     const armyPop = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
+    const deployedUnits = this.systems.combat ? this.systems.combat.getAllUnits() : [];
+    const landDeployed = deployedUnits.filter(u => u.source !== 'tamed').length;
+    const navyUnits = 0;
     const total = idle + assigned + armyPop;
 
     const housingClass = total >= housing ? ' class="bottleneck"' : '';
 
     this.populationDisplay.innerHTML =
-      `👥 <span style="color:#4ecb71">${idle}</span>+<span style="color:#5b8def">${assigned}</span>+<span style="color:#c98500">${armyPop}</span>/<span${housingClass}>${housing}</span>` +
-      ` <span style="font-size:10px;color:#808098;margin-left:4px;">空+建+军</span>` +
-      ` <span style="font-size:11px;color:#808098;margin-left:6px;">⚔️${armies.length}军</span>`;
+      `<div class="population-line">` +
+        `<span class="hud-info-main">👥 <span style="color:#4ecb71">${idle}</span>+<span style="color:#5b8def">${assigned}</span>+<span style="color:#c98500">${armyPop}</span>/<span${housingClass}>${housing}</span></span>` +
+        `<span class="hud-info-sub">空+建+陆</span>` +
+      `</div>` +
+      `<div class="military-line">` +
+        `<span class="hud-info-main">⚔️${armies.length}</span><span class="hud-info-sub">陆${armyPop + landDeployed}</span>` +
+        `<span class="hud-info-main">⚓${navyUnits}</span>` +
+      `</div>`;
 
     // 人口变化弹跳动画
     if (this._prevPopulation !== 0 && this._prevPopulation !== total && window.gsap) {
@@ -405,12 +485,16 @@ export class HUD {
       window.__game?.systems?.quest?.onPlayerAction('click_population');
       const available = this.systems.population.getAvailableWorkers();
       const foodAmount = this.systems.resource ? this.systems.resource.getAmount('food') : 0;
-      // 获取战士/弓箭手数量
-      let warriorCount = 0, archerCount = 0;
+      // 获取地图部署单位数量
+      let deployedText = '无';
       if (this.systems.combat) {
-       const units = this.systems.combat.getAllUnits();
-        warriorCount = units.filter(u => u.type === 'warrior').length;
-        archerCount = units.filter(u => u.type === 'archer').length;
+        const unitConfigs = configRegistry.get('enemies')?.units || [];
+        const unitNames = {};
+        unitConfigs.forEach(u => { unitNames[u.id] = u.name; });
+        const counts = {};
+        const units = this.systems.combat.getAllUnits().filter(u => u.source !== 'tamed');
+        units.forEach(u => { counts[u.type] = (counts[u.type] || 0) + 1; });
+        deployedText = Object.entries(counts).map(([id, n]) => (unitNames[id] || id) + n).join(' / ') || '无';
       }
       const armies = store.getState('armies') || [];
       const availUnits = store.getState('availableUnits') || {};
@@ -418,7 +502,7 @@ export class HUD {
       const totalArmyUnits = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
       const armyDetail = armies.map(a => a.name + ':' + (a.unitIds||[]).length + '单位').join(' · ');
       this._showPopover(e.target,
-        `总人口: ${total} = 空闲${idle} + 建筑${assigned} + 部队${armyPop}\n住宅上限: ${housing}\n可用工人: ${available}\n已分配: ${assigned}\n战士(部署): ${warriorCount}\n弓箭手(部署): ${archerCount}\n训练储备: ${totalAvail}\n军队: ${armies.length}支 · ${totalArmyUnits}单位\n${armyDetail || ''}\n食物储备: ${foodAmount}`
+        `总人口: ${total} = 空闲${idle} + 建筑${assigned} + 陆军${armyPop}\n住宅上限: ${housing}\n可用工人: ${available}\n已分配: ${assigned}\n地图部署: ${deployedText}\n陆军编制: ${armies.length}支 · ${totalArmyUnits}单位\n训练储备: ${totalAvail}\n海军: ${navyUnits}（殖民地战斗预留）\n${armyDetail || ''}\n食物储备: ${foodAmount}`
       );
     };
   }
@@ -438,10 +522,15 @@ export class HUD {
     }
     this._prevPeriod = newPeriod;
 
+    const weatherLabel = store.getState('weatherLabel') || '☀️ 晴天';
+    const seasonLabel = store.getState('seasonLabel') || '🌸 春';
+    const strength = store.getState('weatherStrength') ?? 0;
+    const weatherClass = strength >= 5 ? 'danger' : (strength >= 3 ? 'warning' : '');
+
     // 渲染时间文字 + 进度条容器（仅首次创建）
     if (!this._tickProgressFill) {
       this.timeDisplay.innerHTML = `
-        <span>${icon} ${label} Day ${time.day}</span>
+        <span class="time-weather-line"><span class="${weatherClass}">${seasonLabel} · ${weatherLabel}</span><span>${icon} ${label} Day ${time.day}</span></span>
         <div class="tick-progress"><div class="tick-progress-fill" style="width:0%"></div></div>
       `;
       this._tickProgressFill = this.timeDisplay.querySelector('.tick-progress-fill');
@@ -452,8 +541,12 @@ export class HUD {
         () => 1
       );
     } else {
-      this.timeDisplay.querySelector('span').textContent = `${icon} ${label} Day ${time.day}`;
+      const line = this.timeDisplay.querySelector('.time-weather-line');
+      if (line) {
+        line.innerHTML = `<span class="${weatherClass}">${seasonLabel} · ${weatherLabel}</span><span>${icon} ${label} Day ${time.day}</span>`;
+      }
     }
+    this.timeDisplay.title = `天气强度: ${strength >= 0 ? '+' : ''}${strength} 级`;
   }
 
   _refreshSpeedBtn() {
@@ -526,18 +619,21 @@ export class HUD {
       });
       const currentPeriod = state.currentPeriodIndex + 1;
       const occupiedWorkers = state.occupiedWorkers || 0;
-      const workerInfo = occupiedWorkers > 0 ? ` | 👥 ${occupiedWorkers}人` : '';
-      this.expeditionStatus.style.display = 'block';
+      const workerInfo = occupiedWorkers > 0 ? `👥 ${occupiedWorkers}人` : '👥 0人';
+      this.expeditionStatus.style.display = 'flex';
 
       if (!this._expeditionProgressFill) {
-        // 首次渲染：创建 DOM 并注册到统一进度管理器
+        // 当前系统只有一个探索队列；这里按列表结构渲染，后续可追加多个 expedition-card。
         this.expeditionStatus.innerHTML = `
-          <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:4px;">
-            <span class="expedition-label">🔍 探索中 | ${regionNames.join(' → ')} | 第 ${currentPeriod}/${totalPeriods} 时段${workerInfo}</span>
-            <span class="expedition-pct" style="font-size:11px;opacity:0.8;flex-shrink:0;margin-left:8px;">0%</span>
-          </div>
-          <div class="progress-bar" style="height:5px;">
-            <div class="progress-fill blue expedition-hud-fill" style="width:0%"></div>
+          <div class="expedition-card" data-expedition-index="0">
+            <div class="expedition-head">
+              <span class="expedition-label">🔍 探索中</span>
+              <span class="expedition-pct">0%</span>
+            </div>
+            <div class="expedition-meta">${regionNames.join(' → ')} · ${currentPeriod}/${totalPeriods} 时段 · ${workerInfo}</div>
+            <div class="progress-bar" style="height:4px;">
+              <div class="progress-fill blue expedition-hud-fill" style="width:0%"></div>
+            </div>
           </div>
         `;
         this._expeditionProgressFill = this.expeditionStatus.querySelector('.expedition-hud-fill');
@@ -558,9 +654,9 @@ export class HUD {
         );
       } else {
         // 后续调用：仅更新文本标签
-        const labelEl = this.expeditionStatus.querySelector('.expedition-label');
-        if (labelEl) {
-          labelEl.textContent = `🔍 探索中 | ${regionNames.join(' → ')} | 第 ${currentPeriod}/${totalPeriods} 时段${workerInfo}`;
+        const metaEl = this.expeditionStatus.querySelector('.expedition-meta');
+        if (metaEl) {
+          metaEl.textContent = `${regionNames.join(' → ')} · ${currentPeriod}/${totalPeriods} 时段 · ${workerInfo}`;
         }
       }
 

@@ -6,7 +6,8 @@ import {
   calcFormationGroups,
   getFormationRequirementText,
   getFormationStatusText,
-  getArmyCombatPower
+  getArmyCombatPower,
+  getFormationBonusText
 } from '../../utils/FormationUtils.js';
 
 const MAX_CP = 20;
@@ -26,6 +27,7 @@ function _saveArmies(armies) { _store()?.setState({ armies }); }
 function _saveAvail(avail) { _store()?.setState({ availableUnits: avail }); }
 function _techSys() { return window.__game?.systems?.tech; }
 function _formations() { return window.__game?.configRegistry?.get('enemies')?.formations || []; }
+function _population() { return window.__game?.systems?.population; }
 
 /** 检查单位是否已解锁（配置 unlocked=true 或 被科技解锁） */
 function _isUnitUnlocked(unitId) {
@@ -41,8 +43,6 @@ function _isFormationUnlocked(fId) {
   const f = _formations().find(x => x.id === fId);
   if (!f) return false;
   if (f.unlocked !== false) return true;
-  var tech = _techSys();
-  if (tech && tech.isFormationUnlockedByTech && tech.isFormationUnlockedByTech(fId)) return true;
   var culture = window.__game?.systems?.culture;
   if (culture && culture.isFormationUnlockedByCulture && culture.isFormationUnlockedByCulture(fId)) return true;
   return false;
@@ -80,6 +80,18 @@ function removeFromArmy(armies, ai, uid) {
   armies[ai].unitIds.splice(idx, 1);
   setAvailCount(uid, getAvailCount(uid) + 1);
   _saveArmies(armies);
+}
+
+function dismissFromArmy(armies, ai, uid) {
+  const idx = armies[ai].unitIds.lastIndexOf(uid);
+  if (idx < 0) return false;
+  armies[ai].unitIds.splice(idx, 1);
+  const unit = _cfg().find(u => u.id === uid);
+  const required = unit ? (unit.populationRequired || 0) : 0;
+  const popSys = _population();
+  if (popSys && required > 0) popSys.releaseFromConstruction(required);
+  _saveArmies(armies);
+  return true;
 }
 
 export function renderArmyPanel(data, body, pm) {
@@ -136,7 +148,7 @@ export function renderArmyPanel(data, body, pm) {
       row.style.cssText = 'padding:8px 0;' + (fi === 0 ? '' : 'border-top:1px solid rgba(255,255,255,0.06);');
       const name = document.createElement('div');
       name.style.cssText = 'font-size:12px;font-weight:600;color:#ececf0;margin-bottom:2px;';
-      name.textContent = f.name + '（每组 +' + (f.combatPowerBonus || 0) + ' 战斗力）';
+      name.textContent = f.name + '（' + getFormationBonusText(f.id) + '）';
       const req = document.createElement('div');
       req.style.cssText = 'font-size:11px;color:#5b8def;margin-bottom:2px;';
       req.textContent = '触发需求: ' + getFormationRequirementText(f.id);
@@ -201,7 +213,7 @@ export function renderArmyPanel(data, body, pm) {
     formations.forEach(f => {
       const opt = document.createElement('option');
       const groups = calcFormationGroups(f.id, army);
-      opt.value = f.id; opt.textContent = f.name + ' (+' + (f.combatPowerBonus||0) + '/组)' + (groups > 0 ? '' : ' · 未满足');
+      opt.value = f.id; opt.textContent = f.name + ' (' + getFormationBonusText(f.id, army) + ')' + (groups > 0 ? '' : ' · 未满足');
       opt.title = '需求: ' + getFormationRequirementText(f.id);
       if (army.formationId === f.id) opt.selected = true;
       formationSelect.appendChild(opt);
@@ -269,6 +281,16 @@ export function renderArmyPanel(data, body, pm) {
           renderArmyPanel(data, body, pm);
         });
         uRow.appendChild(removeOne);
+        const dismissOne = document.createElement('button');
+        dismissOne.textContent = '遣散';
+        dismissOne.style.cssText = 'padding:2px 8px;border:none;border-radius:4px;background:rgba(240,160,64,0.12);color:#f0a040;cursor:pointer;font-size:11px;';
+        dismissOne.title = '遣散一个，返还工人';
+        dismissOne.addEventListener('click', () => {
+          const a = _armies();
+          dismissFromArmy(a, ai, uid);
+          renderArmyPanel(data, body, pm);
+        });
+        uRow.appendChild(dismissOne);
         unitsBody.appendChild(uRow);
       });
       const clearBtn = document.createElement('button');

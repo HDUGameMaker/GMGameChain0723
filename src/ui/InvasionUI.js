@@ -80,6 +80,7 @@ export class InvasionUI {
 
   _showIdle() {
     if (!this._widget) return;
+    this._widget.classList.remove('active');
     this._widget.classList.remove('alarm');
     this._widget.classList.add('idle');
     this._powerEl.textContent = '暂无入侵';
@@ -97,6 +98,7 @@ export class InvasionUI {
 
   _showAlert(inv) {
     if (!this._widget) return;
+    this._widget.classList.add('active');
     this._widget.classList.remove('idle');
     this._widget.classList.add('alarm');
     this._powerEl.textContent = inv.combatPower;
@@ -119,18 +121,25 @@ export class InvasionUI {
     } else {
       armies.forEach((army) => {
         if (!army.unitIds || army.unitIds.length === 0) return;
-        const power = getArmyCombatPower(army);
+        const power = getArmyCombatPower(army, { domain: 'land' });
+        const totalPower = getArmyCombatPower(army);
+        const navalOnly = power <= 0 && totalPower > 0;
         const groups = army.formationId ? calcFormationGroups(army.formationId, army) : 0;
         const status = army.formationId ? (groups > 0 ? '阵型×' + groups : '阵型未触发') : '';
         const btn = document.createElement('div');
         btn.className = 'invasion-army-btn';
-        btn.textContent = army.name + ' (⚔️' + power + ' · ' + army.unitIds.length + '单位' + (status ? ' · ' + status : '') + ')';
+        btn.textContent = army.name + ' (陆战⚔️' + power + (navalOnly ? ' · 海军无法防御' : '') + ' · ' + army.unitIds.length + '单位' + (status ? ' · ' + status : '') + ')';
         btn.title = army.formationId ? getFormationStatusText(army.formationId, army) : '';
         btn.addEventListener('click', () => {
           const result = this._invasionSystem.sendArmy(army);
           if (!result.ok) { alert(result.msg); return; }
-          if (result.victory) alert('🎉 胜利！损失 ' + result.lost + ' 单位，剩余 ' + result.survived);
-          else alert('💥 战败！入侵残余战斗力 ' + result.remainingInvasionPower);
+          if (result.victory) {
+            alert('🎉 胜利！损失 ' + result.lost + ' 单位，剩余 ' + result.survived);
+          } else if (result.draw) {
+            alert('⚔️ 平局！全员倒下，' + result.reviveCount + ' 单位将在72小时后复归，入侵已被阻止');
+          } else {
+            alert('💥 战败！损失 ' + result.lost + ' 单位，' + result.reviveCount + ' 单位将在72小时后复归；入侵残余战斗力 ' + result.remainingInvasionPower);
+          }
         });
         this._armyList.appendChild(btn);
       });
