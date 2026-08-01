@@ -553,8 +553,8 @@ export function renderBuildingDetailPanel(data, body, pm) {
     const demolishBtn = actionButton(
       '🗑️ 拆除建筑',
       'rgba(255, 107, 107, 0.15)',
-      () => {
-        if (confirm('确定拆除此建筑？此操作不可撤销。')) {
+      async () => {
+        if (await pm.confirm('确定拆除此建筑？此操作不可撤销。')) {
           buildingSystem.demolishBuilding(buildingIndex);
           pm.close();
         }

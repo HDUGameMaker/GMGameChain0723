@@ -249,7 +249,7 @@ export function renderSettingsPanel(data, body, pm) {
   resetBtn.addEventListener('mouseenter', () => { resetBtn.style.background = 'rgba(255,107,107,0.2)'; });
   resetBtn.addEventListener('mouseleave', () => { resetBtn.style.background = 'rgba(255,107,107,0.1)'; });
   resetBtn.addEventListener('click', async () => {
-    if (confirm('确定要重置所有进度吗？此操作不可撤销。')) {
+    if (await pm.confirm('确定要重置所有进度吗？此操作不可撤销。')) {
       const game = window.__game;
       if (game) game._resetting = true;
       await SaveManager.reset();

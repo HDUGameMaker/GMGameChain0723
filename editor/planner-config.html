@@ -1101,12 +1101,12 @@ function renderCombatForm(c) {
   html += '<div class="section-title">入侵配置</div>';
   html += '<div class="form-row span-3">';
   const inv = c.invasion || {};
-  html += field('invasionBaseA', '基础值 a', inv.baseA ?? 5, { type: 'number' });
+  html += field('invasionBaseA', '基础值 a', inv.baseA ?? 2, { type: 'number' });
   html += field('invasionDayMulB', '天数倍率 b', inv.dayMulB ?? 1, { type: 'number', step: '0.1' });
-  html += field('invasionDaySqMulC', '天数²倍率 c', inv.daySqMulC ?? 0, { type: 'number', step: '0.01' });
+  html += field('invasionDaySqMulC', '天数²倍率 c', inv.daySqMulC ?? 0.1, { type: 'number', step: '0.01' });
   html += '</div>';
   html += '<div class="form-group full" style="font-size:11px;color:#808098;padding:4px 0;">';
-  html += '💡 入侵战斗力 = a + day×b + day²×c。每隔2~5天一波入侵，一天未消灭则损失50%人口和资源';
+  html += '💡 入侵战斗力 = a + day×b + day²×c。第30天开始入侵，之后每隔2~5天一波；一天未消灭则损失50%人口和资源';
   html += '</div>';
 
  return html;

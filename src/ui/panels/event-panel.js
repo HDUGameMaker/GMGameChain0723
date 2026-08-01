@@ -153,11 +153,11 @@ function renderColonyOfferPanel(evt, body, pm) {
         btn.style.cursor = 'not-allowed';
         btn.title = '战力不足';
       }
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         if (preview.power < evt.nativePower) return;
         const result = colonySystem.attackColony(evt.colonyId, army.id);
-        if (!result.ok) { alert(result.msg); return; }
-        alert('占领成功：' + result.colony + '。损失 ' + result.lostCount + ' 单位，殖民地防御 +' + result.defenseGain + '。');
+        if (!result.ok) { pm.alert(result.msg); return; }
+        await pm.alert('占领成功：' + result.colony + '。损失 ' + result.lostCount + ' 单位，殖民地防御 +' + result.defenseGain + '。');
         pm.close();
       });
       optionsDiv.appendChild(btn);
@@ -196,10 +196,10 @@ function renderColonyInvasionPanel(evt, body, pm) {
   const autoBtn = document.createElement('button');
   autoBtn.className = 'event-option-btn';
   autoBtn.textContent = '依靠殖民地守军抵抗（总防御 ' + baseDefense + '）';
-  autoBtn.addEventListener('click', () => {
+  autoBtn.addEventListener('click', async () => {
     const result = colonySystem.resolveColonyInvasion(evt.colonyId);
-    if (!result.ok) { alert(result.msg); return; }
-    alert(result.victory ? '殖民地守住了。剩余防御 ' + result.remainingDefense + '。' : '殖民地沦陷。');
+    if (!result.ok) { pm.alert(result.msg); return; }
+    await pm.alert(result.victory ? '殖民地守住了。剩余防御 ' + result.remainingDefense + '。' : '殖民地沦陷。');
     pm.close();
   });
   optionsDiv.appendChild(autoBtn);
@@ -209,10 +209,10 @@ function renderColonyInvasionPanel(evt, body, pm) {
     const btn = document.createElement('button');
     btn.className = 'event-option-btn';
     btn.textContent = army.name + ' 增援（军团战力 ' + preview.power + '，总防御 ' + (baseDefense + preview.power) + '）';
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const result = colonySystem.resolveColonyInvasion(evt.colonyId, army.id);
-      if (!result.ok) { alert(result.msg); return; }
-      alert(result.victory ? '增援成功，殖民地守住了。剩余防御 ' + result.remainingDefense + '。' : '增援不足，殖民地沦陷。');
+      if (!result.ok) { pm.alert(result.msg); return; }
+      await pm.alert(result.victory ? '增援成功，殖民地守住了。剩余防御 ' + result.remainingDefense + '。' : '增援不足，殖民地沦陷。');
       pm.close();
     });
     optionsDiv.appendChild(btn);

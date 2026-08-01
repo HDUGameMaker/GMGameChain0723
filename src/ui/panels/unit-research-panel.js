@@ -135,7 +135,7 @@ export function renderUnitResearchPanel(data, body, pm) {
       btn.addEventListener('click', () => {
         if (!canClick) {
           if (done) return;
-          alert(check.reason || '暂不可研发');
+          pm.alert(check.reason || '暂不可研发');
           return;
         }
         if (techSystem.researchUnit(unit.id)) {

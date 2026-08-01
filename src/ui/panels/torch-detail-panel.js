@@ -162,7 +162,7 @@ export function renderTorchDetailPanel(data, body, pm) {
         if (result) {
           pm.close();
         } else {
-          alert('点燃失败：煤炭不足');
+          pm.alert('点燃失败：煤炭不足');
         }
       }
     );
@@ -182,7 +182,7 @@ export function renderTorchDetailPanel(data, body, pm) {
         if (result) {
           pm.refresh({ torchIndex });
         } else {
-          alert('添加燃料失败：煤炭不足');
+          pm.alert('添加燃料失败：煤炭不足');
         }
       }
     );
@@ -202,7 +202,7 @@ export function renderTorchDetailPanel(data, body, pm) {
           if (result) {
             pm.refresh({ torchIndex });
           } else {
-            alert('升级失败：资源不足');
+            pm.alert('升级失败：资源不足');
           }
         }
       );
@@ -225,7 +225,7 @@ export function renderTorchDetailPanel(data, body, pm) {
         if (result) {
           pm.refresh({ torchIndex });
         } else {
-          alert('升级失败：资源不足');
+          pm.alert('升级失败：资源不足');
         }
       }
     );
@@ -250,13 +250,13 @@ export function renderTorchDetailPanel(data, body, pm) {
     const demolishBtn = actionButton(
       '拆除火把',
       'rgba(255, 107, 107, 0.15)',
-      () => {
+      async () => {
         // 在点击时重新查找 buildingIndex，避免渲染期间索引变动
         const idx = buildingSystem.buildings.findIndex(
           b => b.gridX === torch.gridX && b.gridY === torch.gridY && b.buildingId === torch.torchId
         );
         if (idx >= 0) {
-          if (confirm('确定拆除此火把？此操作不可撤销。')) {
+          if (await pm.confirm('确定拆除此火把？此操作不可撤销。')) {
             buildingSystem.demolishBuilding(idx);
             pm.close();
           }

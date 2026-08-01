@@ -375,7 +375,7 @@ export function renderExpeditionPrepPanel(data, body, pm) {
         if (success) {
           pm.close();
         } else {
-          alert('出发失败，请检查条件');
+          pm.alert('出发失败，请检查条件');
         }
       });
     }
@@ -392,10 +392,8 @@ export function renderExpeditionPrepPanel(data, body, pm) {
   const onPeriodChange = () => render();
   eventBus.on('periodChange', onPeriodChange);
 
-  // 面板关闭时移除监听
-  const origClose = pm.close.bind(pm);
-  pm.close = () => {
+  // 面板关闭/刷新时由 PopupManager 统一调用清理
+  container._popupCleanup = () => {
     eventBus.off('periodChange', onPeriodChange);
-    origClose();
   };
 }

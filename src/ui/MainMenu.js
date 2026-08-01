@@ -431,6 +431,66 @@ class MainMenu {
     this._aboutPopup = popup;
   }
 
+  showMessage(titleText, messageText) {
+    if (this._aboutPopup) {
+      this._aboutPopup.remove();
+      this._aboutPopup = null;
+    }
+
+    const popup = document.createElement('div');
+    popup.style.cssText = `
+      position:fixed;inset:0;z-index:1100;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,0.6);
+      animation:fadeIn 0.2s ease;
+    `;
+
+    const card = document.createElement('div');
+    card.style.cssText = `
+      background:#1e1e32;color:#ececf0;
+      border:1px solid rgba(139,124,240,0.35);
+      border-radius:16px;padding:28px 36px;
+      max-width:440px;width:90%;
+      box-shadow:0 12px 48px rgba(0,0,0,0.4);
+      text-align:center;
+      font-family:inherit;
+    `;
+
+    const title = document.createElement('div');
+    title.style.cssText = 'font-size:22px;font-weight:bold;color:#c8c3ff;margin-bottom:14px;';
+    title.textContent = titleText || '提示';
+    card.appendChild(title);
+
+    const msg = document.createElement('div');
+    msg.style.cssText = 'font-size:14px;color:#a0a0ba;line-height:1.8;margin-bottom:18px;white-space:pre-line;';
+    msg.textContent = messageText || '';
+    card.appendChild(msg);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '确定';
+    closeBtn.style.cssText = `
+      padding:8px 32px;border:1px solid rgba(255,255,255,0.15);
+      border-radius:8px;background:rgba(255,255,255,0.06);
+      color:#ececf0;font-size:14px;cursor:pointer;
+      font-family:inherit;transition:background 0.2s;
+    `;
+    closeBtn.addEventListener('mouseenter', () => { closeBtn.style.background = 'rgba(255,255,255,0.12)'; });
+    closeBtn.addEventListener('mouseleave', () => { closeBtn.style.background = 'rgba(255,255,255,0.06)'; });
+    closeBtn.addEventListener('click', () => {
+      popup.remove();
+      this._aboutPopup = null;
+    });
+    card.appendChild(closeBtn);
+
+    popup.addEventListener('click', (e) => {
+      if (e.target === popup) closeBtn.click();
+    });
+
+    popup.appendChild(card);
+    document.body.appendChild(popup);
+    this._aboutPopup = popup;
+  }
+
   /**
    * 检查是否有存档，禁用/启用继续游戏按钮
    */

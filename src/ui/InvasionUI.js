@@ -6,6 +6,13 @@ import { store } from '../core/Store.js';
 import { eventBus } from '../core/EventBus.js';
 import { getArmyCombatPower, calcFormationGroups, getFormationStatusText } from '../utils/FormationUtils.js';
 
+function showGameAlert(message) {
+  const pm = window.__game?.popupManager;
+  if (pm?.alert) return pm.alert(message);
+  eventBus.emit('combatBroadcast', { message });
+  return Promise.resolve(true);
+}
+
 export class InvasionUI {
   constructor(invasionSystem) {
     this._invasionSystem = invasionSystem;
@@ -132,13 +139,13 @@ export class InvasionUI {
         btn.title = army.formationId ? getFormationStatusText(army.formationId, army) : '';
         btn.addEventListener('click', () => {
           const result = this._invasionSystem.sendArmy(army);
-          if (!result.ok) { alert(result.msg); return; }
+          if (!result.ok) { showGameAlert(result.msg); return; }
           if (result.victory) {
-            alert('🎉 胜利！损失 ' + result.lost + ' 单位，剩余 ' + result.survived);
+            showGameAlert('🎉 胜利！损失 ' + result.lost + ' 单位，剩余 ' + result.survived);
           } else if (result.draw) {
-            alert('⚔️ 平局！全员倒下，' + result.reviveCount + ' 单位将在72小时后复归，入侵已被阻止');
+            showGameAlert('⚔️ 平局！全员倒下，' + result.reviveCount + ' 单位将在72小时后复归，入侵已被阻止');
           } else {
-            alert('💥 战败！损失 ' + result.lost + ' 单位，' + result.reviveCount + ' 单位将在72小时后复归；入侵残余战斗力 ' + result.remainingInvasionPower);
+            showGameAlert('💥 战败！损失 ' + result.lost + ' 单位，' + result.reviveCount + ' 单位将在72小时后复归；入侵残余战斗力 ' + result.remainingInvasionPower);
           }
         });
         this._armyList.appendChild(btn);

@@ -410,15 +410,15 @@
     }
   ],
   "invasion": {
-    "baseA": 4,
-    "dayMulB": 2,
-    "daySqMulC": 0.18
+    "baseA": 2,
+    "dayMulB": 1,
+    "daySqMulC": 0.1
   },
   "global": {
     "humanHp": 2,
     "clickAttack": 1
   },
-  "invasionBaseA": 4,
-  "invasionDayMulB": 2,
-  "invasionDaySqMulC": 0.18
+  "invasionBaseA": 2,
+  "invasionDayMulB": 1,
+  "invasionDaySqMulC": 0.1
 }

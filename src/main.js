@@ -53,7 +53,7 @@ class Game {
       this.mainMenu.init({
         onNewGame: () => this.startNewGame(),
         onContinueGame: () => this.startContinueGame(),
-        onSettings: () => alert('进入游戏后可在右上角设置中调整选项。'),
+        onSettings: () => this.mainMenu?.showMessage('设置', '进入游戏后可在右上角设置中调整选项。'),
         onExit: () => window.close()
       });
       console.log('[Game] Main menu shown');

@@ -145,11 +145,9 @@ export function renderBuildingSelectPanel(data, body, pm) {
     list.appendChild(card);
   }
 
-  // 面板关闭时清除新解锁标记
-  const origClose = pm.close.bind(pm);
-  pm.close = () => {
+  // 面板关闭/刷新时清除新解锁标记
+  list._popupCleanup = () => {
     buildingSystem.clearNewlyUnlocked();
-    origClose();
   };
 
   body.appendChild(list);

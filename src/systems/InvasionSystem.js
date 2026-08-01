@@ -1,11 +1,13 @@
 /**
  * InvasionSystem - 入侵系统
- * 每2-5天随机一波入侵，玩家派出军团战斗
+ * 第30天开始入侵，之后每2-5天随机一波，玩家派出军团战斗
  */
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { getArmyCombatPower, getFormationStatusText } from '../utils/FormationUtils.js';
+
+const FIRST_INVASION_DAY = 30;
 
 export class InvasionSystem {
  constructor() {
@@ -21,7 +23,7 @@ export class InvasionSystem {
   /* ===== 配置 ===== */
   get _invasionConfig() {
     const ec = configRegistry.get('enemies');
-    return ec?.invasion || { baseA: 5, dayMulB: 1, daySqMulC: 0 };
+    return ec?.invasion || { baseA: 2, dayMulB: 1, daySqMulC: 0.1 };
   }
 
   get _unitConfigs() { return configRegistry.get('enemies')?.units || []; }
@@ -33,6 +35,11 @@ export class InvasionSystem {
     const delay = this._randomBetween(2, 5);
     const day = store.getState('timeDay') || 1;
     this._nextDay = day + delay;
+  }
+
+  _scheduleFirst() {
+    const day = store.getState('timeDay') || 1;
+    this._nextDay = Math.max(day, FIRST_INVASION_DAY);
   }
 
   /* ===== 生成入侵 ===== */
@@ -307,11 +314,15 @@ export class InvasionSystem {
     this._activeInvasion = state.activeInvasion || null;
     this._invasionHistory = state.history || [];
     this._pendingRevives = (state.pendingRevives || []).map(r => ({ ...r, unitIds: [...(r.unitIds || [])] }));
+    const day = store.getState('timeDay') || 1;
+    if (!this._activeInvasion && day < FIRST_INVASION_DAY && this._nextDay < FIRST_INVASION_DAY) {
+      this._nextDay = FIRST_INVASION_DAY;
+    }
     this._updateUI();
   }
 
   initNew() {
-    this._scheduleNext();
+    this._scheduleFirst();
     this._activeInvasion = null;
     this._pendingRevives = [];
     this._updateUI();

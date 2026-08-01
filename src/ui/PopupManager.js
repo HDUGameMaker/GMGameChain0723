@@ -6,7 +6,8 @@ import { eventBus } from '../core/EventBus.js';
 import { renderTutorialPromptPanel } from './panels/tutorial-prompt-panel.js';
 
 // 阻塞时间的面板类型
-const BLOCKING_TYPES = ['event', 'expedition_prep', 'game_over', 'tutorial_prompt'];
+const SYSTEM_DIALOG_TYPE = '_system_dialog';
+const BLOCKING_TYPES = ['event', 'expedition_prep', 'game_over', 'tutorial_prompt', SYSTEM_DIALOG_TYPE];
 
 export class PopupManager {
   constructor(gameLoop, techSystem, cultureSystem, alchemySystem, combatSystem) {
@@ -87,6 +88,11 @@ export class PopupManager {
    * 返回上一层
    */
   pop() {
+    const current = this._stack[this._stack.length - 1];
+    if (current?.type === SYSTEM_DIALOG_TYPE) {
+      this._resolveSystemDialog(this._getDialogCancelValue(current.data));
+      return;
+    }
     if (this._stack.length <= 1) {
       this.close();
       return;
@@ -99,6 +105,15 @@ export class PopupManager {
    * 关闭弹窗
    */
   close() {
+    const current = this._stack[this._stack.length - 1];
+    if (current?.type === SYSTEM_DIALOG_TYPE) {
+      this._resolveSystemDialog(this._getDialogCancelValue(current.data));
+      return;
+    }
+    this._closeAll();
+  }
+
+  _closeAll() {
     // 清理详情面板的序列帧动画定时器
     this._cleanupAnimations();
     this._stack = [];
@@ -118,6 +133,83 @@ export class PopupManager {
     }
   }
 
+  alert(message, options = {}) {
+    return this._openSystemDialog({
+      mode: 'alert',
+      title: options.title || '提示',
+      message,
+      okText: options.okText || '确定',
+      blocking: options.blocking !== false
+    });
+  }
+
+  confirm(message, options = {}) {
+    return this._openSystemDialog({
+      mode: 'confirm',
+      title: options.title || '确认操作',
+      message,
+      okText: options.okText || '确定',
+      cancelText: options.cancelText || '取消',
+      blocking: options.blocking !== false
+    });
+  }
+
+  prompt(message, defaultValue = '', options = {}) {
+    return this._openSystemDialog({
+      mode: 'prompt',
+      title: options.title || '输入',
+      message,
+      defaultValue,
+      okText: options.okText || '确定',
+      cancelText: options.cancelText || '取消',
+      blocking: options.blocking !== false
+    });
+  }
+
+  _openSystemDialog(data) {
+    return new Promise((resolve) => {
+      const dialogData = { ...data, _resolve: resolve };
+      if (this._isOpen && this._stack.length > 0) {
+        this._stack.push({ type: SYSTEM_DIALOG_TYPE, data: dialogData });
+        this._render();
+      } else {
+        this._stack = [{ type: SYSTEM_DIALOG_TYPE, data: dialogData }];
+        this._show();
+        this._render();
+      }
+    });
+  }
+
+  _resolveSystemDialog(value) {
+    const current = this._stack[this._stack.length - 1];
+    if (current?.type !== SYSTEM_DIALOG_TYPE) return;
+
+    const resolve = current.data?._resolve;
+    this._cleanupAnimations();
+    this._stack.pop();
+
+    if (this._stack.length === 0) {
+      this._isOpen = false;
+      this._currentType = null;
+      this.overlay.classList.remove('active');
+      this.body.innerHTML = '';
+      this.footer.style.display = 'none';
+      this.footer.innerHTML = '';
+      eventBus.emit('popupClosed');
+      if (this._gameLoop.isPaused()) this._gameLoop.resume();
+    } else {
+      this._render();
+    }
+
+    if (typeof resolve === 'function') resolve(value);
+  }
+
+  _getDialogCancelValue(data) {
+    if (data?.mode === 'confirm') return false;
+    if (data?.mode === 'prompt') return null;
+    return true;
+  }
+
   /**
    * 清理 body 中所有 _animCleanup 回调（序列帧动画定时器）
    */
@@ -127,6 +219,10 @@ export class PopupManager {
       if (el._animCleanup && typeof el._animCleanup === 'function') {
         el._animCleanup();
         el._animCleanup = null;
+      }
+      if (el._popupCleanup && typeof el._popupCleanup === 'function') {
+        el._popupCleanup();
+        el._popupCleanup = null;
       }
     }
   }
@@ -161,7 +257,7 @@ export class PopupManager {
     const renderFn = this._panels[current.type];
 
     // 更新标题和返回按钮
-    this.backBtn.style.display = this._stack.length > 1 ? 'flex' : 'none';
+    this.backBtn.style.display = this._stack.length > 1 && current.type !== SYSTEM_DIALOG_TYPE ? 'flex' : 'none';
     this.titleEl.textContent = this._getTitle(current.type, current.data);
 
     // 清理旧面板的动画定时器，然后清空 body
@@ -173,9 +269,65 @@ export class PopupManager {
 
     if (renderFn) {
       renderFn(current.data, this.body, this);
+    } else if (current.type === SYSTEM_DIALOG_TYPE) {
+      this._renderSystemDialog(current.data);
     } else {
       this.body.innerHTML = `<p style="color:#999">未知面板类型: ${current.type}</p>`;
     }
+  }
+
+  _renderSystemDialog(data) {
+    this.body.style.cssText = 'padding:28px 24px;display:flex;justify-content:center;';
+
+    const container = document.createElement('div');
+    container.style.cssText = 'width:min(520px,100%);display:flex;flex-direction:column;gap:16px;';
+
+    const msg = document.createElement('div');
+    msg.style.cssText = 'font-size:14px;color:#d8d8e4;line-height:1.7;white-space:pre-line;text-align:center;';
+    msg.textContent = data.message || '';
+    container.appendChild(msg);
+
+    let input = null;
+    if (data.mode === 'prompt') {
+      input = document.createElement('input');
+      input.type = 'text';
+      input.value = data.defaultValue || '';
+      input.style.cssText = [
+        'width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px',
+        'border:1px solid rgba(255,255,255,0.16);background:rgba(0,0,0,0.22)',
+        'color:#ececf0;font-size:14px;font-family:inherit;outline:none'
+      ].join(';');
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') this._resolveSystemDialog(input.value);
+        if (e.key === 'Escape') this._resolveSystemDialog(null);
+      });
+      container.appendChild(input);
+      setTimeout(() => input.focus(), 0);
+    }
+
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display:flex;gap:10px;justify-content:center;';
+
+    if (data.mode !== 'alert') {
+      const cancelBtn = document.createElement('button');
+      cancelBtn.textContent = data.cancelText || '取消';
+      cancelBtn.style.cssText = 'min-width:96px;padding:9px 18px;border:1px solid rgba(255,255,255,0.12);border-radius:8px;background:rgba(255,255,255,0.06);color:#c8c8d6;cursor:pointer;font-family:inherit;';
+      cancelBtn.addEventListener('click', () => this._resolveSystemDialog(this._getDialogCancelValue(data)));
+      actions.appendChild(cancelBtn);
+    }
+
+    const okBtn = document.createElement('button');
+    okBtn.textContent = data.okText || '确定';
+    okBtn.style.cssText = 'min-width:96px;padding:9px 18px;border:1px solid rgba(91,141,239,0.35);border-radius:8px;background:rgba(91,141,239,0.22);color:#dfe8ff;cursor:pointer;font-weight:600;font-family:inherit;';
+    okBtn.addEventListener('click', () => {
+      if (data.mode === 'confirm') this._resolveSystemDialog(true);
+      else if (data.mode === 'prompt') this._resolveSystemDialog(input ? input.value : '');
+      else this._resolveSystemDialog(true);
+    });
+    actions.appendChild(okBtn);
+    container.appendChild(actions);
+
+    this.body.appendChild(container);
   }
 
   _getTitle(type, data) {
@@ -200,6 +352,7 @@ export class PopupManager {
       'tutorial_prompt': '新手教程',
       'quest_panel': '任务'
     };
+    if (type === SYSTEM_DIALOG_TYPE) return data?.title || '提示';
     return titles[type] || '';
   }
 
@@ -210,6 +363,7 @@ export class PopupManager {
       ? this._stack[this._stack.length - 1]
       : null;
     if (current?.data?.blocking === true) return true;
+    if (current?.data?.blocking === false) return false;
 
     const type = this._stack.length > 0
       ? current.type

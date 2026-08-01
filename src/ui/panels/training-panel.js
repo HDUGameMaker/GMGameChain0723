@@ -120,7 +120,7 @@ export function renderTrainingPanel(data, body, pm) {
         const reasons = [];
         if (!canAfford) reasons.push('资源不足');
         if (!hasWorkers) reasons.push('可用工人不足（需要' + (u.populationRequired||0) + '，可用' + availWorkers + '）');
-        alert(msg + reasons.join('，'));
+        pm.alert(msg + reasons.join('，'));
         return;
       }
       if (resourceSys) resourceSys.consumeAll(costs);

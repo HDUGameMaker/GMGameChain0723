@@ -96,7 +96,7 @@ export function renderPotionInventoryPanel(data, body, pm) {
         if (result.valid) {
           pm.refresh(data);
         } else {
-          alert(result.reason);
+          pm.alert(result.reason);
         }
       });
 

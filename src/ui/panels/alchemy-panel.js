@@ -398,7 +398,7 @@ export function renderAlchemyPanel(data, body, pm) {
         if (result.success) {
           pm.refresh(data);
         } else {
-          alert('提炼失败: ' + result.reason);
+          pm.alert('提炼失败: ' + result.reason);
         }
       });
     }
@@ -443,7 +443,7 @@ export function renderAlchemyPanel(data, body, pm) {
         body._alchemySelectedRecipe = null;
         pm.refresh(data);
       } else {
-        alert('实验失败: ' + result.reason);
+        pm.alert('实验失败: ' + result.reason);
       }
     });
     actionBar.appendChild(experimentBtn);
@@ -462,7 +462,7 @@ export function renderAlchemyPanel(data, body, pm) {
         body._alchemySelectedRecipe = null;
         pm.refresh(data);
       } else {
-        alert('酿造失败: ' + result.reason);
+        pm.alert('酿造失败: ' + result.reason);
       }
     });
     actionBar.appendChild(craftBtn);

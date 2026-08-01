@@ -160,8 +160,8 @@ export function renderDoctrinePanel(data, body, pm) {
     el.addEventListener('click', function() {
       var canResearch = _canResearch(d);
       var costAmount = (d.cost && d.cost.length > 0) ? d.cost[0].amount : 0;
-      if (!canResearch) { alert('前置未完成'); return; }
-      if (inspiration < costAmount) { alert('灵感不足（需要 ' + costAmount + '）'); return; }
+      if (!canResearch) { pm.alert('前置未完成'); return; }
+      if (inspiration < costAmount) { pm.alert('灵感不足（需要 ' + costAmount + '）'); return; }
       var cur = _researched();
       cur.push(d.id);
       store.setState({ doctrineResearched: cur, inspiration: _inspiration() - costAmount });
@@ -246,7 +246,7 @@ export function renderMilitaryTraditionPanel(data, body, pm) {
     btn.style.cssText = 'padding:6px 12px;border:none;border-radius:6px;background:' + (canClick ? 'rgba(91,141,239,0.22)' : 'rgba(128,128,152,0.14)') + ';color:' + (canClick ? '#8fb1ff' : '#808098') + ';cursor:' + (canClick ? 'pointer' : 'default') + ';font-size:12px;font-weight:600;';
     btn.addEventListener('click', function() {
       if (!canClick) {
-        if (!done) alert(check.reason || '暂不可研发');
+        if (!done) pm.alert(check.reason || '暂不可研发');
         return;
       }
       if (culture.researchFormation(f.id)) renderMilitaryTraditionPanel(data, body, pm);
