@@ -1,17 +1,15 @@
 /**
  * InvasionSystem - 入侵系统
- * 第30天开始入侵，之后每2-5天随机一波，玩家派出军团战斗
+ * 入侵时间、强度、贡品、惩罚和复归规则均由 enemies.invasion 配置驱动
  */
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { getArmyCombatPower, getFormationStatusText } from '../utils/FormationUtils.js';
 
-const FIRST_INVASION_DAY = 30;
-
 export class InvasionSystem {
  constructor() {
-    this._activeInvasion = null;   // { combatPower, dayCreated }
+    this._activeInvasion = null;   // { combatPower, dayCreated, tributeFoodCost, tributeMultiplier }
     this._lastPunishDay = 0;       // 上次惩罚在哪天
     this._nextDay = 0;             // 下次入侵在哪天
     this._invasionHistory = [];    // 历史记录
@@ -23,32 +21,84 @@ export class InvasionSystem {
   /* ===== 配置 ===== */
   get _invasionConfig() {
     const ec = configRegistry.get('enemies');
-    return ec?.invasion || { baseA: 2, dayMulB: 1, daySqMulC: 0.1 };
+    return ec?.invasion || {};
   }
 
   get _unitConfigs() { return configRegistry.get('enemies')?.units || []; }
 
+  _notifyArmyChanged(reason) {
+    const version = (store.getState('armyVersion') || 0) + 1;
+    store.setState({ armyVersion: version });
+    eventBus.emit('armyChanged', { reason, version });
+  }
+
+  _commitArmies(armies, reason) {
+    store.setState({ armies: [...armies] });
+    this._notifyArmyChanged(reason);
+  }
+
+  _commitAvailableUnits(avail, reason) {
+    store.setState({ availableUnits: { ...avail } });
+    this._notifyArmyChanged(reason);
+  }
+
   /* ===== 调度 ===== */
   _randomBetween(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
+  _cfgNumber(key, fallback) {
+    const value = this._invasionConfig?.[key];
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  _cfgString(key, fallback) {
+    const value = this._invasionConfig?.[key];
+    return typeof value === 'string' && value ? value : fallback;
+  }
+
   _scheduleNext() {
-    const delay = this._randomBetween(2, 5);
+    const min = this._cfgNumber('nextDelayMinDays', 2);
+    const max = this._cfgNumber('nextDelayMaxDays', 5);
+    const delay = this._randomBetween(Math.min(min, max), Math.max(min, max));
     const day = store.getState('timeDay') || 1;
     this._nextDay = day + delay;
+    this._updateUI();
   }
 
   _scheduleFirst() {
     const day = store.getState('timeDay') || 1;
-    this._nextDay = Math.max(day, FIRST_INVASION_DAY);
+    this._nextDay = Math.max(day, this._cfgNumber('firstDay', 30));
+    this._updateUI();
+  }
+
+  _delayNextInvasion(days, reason) {
+    const day = store.getState('timeDay') || 1;
+    this._nextDay = Math.max(this._nextDay || 0, day + days);
+    this._updateUI();
+    eventBus.emit('combatBroadcast', { message: `🛡️ ${reason}，未来${days}日内不会触发入侵` });
+  }
+
+  _rollTributeCost(combatPower) {
+    const min = this._cfgNumber('tributeMultiplierMin', 1);
+    const max = this._cfgNumber('tributeMultiplierMax', 10);
+    const multiplier = this._randomBetween(Math.min(min, max), Math.max(min, max));
+    return {
+      multiplier,
+      foodCost: Math.max(1, Math.round(Math.max(1, combatPower || 1) * multiplier))
+    };
   }
 
   /* ===== 生成入侵 ===== */
   _generateInvasion(forcePower) {
     const day = store.getState('timeDay') || 1;
-    const cfg = this._invasionConfig;
-    const base = forcePower ?? Math.round(cfg.baseA + day * cfg.dayMulB + day * day * cfg.daySqMulC);
+    const baseA = this._cfgNumber('baseA', 2);
+    const dayMulB = this._cfgNumber('dayMulB', 0.8);
+    const daySqMulC = this._cfgNumber('daySqMulC', 0.03);
+    const base = forcePower ?? Math.round(baseA + day * dayMulB + day * day * daySqMulC);
+    const tribute = this._rollTributeCost(base);
     this._activeInvasion = {
       combatPower: base,
+      tributeFoodCost: tribute.foodCost,
+      tributeMultiplier: tribute.multiplier,
       dayCreated: day,
       lastPunishDay: this._lastPunishDay || day,
     };
@@ -78,24 +128,25 @@ export class InvasionSystem {
     }
   }
 
-  /* ===== 超时惩罚：损失50%人口和资源 ===== */
+  /* ===== 超时惩罚 ===== */
   _punishPlayer() {
     const resourceSys = window.__game?.systems?.resource;
     const popSys = window.__game?.systems?.population;
     const buildingSys = window.__game?.systems?.building;
+    const resourceLossRate = this._cfgNumber('punishResourceLossRate', 0.5);
+    const populationLossRate = this._cfgNumber('punishPopulationLossRate', 0.3);
+    const minimumPopulation = this._cfgNumber('minimumPopulationAfterPunish', 2);
 
-    // 损失50%资源
     if (resourceSys) {
       const allRes = configRegistry.get('resources') || [];
       allRes.forEach(r => {
         const cur = resourceSys.getAmount(r.id);
-        if (cur > 0) resourceSys.tryConsume(r.id, Math.ceil(cur * 0.5));
+        if (cur > 0) resourceSys.tryConsume(r.id, Math.ceil(cur * resourceLossRate));
       });
     }
 
-    // 损失30%人口（含已分配工人），随机移除建筑工人
     if (popSys) {
-      const totalToLose = Math.ceil(popSys.current * 0.3);
+      const totalToLose = Math.ceil(popSys.current * populationLossRate);
       let remaining = totalToLose;
 
       // 优先从建筑中随机移除工人
@@ -120,13 +171,13 @@ export class InvasionSystem {
 
       // 剩余从总人口扣除
       if (remaining > 0) {
-        popSys.current = Math.max(2, popSys.current - remaining);
+        popSys.current = Math.max(minimumPopulation, popSys.current - remaining);
       }
       popSys._updateStore();
     }
     eventBus.emit('populationChanged', { current: popSys?.current || 0, direction: 'invasion' });
     eventBus.emit('resourceChanged');
-    eventBus.emit('combatBroadcast', { message: '💀 入侵持续！损失50%资源、30%人口（部分建筑工人被抽离）！' });
+    eventBus.emit('combatBroadcast', { message: `💀 入侵持续！损失${Math.round(resourceLossRate * 100)}%资源、${Math.round(populationLossRate * 100)}%人口（部分建筑工人被抽离）！` });
   }
 
   /* ===== 派出军团 ===== */
@@ -137,16 +188,17 @@ export class InvasionSystem {
     const armies = store.getState('armies') || [];
     const unitMap = {};
     this._unitConfigs.forEach(u => unitMap[u.id] = u);
+    const defenseDomain = this._cfgString('landDefenseDomain', 'land');
 
     // 计算军团总战斗力（含阵型按完整组数触发的加成）
     const landUnitIds = army.unitIds.filter(uid => {
       const cfg = this._unitConfigs.find(u => u.id === uid);
-      return (cfg?.domain || 'land') === 'land';
+      return (cfg?.domain || defenseDomain) === defenseDomain;
     });
     if (landUnitIds.length === 0) return { ok: false, msg: '陆地入侵无法使用海军单位防御' };
 
     const combatArmy = { ...army, unitIds: landUnitIds };
-    const armyPower = getArmyCombatPower(combatArmy, { domain: 'land' });
+    const armyPower = getArmyCombatPower(combatArmy, { domain: defenseDomain });
     const formationStatus = army.formationId ? getFormationStatusText(army.formationId, army) : '';
 
     const invPower = this._activeInvasion.combatPower;
@@ -159,18 +211,19 @@ export class InvasionSystem {
       const toRemoveCount = Math.min(Math.floor(landUnitIds.length * lossRatio), Math.max(0, landUnitIds.length - 1));
       const lostUnitIds = sorted.slice(0, toRemoveCount);
       const survivedLand = sorted.slice(toRemoveCount);
-      const survived = army.unitIds.filter(uid => (unitMap[uid]?.domain || 'land') !== 'land');
+      const survived = army.unitIds.filter(uid => (unitMap[uid]?.domain || defenseDomain) !== defenseDomain);
       survived.push(...survivedLand);
 
       // 更新军团
       const armyIdx = armies.findIndex(a => a.id === army.id);
       if (armyIdx >= 0) {
         armies[armyIdx].unitIds = survived;
-        store.setState({ armies });
+        this._commitArmies(armies, 'invasionVictory');
       }
       this._applyUnitDeaths(lostUnitIds);
 
       this._activeInvasion = null;
+      this._delayNextInvasion(this._cfgNumber('victoryProtectionDays', 14), '已击退入侵');
       this._updateUI();
       eventBus.emit('combatBroadcast', { message: `🎉 击退入侵！军团损失 ${toRemoveCount} 单位，剩余 ${survived.length} 单位` + (formationStatus ? ' · ' + formationStatus : '') });
       return { ok: true, victory: true, survived: survived.length, lost: toRemoveCount };
@@ -180,14 +233,15 @@ export class InvasionSystem {
       const reviveCount = this._scheduleRevive(lostUnitIds);
       const armyIdx = armies.findIndex(a => a.id === army.id);
       if (armyIdx >= 0) {
-        armies[armyIdx].unitIds = army.unitIds.filter(uid => (unitMap[uid]?.domain || 'land') !== 'land');
-        store.setState({ armies });
+        armies[armyIdx].unitIds = army.unitIds.filter(uid => (unitMap[uid]?.domain || defenseDomain) !== defenseDomain);
+        this._commitArmies(armies, 'invasionDraw');
       }
       this._applyUnitDeaths(lostUnitIds);
 
       this._activeInvasion = null;
+      this._delayNextInvasion(this._cfgNumber('drawProtectionDays', 14), '已阻止入侵');
       this._updateUI();
-      eventBus.emit('combatBroadcast', { message: `⚔️ 惨烈平局！军团全员倒下，${reviveCount} 单位将在72小时后复归；入侵已被阻止` + (formationStatus ? ' · ' + formationStatus : '') });
+      eventBus.emit('combatBroadcast', { message: `⚔️ 惨烈平局！军团全员倒下，${reviveCount} 单位将在${this._cfgNumber('reviveDelayDays', 3)}日后复归；入侵已被阻止` + (formationStatus ? ' · ' + formationStatus : '') });
       return { ok: true, draw: true, lost: lostUnitIds.length, reviveCount };
     } else {
       /* ===== 失败 ===== */
@@ -200,15 +254,15 @@ export class InvasionSystem {
       // 军团全灭
       const armyIdx = armies.findIndex(a => a.id === army.id);
       if (armyIdx >= 0) {
-        armies[armyIdx].unitIds = army.unitIds.filter(uid => (unitMap[uid]?.domain || 'land') !== 'land');
-        store.setState({ armies });
+        armies[armyIdx].unitIds = army.unitIds.filter(uid => (unitMap[uid]?.domain || defenseDomain) !== defenseDomain);
+        this._commitArmies(armies, 'invasionDefeat');
       }
       this._applyUnitDeaths(lostUnitIds);
 
       // 入侵战斗力削弱
       this._activeInvasion.combatPower = Math.round(remainingPower);
       this._updateUI();
-      eventBus.emit('combatBroadcast', { message: `💥 军团被击溃！全员倒下，${reviveCount} 单位将在72小时后复归；入侵残余战斗力 ${Math.round(remainingPower)}` + (formationStatus ? ' · ' + formationStatus : '') });
+      eventBus.emit('combatBroadcast', { message: `💥 军团被击溃！全员倒下，${reviveCount} 单位将在${this._cfgNumber('reviveDelayDays', 3)}日后复归；入侵残余战斗力 ${Math.round(remainingPower)}` + (formationStatus ? ' · ' + formationStatus : '') });
       return { ok: true, victory: false, remainingInvasionPower: Math.round(remainingPower), lost: lostUnitIds.length, reviveCount };
     }
   }
@@ -238,12 +292,13 @@ export class InvasionSystem {
 
   _scheduleRevive(unitIds) {
     if (!unitIds || unitIds.length === 0) return 0;
-    const reviveCount = Math.ceil(unitIds.length / 2);
+    const reviveRate = this._cfgNumber('reviveUnitRate', 0.5);
+    const reviveCount = Math.ceil(unitIds.length * reviveRate);
     const reviveUnitIds = unitIds.slice(0, reviveCount);
     const day = store.getState('timeDay') || 1;
     this._pendingRevives.push({
       unitIds: reviveUnitIds,
-      reviveDay: day + 3
+      reviveDay: day + this._cfgNumber('reviveDelayDays', 3)
     });
     return reviveUnitIds.length;
   }
@@ -271,7 +326,7 @@ export class InvasionSystem {
         revivedUnits++;
       }
     }
-    store.setState({ availableUnits: avail });
+    this._commitAvailableUnits(avail, 'unitRevive');
     if (popSys && revivedPeople > 0) {
       popSys.current += revivedPeople;
       popSys.occupyForConstruction(revivedPeople);
@@ -291,9 +346,39 @@ export class InvasionSystem {
   /* ===== 状态查询 ===== */
   getActiveInvasion() { return this._activeInvasion ? { ...this._activeInvasion } : null; }
 
+  payTribute() {
+    if (!this._activeInvasion) return { ok: false, msg: '没有活跃的入侵' };
+    const resourceSys = window.__game?.systems?.resource;
+    if (!resourceSys) return { ok: false, msg: '资源系统未加载' };
+    const tributeResourceId = this._cfgString('tributeResourceId', 'food');
+    const resourceConfig = configRegistry.getResource(tributeResourceId);
+    const resourceName = resourceConfig?.name || tributeResourceId;
+    const cost = Math.max(1, this._activeInvasion.tributeFoodCost || this._activeInvasion.combatPower || 1);
+    if (!resourceSys.hasEnough(tributeResourceId, cost)) {
+      return { ok: false, msg: `${resourceName}不足（需要 ${cost}）`, cost };
+    }
+    if (!resourceSys.tryConsume(tributeResourceId, cost)) {
+      return { ok: false, msg: `${resourceName}不足（需要 ${cost}）`, cost };
+    }
+    const paid = {
+      cost,
+      multiplier: this._activeInvasion.tributeMultiplier || null,
+      combatPower: this._activeInvasion.combatPower
+    };
+    this._activeInvasion = null;
+    const protectedDays = this._cfgNumber('tributeProtectionDays', 7);
+    this._delayNextInvasion(protectedDays, `已上交${resourceName}换取免战`);
+    this._updateUI();
+    eventBus.emit('combatBroadcast', { message: `🌾 上交 ${paid.cost} ${resourceName}，入侵者暂时撤退` });
+    return { ok: true, ...paid, resourceId: tributeResourceId, protectedDays };
+  }
+
   /* ===== UI 更新 ===== */
   _updateUI() {
-    store.setState({ activeInvasion: this._activeInvasion ? { ...this._activeInvasion, lastPunishDay: this._lastPunishDay } : null });
+    store.setState({
+      activeInvasion: this._activeInvasion ? { ...this._activeInvasion, lastPunishDay: this._lastPunishDay } : null,
+      invasionNextDay: this._nextDay || 0
+    });
   }
 
   /* ===== 存档接口 ===== */
@@ -312,11 +397,17 @@ export class InvasionSystem {
     this._nextDay = state.nextDay || 0;
     this._lastPunishDay = state.lastPunishDay || 0;
     this._activeInvasion = state.activeInvasion || null;
+    if (this._activeInvasion && !this._activeInvasion.tributeFoodCost) {
+      const tribute = this._rollTributeCost(this._activeInvasion.combatPower);
+      this._activeInvasion.tributeFoodCost = tribute.foodCost;
+      this._activeInvasion.tributeMultiplier = tribute.multiplier;
+    }
     this._invasionHistory = state.history || [];
     this._pendingRevives = (state.pendingRevives || []).map(r => ({ ...r, unitIds: [...(r.unitIds || [])] }));
     const day = store.getState('timeDay') || 1;
-    if (!this._activeInvasion && day < FIRST_INVASION_DAY && this._nextDay < FIRST_INVASION_DAY) {
-      this._nextDay = FIRST_INVASION_DAY;
+    const firstDay = this._cfgNumber('firstDay', 30);
+    if (!this._activeInvasion && day < firstDay && this._nextDay < firstDay) {
+      this._nextDay = firstDay;
     }
     this._updateUI();
   }

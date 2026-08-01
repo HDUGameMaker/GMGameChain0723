@@ -27,13 +27,14 @@ function _unitName(unitId) {
 }
 
 function _branchName(branch) {
-  const names = {
-    infantry: '步兵',
-    cavalry: '骑兵',
-    artillery: '炮兵',
-    navy: '海军'
-  };
-  return names[branch] || branch;
+  const branches = configRegistry.get('enemies')?.unitBranches || [];
+  const cfg = branches.find(b => b.id === branch);
+  return cfg?.name || branch;
+}
+
+function _defaultUnitDomain() {
+  const domains = configRegistry.get('enemies')?.unitDomains || [];
+  return domains[0]?.id || 'land';
 }
 
 function _formationReqs(f) {
@@ -44,7 +45,7 @@ function _matchesReq(unitId, req, unitMap) {
   if (req.unitId) return unitId === req.unitId;
   const unit = unitMap[unitId];
   if (req.branch && unit?.branch !== req.branch) return false;
-  if (req.domain && (unit?.domain || 'land') !== req.domain) return false;
+  if (req.domain && (unit?.domain || _defaultUnitDomain()) !== req.domain) return false;
   return true;
 }
 

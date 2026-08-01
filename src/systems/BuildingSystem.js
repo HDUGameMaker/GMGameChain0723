@@ -21,27 +21,18 @@ export class BuildingSystem {
     this._adjacencyConfig = []; // 相邻加成配置
 
     // 订阅 tick 事件处理建造和生产
-    eventBus.on('tick', (data) => this.onTick(data));
-    // 订阅 dayStart 处理每天生产一次的建筑
-    eventBus.on('dayStart', () => this._processDayCycleProduction());
+    eventBus.on('workTick', (data) => this._onWorkTick(data));
+    eventBus.on('tick', (data) => this._onAnyTick(data));
+    eventBus.on('dayProductionTick', (data) => this._onDayProductionTick(data));
   }
 
-  /** 每天生产一次的建筑（productionCycle === 'day'） */
-  _processDayCycleProduction() {
-    for (let i = 0; i < this.buildings.length; i++) {
-      const building = this.buildings[i];
-      if (building.status !== 'active') continue;
-      const config = configRegistry.getBuilding(building.buildingId);
-      if (!config || !config.production) continue;
-      const cycle = config.productionCycle || 'tick';
-      if (cycle !== 'day') continue;
-      // 有装置的建筑不受时段限制，没有装置的建筑仅在工作时段产出
-      if (!building._attachmentType && !this._isWorkPeriodNow()) continue;
-      this._processProduction(building);
+  _isWorkPeriodNow(timeData = null) {
+    if (timeData && typeof timeData.isWorkPeriod === 'boolean') return timeData.isWorkPeriod;
+    if (timeData?.period) {
+      const globalConfig = configRegistry.get('global') || {};
+      const workPeriods = globalConfig.WORK_PERIODS || ['morning', 'afternoon'];
+      return workPeriods.includes(timeData.period);
     }
-  }
-
-  _isWorkPeriodNow() {
     const period = store.getState('timePeriod');
     return period === 'morning' || period === 'afternoon';
   }
@@ -164,6 +155,9 @@ export class BuildingSystem {
         return { valid: false, reason: buildingId === 'work_shed' ? '工棚需要紧邻道路、工棚或仓库' : '该建筑需要紧邻道路（道路依赖）' };
       }
     }
+
+    const adjacentCheck = this._checkAdjacentRequirements(config, gridX, gridY, w, h);
+    if (!adjacentCheck.valid) return adjacentCheck;
 
     return { valid: true };
   }
@@ -602,6 +596,9 @@ export class BuildingSystem {
       }
     }
 
+    const adjacentCheck = this._checkAdjacentRequirements(config, newGridX, newGridY, w, h, buildingIndex);
+    if (!adjacentCheck.valid) return adjacentCheck;
+
     return { valid: true };
   }
 
@@ -637,6 +634,15 @@ export class BuildingSystem {
         return { valid: false, reason: building.buildingId === 'work_shed' ? '需要紧邻道路、工棚或仓库' : '需要紧邻道路' };
       }
     }
+    const adjacentCheck = this._checkAdjacentRequirements(
+      config,
+      building.gridX,
+      building.gridY,
+      config.footprint.width,
+      config.footprint.height,
+      buildingIndex
+    );
+    if (!adjacentCheck.valid) return adjacentCheck;
     return { valid: true };
   }
 
@@ -689,25 +695,64 @@ export class BuildingSystem {
 
   // ===== Tick 处理 =====
 
-  onTick(data) {
-    const { isWorkPeriod } = data;
+  _onWorkTick(data) {
+    this._processProductionTick(data, { cycle: 'tick', attachmentsOnly: false, processSynthesis: true });
+  }
 
+  _onAnyTick(data) {
+    this._processProductionTick(data, { cycle: 'tick', attachmentsOnly: true, processSynthesis: true });
+    this._processAttachmentWeatherTick();
+  }
+
+  _onDayProductionTick(data) {
+    this._processDailyFoodProduction();
+    this._processProductionTick(data, { cycle: 'day', attachmentsOnly: false, processSynthesis: false, skipOutputResourceIds: ['food'] });
+    this._processProductionTick(data, { cycle: 'day', attachmentsOnly: true, processSynthesis: false, skipOutputResourceIds: ['food'] });
+  }
+
+  _processProductionTick(data, options) {
+    const { cycle, attachmentsOnly, processSynthesis, skipOutputResourceIds } = options;
+    let changed = false;
     for (const building of this.buildings) {
-      if (building.status === 'constructing') {
-        continue;
-      } else if (building.status === 'active' && isWorkPeriod) {
-        const cfgTick = configRegistry.getBuilding(building.buildingId);
-        const cycle = cfgTick?.productionCycle || 'tick';
-        if (cycle === 'tick') this._processProduction(building);
-        this._processSynthesis(building);
-      } else if (building.status === 'active' && !isWorkPeriod && building._attachmentType) {
-        // 有装置的建筑不受时段限制，全天24小时工作
-        const cfgAtt = configRegistry.getBuilding(building.buildingId);
-        const cycleAtt = cfgAtt?.productionCycle || 'tick';
-        if (cycleAtt === 'tick') this._processProduction(building);
-        this._processSynthesis(building);
-      }
+      if (building.status !== 'active') continue;
+      if (!!building._attachmentType !== attachmentsOnly) continue;
+      if (!building._attachmentType && !data?.isWorkPeriod) continue;
 
+      const config = configRegistry.getBuilding(building.buildingId);
+      if (config?.production && (config.productionCycle || 'tick') === cycle) {
+        this._processProduction(building, { skipOutputResourceIds });
+        changed = true;
+      }
+      if (processSynthesis) {
+        this._processSynthesis(building);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      this._updateStore();
+      this._updateProgressStore();
+    }
+  }
+
+  _processDailyFoodProduction() {
+    let amount = this.getTotalFoodProduction({ cycle: 'day' });
+    if (amount > 0 && this._weatherSystem) {
+      amount = Math.round(amount * this._weatherSystem.getFoodModifier());
+      const population = this._populationSystem?.current || store.getState('populationCurrent') || 0;
+      const rainBonus = this._weatherSystem.getRainBonus();
+      if (rainBonus > 0) {
+        amount += rainBonus * Math.max(1, population);
+      }
+    }
+    if (amount > 0) {
+      this._resourceSystem?.addClamped('food', amount);
+    }
+  }
+
+  _processAttachmentWeatherTick() {
+    let changed = false;
+    for (const building of this.buildings) {
       // 装置天气损坏检测（每tick）
       if (building._attachmentType && this._weatherSystem) {
         const mod = this._weatherSystem.getAttachmentModifier();
@@ -716,12 +761,15 @@ export class BuildingSystem {
           building._attachmentType = null;
           eventBus.emit('combatBroadcast', { message: `💥 ${typeName}装置被暴风摧毁！` });
           eventBus.emit('attachmentChanged', { buildingIndex: this.buildings.indexOf(building), type: null });
+          changed = true;
         }
       }
     }
 
-    this._updateStore();
-    this._updateProgressStore();
+    if (changed) {
+      this._updateStore();
+      this._updateProgressStore();
+    }
   }
 
   /**
@@ -805,7 +853,7 @@ export class BuildingSystem {
     store.setState({ buildingProgresses: progresses, buildingProgressVersion: Date.now() });
   }
 
-  _processProduction(building) {
+  _processProduction(building, options = {}) {
     const config = configRegistry.getBuilding(building.buildingId);
     if (!config || !config.production) return;
     if (building.currentWorkers <= 0 && config.production.perWorker) {
@@ -836,8 +884,10 @@ export class BuildingSystem {
     // 产出（应用相邻加成 + 人文政策产出倍率）
     if (prod.output) {
       const outputMultiplier = prod.perWorker ? effectiveWorkers : 1;
-      const cultureProdMul = this._getProductionMultiplier();
+      const skipOutputResourceIds = new Set(options.skipOutputResourceIds || []);
       for (const out of prod.output) {
+        if (skipOutputResourceIds.has(out.resourceId)) continue;
+        const cultureProdMul = this._getProductionMultiplier(out.resourceId);
         const baseAmount = out.amount * outputMultiplier * cultureProdMul;
         const adjusted = this.applyAdjacencyToProduction(
           building.buildingId, out.resourceId, baseAmount, 'production', bonuses
@@ -902,20 +952,39 @@ export class BuildingSystem {
   /**
    * 获取每天食物产出量（每工人每天产出 foodCapacity 食物）
    */
-  getTotalFoodProduction() {
+  getTotalFoodProduction(options = {}) {
+    const cycleFilter = options.cycle || null;
     let total = 0;
     for (let i = 0; i < this.buildings.length; i++) {
       const b = this.buildings[i];
       if (b.status !== 'active') continue;
-      if (b.currentWorkers <= 0) continue;
       const config = configRegistry.getBuilding(b.buildingId);
+      const cycle = config?.productionCycle || 'tick';
+      if (cycleFilter && cycle !== cycleFilter) continue;
+      const prod = config?.production;
       if (config && config.foodCapacity) {
-        const baseAmount = config.foodCapacity * b.currentWorkers;
+        if (b.currentWorkers <= 0) continue;
+        const baseAmount = config.foodCapacity * b.currentWorkers * this._getProductionMultiplier('food');
         const bonuses = this.getAdjacencyBonuses(i);
         const adjusted = this.applyAdjacencyToProduction(
           b.buildingId, 'food', baseAmount, 'foodCapacity', bonuses
         );
         total += Math.round(adjusted);
+      }
+      if (prod?.output) {
+        const effectiveWorkers = this._getEffectiveProductionWorkers(b, config);
+        const multiplier = prod.perWorker ? effectiveWorkers : 1;
+        if (multiplier <= 0) continue;
+        const cyclesPerDay = config.productionCycle === 'day' ? 1 : this._getProductionCyclesPerDay(b, config);
+        const bonuses = this.getAdjacencyBonuses(i);
+        for (const out of prod.output) {
+          if (out.resourceId !== 'food') continue;
+          const baseAmount = out.amount * multiplier * this._getProductionMultiplier('food');
+          const adjusted = this.applyAdjacencyToProduction(
+            b.buildingId, 'food', baseAmount, 'production', bonuses
+          );
+          total += Math.round(adjusted) * cyclesPerDay;
+        }
       }
     }
     return total;
@@ -951,7 +1020,6 @@ export class BuildingSystem {
       const cyclesPerDay = this._getProductionCyclesPerDay(building, config);
       const effectiveWorkers = this._getEffectiveProductionWorkers(building, config);
       const multiplier = prod.perWorker ? effectiveWorkers : 1;
-      const cultureProdMul = this._getProductionMultiplier();
       if (multiplier <= 0) continue;
 
       // 获取相邻加成
@@ -967,6 +1035,7 @@ export class BuildingSystem {
       // 产出（应用相邻加成）
       if (prod.output) {
         for (const out of prod.output) {
+          const cultureProdMul = this._getProductionMultiplier(out.resourceId);
           const baseAmount = out.amount * multiplier * cultureProdMul;
           const adjusted = this.applyAdjacencyToProduction(
             building.buildingId, out.resourceId, baseAmount, 'production', bonuses
@@ -1012,7 +1081,6 @@ export class BuildingSystem {
     const effectiveWorkers = building.status === 'active' ? this._getEffectiveProductionWorkers(building, config) : 0;
     const multiplier = prod.perWorker ? effectiveWorkers : 1;
     const bonuses = this.getAdjacencyBonuses(buildingIndex);
-    const cultureProdMul = this._getProductionMultiplier();
 
     const inputStandard = (prod.input || []).map(inp => ({
       resourceId: inp.resourceId,
@@ -1028,6 +1096,7 @@ export class BuildingSystem {
       amount: Math.round(inp.amount * multiplier * cyclesPerDay)
     }));
     const dailyOutput = (prod.output || []).map(out => {
+      const cultureProdMul = this._getProductionMultiplier(out.resourceId);
       const baseAmount = out.amount * multiplier * cultureProdMul;
       const adjusted = this.applyAdjacencyToProduction(
         building.buildingId, out.resourceId, baseAmount, 'production', bonuses
@@ -1085,8 +1154,11 @@ export class BuildingSystem {
     return Math.max(1, Math.floor(periodDuration / tickInterval));
   }
 
-  _getProductionMultiplier() {
-    return (this._cultureSystem ? (this._cultureSystem.getEffects().productionMul || 1) : 1)
+  _getProductionMultiplier(resourceId) {
+    const cultureEffects = this._cultureSystem ? this._cultureSystem.getEffects() : null;
+    const globalCultureMul = cultureEffects?.productionMul || 1;
+    const scopedCultureMul = resourceId ? (cultureEffects?.resourceProductionMul?.[resourceId] || 1) : 1;
+    return globalCultureMul * scopedCultureMul
       * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).productionMul || 1) : 1);
   }
 
@@ -1096,6 +1168,120 @@ export class BuildingSystem {
 
   hasBuilding(buildingId) {
     return this.buildings.some(b => b.buildingId === buildingId && b.status === 'active');
+  }
+
+  _checkAdjacentRequirements(config, gridX, gridY, width, height, excludeIndex = -1) {
+    const groups = this._normalizeAdjacentRequirementGroups(config);
+    if (groups.length === 0) return { valid: true };
+
+    const failed = [];
+    for (const group of groups) {
+      const conditions = group.conditions || [];
+      if (conditions.length === 0) continue;
+      const checks = conditions.map(req => this._checkAdjacentRequirement(req, gridX, gridY, width, height, excludeIndex));
+      if (checks.every(check => check.valid)) return { valid: true };
+      failed.push(checks.filter(check => !check.valid).map(check => check.label).join(' + '));
+    }
+
+    return {
+      valid: false,
+      reason: failed.length > 0 ? `需要满足临近条件之一：${failed.join(' 或 ')}` : '临近条件未满足'
+    };
+  }
+
+  _normalizeAdjacentRequirementGroups(config) {
+    if (Array.isArray(config?.adjacentRequirementGroups)) {
+      return config.adjacentRequirementGroups
+        .map(group => Array.isArray(group) ? { conditions: group } : group)
+        .filter(group => Array.isArray(group?.conditions) && group.conditions.length > 0);
+    }
+    if (Array.isArray(config?.adjacentRequirements) && config.adjacentRequirements.length > 0) {
+      return [{ conditions: config.adjacentRequirements }];
+    }
+    return [];
+  }
+
+  _checkAdjacentRequirement(req, gridX, gridY, width, height, excludeIndex = -1) {
+    const type = req?.type || (req?.buildingId ? 'building' : '');
+    const maxDistance = Math.max(1, Number.isFinite(req?.maxDistance) ? req.maxDistance : 1);
+
+    if (type === 'road') {
+      const valid = this._hasRoadWithinDistance(gridX, gridY, width, height, maxDistance);
+      return { valid, label: `道路（${maxDistance}格内）` };
+    }
+
+    if (type === 'building') {
+      const buildingId = req?.buildingId || '';
+      const matched = this._hasBuildingWithinDistance(
+        gridX, gridY, width, height,
+        other => other.buildingId === buildingId,
+        maxDistance,
+        excludeIndex
+      );
+      const requiredConfig = configRegistry.getBuilding(buildingId);
+      const name = requiredConfig ? requiredConfig.name : buildingId;
+      return { valid: matched, label: `${name || '建筑'}（${maxDistance}格内）` };
+    }
+
+    if (type === 'tag') {
+      const tag = req?.tag || '';
+      const matched = this._hasBuildingWithinDistance(
+        gridX, gridY, width, height,
+        other => {
+          const otherConfig = configRegistry.getBuilding(other.buildingId);
+          return !!otherConfig?.tags?.includes(tag);
+        },
+        maxDistance,
+        excludeIndex
+      );
+      return { valid: matched, label: `标签 ${tag || '-'}（${maxDistance}格内）` };
+    }
+
+    return { valid: true, label: '' };
+  }
+
+  _hasRoadWithinDistance(gridX, gridY, width, height, maxDistance) {
+    if (!this._roadSystem) return false;
+    if (maxDistance <= 1 && typeof this._roadSystem.hasAdjacentRoad === 'function') {
+      return this._roadSystem.hasAdjacentRoad(gridX, gridY, width, height);
+    }
+    for (const road of this._roadSystem.roads || []) {
+      if (road.buildProgress !== null && road.buildProgress !== undefined) continue;
+      const dist = this._chebyshevDistance(gridX, gridY, width, height, road.gridX, road.gridY, 1, 1);
+      if (dist <= maxDistance) return true;
+    }
+    return false;
+  }
+
+  _hasBuildingWithinDistance(gridX, gridY, width, height, predicate, maxDistance, excludeIndex = -1) {
+    for (let i = 0; i < this.buildings.length; i++) {
+      if (i === excludeIndex) continue;
+      const other = this.buildings[i];
+      if (!other || other.status !== 'active') continue;
+      if (!predicate(other)) continue;
+      const otherConfig = configRegistry.getBuilding(other.buildingId);
+      if (!otherConfig) continue;
+
+      const otherWidth = otherConfig.footprint.width;
+      const otherHeight = otherConfig.footprint.height;
+      if (maxDistance <= 1) {
+        if (this._areRectsSideAdjacent(
+          gridX, gridY, width, height,
+          other.gridX, other.gridY,
+          otherWidth, otherHeight
+        )) {
+          return true;
+        }
+        continue;
+      }
+      const dist = this._chebyshevDistance(
+        gridX, gridY, width, height,
+        other.gridX, other.gridY,
+        otherWidth, otherHeight
+      );
+      if (dist <= maxDistance) return true;
+    }
+    return false;
   }
 
   /**
@@ -1114,6 +1300,9 @@ export class BuildingSystem {
           return this.hasBuilding(cond.buildingId);
         case 'tech':
           return this._techSystem ? this._techSystem.isResearched(cond.techId) : false;
+        case 'culture':
+        case 'doctrine':
+          return this._cultureSystem ? this._cultureSystem.getDoctrineResearched().includes(cond.doctrineId || cond.cultureId) : false;
         default:
           return false;
       }
@@ -1145,6 +1334,14 @@ export class BuildingSystem {
           const name = t ? t.name : cond.techId;
           const met = this._techSystem ? this._techSystem.isResearched(cond.techId) : false;
           return { type: 'tech', desc: `科技: ${name}`, met };
+        }
+        case 'culture':
+        case 'doctrine': {
+          const doctrines = configRegistry.get('doctrines') || [];
+          const id = cond.doctrineId || cond.cultureId;
+          const d = doctrines.find(x => x.id === id);
+          const met = this._cultureSystem ? this._cultureSystem.getDoctrineResearched().includes(id) : false;
+          return { type: 'culture', desc: `文化: ${d ? d.name : id}`, met };
         }
         default:
           return { type: 'unknown', desc: `条件: ${cond.type}`, met: false };

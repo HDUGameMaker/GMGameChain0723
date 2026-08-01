@@ -563,7 +563,8 @@ export class AudioSystem {
 
     this._pendingInitialBGM = false;
     const period = store.getState('timePeriod') || 'morning';
-    const isNight = period === 'evening' || period === 'night';
+    const nightPeriods = configRegistry.get('global')?.NIGHT_PERIODS || [];
+    const isNight = nightPeriods.includes(period);
     const targetId = this._getBGMConfig('bgm_night') && isNight ? 'bgm_night' : 'bgm_main';
     this.playBGM(targetId);
   }

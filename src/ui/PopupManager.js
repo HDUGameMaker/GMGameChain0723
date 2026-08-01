@@ -106,6 +106,7 @@ export class PopupManager {
    */
   close() {
     const current = this._stack[this._stack.length - 1];
+    if (current?.type === 'game_over') return;
     if (current?.type === SYSTEM_DIALOG_TYPE) {
       this._resolveSystemDialog(this._getDialogCancelValue(current.data));
       return;
@@ -258,6 +259,7 @@ export class PopupManager {
 
     // 更新标题和返回按钮
     this.backBtn.style.display = this._stack.length > 1 && current.type !== SYSTEM_DIALOG_TYPE ? 'flex' : 'none';
+    this.closeBtn.style.display = current.type === 'game_over' ? 'none' : 'flex';
     this.titleEl.textContent = this._getTitle(current.type, current.data);
 
     // 清理旧面板的动画定时器，然后清空 body

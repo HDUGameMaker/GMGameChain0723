@@ -9,6 +9,7 @@ import {
   getArmyCombatPower,
   getFormationBonusText
 } from '../../utils/FormationUtils.js';
+import { eventBus } from '../../core/EventBus.js';
 
 const MAX_CP = 20;
 function _getMaxCP() {
@@ -23,8 +24,21 @@ function _store() { return window.__game?.store; }
 function _armies() { return _store()?.getState('armies') || []; }
 function _avail() { return _store()?.getState('availableUnits') || {}; }
 
-function _saveArmies(armies) { _store()?.setState({ armies }); }
-function _saveAvail(avail) { _store()?.setState({ availableUnits: avail }); }
+function _notifyArmyChanged(reason) {
+  const version = (_store()?.getState('armyVersion') || 0) + 1;
+  _store()?.setState({ armyVersion: version });
+  eventBus.emit('armyChanged', { reason, version });
+}
+
+function _saveArmies(armies, reason = 'armies') {
+  _store()?.setState({ armies: [...armies] });
+  _notifyArmyChanged(reason);
+}
+
+function _saveAvail(avail, reason = 'availableUnits') {
+  _store()?.setState({ availableUnits: { ...avail } });
+  _notifyArmyChanged(reason);
+}
 function _techSys() { return window.__game?.systems?.tech; }
 function _formations() { return window.__game?.configRegistry?.get('enemies')?.formations || []; }
 function _population() { return window.__game?.systems?.population; }

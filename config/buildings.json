@@ -47,7 +47,34 @@
     "tags": [
       "dorm"
     ],
-    "roadRequired": true
+    "adjacentRequirementGroups": [
+      {
+        "conditions": [
+          {
+            "type": "road",
+            "maxDistance": 1
+          }
+        ]
+      },
+      {
+        "conditions": [
+          {
+            "type": "building",
+            "buildingId": "work_shed",
+            "maxDistance": 1
+          }
+        ]
+      },
+      {
+        "conditions": [
+          {
+            "type": "tag",
+            "tag": "warehouse",
+            "maxDistance": 1
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "plank_house",
@@ -97,7 +124,16 @@
     "tags": [
       "dorm"
     ],
-    "roadRequired": true
+    "adjacentRequirementGroups": [
+      {
+        "conditions": [
+          {
+            "type": "road",
+            "maxDistance": 1
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "tile_house",
@@ -179,7 +215,25 @@
       "progressBarOffsetY": 0,
       "workersOffsetY": 0
     },
-    "roadRequired": true,
+    "adjacentRequirementGroups": [
+      {
+        "conditions": [
+          {
+            "type": "road",
+            "maxDistance": 1
+          }
+        ]
+      },
+      {
+        "conditions": [
+          {
+            "type": "tag",
+            "tag": "logging_camp",
+            "maxDistance": 1
+          }
+        ]
+      }
+    ],
     "productionCycle": "day"
   },
   {
@@ -1905,7 +1959,16 @@
     "tags": [
       "fishing_ground"
     ],
-    "roadRequired": true,
+    "adjacentRequirementGroups": [
+      {
+        "conditions": [
+          {
+            "type": "road",
+            "maxDistance": 1
+          }
+        ]
+      }
+    ],
     "unlockConditions": [
       {
         "type": "tech",
@@ -3112,6 +3175,64 @@
     "tags": [
       "alchemy"
     ]
+  },
+  {
+    "id": "supply_post",
+    "name": "补给站",
+    "description": "秩序体系下建立的物资调度点，为邻近基础生产建筑提供相邻加成。",
+    "icon": "",
+    "mapIcon": "",
+    "imageDetail": "",
+    "tags": [
+      "logistics"
+    ],
+    "mapIconLayout": {
+      "scaleX": 1,
+      "scaleY": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "animation": {
+      "spriteSheet": "",
+      "frameCount": 8,
+      "fps": 8,
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "pingpong": false
+    },
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
+    "maxCount": null,
+    "initialBuilding": false,
+    "housingCapacity": 0,
+    "maxWorkers": 0,
+    "buildCost": [
+      {
+        "resourceId": "wood",
+        "amount": 40
+      },
+      {
+        "resourceId": "plank",
+        "amount": 20
+      }
+    ],
+    "unlockConditions": [
+      {
+        "type": "culture",
+        "doctrineId": "logistics_yard"
+      }
+    ],
+    "buildTime": 2,
+    "upgradesTo": null,
+    "production": null,
+    "synthesisRecipes": [],
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    }
   },
   {
     "id": "pub",

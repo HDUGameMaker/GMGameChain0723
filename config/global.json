@@ -2,6 +2,31 @@
   "PERIOD_DURATION": 30,
   "TICK_INTERVAL": 10,
   "PERIOD_NAMES": ["morning", "afternoon", "evening", "night"],
+  "PERIOD_LABELS": {
+    "morning": "上午",
+    "afternoon": "下午",
+    "evening": "傍晚",
+    "night": "夜晚"
+  },
+  "PERIOD_ICONS": {
+    "morning": "☀️",
+    "afternoon": "🌤️",
+    "evening": "🌅",
+    "night": "🌙"
+  },
+  "PERIOD_LIGHTING": {
+    "morning": 0.05,
+    "afternoon": 0,
+    "evening": 0.45,
+    "night": 0.82
+  },
+  "PERIOD_TINTS": {
+    "morning": [1.1, 0, 0, 0, 0, 0, 1.05, 0, 0, 0, 0, 0, 0.9, 0, 0, 0, 0, 0, 1, 0],
+    "afternoon": null,
+    "evening": [1.1, 0, 0, 0, 0, 0, 0.9, 0, 0, 0, 0, 0, 0.7, 0, 0, 0, 0, 0, 1, 0],
+    "night": [0.6, 0, 0, 0, 0, 0, 0.6, 0, 0, 0, 0, 0, 0.9, 0, 0, 0, 0, 0, 1, 0]
+  },
+  "NIGHT_PERIODS": ["evening", "night"],
   "WORK_PERIODS": ["morning", "afternoon"],
   "eventTriggerChance": 0.25,
   "eventMinInterval": 4,

@@ -61,34 +61,14 @@ export class SaveManager {
    */
   static async load() {
     try {
-      // 先检查紧急存档
-      const emergency = localStorage.getItem('gmgc_emergency_save');
-      
       const db = await SaveManager._getDB();
-      const saved = await new Promise((resolve, reject) => {
+      return await new Promise((resolve, reject) => {
         const tx = db.transaction(STORE_NAME, 'readonly');
         const store = tx.objectStore(STORE_NAME);
         const request = store.get(SAVE_KEY);
         request.onsuccess = () => resolve(request.result || null);
         request.onerror = () => resolve(null);
       });
-
-      // 比较紧急存档和正常存档的时间戳
-      if (emergency) {
-        try {
-          const emergencyData = JSON.parse(emergency);
-          if (!saved || (emergencyData.timestamp > saved.timestamp)) {
-            localStorage.removeItem('gmgc_emergency_save');
-            // 旧版紧急存档可能缺少灵感/文化字段，用普通存档补全
-            return { ...(saved || {}), ...emergencyData };
-          }
-        } catch (e) {
-          // ignore parse error
-        }
-        localStorage.removeItem('gmgc_emergency_save');
-      }
-
-      return saved;
     } catch (e) {
       console.error('[SaveManager] Load failed:', e);
       return null;
@@ -101,8 +81,6 @@ export class SaveManager {
    */
   static async hasSave() {
     try {
-      if (localStorage.getItem('gmgc_emergency_save')) return true;
-
       const db = await SaveManager._getDB();
       return new Promise((resolve) => {
         const tx = db.transaction(STORE_NAME, 'readonly');

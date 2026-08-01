@@ -25,6 +25,7 @@ export class PopulationSystem {
     this._overflowLeaving = 0;
 
     eventBus.on('tick', () => this._onOverflowTick());
+    eventBus.on('dayStart', (data) => this.onDayStart(data));
   }
 
   _onOverflowTick() {
@@ -96,6 +97,54 @@ export class PopulationSystem {
     return this._buildingSystem.getTotalAssignedWorkers();
   }
 
+  _getUnitPopulationRequired(unitId) {
+    const units = configRegistry.get('enemies')?.units || [];
+    const cfg = units.find(u => u.id === unitId);
+    return cfg ? (cfg.populationRequired || 1) : 1;
+  }
+
+  getMilitaryPopulation(combatSystem = null) {
+    const availableUnits = store.getState('availableUnits') || {};
+    const reservePop = Object.entries(availableUnits).reduce((sum, [unitId, count]) => {
+      return sum + Math.max(0, count || 0) * this._getUnitPopulationRequired(unitId);
+    }, 0);
+
+    const armies = store.getState('armies') || [];
+    const armyPop = armies.reduce((sum, army) => {
+      return sum + (army.unitIds || []).reduce((s, unitId) => s + this._getUnitPopulationRequired(unitId), 0);
+    }, 0);
+
+    const deployedUnits = combatSystem?.getAllUnits ? combatSystem.getAllUnits() : [];
+    const deployedPop = deployedUnits
+      .filter(unit => unit.source !== 'tamed')
+      .reduce((sum, unit) => sum + this._getUnitPopulationRequired(unit.type), 0);
+
+    return reservePop + armyPop + deployedPop;
+  }
+
+  getPopulationStats(combatSystem = null) {
+    const total = Math.max(0, this.current || 0);
+    const assigned = this.getAssignedWorkers();
+    const expedition = Math.max(0, this._expeditionWorkers || 0);
+    const constructionTotal = Math.max(0, this._constructionWorkers || 0);
+    const military = Math.min(this.getMilitaryPopulation(combatSystem), constructionTotal);
+    const construction = Math.max(0, constructionTotal - military);
+    const work = assigned + expedition + construction;
+    const idle = Math.max(0, total - work - military);
+
+    return {
+      idle,
+      work,
+      military,
+      total,
+      housing: this.getHousingCapacity(),
+      assigned,
+      expedition,
+      construction,
+      constructionTotal
+    };
+  }
+
   /**
    * 获取可用工人池（扣除建筑分配 + 建造占用 + 探险占用）
    */
@@ -128,12 +177,37 @@ export class PopulationSystem {
     const minBase = this.growthConfig?.min ?? 0;
     const maxBase = this.growthConfig?.max ?? minBase;
     const multiplier = this.getGrowthMultiplier();
-    if (room <= 0 || maxBase <= 0 || multiplier <= 0) {
-      return { min: 0, max: 0, room, multiplier };
+    const foodNet = this.getDailyFoodNetPreview();
+    if (room <= 0 || foodNet <= 0 || maxBase <= 0 || multiplier <= 0) {
+      return { min: 0, max: 0, room, multiplier, foodNet };
     }
     const min = Math.min(room, Math.max(1, Math.round(minBase * multiplier)));
     const max = Math.min(room, Math.max(min, Math.round(maxBase * multiplier)));
-    return { min, max, room, multiplier };
+    return { min, max, room, multiplier, foodNet };
+  }
+
+  getFoodConsumptionAmount(population = this.current) {
+    const aEffPop = this._alchemySystem ? (this._alchemySystem.getEffects().population || {}) : {};
+    const foodConsumeMul = (this._cultureSystem ? (this._cultureSystem.getEffects().foodConsumeMul || 1) : 1) * (aEffPop.foodConsumeMul || 1);
+    return Math.ceil(Math.max(0, population || 0) * foodConsumeMul);
+  }
+
+  getDailyFoodProductionPreview() {
+    let foodProduction = this._buildingSystem?.getTotalFoodProduction
+      ? this._buildingSystem.getTotalFoodProduction({ cycle: 'day' })
+      : 0;
+    if (foodProduction > 0 && this._weatherSystem) {
+      foodProduction = Math.round(foodProduction * this._weatherSystem.getFoodModifier());
+      const rainBonus = this._weatherSystem.getRainBonus();
+      if (rainBonus > 0) {
+        foodProduction += rainBonus * Math.max(1, this.current);
+      }
+    }
+    return foodProduction;
+  }
+
+  getDailyFoodNetPreview() {
+    return this.getDailyFoodProductionPreview() - this.getFoodConsumptionAmount(this.current);
   }
 
   /**
@@ -177,29 +251,15 @@ export class PopulationSystem {
 
   /**
    * 每天结算（由 dayStart 事件触发）
-   * 1. 食物建筑产出食物
-   * 2. 消耗食物 = 当前人口数
-   * 3. 食物不够 → 饥饿死亡
-   * 4. 人口 < 2 → 游戏结束
-   * 5. 住房驱动的增长/衰减
+   * 1. 消耗食物 = 当前人口数
+   * 2. 食物不够 → 饥饿死亡
+   * 3. 人口 < 2 → 游戏结束
+   * 4. 有空余住宅且粮食日净增为正时增长，否则只处理住房不足衰减
    */
   onDayStart() {
     if (!this._buildingSystem || !this._resourceSystem) return;
 
-    // ===== 1. 食物产出（受天气/季节影响） =====
-    let foodProduction = this._buildingSystem.getTotalFoodProduction();
-    if (foodProduction > 0 && this._weatherSystem) {
-      // 天气对基础产出的修饰
-      foodProduction = Math.round(foodProduction * this._weatherSystem.getFoodModifier());
-      // 雨后晴增产（每人额外）
-      const rainBonus = this._weatherSystem.getRainBonus();
-      if (rainBonus > 0) {
-        foodProduction += rainBonus * Math.max(1, this.current);
-      }
-    }
-    if (foodProduction > 0) {
-      this._resourceSystem.addClamped('food', foodProduction);
-    }
+    const dailyFoodNet = this.getDailyFoodNetPreview();
 
     // ===== 1.5 灵感产出：每人每天 N 灵感 =====
     const totalPeople = this.current;
@@ -210,22 +270,16 @@ export class PopulationSystem {
     console.log('[Population] Day start: +' + added + ' inspiration (total=' + (curInspiration + added) + ')');
 
     // ===== 2. 食物消耗（受人文政策影响） =====
-    const aEffPop = this._alchemySystem ? (this._alchemySystem.getEffects().population || {}) : {};
-    const foodConsumeMul = (this._cultureSystem ? (this._cultureSystem.getEffects().foodConsumeMul || 1) : 1) * (aEffPop.foodConsumeMul || 1);
-    /* 总人口 = 可用工人 + 已分配工人 + 部队人数 */
-    const idle = this.getAvailableWorkers();
-    const assigned = this.getAssignedWorkers();
-    const armies = store.getState('armies') || [];
-    const armyPop = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
-    const foodPeople = idle + assigned + armyPop;
+    const foodPeople = this.current;
     const foodAvailable = this._resourceSystem.getAmount('food');
-    const consumeAmount = Math.min(foodAvailable, Math.ceil(foodPeople * foodConsumeMul));
+    const requiredFood = this.getFoodConsumptionAmount(foodPeople);
+    const consumeAmount = Math.min(foodAvailable, requiredFood);
     if (consumeAmount > 0) {
       this._resourceSystem.tryConsume('food', consumeAmount);
     }
 
     // ===== 3. 饥饿死亡 =====
-    const deficit = Math.ceil(foodPeople * foodConsumeMul) - consumeAmount;
+    const deficit = requiredFood - consumeAmount;
     if (deficit > 0) {
       const starvedBefore = this.current;
       this.current -= deficit;
@@ -250,7 +304,7 @@ export class PopulationSystem {
     // ===== 5. 住房增长/衰减 =====
     const housing = this.getHousingCapacity();
 
-    if (this.current < housing) {
+    if (this.current < housing && deficit <= 0 && dailyFoodNet > 0) {
       // 增长（受人文政策影响）
       this.declineCountdown = 0;
       const growthMul = this.getGrowthMultiplier();
@@ -287,12 +341,16 @@ export class PopulationSystem {
   }
 
   _updateStore() {
+    const combatSystem = typeof window !== 'undefined' ? window.__game?.systems?.combat : null;
+    const stats = this.getPopulationStats(combatSystem);
     store.setState({
       populationCurrent: this.current,
       populationHousing: this.getHousingCapacity(),
       populationAvailable: this.getAvailableWorkers(),
       populationExpeditionWorkers: this._expeditionWorkers,
       populationConstructionWorkers: this._constructionWorkers,
+      populationWork: stats.work,
+      populationMilitary: stats.military,
       populationDeclineCountdown: this.declineCountdown
     });
   }

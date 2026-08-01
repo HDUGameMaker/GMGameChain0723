@@ -6,20 +6,30 @@ import { store } from '../../core/Store.js';
 import { configRegistry } from '../../core/ConfigRegistry.js';
 
 function _tech() { return window.__game?.systems?.tech; }
-function _units() { return configRegistry.get('enemies')?.units || []; }
+function _combatConfig() { return configRegistry.get('enemies') || {}; }
+function _units() { return _combatConfig().units || []; }
 function _inspiration() { return store.getState('inspiration') || 0; }
 
-const BRANCH_LABELS = {
-  infantry: '步兵',
-  cavalry: '骑兵',
-  artillery: '炮兵',
-  navy: '海军'
-};
+function _branchConfigs() {
+  const configured = _combatConfig().unitBranches || [];
+  if (configured.length > 0) return configured;
+  const ids = [...new Set(_units().map(u => u.branch).filter(Boolean))];
+  return ids.map((id, i) => ({ id, name: id, order: i + 1 }));
+}
+function _domainConfigs() {
+  const configured = _combatConfig().unitDomains || [];
+  if (configured.length > 0) return configured;
+  const ids = [...new Set(_units().map(u => u.domain).filter(Boolean))];
+  return ids.map(id => ({ id, name: id }));
+}
 
-const DOMAIN_LABELS = {
-  land: '陆军',
-  naval: '海军'
-};
+function _branchLabel(branch) {
+  return _branchConfigs().find(b => b.id === branch)?.name || branch;
+}
+
+function _domainLabel(domain) {
+  return _domainConfigs().find(d => d.id === domain)?.name || domain || '';
+}
 
 function _techName(id) {
   const tech = _tech()?.getTech(id);
@@ -32,7 +42,8 @@ function _unitName(id) {
 }
 
 function _branchOrder(branch) {
-  return ['infantry', 'cavalry', 'artillery', 'navy'].indexOf(branch);
+  const cfg = _branchConfigs().find(b => b.id === branch);
+  return Number.isFinite(cfg?.order) ? cfg.order : Number.MAX_SAFE_INTEGER;
 }
 
 function _renderCost(cost) {
@@ -82,7 +93,7 @@ export function renderUnitResearchPanel(data, body, pm) {
 
     const title = document.createElement('div');
     title.style.cssText = 'font-size:14px;font-weight:700;color:#ececf0;margin-bottom:8px;';
-    title.textContent = BRANCH_LABELS[branch] || branch;
+    title.textContent = _branchLabel(branch);
     section.appendChild(title);
 
     const grid = document.createElement('div');
@@ -104,7 +115,7 @@ export function renderUnitResearchPanel(data, body, pm) {
       const name = document.createElement('div');
       name.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;';
       name.innerHTML = '<span style="font-size:14px;font-weight:700;color:' + (done ? '#4ecb71' : '#ececf0') + ';">' + (done ? '✅ ' : '') + unit.name + '</span>' +
-        '<span style="font-size:11px;color:#808098;">' + (DOMAIN_LABELS[unit.domain] || unit.domain || '陆军') + ' T' + (unit.tier || 0) + '</span>';
+        '<span style="font-size:11px;color:#808098;">' + (_domainLabel(unit.domain) || unit.domain) + ' T' + (unit.tier || 0) + '</span>';
       card.appendChild(name);
 
       const stats = document.createElement('div');

@@ -8,12 +8,15 @@ import { store } from '../core/Store.js';
 
 export class TimeSystem {
   constructor() {
-    const config = configRegistry.get('global');
-    this.PERIOD_DURATION = config.PERIOD_DURATION; // 每时段秒数 (120)
-    this.TICK_INTERVAL = config.TICK_INTERVAL;   // 结算间隔秒数 (40)
-    this.PERIOD_NAMES = config.PERIOD_NAMES;     // ['morning','afternoon','evening','night']
-    this.WORK_PERIODS = config.WORK_PERIODS;     // ['morning','afternoon']
-    this.TICKS_PER_PERIOD = Math.floor(this.PERIOD_DURATION / this.TICK_INTERVAL); // 3
+    const config = configRegistry.get('global') || {};
+    this.PERIOD_DURATION = config.PERIOD_DURATION || 30;
+    this.TICK_INTERVAL = config.TICK_INTERVAL || 10;
+    this.PERIOD_NAMES = Array.isArray(config.PERIOD_NAMES) && config.PERIOD_NAMES.length > 0
+      ? config.PERIOD_NAMES
+      : ['morning', 'afternoon', 'evening', 'night'];
+    this.WORK_PERIODS = Array.isArray(config.WORK_PERIODS) ? config.WORK_PERIODS : [];
+    this.TICKS_PER_PERIOD = Math.max(1, Math.floor(this.PERIOD_DURATION / this.TICK_INTERVAL));
+    this.TICKS_PER_DAY = this.TICKS_PER_PERIOD * this.PERIOD_NAMES.length;
 
     this.currentTick = 0;         // 全局 tick 计数
     this.tickInPeriod = 0;        // 当前时段内第几个 tick
@@ -23,10 +26,10 @@ export class TimeSystem {
 
     this.speed = 1;               // 速度倍率: 1, 2, 4
     this.userPaused = false;      // 用户手动暂停
+    this._lastStartedDay = 0;
 
-    // 时段显示信息
-    this.PERIOD_ICONS = { morning: '☀️', afternoon: '🌤️', evening: '🌅', night: '🌙' };
-    this.PERIOD_LABELS = { morning: '上午', afternoon: '下午', evening: '傍晚', night: '深夜' };
+    this.PERIOD_ICONS = config.PERIOD_ICONS || {};
+    this.PERIOD_LABELS = config.PERIOD_LABELS || {};
   }
 
   initNew() {
@@ -37,6 +40,7 @@ export class TimeSystem {
     this.elapsedInTick = 0;
     this.speed = 1;
     this.userPaused = false;
+    this._lastStartedDay = 0;
     this._updateStore();
   }
 
@@ -63,14 +67,10 @@ export class TimeSystem {
   _onTick() {
     this.currentTick++;
     this.tickInPeriod++;
+    this._updateStore();
 
-    // 触发 tick 事件（所有系统订阅此事件）
-    eventBus.emit('tick', {
-      tick: this.currentTick,
-      period: this.currentPeriod,
-      day: this.day,
-      isWorkPeriod: this.isWorkPeriod
-    });
+    const tickData = this._buildTickData();
+    this._emitTickEvents(tickData);
 
     // 检查时段是否结束
     if (this.tickInPeriod >= this.TICKS_PER_PERIOD) {
@@ -80,27 +80,81 @@ export class TimeSystem {
     this._updateStore();
   }
 
+  _buildTickData() {
+    const tickInDay = this._getTickInDay();
+    return {
+      tick: this.currentTick,
+      period: this.currentPeriod,
+      day: this.day,
+      periodIndex: this.periodIndex,
+      tickInPeriod: this.tickInPeriod,
+      tickInDay,
+      ticksPerPeriod: this.TICKS_PER_PERIOD,
+      ticksPerDay: this.TICKS_PER_DAY,
+      isWorkPeriod: this.isWorkPeriod,
+      isFirstTickOfDay: tickInDay === 1,
+      isFirstWorkTickOfDay: this._isFirstWorkTickOfDay()
+    };
+  }
+
+  _emitTickEvents(tickData) {
+    if (tickData.isFirstTickOfDay && this._lastStartedDay !== this.day) {
+      this._lastStartedDay = this.day;
+      eventBus.emit('dayStart', tickData);
+      eventBus.emit('dayProductionTick', tickData);
+      eventBus.emit('dayAutosaveTick', tickData);
+    }
+    eventBus.emit('tick', tickData);
+    eventBus.emit('periodTick', tickData);
+    eventBus.emit(`${tickData.period}Tick`, tickData);
+    eventBus.emit(tickData.isWorkPeriod ? 'workTick' : 'nonWorkTick', tickData);
+    if (tickData.isFirstTickOfDay) eventBus.emit('dayFirstTick', tickData);
+    if (tickData.isFirstWorkTickOfDay) eventBus.emit('dayFirstWorkTick', tickData);
+  }
+
+  _getTickInDay() {
+    return this.periodIndex * this.TICKS_PER_PERIOD + this.tickInPeriod;
+  }
+
+  _isFirstWorkTickOfDay() {
+    if (!this.isWorkPeriod || this.tickInPeriod !== 1) return false;
+    const earlierPeriods = this.PERIOD_NAMES.slice(0, this.periodIndex);
+    return !earlierPeriods.some(period => this.WORK_PERIODS.includes(period));
+  }
+
   _onPeriodEnd() {
     const prevPeriod = this.currentPeriod;
-    eventBus.emit('periodEnd', { period: prevPeriod, day: this.day });
+    const prevDay = this.day;
+    eventBus.emit('periodEnd', { period: prevPeriod, day: prevDay });
 
     this.tickInPeriod = 0;
     this.periodIndex++;
+    let dayChanged = false;
 
     // 一天结束
     if (this.periodIndex >= this.PERIOD_NAMES.length) {
       this.periodIndex = 0;
       this.day++;
-      eventBus.emit('dayStart', { day: this.day });
+      dayChanged = true;
     }
 
-    eventBus.emit('periodChange', {
+    // 先把唯一时间源写入 Store，再通知监听者，避免监听者读到旧时段。
+    this._updateStore();
+
+    const periodChangeData = {
       period: this.currentPeriod,
       prevPeriod,
+      prevDay,
       day: this.day,
       icon: this.PERIOD_ICONS[this.currentPeriod],
-      label: this.PERIOD_LABELS[this.currentPeriod]
-    });
+      label: this.PERIOD_LABELS[this.currentPeriod],
+      periodIndex: this.periodIndex,
+      tickInPeriod: this.tickInPeriod,
+      isWorkPeriod: this.isWorkPeriod
+    };
+    eventBus.emit('periodChange', periodChangeData);
+
+    if (dayChanged) this._lastStartedDay = prevDay;
   }
 
   get currentPeriod() {
@@ -143,6 +197,8 @@ export class TimeSystem {
       timePeriod: this.currentPeriod,
       timeDay: this.day,
       timePeriodIndex: this.periodIndex,
+      timeTickInPeriod: this.tickInPeriod,
+      timeTickInDay: this._getTickInDay(),
       timeSpeed: this.speed,
       timeUserPaused: this.userPaused
     });
@@ -166,6 +222,7 @@ export class TimeSystem {
     this.periodIndex = state.periodIndex || 0;
     this.day = state.day || 1;
     this.elapsedInTick = state.elapsedInTick || 0;
+    this._lastStartedDay = this._getTickInDay() > 0 ? this.day : this.day - 1;
     this._updateStore();
   }
 }

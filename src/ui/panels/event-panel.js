@@ -9,6 +9,7 @@ export function renderEventPanel(data, body, pm) {
 
   const evt = data.event;
   if (!evt) return;
+  const managedByEventSystem = data.source === 'eventSystem';
 
   if (evt.kind === 'colony_offer') {
     renderColonyOfferPanel(evt, body, pm);
@@ -68,6 +69,7 @@ export function renderEventPanel(data, body, pm) {
   optionsDiv.style.cssText = 'display:flex;flex-direction:column;';
 
   for (const option of (evt.options || [])) {
+    const optionIndex = (evt.options || []).indexOf(option);
     const canAfford = game.systems.event.canAffordOption(option.effects);
     const btn = document.createElement('button');
     btn.className = 'event-option-btn';
@@ -81,13 +83,29 @@ export function renderEventPanel(data, body, pm) {
 
     btn.addEventListener('click', () => {
       if (!canAfford) return;
-      // 执行选项效果
-      const hasTrigger = game.systems.event.executeOptionEffects(option.effects);
+      const result = managedByEventSystem
+        ? game.systems.event.chooseOption(evt.id, optionIndex)
+        : { ok: true, hasTrigger: game.systems.event.executeOptionEffects(option.effects) };
+      if (!result.ok) {
+        pm.alert(result.reason || '无法选择该选项');
+        return;
+      }
+      const hasTrigger = result.hasTrigger;
       if (!hasTrigger) {
         pm.close();
       }
     });
     optionsDiv.appendChild(btn);
+  }
+
+  if (managedByEventSystem) {
+    const laterBtn = document.createElement('button');
+    laterBtn.className = 'event-option-btn';
+    laterBtn.textContent = '稍后处理';
+    laterBtn.style.background = 'rgba(255,255,255,0.06)';
+    laterBtn.style.color = '#a0a0ba';
+    laterBtn.addEventListener('click', () => pm.close());
+    optionsDiv.appendChild(laterBtn);
   }
 
   container.appendChild(optionsDiv);

@@ -1,4 +1,36 @@
 {
+  "unitBranches": [
+    {
+      "id": "infantry",
+      "name": "步兵",
+      "order": 1
+    },
+    {
+      "id": "cavalry",
+      "name": "骑兵",
+      "order": 2
+    },
+    {
+      "id": "artillery",
+      "name": "炮兵",
+      "order": 3
+    },
+    {
+      "id": "navy",
+      "name": "海军",
+      "order": 4
+    }
+  ],
+  "unitDomains": [
+    {
+      "id": "land",
+      "name": "陆军"
+    },
+    {
+      "id": "naval",
+      "name": "海军"
+    }
+  ],
   "enemies": [],
   "units": [
     {
@@ -17,8 +49,14 @@
       "researchCost": 0,
       "prerequisiteTechs": [],
       "cost": [
-        { "resourceId": "wood", "amount": 10 },
-        { "resourceId": "food", "amount": 10 }
+        {
+          "resourceId": "wood",
+          "amount": 10
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        }
       ],
       "unlocked": true
     },
@@ -36,11 +74,22 @@
       "commandPoints": 3,
       "weight": 10,
       "researchCost": 40,
-      "prerequisiteUnits": ["warrior"],
-      "prerequisiteTechs": ["smelting", "military_training"],
+      "prerequisiteUnits": [
+        "warrior"
+      ],
+      "prerequisiteTechs": [
+        "smelting",
+        "military_training"
+      ],
       "cost": [
-        { "resourceId": "iron_ingot", "amount": 12 },
-        { "resourceId": "food", "amount": 15 }
+        {
+          "resourceId": "iron_ingot",
+          "amount": 12
+        },
+        {
+          "resourceId": "food",
+          "amount": 15
+        }
       ],
       "unlocked": false
     },
@@ -58,12 +107,25 @@
       "commandPoints": 5,
       "weight": 25,
       "researchCost": 90,
-      "prerequisiteUnits": ["swordsman"],
-      "prerequisiteTechs": ["firearm"],
+      "prerequisiteUnits": [
+        "swordsman"
+      ],
+      "prerequisiteTechs": [
+        "firearm"
+      ],
       "cost": [
-        { "resourceId": "gear", "amount": 8 },
-        { "resourceId": "iron_ingot", "amount": 18 },
-        { "resourceId": "food", "amount": 25 }
+        {
+          "resourceId": "gear",
+          "amount": 8
+        },
+        {
+          "resourceId": "iron_ingot",
+          "amount": 18
+        },
+        {
+          "resourceId": "food",
+          "amount": 25
+        }
       ],
       "unlocked": false
     },
@@ -81,12 +143,25 @@
       "commandPoints": 7,
       "weight": 55,
       "researchCost": 180,
-      "prerequisiteUnits": ["musketeer"],
-      "prerequisiteTechs": ["modern_firearms"],
+      "prerequisiteUnits": [
+        "musketeer"
+      ],
+      "prerequisiteTechs": [
+        "modern_firearms"
+      ],
       "cost": [
-        { "resourceId": "steel", "amount": 25 },
-        { "resourceId": "electronic_part", "amount": 4 },
-        { "resourceId": "food", "amount": 40 }
+        {
+          "resourceId": "steel",
+          "amount": 25
+        },
+        {
+          "resourceId": "electronic_part",
+          "amount": 4
+        },
+        {
+          "resourceId": "food",
+          "amount": 40
+        }
       ],
       "unlocked": false
     },
@@ -104,11 +179,22 @@
       "commandPoints": 4,
       "weight": 18,
       "researchCost": 55,
-      "prerequisiteTechs": ["domesticate_horses"],
+      "prerequisiteTechs": [
+        "domesticate_horses"
+      ],
       "cost": [
-        { "resourceId": "iron_ingot", "amount": 18 },
-        { "resourceId": "plank", "amount": 10 },
-        { "resourceId": "food", "amount": 45 }
+        {
+          "resourceId": "iron_ingot",
+          "amount": 18
+        },
+        {
+          "resourceId": "plank",
+          "amount": 10
+        },
+        {
+          "resourceId": "food",
+          "amount": 45
+        }
       ],
       "unlocked": false
     },
@@ -126,12 +212,25 @@
       "commandPoints": 6,
       "weight": 35,
       "researchCost": 110,
-      "prerequisiteUnits": ["knight"],
-      "prerequisiteTechs": ["precision_manufacturing"],
+      "prerequisiteUnits": [
+        "knight"
+      ],
+      "prerequisiteTechs": [
+        "precision_manufacturing"
+      ],
       "cost": [
-        { "resourceId": "steel", "amount": 22 },
-        { "resourceId": "machine_part", "amount": 6 },
-        { "resourceId": "food", "amount": 70 }
+        {
+          "resourceId": "steel",
+          "amount": 22
+        },
+        {
+          "resourceId": "machine_part",
+          "amount": 6
+        },
+        {
+          "resourceId": "food",
+          "amount": 70
+        }
       ],
       "unlocked": false
     },
@@ -149,12 +248,25 @@
       "commandPoints": 9,
       "weight": 70,
       "researchCost": 220,
-      "prerequisiteUnits": ["armored_cavalry"],
-      "prerequisiteTechs": ["aeronautics"],
+      "prerequisiteUnits": [
+        "armored_cavalry"
+      ],
+      "prerequisiteTechs": [
+        "aeronautics"
+      ],
       "cost": [
-        { "resourceId": "steel", "amount": 45 },
-        { "resourceId": "machine_part", "amount": 18 },
-        { "resourceId": "gear", "amount": 16 }
+        {
+          "resourceId": "steel",
+          "amount": 45
+        },
+        {
+          "resourceId": "machine_part",
+          "amount": 18
+        },
+        {
+          "resourceId": "gear",
+          "amount": 16
+        }
       ],
       "unlocked": false
     },
@@ -172,12 +284,25 @@
       "commandPoints": 12,
       "weight": 110,
       "researchCost": 420,
-      "prerequisiteUnits": ["biplane"],
-      "prerequisiteTechs": ["modern_aeronautics"],
+      "prerequisiteUnits": [
+        "biplane"
+      ],
+      "prerequisiteTechs": [
+        "modern_aeronautics"
+      ],
       "cost": [
-        { "resourceId": "steel", "amount": 90 },
-        { "resourceId": "machine_part", "amount": 36 },
-        { "resourceId": "electronic_part", "amount": 16 }
+        {
+          "resourceId": "steel",
+          "amount": 90
+        },
+        {
+          "resourceId": "machine_part",
+          "amount": 36
+        },
+        {
+          "resourceId": "electronic_part",
+          "amount": 16
+        }
       ],
       "unlocked": false
     },
@@ -195,11 +320,23 @@
       "commandPoints": 6,
       "weight": 30,
       "researchCost": 80,
-      "prerequisiteTechs": ["smelting", "gunpowder"],
+      "prerequisiteTechs": [
+        "smelting",
+        "gunpowder"
+      ],
       "cost": [
-        { "resourceId": "iron_ingot", "amount": 35 },
-        { "resourceId": "gear", "amount": 6 },
-        { "resourceId": "food", "amount": 40 }
+        {
+          "resourceId": "iron_ingot",
+          "amount": 35
+        },
+        {
+          "resourceId": "gear",
+          "amount": 6
+        },
+        {
+          "resourceId": "food",
+          "amount": 40
+        }
       ],
       "unlocked": false
     },
@@ -217,13 +354,30 @@
       "commandPoints": 10,
       "weight": 80,
       "researchCost": 260,
-      "prerequisiteUnits": ["cannon"],
-      "prerequisiteTechs": ["internal_combustion", "precision_manufacturing"],
+      "prerequisiteUnits": [
+        "cannon"
+      ],
+      "prerequisiteTechs": [
+        "internal_combustion",
+        "precision_manufacturing"
+      ],
       "cost": [
-        { "resourceId": "steel", "amount": 70 },
-        { "resourceId": "machine_part", "amount": 24 },
-        { "resourceId": "gear", "amount": 20 },
-        { "resourceId": "food", "amount": 90 }
+        {
+          "resourceId": "steel",
+          "amount": 70
+        },
+        {
+          "resourceId": "machine_part",
+          "amount": 24
+        },
+        {
+          "resourceId": "gear",
+          "amount": 20
+        },
+        {
+          "resourceId": "food",
+          "amount": 90
+        }
       ],
       "unlocked": false
     },
@@ -241,12 +395,25 @@
       "commandPoints": 13,
       "weight": 120,
       "researchCost": 460,
-      "prerequisiteUnits": ["tank"],
-      "prerequisiteTechs": ["modern_ballistics"],
+      "prerequisiteUnits": [
+        "tank"
+      ],
+      "prerequisiteTechs": [
+        "modern_ballistics"
+      ],
       "cost": [
-        { "resourceId": "steel", "amount": 120 },
-        { "resourceId": "machine_part", "amount": 45 },
-        { "resourceId": "electronic_part", "amount": 18 }
+        {
+          "resourceId": "steel",
+          "amount": 120
+        },
+        {
+          "resourceId": "machine_part",
+          "amount": 45
+        },
+        {
+          "resourceId": "electronic_part",
+          "amount": 18
+        }
       ],
       "unlocked": false
     },
@@ -264,10 +431,18 @@
       "commandPoints": 2,
       "weight": 12,
       "researchCost": 25,
-      "prerequisiteTechs": ["wood_processing"],
+      "prerequisiteTechs": [
+        "wood_processing"
+      ],
       "cost": [
-        { "resourceId": "plank", "amount": 20 },
-        { "resourceId": "food", "amount": 10 }
+        {
+          "resourceId": "plank",
+          "amount": 20
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        }
       ],
       "unlocked": false
     },
@@ -285,12 +460,25 @@
       "commandPoints": 5,
       "weight": 32,
       "researchCost": 95,
-      "prerequisiteUnits": ["raft"],
-      "prerequisiteTechs": ["sail"],
+      "prerequisiteUnits": [
+        "raft"
+      ],
+      "prerequisiteTechs": [
+        "sail"
+      ],
       "cost": [
-        { "resourceId": "plank", "amount": 80 },
-        { "resourceId": "fur", "amount": 20 },
-        { "resourceId": "food", "amount": 35 }
+        {
+          "resourceId": "plank",
+          "amount": 80
+        },
+        {
+          "resourceId": "fur",
+          "amount": 20
+        },
+        {
+          "resourceId": "food",
+          "amount": 35
+        }
       ],
       "unlocked": false
     },
@@ -308,13 +496,29 @@
       "commandPoints": 11,
       "weight": 90,
       "researchCost": 300,
-      "prerequisiteUnits": ["sailing_ship"],
-      "prerequisiteTechs": ["steam_engine"],
+      "prerequisiteUnits": [
+        "sailing_ship"
+      ],
+      "prerequisiteTechs": [
+        "steam_engine"
+      ],
       "cost": [
-        { "resourceId": "steel", "amount": 120 },
-        { "resourceId": "machine_part", "amount": 35 },
-        { "resourceId": "coal", "amount": 120 },
-        { "resourceId": "food", "amount": 120 }
+        {
+          "resourceId": "steel",
+          "amount": 120
+        },
+        {
+          "resourceId": "machine_part",
+          "amount": 35
+        },
+        {
+          "resourceId": "coal",
+          "amount": 120
+        },
+        {
+          "resourceId": "food",
+          "amount": 120
+        }
       ],
       "unlocked": false
     },
@@ -332,13 +536,30 @@
       "commandPoints": 14,
       "weight": 130,
       "researchCost": 520,
-      "prerequisiteUnits": ["battleship"],
-      "prerequisiteTechs": ["modern_ballistics", "precision_manufacturing"],
+      "prerequisiteUnits": [
+        "battleship"
+      ],
+      "prerequisiteTechs": [
+        "modern_ballistics",
+        "precision_manufacturing"
+      ],
       "cost": [
-        { "resourceId": "steel", "amount": 180 },
-        { "resourceId": "machine_part", "amount": 60 },
-        { "resourceId": "electronic_part", "amount": 28 },
-        { "resourceId": "food", "amount": 160 }
+        {
+          "resourceId": "steel",
+          "amount": 180
+        },
+        {
+          "resourceId": "machine_part",
+          "amount": 60
+        },
+        {
+          "resourceId": "electronic_part",
+          "amount": 28
+        },
+        {
+          "resourceId": "food",
+          "amount": 160
+        }
       ],
       "unlocked": false
     }
@@ -352,7 +573,10 @@
       "researchCost": 20,
       "description": "2 名任意步兵互相掩护。现代单位出现前约提升参与单位 50% 战力，现代单位出现后约 30%。",
       "requiredUnits": [
-        { "branch": "infantry", "count": 2 }
+        {
+          "branch": "infantry",
+          "count": 2
+        }
       ],
       "unlocked": false
     },
@@ -364,8 +588,14 @@
       "researchCost": 55,
       "description": "2 名任意步兵与 1 名任意骑兵协同推进。现代单位出现前约提升参与单位 50% 战力，现代单位出现后约 30%。",
       "requiredUnits": [
-        { "branch": "infantry", "count": 2 },
-        { "branch": "cavalry", "count": 1 }
+        {
+          "branch": "infantry",
+          "count": 2
+        },
+        {
+          "branch": "cavalry",
+          "count": 1
+        }
       ],
       "unlocked": false
     },
@@ -377,7 +607,10 @@
       "researchCost": 75,
       "description": "3 名任意骑兵组成冲击队形。现代单位出现前约提升参与单位 50% 战力，现代单位出现后约 30%。",
       "requiredUnits": [
-        { "branch": "cavalry", "count": 3 }
+        {
+          "branch": "cavalry",
+          "count": 3
+        }
       ],
       "unlocked": false
     },
@@ -389,8 +622,14 @@
       "researchCost": 80,
       "description": "2 名任意步兵保护 1 个任意炮兵单位。现代单位出现前约提升参与单位 50% 战力，现代单位出现后约 30%。",
       "requiredUnits": [
-        { "branch": "infantry", "count": 2 },
-        { "branch": "artillery", "count": 1 }
+        {
+          "branch": "infantry",
+          "count": 2
+        },
+        {
+          "branch": "artillery",
+          "count": 1
+        }
       ],
       "unlocked": false
     },
@@ -402,23 +641,44 @@
       "researchCost": 140,
       "description": "2 名任意步兵、1 名任意骑兵与 1 个任意炮兵单位组成完整陆军战斗群。现代单位出现前约提升参与单位 50% 战力，现代单位出现后约 30%。",
       "requiredUnits": [
-        { "branch": "infantry", "count": 2 },
-        { "branch": "cavalry", "count": 1 },
-        { "branch": "artillery", "count": 1 }
+        {
+          "branch": "infantry",
+          "count": 2
+        },
+        {
+          "branch": "cavalry",
+          "count": 1
+        },
+        {
+          "branch": "artillery",
+          "count": 1
+        }
       ],
       "unlocked": false
     }
   ],
   "invasion": {
     "baseA": 2,
-    "dayMulB": 1,
-    "daySqMulC": 0.1
+    "dayMulB": 0.8,
+    "daySqMulC": 0.03,
+    "firstDay": 30,
+    "nextDelayMinDays": 2,
+    "nextDelayMaxDays": 5,
+    "tributeResourceId": "food",
+    "tributeMultiplierMin": 1,
+    "tributeMultiplierMax": 10,
+    "tributeProtectionDays": 7,
+    "victoryProtectionDays": 14,
+    "drawProtectionDays": 14,
+    "punishResourceLossRate": 0.5,
+    "punishPopulationLossRate": 0.3,
+    "minimumPopulationAfterPunish": 2,
+    "reviveUnitRate": 0.5,
+    "reviveDelayDays": 3,
+    "landDefenseDomain": "land"
   },
   "global": {
     "humanHp": 2,
     "clickAttack": 1
-  },
-  "invasionBaseA": 2,
-  "invasionDayMulB": 1,
-  "invasionDaySqMulC": 0.1
+  }
 }

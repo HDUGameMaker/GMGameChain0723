@@ -41,7 +41,7 @@
         "amount": 30
       }
     ],
-    "researchTime": 12,
+    "researchTime": 8,
     "prerequisites": [],
     "pos": {
       "x": 6
@@ -62,7 +62,7 @@
         "amount": 20
       }
     ],
-    "researchTime": 12,
+    "researchTime": 8,
     "prerequisites": [
       "logging"
     ],
@@ -85,7 +85,7 @@
         "amount": 50
       }
     ],
-    "researchTime": 12,
+    "researchTime": 8,
     "prerequisites": [
       "logging"
     ],
@@ -112,7 +112,7 @@
         "amount": 200
       }
     ],
-    "researchTime": 12,
+    "researchTime": 8,
     "prerequisites": [
       "mining"
     ],
@@ -138,7 +138,7 @@
         "amount": 30
       }
     ],
-    "researchTime": 24,
+    "researchTime": 12,
     "prerequisites": [
       "wood_processing"
     ],
@@ -161,7 +161,7 @@
         "amount": 100
       }
     ],
-    "researchTime": 24,
+    "researchTime": 12,
     "prerequisites": [
       "smelting"
     ],
@@ -187,7 +187,7 @@
         "amount": 50
       }
     ],
-    "researchTime": 24,
+    "researchTime": 12,
     "prerequisites": [
       "smelting",
       "basic_crafting"
@@ -214,7 +214,7 @@
         "amount": 80
       }
     ],
-    "researchTime": 24,
+    "researchTime": 12,
     "prerequisites": [
       "smelting"
     ],
@@ -237,7 +237,7 @@
         "amount": 40
       }
     ],
-    "researchTime": 24,
+    "researchTime": 12,
     "prerequisites": [
       "smelting"
     ],
@@ -260,7 +260,7 @@
         "amount": 30
       }
     ],
-    "researchTime": 24,
+    "researchTime": 12,
     "prerequisites": [
       "farming"
     ],
@@ -283,7 +283,7 @@
         "amount": 40
       }
     ],
-    "researchTime": 24,
+    "researchTime": 12,
     "prerequisites": [
       "farming"
     ],
@@ -306,7 +306,7 @@
         "amount": 100
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "wood_processing"
     ],
@@ -329,7 +329,7 @@
         "amount": 30
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "steelmaking"
     ],
@@ -355,7 +355,7 @@
         "amount": 50
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "brickmaking"
     ],
@@ -380,7 +380,7 @@
         "amount": 30
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "brickmaking"
     ],
@@ -407,7 +407,7 @@
         "amount": 50
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "hunting"
     ],
@@ -434,7 +434,7 @@
         "amount": 80
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "military_training",
       "smelting"
@@ -461,7 +461,7 @@
         "amount": 10
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "mechanical_engineering"
     ],
@@ -484,7 +484,7 @@
         "amount": 15
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "mechanical_engineering"
     ],
@@ -508,7 +508,7 @@
         "amount": 20
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "mechanical_engineering",
       "precision_crafting"
@@ -535,7 +535,7 @@
         "amount": 5
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "storage_tech"
     ],
@@ -558,7 +558,7 @@
         "amount": 50
       }
     ],
-    "researchTime": 24,
+    "researchTime": 12,
     "prerequisites": [
       "farming"
     ],
@@ -581,7 +581,7 @@
         "amount": 20
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "precision_manufacturing"
     ],
@@ -607,7 +607,7 @@
         "amount": 30
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "exploration_tech",
       "electronic_engineering"
@@ -635,7 +635,7 @@
         "amount": 20
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "precision_crafting"
     ],
@@ -662,7 +662,7 @@
         "amount": 30
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "precision_molding"
     ],
@@ -691,7 +691,7 @@
         "amount": 20
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "waterwheel"
     ],
@@ -718,7 +718,7 @@
         "amount": 100
       }
     ],
-    "researchTime": 36,
+    "researchTime": 18,
     "prerequisites": [
       "military_training"
     ],
@@ -754,7 +754,7 @@
         "amount": 30
       }
     ],
-    "researchTime": 24,
+    "researchTime": 12,
     "prerequisites": [
       "advanced_military",
       "steelmaking"
@@ -788,7 +788,7 @@
         "amount": 20
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "domesticate_horses",
       "precision_molding"
@@ -822,7 +822,7 @@
         "amount": 40
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "smelting",
       "precision_molding"
@@ -860,7 +860,7 @@
         "amount": 120
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "waterwheel",
       "mechanical_engineering"
@@ -898,7 +898,7 @@
         "amount": 35
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "steam_engine",
       "precision_manufacturing"
@@ -936,7 +936,7 @@
         "amount": 40
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "internal_combustion",
       "sail"
@@ -974,7 +974,7 @@
         "amount": 8
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "firearm",
       "precision_manufacturing"
@@ -1012,7 +1012,7 @@
         "amount": 20
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "modern_firearms",
       "electronic_engineering"
@@ -1050,7 +1050,7 @@
         "amount": 24
       }
     ],
-    "researchTime": 48,
+    "researchTime": 24,
     "prerequisites": [
       "aeronautics",
       "electronic_engineering"

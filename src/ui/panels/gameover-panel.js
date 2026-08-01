@@ -2,8 +2,6 @@
  * gameover-panel - 游戏结束弹窗面板
  * 当人口降至 2 以下时触发，显示统计和重新开始选项
  */
-import { SaveManager } from '../../core/SaveManager.js';
-
 export function renderGameOverPanel(data, body, pm) {
   const game = window.__game;
   if (!game) return;
@@ -83,7 +81,7 @@ export function renderGameOverPanel(data, body, pm) {
     stats.appendChild(row);
   }
 
-  // === 重新开始按钮 ===
+  // === 返回主菜单按钮 ===
   const restartBtn = document.createElement('button');
   restartBtn.style.cssText = `
     padding: 10px 32px;
@@ -94,7 +92,7 @@ export function renderGameOverPanel(data, body, pm) {
     transition: transform 0.15s, box-shadow 0.15s;
     box-shadow: 0 4px 16px rgba(204,68,68,0.25);
   `;
-  restartBtn.textContent = '🔄 重新开始';
+  restartBtn.textContent = '返回主菜单';
   restartBtn.addEventListener('mouseenter', () => {
     restartBtn.style.transform = 'scale(1.03)';
     restartBtn.style.boxShadow = '0 6px 24px rgba(204,68,68,0.35)';
@@ -103,13 +101,8 @@ export function renderGameOverPanel(data, body, pm) {
     restartBtn.style.transform = 'scale(1)';
     restartBtn.style.boxShadow = '0 4px 16px rgba(204,68,68,0.25)';
   });
-  restartBtn.addEventListener('click', async () => {
-    // 标记重置状态，防止 beforeunload 保存
-    if (game._resetting !== undefined) {
-      game._resetting = true;
-    }
-    await SaveManager.reset();
-    location.reload();
+  restartBtn.addEventListener('click', () => {
+    game.returnToMainMenu?.();
   });
 
   container.appendChild(icon);

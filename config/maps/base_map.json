@@ -338,7 +338,6 @@
           "workerCost": 3
         }
       ],
-      "differentWorkersPerPeriod": true,
       "width": 1
     },
     {
@@ -359,8 +358,7 @@
           "regionId": "summit_ruins",
           "workerCost": 4
         }
-      ],
-      "differentWorkersPerPeriod": true
+      ]
     },
     {
       "id": "scrapyard_entrance",

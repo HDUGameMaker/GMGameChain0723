@@ -4,6 +4,7 @@
  */
 import { SaveManager } from '../../core/SaveManager.js';
 import { messageLog } from '../MessageLog.js';
+import { configRegistry } from '../../core/ConfigRegistry.js';
 
 export function renderSettingsPanel(data, body, pm) {
   const container = document.createElement('div');
@@ -333,8 +334,7 @@ export function renderSettingsPanel(data, body, pm) {
         const icon = res.icon
           ? `<img src="${res.icon}" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:4px;" onerror="this.remove()" />`
           : '';
-        const emojiMap = { wood: '🪵', plank: '📐', stone: '🪨', iron_ore: '⛏️', coal: '⚫', iron_ingot: '🔩', food: '🍞' };
-        info.innerHTML = `${icon}${emojiMap[res.id] || ''} ${res.name} <span style="color:#888;font-size:11px;">${res.current}/${res.max}</span>`;
+        info.innerHTML = `${icon}${res.name} <span style="color:#888;font-size:11px;">${res.current}/${res.max}</span>`;
 
         const addBtn = document.createElement('button');
         const isFull = res.current >= res.max;
@@ -421,11 +421,13 @@ export function renderSettingsPanel(data, body, pm) {
     const enemyRow = document.createElement('div');
     enemyRow.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;';
 
-    const enemyTypes = [
-      { id: 'wild_animal', name: '野兽' },
-      { id: 'robot_scout', name: '侦察机器人' },
-      { id: 'robot_raider', name: '袭击者机器人' }
-    ];
+    const enemyTypes = configRegistry.get('enemies')?.enemies || [];
+    if (enemyTypes.length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'font-size:12px;color:#808098;';
+      empty.textContent = '敌人配置为空';
+      enemyRow.appendChild(empty);
+    }
     enemyTypes.forEach(et => {
       const btn = document.createElement('button');
       btn.textContent = `📍 ${et.name}`;

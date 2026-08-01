@@ -1,5 +1,6 @@
 {
   "expeditionPeriods": 3,
   "baseBackpackCapacity": 10,
-  "baseResourceCapacity": 150
+  "baseResourceCapacity": 150,
+  "baseQueueLimit": 1
 }
