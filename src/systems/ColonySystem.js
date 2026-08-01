@@ -330,7 +330,9 @@ export class ColonySystem {
     const idx = armies.findIndex(a => a.id === army.id);
     if (idx >= 0) {
       armies[idx] = { ...armies[idx], unitIds: remaining };
-      store.setState({ armies });
+      const version = (store.getState('armyVersion') || 0) + 1;
+      store.setState({ armies: [...armies], armyVersion: version });
+      eventBus.emit('armyChanged', { reason: 'colonyOccupationLoss', version });
     }
     this._applyUnitDeaths(lostIds);
 

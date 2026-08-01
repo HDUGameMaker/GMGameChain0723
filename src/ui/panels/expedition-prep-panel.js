@@ -3,7 +3,6 @@
  * 支持 1-3 个阶段（必须从第一个开始连续选择，不允许空隙）
  */
 import { configRegistry } from '../../core/ConfigRegistry.js';
-import { eventBus } from '../../core/EventBus.js';
 
 export function renderExpeditionPrepPanel(data, body, pm) {
   const game = window.__game;
@@ -20,7 +19,11 @@ export function renderExpeditionPrepPanel(data, body, pm) {
   let selectedRegions = new Array(MAX_STAGES).fill(null); // [regionId | null, ...]
   let focusSlot = 0; // 当前焦点栏位
   // 从上次探险记录中恢复装备选择
-  let equippedInstanceIds = new Set(itemSystem.getEquippedInstances().map(i => i.instanceId));
+  let equippedInstanceIds = new Set(
+    itemSystem.getEquippedInstances()
+      .filter(i => !i.inExpedition)
+      .map(i => i.instanceId)
+  );
 
   /**
    * 紧凑化区域选择（去掉末尾 null），用于预览产出
@@ -48,38 +51,15 @@ export function renderExpeditionPrepPanel(data, body, pm) {
     return true;
   }
 
-  // 时段映射表
-  const ALL_PERIOD_KEYS = ['morning', 'afternoon', 'evening', 'night'];
-  const ALL_PERIOD_LABELS = ['上午', '下午', '傍晚', '夜晚'];
-  const ALL_PERIOD_ICONS = ['☀️', '🌤️', '🌅', '🌙'];
-
-  function getCurrentPeriodIndex() {
-    const timeSystem = game.systems.time;
-    return timeSystem ? timeSystem.periodIndex : 0;
-  }
-
-  function getPhaseLabels() {
-    const base = getCurrentPeriodIndex();
-    const labels = [];
-    const icons = [];
-    for (let i = 0; i < MAX_STAGES; i++) {
-      const idx = (base + i) % 4;
-      labels.push(ALL_PERIOD_LABELS[idx]);
-      icons.push(ALL_PERIOD_ICONS[idx]);
+  function formatCycleYields(region) {
+    const totals = {};
+    for (const periodYields of Object.values(region.baseYields || {})) {
+      for (const [resId, amt] of Object.entries(periodYields || {})) {
+        totals[resId] = (totals[resId] || 0) + amt;
+      }
     }
-    return { labels, icons };
-  }
-
-  // 获取当前焦点栏位对应时段的产出（用于区域卡片上直观展示）
-  function getFocusPeriodKey() {
-    return ALL_PERIOD_KEYS[(getCurrentPeriodIndex() + focusSlot) % 4];
-  }
-
-  function formatYields(region) {
-    const periodKey = getFocusPeriodKey();
-    const yields = region.baseYields[periodKey];
-    if (!yields) return '';
-    return Object.entries(yields).map(([resId, amt]) => {
+    if (Object.keys(totals).length === 0) return '';
+    return Object.entries(totals).map(([resId, amt]) => {
       const cfg = configRegistry.getResource(resId);
       return `${cfg ? cfg.name : resId} ${amt}`;
     }).join(' · ');
@@ -91,14 +71,16 @@ export function renderExpeditionPrepPanel(data, body, pm) {
   function render() {
     container.innerHTML = '';
 
-    // === 时段区域选择 ===
-    const { labels: periodNames, icons: periodIcons } = getPhaseLabels();
+    // === 阶段区域选择 ===
 
     // 提示文字
     const hintDiv = document.createElement('div');
     hintDiv.style.cssText = 'font-size:12px;color:#888;text-align:center;margin-bottom:2px;';
     const compacted = compactRegions(selectedRegions);
+    const queueCount = expeditionSystem.getActiveCount ? expeditionSystem.getActiveCount() : 0;
+    const queueLimit = expeditionSystem.getQueueLimit ? expeditionSystem.getQueueLimit() : 1;
     let hintText = entrance ? `探索入口: ${entrance.name}` : '';
+    hintText += hintText ? ` | 队列 ${queueCount}/${queueLimit}` : `队列 ${queueCount}/${queueLimit}`;
     if (compacted.length === 0) {
       hintText += hintText ? ' | 请至少选择第一个阶段的探索区域' : '请至少选择第一个阶段的探索区域';
     } else {
@@ -133,7 +115,7 @@ export function renderExpeditionPrepPanel(data, body, pm) {
         : '';
 
       slot.innerHTML = `
-        <div style="font-size:12px;color:#aaa;">${periodIcons[i]} ${periodNames[i]}${requiredBadge}</div>
+        <div style="font-size:12px;color:#aaa;">阶段 ${i + 1}${requiredBadge}</div>
         <div style="font-size:13px;color:#fff;margin-top:4px;">${regionName}</div>
         ${isSelected && i > 0 ? '<div style="font-size:10px;color:#888;margin-top:2px;">点击清除</div>' : ''}
       `;
@@ -164,10 +146,9 @@ export function renderExpeditionPrepPanel(data, body, pm) {
     const currentSelection = selectedRegions[focusSlot];
     const canSelectHere = focusSlot === 0 || selectedRegions[focusSlot - 1] !== null;
 
-    const focusPeriodLabel = ALL_PERIOD_LABELS[(getCurrentPeriodIndex() + focusSlot) % 4];
     const regionsSection = document.createElement('div');
     if (canSelectHere) {
-      regionsSection.innerHTML = `<div style="font-size:13px;color:#aaa;margin-bottom:8px;">选择区域 (${focusPeriodLabel}时段产出):</div>`;
+      regionsSection.innerHTML = '<div style="font-size:13px;color:#aaa;margin-bottom:8px;">选择区域:</div>';
     } else {
       regionsSection.innerHTML = '<div style="font-size:13px;color:#f88;margin-bottom:8px;">⚠ 请先选择上一阶段的区域</div>';
     }
@@ -195,8 +176,7 @@ export function renderExpeditionPrepPanel(data, body, pm) {
       } else if (isSelectedElsewhere) {
         bg = 'rgba(100,200,255,0.12)';
         border = 'rgba(100,200,255,0.3)';
-        const stageNames = periodNames;
-        const slotLabels = selectedSlots.map(s => stageNames[s]).join(',');
+        const slotLabels = selectedSlots.map(s => `阶段${s + 1}`).join(',');
         badgeHtml = `<div style="font-size:10px;color:#8cf;margin-top:2px;">已选: ${slotLabels}</div>`;
       } else {
         bg = unlocked ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.02)';
@@ -212,7 +192,7 @@ export function renderExpeditionPrepPanel(data, body, pm) {
       `;
       card.innerHTML = `
         <div style="font-size:13px;color:#fff;font-weight:600;">${region.name}</div>
-        ${unlocked ? `<div style="font-size:11px;color:#8f8;margin-top:3px;line-height:1.4;">${formatYields(region)}</div>` : ''}
+        ${unlocked ? `<div style="font-size:11px;color:#8f8;margin-top:3px;line-height:1.4;">${formatCycleYields(region)}</div>` : ''}
         ${unlocked && region.workerCost ? `<div style="font-size:10px;color:#f8a040;margin-top:2px;">👥 ${region.workerCost}人</div>` : ''}
         ${badgeHtml}
         ${!unlocked ? `<div style="font-size:10px;color:#f88;margin-top:2px;">🔒 ${unlockHint}</div>` : ''}
@@ -267,8 +247,8 @@ export function renderExpeditionPrepPanel(data, body, pm) {
       const workersOK = totalWorkers <= availableWorkers;
       workerDiv.style.cssText = `font-size:12px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.05);color:${workersOK ? '#aaa' : '#f66'};`;
       workerDiv.textContent = workersOK
-        ? `👥 所需工人: ${totalWorkers}人 (可用: ${availableWorkers}人)`
-        : `⚠ 所需工人: ${totalWorkers}人 (可用: ${availableWorkers}人) — 工人不足！`;
+        ? `👥 占用工人: ${totalWorkers}人 (可用: ${availableWorkers}人，多阶段占用更久)`
+        : `⚠ 占用工人: ${totalWorkers}人 (可用: ${availableWorkers}人) — 工人不足！`;
       container.appendChild(workerDiv);
     }
 
@@ -362,7 +342,7 @@ export function renderExpeditionPrepPanel(data, body, pm) {
         canStart = false;
         buttonLabel = check.reason;
       } else {
-        buttonLabel = stageCount === MAX_STAGES ? '确认出发' : `确认出发 (${stageCount}阶段)`;
+        buttonLabel = stageCount === MAX_STAGES ? '确认循环探索' : `确认循环探索 (${stageCount}阶段)`;
       }
     }
 
@@ -375,7 +355,7 @@ export function renderExpeditionPrepPanel(data, body, pm) {
         if (success) {
           pm.close();
         } else {
-          alert('出发失败，请检查条件');
+          pm.alert('出发失败，请检查条件');
         }
       });
     }
@@ -388,14 +368,4 @@ export function renderExpeditionPrepPanel(data, body, pm) {
   render();
   body.appendChild(container);
 
-  // 监听时段变化，实时更新阶段名称
-  const onPeriodChange = () => render();
-  eventBus.on('periodChange', onPeriodChange);
-
-  // 面板关闭时移除监听
-  const origClose = pm.close.bind(pm);
-  pm.close = () => {
-    eventBus.off('periodChange', onPeriodChange);
-    origClose();
-  };
 }

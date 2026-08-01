@@ -66,6 +66,9 @@ export class MapRenderer {
     this.dragStartCamX = 0;
     this.dragStartCamY = 0;
     this.hasMoved = false;
+    this._cameraKeys = new Set();
+    this._keyboardPanSpeed = 720;
+    this._keyboardPanTicker = null;
 
     // 虚影状态
     this.ghostGraphic = null;
@@ -587,13 +590,8 @@ export class MapRenderer {
    */
   _getFogBaseAlpha() {
     const period = store.getState('timePeriod') || 'morning';
-    switch (period) {
-      case 'morning':   return 0.05;  // 清晨：基本无暗化
-      case 'afternoon': return 0.00;  // 下午：完全明亮
-      case 'evening':   return 0.45;  // 傍晚：明显变暗
-      case 'night':     return 0.82;  // 深夜：接近全黑（建筑/道路光照范围除外）
-      default:          return 0.05;
-    }
+    const lighting = configRegistry.get('global')?.PERIOD_LIGHTING || {};
+    return Number.isFinite(lighting[period]) ? lighting[period] : 0.05;
   }
 
   /**
@@ -1359,6 +1357,8 @@ export class MapRenderer {
 
     // Esc 取消放置
     window.addEventListener('keydown', (e) => {
+      if (this._handleCameraKeyDown(e)) return;
+
       if (e.key === 'Escape' && this._roadSystem && this._roadSystem.isEditMode()) {
         this._roadSystem.exitEditMode();
         this._clearRoadGhost();
@@ -1396,6 +1396,8 @@ export class MapRenderer {
     });
 
     window.addEventListener('keyup', (e) => {
+      this._handleCameraKeyUp(e);
+
       if (e.key === 'Alt') {
         this.lightOverlay.visible = false;
         this.lightOverlay.removeChildren();
@@ -1427,6 +1429,68 @@ export class MapRenderer {
       this._recreateFogCanvas();
       this._drawTerrainChunk();
     }, { passive: false });
+
+    this._keyboardPanTicker = (ticker) => {
+      this._updateKeyboardCameraPan(ticker.deltaMS / 1000);
+    };
+    this.app.ticker.add(this._keyboardPanTicker);
+  }
+
+  _handleCameraKeyDown(e) {
+    const key = e.key?.toLowerCase();
+    if (!['w', 'a', 's', 'd'].includes(key)) return false;
+    if (e.ctrlKey || e.metaKey || e.altKey || this._shouldIgnoreKeyboardCamera(e)) return false;
+
+    e.preventDefault();
+    this._cameraKeys.add(key);
+    return true;
+  }
+
+  _handleCameraKeyUp(e) {
+    const key = e.key?.toLowerCase();
+    if (!['w', 'a', 's', 'd'].includes(key)) return;
+    this._cameraKeys.delete(key);
+  }
+
+  _shouldIgnoreKeyboardCamera(e) {
+    const target = e.target;
+    if (target && target !== document.body) {
+      const tag = target.tagName;
+      if (target.isContentEditable || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+        return true;
+      }
+    }
+    return window.__game?.popupManager?._isOpen === true;
+  }
+
+  _updateKeyboardCameraPan(dt) {
+    if (!this._cameraKeys.size || this._shouldIgnoreKeyboardCamera({ target: document.activeElement })) return;
+
+    const up = this._cameraKeys.has('w') ? -1 : 0;
+    const down = this._cameraKeys.has('s') ? 1 : 0;
+    const left = this._cameraKeys.has('a') ? -1 : 0;
+    const right = this._cameraKeys.has('d') ? 1 : 0;
+    let dx = left + right;
+    let dy = up + down;
+    if (dx === 0 && dy === 0) return;
+
+    if (dx !== 0 && dy !== 0) {
+      const invLen = 1 / Math.sqrt(2);
+      dx *= invLen;
+      dy *= invLen;
+    }
+
+    const oldX = this.camX;
+    const oldY = this.camY;
+    const step = this._keyboardPanSpeed * dt / this.zoom;
+    this.camX += dx * step;
+    this.camY += dy * step;
+    this._clampCamera();
+
+    if (this.camX === oldX && this.camY === oldY) return;
+    this._updateWorldContainerPosition();
+    this._drawTerrainChunk();
+    this._updateFogTexture();
   }
 
   _onClick(e) {
@@ -2555,7 +2619,8 @@ export class MapRenderer {
   _updateMapSynthBars() {
     const t = store.getState('timeProgress') || 0;
     const period = store.getState('timePeriod') || '';
-    const isWorkPeriod = period === 'morning' || period === 'afternoon';
+    const workPeriods = configRegistry.get('global')?.WORK_PERIODS || [];
+    const isWorkPeriod = workPeriods.includes(period);
     for (const ref of this._mapSynthFills) {
       const b = this.buildingSystem.buildings[ref.buildingIndex];
       if (!b || !b.synthesisProgress) continue;
@@ -2585,7 +2650,7 @@ export class MapRenderer {
 
   /**
    * 应用时段色调，支持平滑过渡
-   * @param {string} period - 'morning' | 'afternoon' | 'evening' | 'night'
+   * @param {string} period
    * @param {number} [duration=1.5] - 过渡时长（秒）
    */
   applyPeriodTint(period, duration = 1.5) {
@@ -2594,27 +2659,7 @@ export class MapRenderer {
     //         G×R, G×G, G×B, G×A, G_offset,
     //         B×R, B×G, B×B, B×A, B_offset,
     //         A×R, A×G, A×B, A×A, A_offset]
-    const tints = {
-      'morning': [
-        1.1, 0, 0, 0, 0,
-        0, 1.05, 0, 0, 0,
-        0, 0, 0.9, 0, 0,
-        0, 0, 0, 1, 0
-      ],
-      'afternoon': null, // 无滤镜 → 用单位矩阵表示
-      'evening': [
-        1.1, 0, 0, 0, 0,
-        0, 0.9, 0, 0, 0,
-        0, 0, 0.7, 0, 0,
-        0, 0, 0, 1, 0
-      ],
-      'night': [
-        0.6, 0, 0, 0, 0,
-        0, 0.6, 0, 0, 0,
-        0, 0, 0.9, 0, 0,
-        0, 0, 0, 1, 0
-      ]
-    };
+    const tints = configRegistry.get('global')?.PERIOD_TINTS || {};
 
     // 单位矩阵（afternoon 无滤镜时使用）
     const IDENTITY = [
@@ -2745,6 +2790,10 @@ export class MapRenderer {
    */
   destroy() {
     this._stopTintTransition();
+    if (this._keyboardPanTicker) {
+      this.app.ticker.remove(this._keyboardPanTicker);
+      this._keyboardPanTicker = null;
+    }
     // ... existing destroy logic would be here
   }
 

@@ -6,6 +6,7 @@
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
+import { mergeModifierValue } from '../utils/BonusUtils.js';
 
 const POLICY_COOLDOWN_DAYS = 3; // 政策卡切换冷却（游戏日）
 
@@ -63,6 +64,11 @@ export class CultureSystem {
 
   /** 已通过灵感研究的信条（doctrines.json） */
   getDoctrineResearched() { return store.getState('doctrineResearched') || []; }
+  getDoctrineResearchLevels() { return store.getState('doctrineResearchLevels') || {}; }
+  getDoctrineLevel(id) {
+    const levels = this.getDoctrineResearchLevels();
+    return Math.max(0, levels[id] || 0);
+  }
 
   _getDoctrineConfigs() { return configRegistry.get('doctrines') || []; }
   _getFormationConfigs() { return configRegistry.get('enemies')?.formations || []; }
@@ -276,12 +282,14 @@ export class CultureSystem {
       rangedDamageMul: 1,
       unitHpMul: 1,
       productionMul: 1,
+      resourceProductionMul: {},
       buildCostMul: 1,
       growthMul: 1,
       maxPopBonus: 0,
       foodConsumeMul: 1,
       researchSpeedMul: 1,
-      commandPointsBonus: 0
+      commandPointsBonus: 0,
+      expeditionQueueBonus: 0
     };
     const apply = (cfg) => {
       if (!cfg || !cfg.effects) return;
@@ -290,25 +298,44 @@ export class CultureSystem {
       const pe = cfg.effects.population || {};
       const meleeDamageMul = ce.meleeDamageMul || ce.warriorDamageMul;
       const rangedDamageMul = ce.rangedDamageMul || ce.archerDamageMul;
-      if (meleeDamageMul) e.meleeDamageMul *= meleeDamageMul;
-      if (rangedDamageMul) e.rangedDamageMul *= rangedDamageMul;
-      if (ce.unitHpMul) e.unitHpMul *= ce.unitHpMul;
-      if (ee.productionMul) e.productionMul *= ee.productionMul;
-      if (ee.buildCostMul) e.buildCostMul *= ee.buildCostMul;
-      if (ee.researchSpeedMul) e.researchSpeedMul *= ee.researchSpeedMul;
-      if (ee.commandPointsBonus) e.commandPointsBonus += ee.commandPointsBonus;
-      if (pe.growthMul) e.growthMul *= pe.growthMul;
-      if (pe.foodConsumeMul) e.foodConsumeMul *= pe.foodConsumeMul;
-      if (pe.maxPopBonus) e.maxPopBonus += pe.maxPopBonus;
+      if (meleeDamageMul) mergeModifierValue(e, 'meleeDamageMul', meleeDamageMul);
+      if (rangedDamageMul) mergeModifierValue(e, 'rangedDamageMul', rangedDamageMul);
+      if (ce.unitHpMul) mergeModifierValue(e, 'unitHpMul', ce.unitHpMul);
+      if (ee.productionMul) mergeModifierValue(e, 'productionMul', ee.productionMul);
+      if (ee.resourceProductionMul && typeof ee.resourceProductionMul === 'object') {
+        for (const [resourceId, mul] of Object.entries(ee.resourceProductionMul)) {
+          mergeModifierValue(e.resourceProductionMul, resourceId, mul);
+        }
+      }
+      if (ee.buildCostMul) mergeModifierValue(e, 'buildCostMul', ee.buildCostMul);
+      if (ee.researchSpeedMul) mergeModifierValue(e, 'researchSpeedMul', ee.researchSpeedMul);
+      if (ee.commandPointsBonus) mergeModifierValue(e, 'commandPointsBonus', ee.commandPointsBonus, 'add');
+      if (ee.expeditionQueueBonus) mergeModifierValue(e, 'expeditionQueueBonus', ee.expeditionQueueBonus, 'add');
+      if (pe.growthMul) mergeModifierValue(e, 'growthMul', pe.growthMul);
+      if (pe.foodConsumeMul) mergeModifierValue(e, 'foodConsumeMul', pe.foodConsumeMul);
+      if (pe.maxPopBonus) mergeModifierValue(e, 'maxPopBonus', pe.maxPopBonus, 'add');
     };
     for (const id of this._activatedPolicies) apply(this.get(id));
     if (this._government) apply(this.get(this._government));
     /* 灵感研究的信条：直接加算到对应效果 */
     const researchedDoctrines = this.getDoctrineResearched();
+    const doctrineLevels = this.getDoctrineResearchLevels();
     for (const d of this._getDoctrineConfigs()) {
-      if (!researchedDoctrines.includes(d.id)) continue;
-      if (d.commandPointsBonus) e.commandPointsBonus += d.commandPointsBonus;
-      if (d.growthSpeedBonus) e.growthMul += d.growthSpeedBonus;
+      const level = d.repeatable ? Math.max(0, doctrineLevels[d.id] || 0) : (researchedDoctrines.includes(d.id) ? 1 : 0);
+      if (level <= 0) continue;
+      if (d.commandPointsBonus) mergeModifierValue(e, 'commandPointsBonus', d.commandPointsBonus * level, 'add');
+      if (d.growthSpeedBonus) mergeModifierValue(e, 'growthMul', d.growthSpeedBonus * level, 'add');
+      if (d.expeditionQueueBonus) mergeModifierValue(e, 'expeditionQueueBonus', d.expeditionQueueBonus * level, 'add');
+      if (d.foodConsumeMul) mergeModifierValue(e, 'foodConsumeMul', Math.pow(d.foodConsumeMul, level));
+      if (d.productionMul) mergeModifierValue(e, 'productionMul', Math.pow(d.productionMul, level));
+      if (d.resourceProductionMul && typeof d.resourceProductionMul === 'object') {
+        for (const [resourceId, mul] of Object.entries(d.resourceProductionMul)) {
+          mergeModifierValue(e.resourceProductionMul, resourceId, Math.pow(mul, level));
+        }
+      }
+      if (d.meleeDamageMul) mergeModifierValue(e, 'meleeDamageMul', Math.pow(d.meleeDamageMul, level));
+      if (d.rangedDamageMul) mergeModifierValue(e, 'rangedDamageMul', Math.pow(d.rangedDamageMul, level));
+      if (d.unitHpMul) mergeModifierValue(e, 'unitHpMul', Math.pow(d.unitHpMul, level));
     }
     return e;
   }

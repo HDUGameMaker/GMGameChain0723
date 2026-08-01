@@ -23,6 +23,9 @@ export class WeatherSystem {
     this.lastWeather = null;
     this.dayInSeason = 1;
     this.seasonDay = 1;
+    this._foodModifier = 1;
+    this._rainBonus = 0;
+    this._foodAdjustmentDay = 0;
 
     // 系统引用
     this._populationSystem = null;
@@ -59,6 +62,9 @@ export class WeatherSystem {
     this.weatherStrength = 0;
     this.lastWeather = null;
     this.dayInSeason = 1;
+    this._foodModifier = 1;
+    this._rainBonus = 0;
+    this._foodAdjustmentDay = 0;
     this._updateStore();
   }
 
@@ -115,6 +121,7 @@ export class WeatherSystem {
     }
 
     this.weatherStrength = this._rollStrength();
+    this._rollDailyFoodAdjustment(data.day);
 
     // 触发事件
     if (prevSeason !== this.currentSeason) {
@@ -245,6 +252,10 @@ export class WeatherSystem {
    * 在 getTotalFoodProduction 中应用
    */
   getFoodModifier() {
+    return this._foodModifier || 1;
+  }
+
+  _rollFoodModifier() {
     let mod = 1.0;
 
     // 天气影响
@@ -284,6 +295,10 @@ export class WeatherSystem {
    * @returns {number} 每人额外获得食物份数
    */
   getRainBonus() {
+    return this._rainBonus || 0;
+  }
+
+  _rollRainBonus() {
     if (this.currentWeather !== 'clear') return 0;
     if (!this.lastWeather) return 0;
 
@@ -305,6 +320,17 @@ export class WeatherSystem {
     return bonus;
   }
 
+  _rollDailyFoodAdjustment(day) {
+    this._foodAdjustmentDay = day || store.getState('timeDay') || 1;
+    this._foodModifier = this._rollFoodModifier();
+    this._rainBonus = this._rollRainBonus();
+    store.setState({
+      weatherFoodModifier: this._foodModifier,
+      weatherRainBonus: this._rainBonus,
+      weatherFoodAdjustmentDay: this._foodAdjustmentDay
+    });
+  }
+
   // ===== 存档 =====
 
   getState() {
@@ -313,7 +339,10 @@ export class WeatherSystem {
       currentSeason: this.currentSeason,
       weatherStrength: this.weatherStrength,
       lastWeather: this.lastWeather,
-      dayInSeason: this.dayInSeason
+      dayInSeason: this.dayInSeason,
+      foodModifier: this._foodModifier,
+      rainBonus: this._rainBonus,
+      foodAdjustmentDay: this._foodAdjustmentDay
     };
   }
 
@@ -324,6 +353,9 @@ export class WeatherSystem {
     this.weatherStrength = state.weatherStrength ?? 0;
     this.lastWeather = state.lastWeather || null;
     this.dayInSeason = state.dayInSeason || 1;
+    this._foodModifier = state.foodModifier ?? 1;
+    this._rainBonus = state.rainBonus ?? 0;
+    this._foodAdjustmentDay = state.foodAdjustmentDay ?? 0;
     this._updateStore();
   }
 
@@ -332,6 +364,9 @@ export class WeatherSystem {
       weatherCurrent: this.currentWeather,
       weatherSeason: this.currentSeason,
       weatherStrength: this.weatherStrength,
+      weatherFoodModifier: this._foodModifier,
+      weatherRainBonus: this._rainBonus,
+      weatherFoodAdjustmentDay: this._foodAdjustmentDay,
       weatherLabel: this.weatherLabels[this.currentWeather] || '☀️ 晴天',
       seasonLabel: this.seasonLabels[this.currentSeason] || '🌸 春'
     });

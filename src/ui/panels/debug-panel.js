@@ -299,7 +299,7 @@ export class DebugPanel {
 
   // ==================== 快捷操作 ====================
 
-  _handleAction(action) {
+  async _handleAction(action) {
     switch (action) {
       case 'add-resources':
         this._cheatAddAllResources();
@@ -320,8 +320,8 @@ export class DebugPanel {
         this._systems.time.togglePause();
         break;
       case 'spawn-invasion': {
-        const power = prompt('输入入侵战斗力:', '20');
-        if (power !== null && this._systems.invasion) {
+        const power = await window.__game?.popupManager?.prompt('输入入侵战斗力:', '20', { title: '生成入侵' });
+        if (power != null && this._systems.invasion) {
           this._systems.invasion.spawnInvasion(parseInt(power) || 20);
         }
         break;

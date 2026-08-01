@@ -774,6 +774,124 @@
       margin-bottom: 6px;
     }
 
+    /* ===== 左侧悬浮状态 ===== */
+    #left-status-stack {
+      position: fixed;
+      top: calc(var(--hud-top-offset) + 12px);
+      left: 12px;
+      width: 230px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 1100;
+      pointer-events: none;
+    }
+
+    #deferred-event-tray {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .deferred-event-card {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      width: 100%;
+      padding: 9px 10px;
+      border: 1px solid rgba(240,160,64,0.28);
+      border-radius: 12px;
+      background: #191932;
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      font-family: inherit;
+      text-align: left;
+      pointer-events: auto;
+    }
+
+    .deferred-event-card:hover {
+      border-color: var(--accent-amber);
+      box-shadow: 0 0 12px rgba(240,160,64,0.14);
+    }
+
+    .deferred-event-icon {
+      flex-shrink: 0;
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .deferred-event-text {
+      min-width: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .deferred-event-name {
+      font-size: 12px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .deferred-event-meta {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    #tech-status {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      padding: 9px 10px;
+      border-radius: 12px;
+      background: #191932;
+      border: 1px solid rgba(91,141,239,0.28);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    #tech-status:hover {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 12px rgba(91,141,239,0.14);
+    }
+
+    .tech-status-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .tech-status-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tech-status-pct {
+      flex-shrink: 0;
+      color: #9db8ff;
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tech-status-meta {
+      font-size: 10px;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     /* ===== 进度条 ===== */
     .progress-bar {
       width: 100%;
@@ -1227,6 +1345,11 @@
     <div id="msg-log-container">
       <div id="msg-log-left" class="msg-log-side"></div>
       <div id="msg-log-right" class="msg-log-side"></div>
+    </div>
+
+    <div id="left-status-stack">
+      <div id="deferred-event-tray"></div>
+      <div id="tech-status"></div>
     </div>
 
     <div id="expedition-status"></div>

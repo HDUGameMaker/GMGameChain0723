@@ -9,14 +9,15 @@ export function renderExpeditionDetailPanel(data, body, pm) {
   const game = window.__game;
   if (!game) return;
 
-  const expedition = game.systems.expedition.getCurrentExpedition();
+  const expeditionId = data?.expeditionId || null;
+  const expedition = game.systems.expedition.getCurrentExpedition(expeditionId);
   if (!expedition) {
     body.innerHTML = '<p style="color:#888;text-align:center;padding:24px;font-size:14px;">当前没有进行中的探险</p>';
     return;
   }
 
   const expSystem = game.systems.expedition;
-  const ticksPerPeriod = 3;
+  const ticksPerPeriod = expSystem.getTicksPerPeriod ? expSystem.getTicksPerPeriod() : 3;
   const totalPeriods = expedition.regions.length;
   const totalTicks = totalPeriods * ticksPerPeriod;
 
@@ -38,7 +39,7 @@ export function renderExpeditionDetailPanel(data, body, pm) {
   progressSection.innerHTML = `
     <div style="font-size:14px;font-weight:600;color:#ececf0;margin-bottom:10px;letter-spacing:0.01em;">🔍 探险进度</div>
     <div style="font-size:13px;color:#a0a0ba;margin-bottom:4px;">路线: <span style="color:#ececf0;">${regionNames.join(' → ')}</span></div>
-    <div style="font-size:13px;color:#4ecb71;margin-bottom:10px;font-weight:500;">当前: 第 ${expedition.currentPeriodIndex + 1}/${totalPeriods} 时段</div>
+    <div style="font-size:13px;color:#4ecb71;margin-bottom:10px;font-weight:500;">当前: 第 ${expedition.currentPeriodIndex + 1}/${totalPeriods} 阶段 · 已循环 ${expedition.cyclesCompleted || 0} 次</div>
     <div class="panel-progress-section" style="margin-bottom:8px;">
       <div class="panel-progress-label">总进度 <span class="overall-pct-label">${overallPct}%</span></div>
       <div class="progress-bar" style="height:7px;">
@@ -46,7 +47,7 @@ export function renderExpeditionDetailPanel(data, body, pm) {
       </div>
     </div>
     <div class="panel-progress-section">
-      <div class="panel-progress-label">当前时段 <span class="period-pct-label">${periodTickPct}%</span></div>
+      <div class="panel-progress-label">当前阶段 <span class="period-pct-label">${periodTickPct}%</span></div>
       <div class="progress-bar" style="height:5px;">
         <div class="progress-fill blue period-tick-fill" style="width:${periodTickPct}%"></div>
       </div>
@@ -63,7 +64,7 @@ export function renderExpeditionDetailPanel(data, body, pm) {
   if (overallFill) {
     progressManager.registerDiscrete(overallFill,
       () => {
-        const exp = expSystem.getCurrentExpedition();
+        const exp = expSystem.getCurrentExpedition(expedition.id);
         return (exp && exp.status === 'active') ? exp.currentPeriodIndex * ticksPerPeriod + (exp.ticksInCurrentPeriod || 0) : 0;
       },
       () => totalTicks,
@@ -73,7 +74,7 @@ export function renderExpeditionDetailPanel(data, body, pm) {
   if (periodTickFill) {
     progressManager.registerDiscrete(periodTickFill,
       () => {
-        const exp = expSystem.getCurrentExpedition();
+        const exp = expSystem.getCurrentExpedition(expedition.id);
         return (exp && exp.status === 'active') ? (exp.ticksInCurrentPeriod || 0) : 0;
       },
       () => ticksPerPeriod,
@@ -116,14 +117,29 @@ export function renderExpeditionDetailPanel(data, body, pm) {
     container.appendChild(discardSection);
   }
 
-  // ===== 关闭按钮 =====
+  // ===== 操作按钮 =====
+  const actionRow = document.createElement('div');
+  actionRow.style.cssText = 'display:flex;gap:8px;';
+
+  const recallBtn = document.createElement('button');
+  recallBtn.textContent = '召回队伍';
+  recallBtn.style.cssText = 'flex:1;padding:10px;border:1px solid rgba(255,107,107,0.25);border-radius:10px;background:rgba(255,107,107,0.12);color:#ff9a9a;cursor:pointer;font-size:14px;font-weight:500;font-family:inherit;transition:background 0.2s;';
+  recallBtn.addEventListener('mouseenter', () => { recallBtn.style.background = 'rgba(255,107,107,0.2)'; });
+  recallBtn.addEventListener('mouseleave', () => { recallBtn.style.background = 'rgba(255,107,107,0.12)'; });
+  recallBtn.addEventListener('click', () => {
+    const ok = expSystem.cancelExpedition(expedition.id);
+    if (ok) pm.close();
+  });
+  actionRow.appendChild(recallBtn);
+
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '关闭';
-  closeBtn.style.cssText = 'width:100%;padding:10px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:rgba(255,255,255,0.06);color:#ececf0;cursor:pointer;font-size:14px;font-weight:500;font-family:inherit;transition:background 0.2s;';
+  closeBtn.style.cssText = 'flex:1;padding:10px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:rgba(255,255,255,0.06);color:#ececf0;cursor:pointer;font-size:14px;font-weight:500;font-family:inherit;transition:background 0.2s;';
   closeBtn.addEventListener('mouseenter', () => { closeBtn.style.background = 'rgba(255,255,255,0.12)'; });
   closeBtn.addEventListener('mouseleave', () => { closeBtn.style.background = 'rgba(255,255,255,0.06)'; });
   closeBtn.addEventListener('click', () => pm.close());
-  container.appendChild(closeBtn);
+  actionRow.appendChild(closeBtn);
+  container.appendChild(actionRow);
 
   body.appendChild(container);
 }

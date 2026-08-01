@@ -2,15 +2,18 @@
  * training-panel.js - 军事训练面板
  * 消耗资源和工人训练军事单位
  */
-
-const DEFAULT_AVAIL = 10;
+import { eventBus } from '../../core/EventBus.js';
 
 function _store() { return window.__game?.store; }
 function _cfg() { return window.__game?.configRegistry?.get('enemies')?.units || []; }
 function _resource() { return window.__game?.systems?.resource; }
 function _population() { return window.__game?.systems?.population; }
 function _avail() { return _store()?.getState('availableUnits') || {}; }
-function _saveAvail(av) { _store()?.setState({ availableUnits: av }); }
+function _saveAvail(av) {
+  const version = (_store()?.getState('armyVersion') || 0) + 1;
+  _store()?.setState({ availableUnits: { ...av }, armyVersion: version });
+  eventBus.emit('armyChanged', { reason: 'training', version });
+}
 function _techSystem() { return window.__game?.systems?.tech; }
 
 function _releaseUnitWorker(unit) {
@@ -120,7 +123,7 @@ export function renderTrainingPanel(data, body, pm) {
         const reasons = [];
         if (!canAfford) reasons.push('资源不足');
         if (!hasWorkers) reasons.push('可用工人不足（需要' + (u.populationRequired||0) + '，可用' + availWorkers + '）');
-        alert(msg + reasons.join('，'));
+        pm.alert(msg + reasons.join('，'));
         return;
       }
       if (resourceSys) resourceSys.consumeAll(costs);

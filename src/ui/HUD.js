@@ -49,6 +49,8 @@ export class HUD {
     this.btnTraining = document.getElementById('btn-training');
     this.weatherDisplay = document.getElementById('weather-display');
     this.expeditionStatus = document.getElementById('expedition-status');
+    this.deferredEventTray = document.getElementById('deferred-event-tray');
+    this.techStatus = document.getElementById('tech-status');
     if (this.weatherDisplay) {
       this.weatherDisplay.style.display = 'none';
     }
@@ -79,13 +81,7 @@ export class HUD {
     });
 
     // 道路编辑
-    this.btnRoad.addEventListener('click', () => {
-      if (this.systems.road) {
-        const mr = window.__game?.mapRenderer;
-        if (mr && mr._moveMode) mr.exitMoveMode();
-        this.systems.road.toggleEditMode();
-      }
-    });
+    this.btnRoad.addEventListener('click', () => this._toggleRoadEditMode());
 
     // 任务面板
     this.btnQuest.addEventListener('click', () => {
@@ -170,7 +166,30 @@ export class HUD {
         this._updatePauseIndicator(paused);
         window.__game?.systems?.quest?.onPlayerAction('toggle_pause');
       }
+      if ((e.key === 'e' || e.key === 'E') && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (this._shouldIgnoreShortcut(e)) return;
+        e.preventDefault();
+        this._toggleRoadEditMode();
+      }
     });
+  }
+
+  _toggleRoadEditMode() {
+    if (!this.systems.road) return;
+    const mr = window.__game?.mapRenderer;
+    if (mr && mr._moveMode) mr.exitMoveMode();
+    this.systems.road.toggleEditMode();
+  }
+
+  _shouldIgnoreShortcut(e) {
+    const target = e.target;
+    if (target && target !== document.body) {
+      const tag = target.tagName;
+      if (target.isContentEditable || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+        return true;
+      }
+    }
+    return this.popupManager?._isOpen === true;
   }
 
   _updatePauseIndicator(paused) {
@@ -194,16 +213,26 @@ export class HUD {
     store.subscribe('resourceVersion', () => this._refreshResources());
     store.subscribe('inspiration', () => this._refreshResources());
     store.subscribe('populationCurrent', () => this._refreshPopulation());
+    store.subscribe('populationAvailable', () => this._refreshPopulation());
+    store.subscribe('populationWork', () => this._refreshPopulation());
+    store.subscribe('populationMilitary', () => this._refreshPopulation());
+    store.subscribe('populationExpeditionWorkers', () => this._refreshPopulation());
+    store.subscribe('populationConstructionWorkers', () => this._refreshPopulation());
     store.subscribe('timePeriod', () => this._refreshTime());
     store.subscribe('timeDay', () => this._refreshTime());
     store.subscribe('timeSpeed', () => this._refreshSpeedBtn());
     store.subscribe('armies', () => this._refreshPopulation());
     store.subscribe('availableUnits', () => this._refreshPopulation());
+    store.subscribe('armyVersion', () => this._refreshPopulation());
     store.subscribe('timeUserPaused', () => this._refreshPauseBtn());
     store.subscribe('placingState', (state) => this._refreshPlacingMode(state));
     store.subscribe('deployTamedMode', (mode) => this._refreshDeployTamedMode(mode));
     store.subscribe('roadEditMode', (enabled) => this._refreshRoadEditMode(enabled));
     store.subscribe('expeditionState', (state) => this._refreshExpeditionStatus(state));
+    store.subscribe('expeditionStates', (states) => this._refreshExpeditionStatus(states));
+    store.subscribe('deferredEvents', (events) => this._refreshDeferredEvents(events));
+    store.subscribe('techCurrent', (current) => this._refreshTechStatus(current));
+    store.subscribe('roadVersion', () => this._refreshPopulation());
     store.subscribe('buildingVersion', () => {
       this._refreshPopulation();
       this._refreshResources();
@@ -286,6 +315,8 @@ export class HUD {
     this._refreshPauseBtn();
     this._refreshWeather();
     this._checkAdvancedUnlocks();
+    this._refreshDeferredEvents(store.getState('deferredEvents') || []);
+    this._refreshTechStatus(store.getState('techCurrent'));
   }
 
   _refreshResources() {
@@ -339,6 +370,62 @@ export class HUD {
     }
   }
 
+  _refreshDeferredEvents(events) {
+    if (!this.deferredEventTray) return;
+    const pending = Array.isArray(events) ? events : [];
+    if (pending.length === 0) {
+      this.deferredEventTray.style.display = 'none';
+      this.deferredEventTray.innerHTML = '';
+      return;
+    }
+
+    this.deferredEventTray.style.display = 'flex';
+    this.deferredEventTray.innerHTML = pending.map(evt => `
+      <button class="deferred-event-card" data-event-id="${evt.id}">
+        <span class="deferred-event-icon">📜</span>
+        <span class="deferred-event-text">
+          <span class="deferred-event-name">${evt.name || evt.id}</span>
+          <span class="deferred-event-meta">待处理 · 当天结束自动默认</span>
+        </span>
+      </button>
+    `).join('');
+
+    this.deferredEventTray.querySelectorAll('.deferred-event-card').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.systems.event?.openDeferredEvent?.(btn.dataset.eventId);
+      });
+    });
+  }
+
+  _refreshTechStatus(current) {
+    if (!this.techStatus) return;
+    if (!current || !current.techId) {
+      this.techStatus.style.display = 'none';
+      this.techStatus.innerHTML = '';
+      this.techStatus.onclick = null;
+      return;
+    }
+
+    const tech = this.systems.tech?.getTech?.(current.techId);
+    const total = Math.max(1, tech?.researchTime || 1);
+    const progress = Math.max(0, current.progressTicks || 0);
+    const pct = Math.min(100, Math.round((progress / total) * 100));
+    const progressText = `${Math.floor(progress)}/${total} tick`;
+
+    this.techStatus.style.display = 'flex';
+    this.techStatus.innerHTML = `
+      <div class="tech-status-head">
+        <span class="tech-status-name">🔬 ${tech ? tech.name : current.techId}</span>
+        <span class="tech-status-pct">${pct}%</span>
+      </div>
+      <div class="tech-status-meta">科技研发中 · ${progressText}</div>
+      <div class="progress-bar" style="height:4px;">
+        <div class="progress-fill blue" style="width:${pct}%"></div>
+      </div>
+    `;
+    this.techStatus.onclick = () => this.popupManager.open('tech_tree', {});
+  }
+
   _getDailyResourceFlow() {
     const flow = this.systems.building.getDailyResourceFlow ? this.systems.building.getDailyResourceFlow() : {};
     const clone = {};
@@ -357,24 +444,18 @@ export class HUD {
       clone[id].net = clone[id].produced - clone[id].consumed;
     };
 
-    // 食物每日产出和消耗来自人口系统的日结算口径。
-    let foodProduction = this.systems.building.getTotalFoodProduction();
-    if (foodProduction > 0 && this.systems.weather) {
-      foodProduction = Math.round(foodProduction * this.systems.weather.getFoodModifier());
-      const rainBonus = this.systems.weather.getRainBonus();
-      if (rainBonus > 0) {
-        foodProduction += rainBonus * Math.max(1, this.systems.population.current);
-      }
-    }
-    const idle = this.systems.population.getAvailableWorkers();
-    const assigned = this.systems.population.getAssignedWorkers();
-    const armies = store.getState('armies') || [];
-    const armyPop = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
-    const aEffPop = this.systems.alchemy ? (this.systems.alchemy.getEffects().population || {}) : {};
-    const cultureMul = this.systems.culture ? (this.systems.culture.getEffects().foodConsumeMul || 1) : 1;
-    const foodConsumeMul = cultureMul * (aEffPop.foodConsumeMul || 1);
-    const foodConsumption = Math.ceil((idle + assigned + armyPop) * foodConsumeMul);
-    add('food', foodProduction, foodConsumption);
+    // 食物每日产出和消耗来自人口系统的日结算口径；覆盖建筑通用 flow 中的 food，避免重复累加。
+    const foodProduction = this.systems.population.getDailyFoodProductionPreview
+      ? this.systems.population.getDailyFoodProductionPreview()
+      : (this.systems.building.getTotalFoodProduction ? this.systems.building.getTotalFoodProduction({ cycle: 'day' }) : 0);
+    const foodConsumption = this.systems.population.getFoodConsumptionAmount
+      ? this.systems.population.getFoodConsumptionAmount(this.systems.population.current)
+      : Math.ceil(this.systems.population.current || 0);
+    clone.food = {
+      produced: Math.round(foodProduction || 0),
+      consumed: Math.round(foodConsumption || 0),
+      net: Math.round((foodProduction || 0) - (foodConsumption || 0))
+    };
 
     // 人口每日灵感。
     const inspPerPerson = this.systems.population.inspirationPerPerson || 1;
@@ -449,26 +530,42 @@ export class HUD {
   }
 
   _refreshPopulation() {
-    const idle = this.systems.population.getAvailableWorkers();
-    const assigned = this.systems.population.getAssignedWorkers();
-    const housing = this.systems.population.getHousingCapacity();
-    /* 部队人数：所有军团中的单位总数 */
+    const stats = this.systems.population.getPopulationStats
+      ? this.systems.population.getPopulationStats(this.systems.combat)
+      : {
+          idle: this.systems.population.getAvailableWorkers(),
+          work: this.systems.population.getAssignedWorkers(),
+          military: 0,
+          total: this.systems.population.current || 0,
+          housing: this.systems.population.getHousingCapacity(),
+          assigned: this.systems.population.getAssignedWorkers(),
+          expedition: 0,
+          construction: 0
+        };
+    const idle = stats.idle;
+    const work = stats.work;
+    const military = stats.military;
+    const total = stats.total;
+    const housing = stats.housing;
     const armies = store.getState('armies') || [];
-    const armyPop = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
-    const deployedUnits = this.systems.combat ? this.systems.combat.getAllUnits() : [];
-    const landDeployed = deployedUnits.filter(u => u.source !== 'tamed').length;
-    const navyUnits = 0;
-    const total = idle + assigned + armyPop;
+    const landUnits = this._countMilitaryUnitsByDomain('land');
+    const navyUnits = this._countMilitaryUnitsByDomain('naval');
+    const growthPreview = this.systems.population.getDailyGrowthPreview
+      ? this.systems.population.getDailyGrowthPreview()
+      : { min: 0, max: 0, room: 0, multiplier: 1 };
+    const growthText = growthPreview.min === growthPreview.max
+      ? `+${growthPreview.max}`
+      : `+${growthPreview.min}~${growthPreview.max}`;
 
     const housingClass = total >= housing ? ' class="bottleneck"' : '';
 
     this.populationDisplay.innerHTML =
       `<div class="population-line">` +
-        `<span class="hud-info-main">👥 <span style="color:#4ecb71">${idle}</span>+<span style="color:#5b8def">${assigned}</span>+<span style="color:#c98500">${armyPop}</span>/<span${housingClass}>${housing}</span></span>` +
-        `<span class="hud-info-sub">空+建+陆</span>` +
+        `<span class="hud-info-main">👥 <span style="color:#4ecb71">${idle}</span>+<span style="color:#5b8def">${work}</span>+<span style="color:#c98500">${military}</span>/<span${housingClass}>${housing}</span></span>` +
+        `<span class="hud-info-sub">日增 ${growthText}</span>` +
       `</div>` +
       `<div class="military-line">` +
-        `<span class="hud-info-main">⚔️${armies.length}</span><span class="hud-info-sub">陆${armyPop + landDeployed}</span>` +
+        `<span class="hud-info-main">⚔️${armies.length}</span><span class="hud-info-sub">陆${landUnits}</span>` +
         `<span class="hud-info-main">⚓${navyUnits}</span>` +
       `</div>`;
 
@@ -498,13 +595,45 @@ export class HUD {
       }
       const armies = store.getState('armies') || [];
       const availUnits = store.getState('availableUnits') || {};
-      const totalAvail = Object.values(availUnits).reduce((s, v) => s + v, 0);
+      const totalAvail = Object.values(availUnits).reduce((s, v) => s + (v || 0), 0);
       const totalArmyUnits = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
       const armyDetail = armies.map(a => a.name + ':' + (a.unitIds||[]).length + '单位').join(' · ');
+      const growth = this.systems.population.getDailyGrowthPreview
+        ? this.systems.population.getDailyGrowthPreview()
+        : { min: 0, max: 0, room: 0, multiplier: 1 };
+      const growthDetail = growth.min === growth.max
+        ? `每日可新增: ${growth.max}`
+        : `每日可新增: ${growth.min}~${growth.max}`;
       this._showPopover(e.target,
-        `总人口: ${total} = 空闲${idle} + 建筑${assigned} + 陆军${armyPop}\n住宅上限: ${housing}\n可用工人: ${available}\n已分配: ${assigned}\n地图部署: ${deployedText}\n陆军编制: ${armies.length}支 · ${totalArmyUnits}单位\n训练储备: ${totalAvail}\n海军: ${navyUnits}（殖民地战斗预留）\n${armyDetail || ''}\n食物储备: ${foodAmount}`
+        `总人口: ${total} / 住宅上限 ${housing}\n空闲人口: ${idle}\n工作人口: ${work}（建筑 ${stats.assigned}，修路/建造 ${stats.construction}，探险 ${stats.expedition}）\n军队人口: ${military}\n${growthDetail}（剩余住宅 ${growth.room}，倍率 ×${growth.multiplier.toFixed(2)}）\n可用工人: ${available}\n地图部署: ${deployedText}\n军团编制: ${armies.length}支 · ${totalArmyUnits}单位\n训练储备: ${totalAvail}单位\n海军单位: ${navyUnits}（殖民地战斗预留）\n${armyDetail || ''}\n食物储备: ${foodAmount}`
       );
     };
+  }
+
+  _countMilitaryUnitsByDomain(domain) {
+    const units = configRegistry.get('enemies')?.units || [];
+    const unitMap = {};
+    units.forEach(u => { unitMap[u.id] = u; });
+    let count = 0;
+
+    const availableUnits = store.getState('availableUnits') || {};
+    for (const [unitId, amount] of Object.entries(availableUnits)) {
+      if ((unitMap[unitId]?.domain || 'land') === domain) count += amount || 0;
+    }
+
+    const armies = store.getState('armies') || [];
+    for (const army of armies) {
+      for (const unitId of army.unitIds || []) {
+        if ((unitMap[unitId]?.domain || 'land') === domain) count++;
+      }
+    }
+
+    const deployedUnits = this.systems.combat ? this.systems.combat.getAllUnits() : [];
+    for (const unit of deployedUnits) {
+      if (unit.source === 'tamed') continue;
+      if ((unitMap[unit.type]?.domain || 'land') === domain) count++;
+    }
+    return count;
   }
 
   _refreshTime() {
@@ -609,64 +738,52 @@ export class HUD {
   }
 
   _refreshExpeditionStatus(state) {
-    if (state && state.status === 'active') {
-      const expSystem = this.systems.expedition;
-      const totalPeriods = state.regions.length; // 实际选择的阶段数
-      const totalTicks = totalPeriods * 3;
-      const regionNames = state.regions.map(rId => {
+    const states = Array.isArray(state)
+      ? state
+      : (state && state.status === 'active' ? [state] : (this.systems.expedition?.getExpeditions?.() || []));
+    const activeStates = states.filter(exp => exp && exp.status === 'active');
+
+    if (activeStates.length === 0) {
+      this.expeditionStatus.style.display = 'none';
+      this._expeditionProgressFill = null;
+      this.expeditionStatus.onclick = null;
+      return;
+    }
+
+    this.expeditionStatus.style.display = 'flex';
+    this.expeditionStatus.innerHTML = activeStates.map((exp, index) => {
+      const ticksPerPeriod = this.systems.expedition?.getTicksPerPeriod?.() || 3;
+      const totalPeriods = exp.regions.length;
+      const totalTicks = Math.max(1, totalPeriods * ticksPerPeriod);
+      const completedTicks = exp.currentPeriodIndex * ticksPerPeriod + (exp.ticksInCurrentPeriod || 0);
+      const pct = Math.min(100, Math.round((completedTicks / totalTicks) * 100));
+      const regionNames = exp.regions.map(rId => {
         const r = configRegistry.getRegion(rId);
         return r ? r.name : rId;
       });
-      const currentPeriod = state.currentPeriodIndex + 1;
-      const occupiedWorkers = state.occupiedWorkers || 0;
+      const currentPeriod = Math.min(totalPeriods, exp.currentPeriodIndex + 1);
+      const occupiedWorkers = exp.occupiedWorkers || 0;
       const workerInfo = occupiedWorkers > 0 ? `👥 ${occupiedWorkers}人` : '👥 0人';
-      this.expeditionStatus.style.display = 'flex';
-
-      if (!this._expeditionProgressFill) {
-        // 当前系统只有一个探索队列；这里按列表结构渲染，后续可追加多个 expedition-card。
-        this.expeditionStatus.innerHTML = `
-          <div class="expedition-card" data-expedition-index="0">
-            <div class="expedition-head">
-              <span class="expedition-label">🔍 探索中</span>
-              <span class="expedition-pct">0%</span>
-            </div>
-            <div class="expedition-meta">${regionNames.join(' → ')} · ${currentPeriod}/${totalPeriods} 时段 · ${workerInfo}</div>
-            <div class="progress-bar" style="height:4px;">
-              <div class="progress-fill blue expedition-hud-fill" style="width:0%"></div>
-            </div>
+      const loopInfo = exp.cyclesCompleted ? ` · ${exp.cyclesCompleted}轮` : '';
+      return `
+        <div class="expedition-card" data-expedition-id="${exp.id || ''}">
+          <div class="expedition-head">
+            <span class="expedition-label">🔍 探索${activeStates.length > 1 ? index + 1 : '中'}</span>
+            <span class="expedition-pct">${pct}%</span>
           </div>
-        `;
-        this._expeditionProgressFill = this.expeditionStatus.querySelector('.expedition-hud-fill');
-        const pctLabel = this.expeditionStatus.querySelector('.expedition-pct');
+          <div class="expedition-meta">${regionNames.join(' → ')} · ${currentPeriod}/${totalPeriods} 时段 · ${workerInfo}${loopInfo}</div>
+          <div class="progress-bar" style="height:4px;">
+            <div class="progress-fill blue expedition-hud-fill" style="width:${pct}%"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
 
-        // 注册进度条：自动在 tick 间平滑插值
-        progressManager.registerDiscrete(
-          this._expeditionProgressFill,
-          () => {
-            const exp = expSystem.getCurrentExpedition();
-            return exp ? exp.currentPeriodIndex * 3 + (exp.ticksInCurrentPeriod || 0) : 0;
-          },
-          () => totalTicks,
-          {
-            labelEl: pctLabel,
-            formatLabel: (v) => `${Math.round(v * 100)}%`
-          }
-        );
-      } else {
-        // 后续调用：仅更新文本标签
-        const metaEl = this.expeditionStatus.querySelector('.expedition-meta');
-        if (metaEl) {
-          metaEl.textContent = `${regionNames.join(' → ')} · ${currentPeriod}/${totalPeriods} 时段 · ${workerInfo}`;
-        }
-      }
-
-      this.expeditionStatus.onclick = () => {
-        this.popupManager.open('expedition_detail', {});
-      };
-    } else {
-      this.expeditionStatus.style.display = 'none';
-      this._expeditionProgressFill = null;
-    }
+    this.expeditionStatus.onclick = (ev) => {
+      const card = ev.target.closest('.expedition-card');
+      if (!card) return;
+      this.popupManager.open('expedition_detail', { expeditionId: card.dataset.expeditionId });
+    };
   }
 
   _showExpeditionResult(result) {
@@ -681,12 +798,18 @@ export class HUD {
         return `${cfg ? cfg.name : id} -${amt}`;
       }).join(', ');
 
-    let msg = `探险归来！\n获得: ${yields || '无'}`;
+    const isLoopCycle = result.autoLoop && !result.returned;
+    let msg = `${isLoopCycle ? '本轮探索完成，队伍继续循环。' : '探险归来！'}\n获得: ${yields || '无'}`;
     if (discarded) msg += `\n因容量不足损失: ${discarded}`;
+
+    if (isLoopCycle) {
+      eventBus.emit('combatBroadcast', { message: msg.replace(/\n/g, ' ') });
+      return;
+    }
 
     this.popupManager.open('event', {
       event: {
-        name: '探险归来',
+        name: isLoopCycle ? '探索循环结算' : '探险归来',
         description: msg,
         image: '',
         options: [{ text: '好的', effects: [] }]

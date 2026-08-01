@@ -19,6 +19,7 @@
  */
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
+import { store } from '../core/Store.js';
 
 export class EventSystem {
   constructor(popupManager) {
@@ -41,6 +42,9 @@ export class EventSystem {
     // === 事件处理队列 ===
     this._eventQueue = [];          // 待处理事件数组
     this._isProcessing = false;     // 是否正在处理事件
+    this._currentEvent = null;      // 当前打开但尚未选择的事件
+    this._currentEventHandled = false;
+    this._deferredEvents = [];      // 玩家关闭后稍后处理的事件
 
     // === 延迟事件 ===
     this._pendingEvents = [];       // { eventId, triggerDay, triggerPeriodIndex }
@@ -51,6 +55,7 @@ export class EventSystem {
 
     // 订阅 tick
     eventBus.on('tick', (data) => this.onTick(data));
+    eventBus.on('periodEnd', (data) => this._onPeriodEnd(data));
 
     // 订阅弹窗关闭（驱动队列处理）
     eventBus.on('popupClosed', () => this._onPopupClosed());
@@ -82,8 +87,12 @@ export class EventSystem {
     this._cooldowns = {};
     this._eventQueue = [];
     this._isProcessing = false;
+    this._currentEvent = null;
+    this._currentEventHandled = false;
     this._globalEventCooldown = 0;
     this._pendingEvents = [];
+    this._deferredEvents = [];
+    this._updateDeferredStore();
   }
 
   _registerBuiltinEffects() {
@@ -450,12 +459,16 @@ export class EventSystem {
     if (this._eventQueue.length === 0) {
       // 队列为空，结束处理，恢复时间
       this._isProcessing = false;
+      this._currentEvent = null;
+      this._currentEventHandled = false;
       console.log('[EventSystem] Event queue empty, resuming time');
       return;
     }
 
     this._isProcessing = true;
     const evt = this._eventQueue.shift();
+    this._currentEvent = evt;
+    this._currentEventHandled = false;
 
     console.log(`[EventSystem] Processing event: "${evt.name}" (remaining in queue: ${this._eventQueue.length})`);
 
@@ -465,7 +478,7 @@ export class EventSystem {
     }
 
     // 打开事件弹窗（_show() 会通过 _isBlocking() 自动暂停时间）
-    this._popupManager.open('event', { event: evt });
+    this._popupManager.open('event', { event: evt, source: 'eventSystem' });
   }
 
   /**
@@ -473,6 +486,12 @@ export class EventSystem {
    * 如果队列中还有事件，处理下一个；否则结束处理
    */
   _onPopupClosed() {
+    if (this._currentEvent && !this._currentEventHandled) {
+      this._deferEvent(this._currentEvent);
+    }
+    this._currentEvent = null;
+    this._currentEventHandled = false;
+
     if (this._eventQueue.length > 0) {
       // 还有待处理事件，继续处理下一个
       this._processNextEvent();
@@ -490,6 +509,7 @@ export class EventSystem {
    * @returns {boolean} 是否包含 trigger_event（链式触发）
    */
   executeOptionEffects(effects) {
+    this._currentEventHandled = true;
     if (!effects || effects.length === 0) return false;
 
     let hasTriggerOrSchedule = false;
@@ -509,6 +529,89 @@ export class EventSystem {
     }
 
     return hasTriggerOrSchedule;
+  }
+
+  chooseOption(eventId, optionIndex) {
+    const evt = this._findEventInDeferred(eventId) || (this._currentEvent?.id === eventId ? this._currentEvent : null);
+    if (!evt) return { ok: false, reason: '事件不存在或已处理' };
+    const option = evt.options?.[optionIndex];
+    if (!option) return { ok: false, reason: '选项不存在' };
+    if (!this.canAffordOption(option.effects)) return { ok: false, reason: '资源不足，无法选择' };
+
+    this._currentEventHandled = true;
+    this._removeDeferredEvent(eventId);
+    const hasTrigger = this.executeOptionEffects(option.effects);
+    return { ok: true, hasTrigger };
+  }
+
+  openDeferredEvent(eventId) {
+    const evt = this._findEventInDeferred(eventId);
+    if (!evt || !this._popupManager) return false;
+    this._currentEvent = evt;
+    this._currentEventHandled = false;
+    this._removeDeferredEvent(eventId);
+    this._popupManager.open('event', { event: evt, source: 'eventSystem', deferred: true });
+    return true;
+  }
+
+  resolveDefaultOption(eventId) {
+    const evt = this._findEventInDeferred(eventId);
+    if (!evt) return false;
+    const idx = this._getDefaultOptionIndex(evt);
+    const result = this.chooseOption(eventId, idx);
+    if (!result.ok) {
+      console.warn(`[EventSystem] Default option failed for "${evt.name}": ${result.reason}`);
+      this._removeDeferredEvent(eventId);
+    }
+    return result.ok;
+  }
+
+  _onPeriodEnd(data) {
+    if (!this._timeSystem || this._deferredEvents.length === 0) return;
+    const periods = this._timeSystem.PERIOD_NAMES || [];
+    const lastPeriod = periods[periods.length - 1];
+    if (data?.period !== lastPeriod) return;
+
+    const dueEvents = [...this._deferredEvents];
+    for (const evt of dueEvents) {
+      this.resolveDefaultOption(evt.id);
+    }
+  }
+
+  _deferEvent(evt) {
+    if (!evt || this._deferredEvents.some(e => e.id === evt.id)) return;
+    this._deferredEvents.push(evt);
+    this._updateDeferredStore();
+    eventBus.emit('eventDeferred', { eventId: evt.id, name: evt.name });
+  }
+
+  _findEventInDeferred(eventId) {
+    return this._deferredEvents.find(e => e.id === eventId) || null;
+  }
+
+  _removeDeferredEvent(eventId) {
+    const before = this._deferredEvents.length;
+    this._deferredEvents = this._deferredEvents.filter(e => e.id !== eventId);
+    if (this._deferredEvents.length !== before) this._updateDeferredStore();
+  }
+
+  _getDefaultOptionIndex(evt) {
+    const options = evt.options || [];
+    if (options.length === 0) return -1;
+    const configured = Number.isInteger(evt.defaultOptionIndex) ? evt.defaultOptionIndex : parseInt(evt.defaultOptionIndex, 10);
+    if (!Number.isNaN(configured) && configured >= 0 && configured < options.length) return configured;
+    return 0;
+  }
+
+  _updateDeferredStore() {
+    store.setState({
+      deferredEvents: this._deferredEvents.map(evt => ({
+        id: evt.id,
+        name: evt.name,
+        description: evt.description || '',
+        defaultOptionIndex: this._getDefaultOptionIndex(evt)
+      }))
+    });
   }
 
   _executeEffects(effects) {
@@ -549,7 +652,7 @@ export class EventSystem {
    * 判断当前是否有事件正在处理或排队中
    */
   hasPendingEvents() {
-    return this._isProcessing || this._eventQueue.length > 0;
+    return this._isProcessing || this._eventQueue.length > 0 || this._deferredEvents.length > 0;
   }
 
   /**
@@ -558,6 +661,10 @@ export class EventSystem {
   clearQueue() {
     this._eventQueue = [];
     this._isProcessing = false;
+    this._currentEvent = null;
+    this._currentEventHandled = false;
+    this._deferredEvents = [];
+    this._updateDeferredStore();
   }
 
   /**
@@ -576,7 +683,8 @@ export class EventSystem {
       triggerCounts: { ...this._triggerCounts },
       cooldowns: { ...this._cooldowns },
       globalEventCooldown: this._globalEventCooldown,
-      pendingEvents: this._pendingEvents.map(p => ({ ...p }))
+      pendingEvents: this._pendingEvents.map(p => ({ ...p })),
+      deferredEvents: this._deferredEvents.map(e => ({ ...e }))
     };
   }
 
@@ -587,7 +695,11 @@ export class EventSystem {
     this._cooldowns = state.cooldowns || {};
     this._globalEventCooldown = state.globalEventCooldown || 0;
     this._pendingEvents = (state.pendingEvents || []).map(p => ({ ...p }));
+    this._deferredEvents = (state.deferredEvents || []).map(e => ({ ...e }));
     this._eventQueue = [];
     this._isProcessing = false;
+    this._currentEvent = null;
+    this._currentEventHandled = false;
+    this._updateDeferredStore();
   }
 }

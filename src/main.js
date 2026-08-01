@@ -40,7 +40,8 @@ class Game {
     this.systems = {};
     this.mainMenu = null;
     this._started = false;
-    this._resetting = false; // 重置标记，防止 beforeunload 重新保存
+    this._resetting = false;
+    this._gameOver = false;
   }
 
   async boot() {
@@ -53,7 +54,7 @@ class Game {
       this.mainMenu.init({
         onNewGame: () => this.startNewGame(),
         onContinueGame: () => this.startContinueGame(),
-        onSettings: () => alert('进入游戏后可在右上角设置中调整选项。'),
+        onSettings: () => this.mainMenu?.showMessage('设置', '进入游戏后可在右上角设置中调整选项。'),
         onExit: () => window.close()
       });
       console.log('[Game] Main menu shown');
@@ -93,6 +94,8 @@ class Game {
     this.systems.time = new TimeSystem();
     this.systems.resource = new ResourceSystem();
     this.systems.building = new BuildingSystem();
+    // 天气需要先于人口注册 dayStart，人口日结会读取当天粮食修正。
+    this.systems.weather = new WeatherSystem();
     this.systems.population = new PopulationSystem();
     this.systems.item = new ItemSystem();
     this.systems.expedition = new ExpeditionSystem();
@@ -118,9 +121,6 @@ class Game {
     this.systems.invasion = new InvasionSystem();
     // 殖民地系统
     this.systems.colony = new ColonySystem();
-
-    // 天气与季节系统
-    this.systems.weather = new WeatherSystem();
 
     // 音效系统
     this.systems.audio = new AudioSystem();
@@ -204,7 +204,9 @@ class Game {
       item: this.systems.item,
       building: this.systems.building,
       population: this.systems.population,
-      alchemy: this.systems.alchemy
+      alchemy: this.systems.alchemy,
+      culture: this.systems.culture,
+      time: this.systems.time
     });
     this.systems.colony.setSystems({
       popupManager: this.popupManager,
@@ -212,14 +214,9 @@ class Game {
       resource: this.systems.resource
     });
 
-    // 注册人口每日结算
-    eventBus.on('dayStart', () => {
-      this.systems.population.onDayStart();
-    });
-
     // 游戏结束事件
     eventBus.on('gameOver', (data) => {
-      this.popupManager.open('game_over', data);
+      this.handleGameOver(data);
     });
 
     // 作弊状态变化
@@ -246,10 +243,15 @@ class Game {
 
     // 注册探险出发口点击事件
     eventBus.on('expeditionEntranceClicked', (entrance) => {
-      if (this.systems.expedition.getCurrentExpedition()) return;
       // 入口必须与道路相连
       if (this.systems.road && !this.systems.road.hasAdjacentRoad(entrance.gridX, entrance.gridY, 1, 1)) {
         eventBus.emit('combatBroadcast', { message: '🛑 该入口还未与道路相连，无法进入！' });
+        return;
+      }
+      const active = this.systems.expedition.getActiveCount();
+      const limit = this.systems.expedition.getQueueLimit();
+      if (active >= limit) {
+        this.popupManager.alert(`探索队列已满（${active}/${limit}）`);
         return;
       }
       this.popupManager.open('expedition_prep', { entrance });
@@ -413,7 +415,7 @@ class Game {
     // 初始化事件标记状态（新游戏 = 无已移除标记）
     store.setState({ removedEventMarkers: [] });
     /* 初始化文化系统 */
-    store.setState({ doctrineResearched: [], inspiration: 0, formationResearch: [] });
+    store.setState({ doctrineResearched: [], doctrineResearchLevels: {}, inspiration: 0, formationResearch: [] });
   }
 
   restoreFromSave(saveData) {
@@ -469,6 +471,7 @@ class Game {
     }
     store.setState({
       doctrineResearched: saveData.doctrineResearched || [],
+      doctrineResearchLevels: saveData.doctrineResearchLevels || {},
       inspiration: saveData.inspiration || 0
     });
     // 恢复相机位置（后续 MapRenderer 初始化后应用）
@@ -477,6 +480,7 @@ class Game {
   }
 
   update(delta) {
+    if (this._gameOver) return;
     // 时间系统更新（内部处理速度倍率）
     this.systems.time.update(delta);
     // 建造进度按各自开始时间推进，避免同一 tick 内新建对象共享全局进度
@@ -485,18 +489,15 @@ class Game {
   }
 
   registerAutoSave() {
-    // 每个时段结束后自动保存
-    eventBus.on('periodEnd', () => {
+    // 每天结束后的存档点：第二天开始时保存上一天结算后的状态
+    eventBus.on('dayAutosaveTick', (data) => {
+      if ((data?.day || 1) <= 1) return;
       this.saveGame();
-    });
-
-    // 浏览器关闭前紧急保存
-    window.addEventListener('beforeunload', () => {
-      this.saveGameSync();
     });
   }
 
   async saveGame() {
+    if (this._resetting || this._gameOver) return false;
     const state = {
       version: 1,
       timestamp: Date.now(),
@@ -505,7 +506,7 @@ class Game {
       resources: this.systems.resource.getSaveState(),
       items: this.systems.item.getAllStates(),
       buildings: this.systems.building.getAllStates(),
-      expedition: this.systems.expedition.getCurrentExpedition(),
+      expedition: this.systems.expedition.getState(),
       events: this.systems.event.getSaveState(),
       torches: this.systems.torch.getAllStates(),
       roads: this.systems.road.getAllStates(),
@@ -522,50 +523,13 @@ class Game {
       armies: store.getState('armies'),
       availableUnits: store.getState('availableUnits'),
       doctrineResearched: store.getState('doctrineResearched') || [],
+      doctrineResearchLevels: store.getState('doctrineResearchLevels') || {},
       inspiration: store.getState('inspiration') || 0,
       removedEventMarkers: this.mapRenderer ? this.mapRenderer.getMarkerState() : []
     };
     await SaveManager.save(state);
     console.log('[Game] Auto-saved');
-  }
-
-  saveGameSync() {
-    // 重置过程中不保存
-    if (this._resetting) return;
-    // beforeunload 中使用同步方式（localStorage 备份）
-    const state = {
-      version: 1,
-      timestamp: Date.now(),
-      time: this.systems.time.getState(),
-      population: this.systems.population.getState(),
-      resources: this.systems.resource.getSaveState(),
-      items: this.systems.item.getAllStates(),
-      buildings: this.systems.building.getAllStates(),
-      expedition: this.systems.expedition.getCurrentExpedition(),
-      events: this.systems.event.getSaveState(),
-      torches: this.systems.torch.getAllStates(),
-      roads: this.systems.road.getAllStates(),
-      audio: this.systems.audio.getAllStates(),
-      weather: this.systems.weather.getState(),
-      invasion: this.systems.invasion.getState(),
-      colony: this.systems.colony.getState(),
-      tech: this.systems.tech.getState(),
-      culture: this.systems.culture.getState(),
-      alchemy: this.systems.alchemy.getState(),
-      combat: this.systems.combat.getState(),
-      doctrineResearched: store.getState('doctrineResearched') || [],
-      inspiration: store.getState('inspiration') || 0,
-      quest: this.systems.quest.getState(),
-      camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
-      armies: store.getState('armies'),
-      availableUnits: store.getState('availableUnits'),
-      removedEventMarkers: this.mapRenderer ? this.mapRenderer.getMarkerState() : []
-    };
-    try {
-      localStorage.setItem('gmgc_emergency_save', JSON.stringify(state));
-    } catch (e) {
-      // ignore
-    }
+    return true;
   }
 
   onResize() {
@@ -575,6 +539,20 @@ class Game {
     if (this.mapRenderer) {
       this.mapRenderer.onResize();
     }
+  }
+
+  async handleGameOver(data = {}) {
+    if (this._gameOver) return;
+    this._gameOver = true;
+    this._resetting = true;
+    gameLoop.stop();
+    await SaveManager.reset();
+    this.popupManager.open('game_over', { ...data, saveCleared: true });
+  }
+
+  returnToMainMenu() {
+    this._resetting = true;
+    location.reload();
   }
 }
 

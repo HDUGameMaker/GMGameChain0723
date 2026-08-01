@@ -4,45 +4,124 @@
     "name": "秩序",
     "tier": 0,
     "researchTime": 8,
-    "pos": {
-      "x": 1
-    },
+    "pos": { "x": 1 },
     "prerequisites": [],
-    "cost": [
-      {
-        "resourceId": "inspiration",
-        "amount": 5
-      }
-    ],
-    "unlocks": {
-      "buildings": [],
-      "units": [],
-      "formations": []
-    },
+    "cost": [{ "resourceId": "inspiration", "amount": 5 }],
+    "unlocks": { "buildings": [], "units": [], "formations": [] },
     "commandPointsBonus": 5,
     "growthSpeedBonus": 0,
-    "description": "指挥点上限 +5"
+    "description": "指挥点上限 +5，并开放军事传统"
+  },
+  {
+    "id": "rationing",
+    "name": "配给制度",
+    "tier": 1,
+    "researchTime": 12,
+    "pos": { "x": 0 },
+    "prerequisites": ["order"],
+    "cost": [{ "resourceId": "inspiration", "amount": 15 }],
+    "unlocks": { "buildings": [], "units": [], "formations": [] },
+    "commandPointsBonus": 0,
+    "growthSpeedBonus": 0,
+    "foodConsumeMul": 0.9,
+    "description": "每人口粮食消耗 -10%"
+  },
+  {
+    "id": "work_records",
+    "name": "劳作记录",
+    "tier": 1,
+    "researchTime": 12,
+    "pos": { "x": 1 },
+    "prerequisites": ["order"],
+    "cost": [{ "resourceId": "inspiration", "amount": 15 }],
+    "unlocks": { "buildings": [], "units": [], "formations": [] },
+    "commandPointsBonus": 0,
+    "growthSpeedBonus": 0,
+    "resourceProductionMul": { "wood": 1.15, "stone": 1.1 },
+    "description": "木材产出 +15%，石料产出 +10%"
+  },
+  {
+    "id": "guard_drills",
+    "name": "民兵操典",
+    "tier": 1,
+    "researchTime": 12,
+    "pos": { "x": 2 },
+    "prerequisites": ["order"],
+    "cost": [{ "resourceId": "inspiration", "amount": 20 }],
+    "unlocks": { "buildings": [], "units": [], "formations": [] },
+    "commandPointsBonus": 0,
+    "growthSpeedBonus": 0,
+    "meleeDamageMul": 1.08,
+    "rangedDamageMul": 1.08,
+    "unitHpMul": 1.05,
+    "description": "军队伤害 +8%，生命 +5%"
+  },
+  {
+    "id": "logistics_yard",
+    "name": "补给站",
+    "tier": 2,
+    "researchTime": 16,
+    "pos": { "x": 1 },
+    "prerequisites": ["rationing", "work_records"],
+    "cost": [{ "resourceId": "inspiration", "amount": 35 }],
+    "unlocks": { "buildings": ["supply_post"], "units": [], "formations": [] },
+    "commandPointsBonus": 0,
+    "growthSpeedBonus": 0,
+    "description": "解锁补给站，为邻近生产建筑提供相邻加成"
+  },
+  {
+    "id": "organized_labor",
+    "name": "编组劳动",
+    "tier": 2,
+    "researchTime": 20,
+    "pos": { "x": 0 },
+    "prerequisites": ["work_records"],
+    "cost": [{ "resourceId": "inspiration", "amount": 40 }],
+    "unlocks": { "buildings": [], "units": [], "formations": [] },
+    "commandPointsBonus": 0,
+    "growthSpeedBonus": 0,
+    "productionMul": 1.06,
+    "description": "全部建筑产出 +6%"
+  },
+  {
+    "id": "standing_watch",
+    "name": "常备警戒",
+    "tier": 2,
+    "researchTime": 20,
+    "pos": { "x": 2 },
+    "prerequisites": ["guard_drills"],
+    "cost": [{ "resourceId": "inspiration", "amount": 45 }],
+    "unlocks": { "buildings": [], "units": [], "formations": [] },
+    "commandPointsBonus": 5,
+    "growthSpeedBonus": 0,
+    "meleeDamageMul": 1.05,
+    "rangedDamageMul": 1.05,
+    "description": "指挥点上限 +5，军队伤害 +5%"
+  },
+  {
+    "id": "command_drill",
+    "name": "指挥演练",
+    "tier": 3,
+    "researchTime": 0,
+    "pos": { "x": 2 },
+    "prerequisites": ["standing_watch"],
+    "cost": [{ "resourceId": "inspiration", "amount": 60 }],
+    "costGrowth": 25,
+    "repeatable": true,
+    "unlocks": { "buildings": [], "units": [], "formations": [] },
+    "commandPointsBonus": 2,
+    "growthSpeedBonus": 0,
+    "description": "可无限重复研究，每级指挥点上限 +2，灵感费用逐级增加"
   },
   {
     "id": "adaptation",
     "name": "适应",
     "tier": 1,
     "researchTime": 12,
-    "pos": {
-      "x": 3
-    },
+    "pos": { "x": 4 },
     "prerequisites": [],
-    "cost": [
-      {
-        "resourceId": "inspiration",
-        "amount": 5
-      }
-    ],
-    "unlocks": {
-      "buildings": [],
-      "units": [],
-      "formations": []
-    },
+    "cost": [{ "resourceId": "inspiration", "amount": 5 }],
+    "unlocks": { "buildings": [], "units": [], "formations": [] },
     "commandPointsBonus": 0,
     "growthSpeedBonus": 0.5,
     "description": "人口增长速度 +1~2"
@@ -52,237 +131,39 @@
     "name": "酒馆",
     "tier": 2,
     "researchTime": 12,
-    "pos": {
-      "x": 3
-    },
-    "prerequisites": [
-      "adaptation"
-    ],
-    "cost": [
-      {
-        "resourceId": "inspiration",
-        "amount": 10
-      }
-    ],
-    "unlocks": {
-      "buildings": [
-        "pub"
-      ],
-      "units": [],
-      "formations": []
-    },
+    "pos": { "x": 4 },
+    "prerequisites": ["adaptation"],
+    "cost": [{ "resourceId": "inspiration", "amount": 10 }],
+    "unlocks": { "buildings": ["pub"], "units": [], "formations": [] },
     "commandPointsBonus": 0,
     "growthSpeedBonus": 0,
     "description": "建造酒馆增加灵感"
   },
   {
-    "id": "unlock_infantry_pair",
-    "name": "步兵互援",
-    "tier": 1,
-    "researchTime": 8,
-    "pos": {
-      "x": 1
-    },
-    "prerequisites": [
-      "order"
-    ],
-    "cost": [
-      {
-        "resourceId": "inspiration",
-        "amount": 15
-      }
-    ],
-    "unlocks": {
-      "buildings": [],
-      "units": [],
-      "formations": []
-    },
-    "commandPointsBonus": 0,
-    "growthSpeedBonus": 0,
-    "description": "建立军事传统，开放阵型研发方向"
-  },
-  {
-    "id": "tactics",
-    "name": "战斗策略",
+    "id": "trailblazing",
+    "name": "拓荒队列",
     "tier": 2,
     "researchTime": 12,
-    "pos": {
-      "x": 1
-    },
-    "prerequisites": [
-      "unlock_infantry_pair"
-    ],
-    "cost": [
-      {
-        "resourceId": "inspiration",
-        "amount": 25
-      }
-    ],
-    "unlocks": {
-      "buildings": [],
-      "units": [],
-      "formations": []
-    },
+    "pos": { "x": 5 },
+    "prerequisites": ["adaptation"],
+    "cost": [{ "resourceId": "inspiration", "amount": 20 }],
+    "unlocks": { "buildings": [], "units": [], "formations": [] },
     "commandPointsBonus": 0,
     "growthSpeedBonus": 0,
-    "description": "提升战术理解，为军事传统研发提供背景"
-  },
-  {
-    "id": "commander",
-    "name": "指挥官",
-    "tier": 2,
-    "researchTime": 24,
-    "pos": {
-      "x": 0
-    },
-    "prerequisites": [
-      "unlock_infantry_pair"
-    ],
-    "cost": [
-      {
-        "resourceId": "inspiration",
-        "amount": 40
-      }
-    ],
-    "unlocks": {
-      "buildings": [],
-      "units": [],
-      "formations": []
-    },
-    "commandPointsBonus": 8,
-    "growthSpeedBonus": 0,
-    "description": "派遣指挥官，增加军队的指挥上限"
-  },
-  {
-    "id": "cover",
-    "name": "交叉掩护",
-    "tier": 3,
-    "researchTime": 24,
-    "pos": {
-      "x": 0
-    },
-    "prerequisites": [
-      "tactics",
-      "commander"
-    ],
-    "cost": [
-      {
-        "resourceId": "inspiration",
-        "amount": 60
-      }
-    ],
-    "unlocks": {
-      "buildings": [],
-      "units": [],
-      "formations": []
-    },
-    "commandPointsBonus": 2,
-    "growthSpeedBonus": 0,
-    "description": "训练步兵、骑兵和炮兵协同推进，解锁新的阵型"
-  },
-  {
-    "id": "legion",
-    "name": "骑兵团",
-    "tier": 3,
-    "researchTime": 32,
-    "pos": {
-      "x": 1
-    },
-    "prerequisites": [
-      "tactics"
-    ],
-    "cost": [
-      {
-        "resourceId": "inspiration",
-        "amount": 80
-      }
-    ],
-    "unlocks": {
-      "buildings": [],
-      "units": [],
-      "formations": []
-    },
-    "commandPointsBonus": 0,
-    "growthSpeedBonus": 0,
-    "description": "解锁新的战阵，我说打不过就是骑兵不够多）"
+    "expeditionQueueBonus": 1,
+    "description": "探索队列上限 +1"
   },
   {
     "id": "settle_down",
     "name": "安居",
     "tier": 3,
     "researchTime": 12,
-    "pos": {
-      "x": 3
-    },
-    "prerequisites": [
-      "wine"
-    ],
-    "cost": [
-      {
-        "resourceId": "inspiration",
-        "amount": 40
-      }
-    ],
-    "unlocks": {
-      "buildings": [],
-      "units": [],
-      "formations": []
-    },
+    "pos": { "x": 4 },
+    "prerequisites": ["wine"],
+    "cost": [{ "resourceId": "inspiration", "amount": 40 }],
+    "unlocks": { "buildings": [], "units": [], "formations": [] },
     "commandPointsBonus": 0,
     "growthSpeedBonus": 1,
     "description": "人口增长速度 +2~4"
-  },
-  {
-    "id": "reform",
-    "name": "军队改革",
-    "tier": 4,
-    "researchTime": 36,
-    "pos": {
-      "x": 2
-    },
-    "prerequisites": [
-      "settle_down",
-      "tactics"
-    ],
-    "cost": [
-      {
-        "resourceId": "inspiration",
-        "amount": 200
-      }
-    ],
-    "unlocks": {
-      "buildings": [],
-      "units": [],
-      "formations": []
-    },
-    "commandPointsBonus": 15,
-    "growthSpeedBonus": 0,
-    "description": "改革军队编制，指挥点上限+15"
-  },
-  {
-    "id": "new_doctrine",
-    "name": "协同作战",
-    "tier": 5,
-    "researchTime": 48,
-    "pos": {
-      "x": 2
-    },
-    "prerequisites": [
-      "reform"
-    ],
-    "cost": [
-      {
-        "resourceId": "inspiration",
-        "amount": 300
-      }
-    ],
-    "unlocks": {
-      "buildings": [],
-      "units": [],
-      "formations": []
-    },
-    "commandPointsBonus": 5,
-    "growthSpeedBonus": 0,
-    "description": "多兵种协同作战，解锁新的战阵"
   }
 ]

@@ -9,16 +9,23 @@ import { getFormationBonusText, getFormationRequirementText } from '../../utils/
 
 function _dcfg() { return configRegistry.get('doctrines') || []; }
 function _researched() { return store.getState('doctrineResearched') || []; }
+function _levels() { return store.getState('doctrineResearchLevels') || {}; }
 function _inspiration() { return store.getState('inspiration') || 0; }
 function _culture() { return window.__game?.systems?.culture; }
+function _level(id) { return Math.max(0, _levels()[id] || 0); }
+function _hasDoctrine(id) { return _researched().includes(id) || _level(id) > 0; }
+function _costAmount(d) {
+  var base = (d.cost && d.cost.length > 0) ? d.cost[0].amount : 0;
+  if (!d.repeatable) return base;
+  return base + _level(d.id) * (d.costGrowth || 0);
+}
 
 function _canResearch(d) {
   if (!d) return false;
-  var researched = _researched();
-  if (researched.includes(d.id)) return false;
+  if (!d.repeatable && _hasDoctrine(d.id)) return false;
   var prereqs = d.prerequisites || [];
   for (var i = 0; i < prereqs.length; i++) {
-    if (!researched.includes(prereqs[i])) return false;
+    if (!_hasDoctrine(prereqs[i])) return false;
   }
   return true;
 }
@@ -38,11 +45,13 @@ export function renderDoctrinePanel(data, body, pm) {
   var headerRight = document.createElement('div');
   headerRight.style.cssText = 'display:flex;align-items:center;gap:10px;';
   headerRight.innerHTML = '<span style="font-size:13px;color:#c98500;">💡 灵感: ' + inspiration + '</span>';
-  var militaryBtn = document.createElement('button');
-  militaryBtn.textContent = '军事传统';
-  militaryBtn.style.cssText = 'padding:7px 12px;border:none;border-radius:6px;background:rgba(91,141,239,0.18);color:#8fb1ff;cursor:pointer;font-size:12px;font-weight:600;';
-  militaryBtn.addEventListener('click', function() { pm.push('military_tradition', {}); });
-  headerRight.appendChild(militaryBtn);
+  if (researched.includes('order')) {
+    var militaryBtn = document.createElement('button');
+    militaryBtn.textContent = '军事传统';
+    militaryBtn.style.cssText = 'padding:7px 12px;border:none;border-radius:6px;background:rgba(91,141,239,0.18);color:#8fb1ff;cursor:pointer;font-size:12px;font-weight:600;';
+    militaryBtn.addEventListener('click', function() { pm.push('military_tradition', {}); });
+    headerRight.appendChild(militaryBtn);
+  }
   header.appendChild(headerRight);
   body.appendChild(header);
 
@@ -98,8 +107,8 @@ export function renderDoctrinePanel(data, body, pm) {
   edges.forEach(function(edge) {
     var from = positions[edge.from];
     var to = positions[edge.to];
-    var fromResearched = researched.includes(edge.from);
-    var toResearched = researched.includes(edge.to);
+    var fromResearched = _hasDoctrine(edge.from);
+    var toResearched = _hasDoctrine(edge.to);
     var color = fromResearched ? '#4ecb71' : '#3a3a55';
     var x1 = from.x + NODE_W / 2;
     var y1 = from.y + NODE_H;
@@ -111,28 +120,38 @@ export function renderDoctrinePanel(data, body, pm) {
   /* 节点 */
   doctrines.forEach(function(d) {
     var p = positions[d.id];
-    var isResearched = researched.includes(d.id);
+    var currentLevel = _level(d.id);
+    var isResearched = _hasDoctrine(d.id);
     var canResearch = _canResearch(d);
-    var costAmount = (d.cost && d.cost.length > 0) ? d.cost[0].amount : 0;
+    var costAmount = _costAmount(d);
     var canAfford = inspiration >= costAmount;
     var bg = isResearched ? 'rgba(78,203,113,0.12)' : canResearch ? 'rgba(91,141,239,0.10)' : 'rgba(255,255,255,0.03)';
     var border = isResearched ? '#4ecb71' : canResearch ? '#5b8def' : '#3a3a55';
 
     /* 效果预览文本 */
     var fx = [];
-    if (d.commandPointsBonus) fx.push('CP+' + d.commandPointsBonus);
+    if (d.commandPointsBonus) fx.push('CP+' + d.commandPointsBonus + (d.repeatable ? '/级' : ''));
     if (d.growthSpeedBonus) fx.push('人口+' + Math.round(d.growthSpeedBonus * 100) + '%');
+    if (d.foodConsumeMul) fx.push('粮耗×' + d.foodConsumeMul);
+    if (d.productionMul) fx.push('产出×' + d.productionMul);
+    if (d.resourceProductionMul) {
+      Object.entries(d.resourceProductionMul).forEach(function(entry) {
+        var r = configRegistry.getResource(entry[0]);
+        fx.push((r ? r.name : entry[0]) + '×' + entry[1]);
+      });
+    }
+    if (d.meleeDamageMul || d.rangedDamageMul || d.unitHpMul) fx.push('军力提升');
     if (d.unlocks && d.unlocks.buildings && d.unlocks.buildings.length) fx.push('🏗' + d.unlocks.buildings.length);
     if (d.unlocks && d.unlocks.units && d.unlocks.units.length) fx.push('⚔' + d.unlocks.units.length);
     if (d.unlocks && d.unlocks.formations && d.unlocks.formations.length) fx.push('🔱' + d.unlocks.formations.length);
 
     svg += '<foreignObject x="' + p.x + '" y="' + p.y + '" width="' + NODE_W + '" height="' + NODE_H + '">';
     svg += '<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;box-sizing:border-box;padding:8px 10px;background:' + bg + ';border:2px solid ' + border + ';border-radius:8px;display:flex;flex-direction:column;gap:2px;overflow:hidden;">';
-    svg += '<div style="font-size:12px;font-weight:600;color:' + (isResearched ? '#4ecb71' : '#ececf0') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (isResearched ? '✅ ' : '') + d.name + '</div>';
+    svg += '<div style="font-size:12px;font-weight:600;color:' + (isResearched ? '#4ecb71' : '#ececf0') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (isResearched && !d.repeatable ? '✅ ' : '') + d.name + (d.repeatable ? ' Lv.' + currentLevel : '') + '</div>';
     svg += '<div style="font-size:10px;color:#808098;">T' + d.tier + ' · ⏱' + d.researchTime + '</div>';
     if (d.description) svg += '<div style="font-size:9px;color:#a0a0ba;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + d.description + '</div>';
     if (fx.length) svg += '<div style="font-size:9px;color:#5b8def;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + fx.join(' · ') + '</div>';
-    svg += '<div style="font-size:10px;color:' + (canAfford || isResearched ? '#c98500' : '#f0a040') + ';">💡 ' + costAmount + (isResearched ? ' ✅已研究' : '') + '</div>';
+    svg += '<div style="font-size:10px;color:' + (canAfford || isResearched ? '#c98500' : '#f0a040') + ';">💡 ' + costAmount + (isResearched && !d.repeatable ? ' ✅已研究' : '') + '</div>';
     svg += '</div></foreignObject>';
   });
 
@@ -154,19 +173,31 @@ export function renderDoctrinePanel(data, body, pm) {
   doctrines.forEach(function(d, i) {
     var el = nodeEls[i];
     if (!el) return;
-    var isResearched = researched.includes(d.id);
-    if (isResearched) return;
+    var isResearched = _hasDoctrine(d.id);
+    if (isResearched && !d.repeatable) return;
     el.style.cursor = 'pointer';
     el.addEventListener('click', function() {
       var canResearch = _canResearch(d);
-      var costAmount = (d.cost && d.cost.length > 0) ? d.cost[0].amount : 0;
-      if (!canResearch) { alert('前置未完成'); return; }
-      if (inspiration < costAmount) { alert('灵感不足（需要 ' + costAmount + '）'); return; }
+      var costAmount = _costAmount(d);
+      if (!canResearch) { pm.alert('前置未完成'); return; }
+      if (inspiration < costAmount) { pm.alert('灵感不足（需要 ' + costAmount + '）'); return; }
       var cur = _researched();
-      cur.push(d.id);
-      store.setState({ doctrineResearched: cur, inspiration: _inspiration() - costAmount });
+      var nextState = { inspiration: _inspiration() - costAmount };
+      if (d.repeatable) {
+        var levels = { ..._levels() };
+        levels[d.id] = _level(d.id) + 1;
+        nextState.doctrineResearchLevels = levels;
+        if (!cur.includes(d.id)) {
+          cur.push(d.id);
+          nextState.doctrineResearched = cur;
+        }
+      } else {
+        cur.push(d.id);
+        nextState.doctrineResearched = cur;
+      }
+      store.setState(nextState);
       eventBus.emit('cultureResearched', { id: d.id });
-      eventBus.emit('combatBroadcast', { message: '📜 完成文化研究: ' + d.name });
+      eventBus.emit('combatBroadcast', { message: '📜 完成文化研究: ' + d.name + (d.repeatable ? ' Lv.' + _level(d.id) : '') });
       renderDoctrinePanel(data, body, pm);
     });
   });
@@ -246,7 +277,7 @@ export function renderMilitaryTraditionPanel(data, body, pm) {
     btn.style.cssText = 'padding:6px 12px;border:none;border-radius:6px;background:' + (canClick ? 'rgba(91,141,239,0.22)' : 'rgba(128,128,152,0.14)') + ';color:' + (canClick ? '#8fb1ff' : '#808098') + ';cursor:' + (canClick ? 'pointer' : 'default') + ';font-size:12px;font-weight:600;';
     btn.addEventListener('click', function() {
       if (!canClick) {
-        if (!done) alert(check.reason || '暂不可研发');
+        if (!done) pm.alert(check.reason || '暂不可研发');
         return;
       }
       if (culture.researchFormation(f.id)) renderMilitaryTraditionPanel(data, body, pm);

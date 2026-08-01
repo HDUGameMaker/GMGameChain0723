@@ -59,6 +59,10 @@ export class QuestSystem {
       if (!this._completed.has(this._quests[i].id)) {
         this._activeIndex = i;
         this._takeSnapshot();
+        if (this._checkCompletion(this._quests[i])) {
+          this._completeQuest();
+          return;
+        }
         this._notify();
         return;
       }
@@ -131,9 +135,7 @@ export class QuestSystem {
         const cur = this._countBuildingsById();
         let c = 0;
         for (const bid of q.target.buildings) {
-          const curCount = cur[bid] || 0;
-          const snapCount = s.buildingCounts[bid] || 0;
-          if (curCount > snapCount) c++;
+          if ((cur[bid] || 0) > 0) c++;
         }
         return { current: c, target: q.target.buildings.length };
       }
@@ -235,6 +237,11 @@ export class QuestSystem {
     this._completed = new Set(state.completed || []);
     this._snapshot = state.snapshot || {};
     store.setState({ questExpeditionCount: state.expeditionCount || 0 });
+    const active = this._quests[this._activeIndex];
+    if (this._enabled && active && this._checkCompletion(active)) {
+      this._completeQuest();
+      return;
+    }
     this._notify();
   }
 }

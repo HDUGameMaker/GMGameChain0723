@@ -9,6 +9,7 @@ import {
   getArmyCombatPower,
   getFormationBonusText
 } from '../../utils/FormationUtils.js';
+import { eventBus } from '../../core/EventBus.js';
 
 const MAX_CP = 20;
 function _getMaxCP() {
@@ -23,8 +24,21 @@ function _store() { return window.__game?.store; }
 function _armies() { return _store()?.getState('armies') || []; }
 function _avail() { return _store()?.getState('availableUnits') || {}; }
 
-function _saveArmies(armies) { _store()?.setState({ armies }); }
-function _saveAvail(avail) { _store()?.setState({ availableUnits: avail }); }
+function _notifyArmyChanged(reason) {
+  const version = (_store()?.getState('armyVersion') || 0) + 1;
+  _store()?.setState({ armyVersion: version });
+  eventBus.emit('armyChanged', { reason, version });
+}
+
+function _saveArmies(armies, reason = 'armies') {
+  _store()?.setState({ armies: [...armies] });
+  _notifyArmyChanged(reason);
+}
+
+function _saveAvail(avail, reason = 'availableUnits') {
+  _store()?.setState({ availableUnits: { ...avail } });
+  _notifyArmyChanged(reason);
+}
 function _techSys() { return window.__game?.systems?.tech; }
 function _formations() { return window.__game?.configRegistry?.get('enemies')?.formations || []; }
 function _population() { return window.__game?.systems?.population; }
@@ -232,9 +246,9 @@ export function renderArmyPanel(data, body, pm) {
     delBtn.title = '删除部队';
     delBtn.addEventListener('mouseenter', () => delBtn.style.background = 'rgba(255,107,107,0.3)');
     delBtn.addEventListener('mouseleave', () => delBtn.style.background = 'rgba(255,107,107,0.15)');
-    delBtn.addEventListener('click', (e) => {
+    delBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      if (!confirm('确认删除「' + army.name + '」？')) return;
+      if (!await pm.confirm('确认删除「' + army.name + '」？')) return;
       /* 归还所有单位到可用池 */
       const a = _armies();
       const av = { ..._avail() };
@@ -327,7 +341,7 @@ export function renderArmyPanel(data, body, pm) {
         addBtn.addEventListener('mouseleave', () => addBtn.style.background = availCount > 0 ? 'rgba(78,203,113,0.12)' : 'rgba(240,160,64,0.12)');
         addBtn.addEventListener('click', () => {
           if (availCount <= 0) {
-            alert('「' + u.name + '」数量不足，无法添加');
+            pm.alert('「' + u.name + '」数量不足，无法添加');
             return;
           }
           const a = _armies();

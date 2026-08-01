@@ -42,6 +42,14 @@ npx http-server -p 8080 -c-1 --cors
 
 Must use HTTP server — `fetch()` loads JSON configs, `file://` won't work. No build step, no tests, no linter.
 
+## Agent Tools
+
+```bash
+node scripts/verify_bonus_interfaces.js
+```
+
+Run this after editing adjacency bonuses, expedition item effects, alchemy effects, or formations. It validates bonus references across `config/adjacency-bonuses.json`, `config/items.json`, `config/alchemy.json`, and `config/enemies.json`.
+
 ## Tech Stack & Constraints
 
 - **PixiJS v8** (global `PIXI`) for 2D rendering, **GSAP** (global `gsap`) for animation

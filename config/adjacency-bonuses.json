@@ -29,7 +29,7 @@
     "maxDistance": 0,
     "effectType": "flat",
     "effectValue": 1,
-    "applyToField": "foodCapacity",
+    "applyToField": "production",
     "applyTo": "food"
   },
   {
@@ -42,5 +42,38 @@
     "effectValue": 2,
     "applyToField": "production",
     "applyTo": "all"
+  },
+  {
+    "id": "farm_near_supply_post",
+    "name": "农场·补给调度",
+    "sourceBuildingId": "farm",
+    "targetBuildingId": "supply_post",
+    "maxDistance": 1,
+    "effectType": "flat",
+    "effectValue": 1,
+    "applyToField": "production",
+    "applyTo": "food"
+  },
+  {
+    "id": "logging_camp_near_supply_post",
+    "name": "伐木点·补给调度",
+    "sourceBuildingId": "logging_camp",
+    "targetBuildingId": "supply_post",
+    "maxDistance": 1,
+    "effectType": "flat",
+    "effectValue": 0.5,
+    "applyToField": "production",
+    "applyTo": "wood"
+  },
+  {
+    "id": "stope_near_supply_post",
+    "name": "采石场·补给调度",
+    "sourceBuildingId": "stope",
+    "targetBuildingId": "supply_post",
+    "maxDistance": 1,
+    "effectType": "flat",
+    "effectValue": 0.5,
+    "applyToField": "production",
+    "applyTo": "stone"
   }
 ]

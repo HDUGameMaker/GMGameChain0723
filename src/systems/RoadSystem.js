@@ -18,9 +18,6 @@ export class RoadSystem {
     this._resourceSystem = null;
     this._populationSystem = null;
     this._editMode = false; // 道路编辑模式
-
-    // 订阅 tick 事件处理建造进度
-    eventBus.on('tick', (data) => this.onTick(data));
   }
 
   setBuildingSystem(bs) { this._buildingSystem = bs; }
@@ -288,19 +285,31 @@ export class RoadSystem {
   }
 
   /**
-   * Tick 处理：推进道路建造进度
-   */
-  onTick(data) {
-    this.updateConstructionProgress();
-  }
-
-  /**
    * 按每条道路自己的开始时间推进建造，避免同一 tick 内新铺道路共享全局进度。
    */
   updateConstructionProgress() {
     const state = store.getState();
     const now = (state.timeTick ?? 0) + (state.timeProgress ?? 0);
     let changed = false;
+    let releasedWorker = false;
+    let guard = 0;
+
+    do {
+      releasedWorker = false;
+      guard++;
+      const result = this._updateConstructionProgressPass(now);
+      changed = changed || result.changed;
+      releasedWorker = result.releasedWorker;
+    } while (releasedWorker && guard <= this.roads.length + 1);
+
+    if (changed) {
+      this._notifyChange();
+    }
+  }
+
+  _updateConstructionProgressPass(now) {
+    let changed = false;
+    let releasedWorker = false;
 
     for (const road of this.roads) {
       if (road.buildProgress === null) continue;
@@ -335,6 +344,7 @@ export class RoadSystem {
           this._populationSystem.releaseFromConstruction(1);
         }
         changed = true;
+        releasedWorker = true;
         eventBus.emit('roadBuilt', {
           gridX: road.gridX,
           gridY: road.gridY,
@@ -344,9 +354,7 @@ export class RoadSystem {
       }
     }
 
-    if (changed) {
-      this._notifyChange();
-    }
+    return { changed, releasedWorker };
   }
 
   /**

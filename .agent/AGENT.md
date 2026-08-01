@@ -155,10 +155,12 @@ demolishBuilding(buildingIndex) → boolean
 hasBuilding(buildingId) → boolean
 // 相邻加成
 getAdjacencyBonuses(buildingIndex) → [{rule, targetBuilding, distance, bonusDesc, isPositive}]
+getProvidedAdjacencyBonuses(buildingIndex) → [{rule, receiverBuilding, distance, bonusDesc, isPositive}]
 getAdjacencyBonusesAt(buildingId, gridX, gridY) → [...]     // 放置预览
 getAllAdjacencyInteractionsAt(buildingId, gridX, gridY) → [...]  // 双向、全距离
 applyAdjacencyToProduction(buildingId, resourceId, baseAmount, applyToField, bonuses) → number
-getProductionRates() → {resourceId: netAmountPerTick}       // 含相邻加成
+getDailyResourceFlow() → {resourceId: {produced, consumed, net}}  // 每日口径，含相邻加成
+getBuildingDailyProductionPreview(buildingIndex) → {dailyInput, dailyOutput, ...}
 ```
 
 ### TorchSystem
@@ -287,6 +289,15 @@ restoreState(state) → void
 - 伟大工作五阶段（Nigredo→Albedo→Citrinitas→Rubedo→Philosopher's Stone）每阶段消耗前一阶段产物作为输入
 
 ## 添加新功能的模式
+
+### 加成接口验证
+修改相邻加成、探险物品加成、炼金效果或阵型需求后，运行：
+
+```bash
+node scripts/verify_bonus_interfaces.js
+```
+
+该脚本检查 `config/adjacency-bonuses.json`、`config/items.json`、`config/alchemy.json`、`config/enemies.json` 中的加成接口引用，能提前发现未知建筑 ID、未知资源 ID、未知区域 ID、未知单位 ID、未知加成类型和非法数值类型。
 
 ### 添加新面板
 1. 创建 `src/ui/panels/xxx-panel.js`，导出 `renderXxxPanel(data, body, pm)`
