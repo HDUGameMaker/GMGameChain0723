@@ -37,7 +37,8 @@ class ConfigRegistry {
       'territory': 'config/territory.json',
       'enemyExpansion': 'config/enemy_expansion.json',
       'buildingTech': 'config/building_tech.json',
-      'eaIntegration': 'config/ea_integration.json'
+      'eaIntegration': 'config/ea_integration.json',
+      'historicalContent': 'config/historical_content.json'
     };
 
     const loadPromises = Object.entries(configFiles).map(async ([key, path]) => {
@@ -58,6 +59,7 @@ class ConfigRegistry {
     await Promise.all(loadPromises);
 
     this._applyEaIntegration();
+    this._applyHistoricalContent();
 
     // 合成配方继承：高级建筑自动继承低级建筑的合成配方
     this._inheritSynthesisRecipes();
@@ -93,6 +95,33 @@ class ConfigRegistry {
         if (!tech.unlocks.buildings.includes(building.id)) tech.unlocks.buildings.push(building.id);
       }
     }
+  }
+
+  /**
+   * 合并历史文明大内容包。与 EA 兼容层使用同一规则：主版本和已加载扩展的
+   * 同 ID 项优先，历史内容只追加新 ID，避免平衡配置被静默覆盖。
+   */
+  _applyHistoricalContent() {
+    const content = this._configs.historicalContent;
+    if (!content) return;
+    const mergeUnique = (base = [], additions = []) => {
+      const ids = new Set(base.map(item => item.id));
+      return [...base, ...additions.filter(item => !ids.has(item.id))];
+    };
+
+    this._configs.buildings = mergeUnique(this._configs.buildings, content.buildings);
+    this._configs.techs = mergeUnique(this._configs.techs, content.techs);
+    this._configs.culture = mergeUnique(this._configs.culture, content.civics);
+
+    if (!this._configs.enemies) this._configs.enemies = { units: [] };
+    this._configs.enemies.units = mergeUnique(this._configs.enemies.units, content.units);
+  }
+
+  getHistoricalContent() {
+    return this._configs.historicalContent || {
+      eras: [], civilizations: [], luxuries: [], buildings: [], techs: [],
+      civics: [], units: [], heroes: [], strategies: []
+    };
   }
 
   /**
