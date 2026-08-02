@@ -14,6 +14,7 @@ export class TechSystem {
     this._currentResearch = null;
     /** @type {Set<string>} 已完成专项研发的兵种ID */
     this._unitResearch = new Set();
+    this._sciencePoints = 0;
     this._resourceSystem = null;
     this._buildingSystem = null;
     this._itemSystem = null;
@@ -26,12 +27,13 @@ export class TechSystem {
   setItemSystem(is) { this._itemSystem = is; }
   setCultureSystem(cs) { this._cultureSystem = cs; }
   setHeroSystem(hs) { this._heroSystem = hs; }
+  setEraSystem(es) { this._eraSystem = es; }
 
   init() {
     // Tier 0 科技自动完成
     const allTechs = this._getAllTechs();
     for (const tech of allTechs) {
-      if (tech.tier === 0) {
+      if (tech.tier === 0 && !tech.eraId) {
         this._researched.add(tech.id);
         this._applyUnlocks(tech);
       }
@@ -67,6 +69,14 @@ export class TechSystem {
   /** 获取当前研究进度 */
   getCurrentResearch() {
     return this._currentResearch ? { ...this._currentResearch } : null;
+  }
+
+  getSciencePoints() { return this._sciencePoints; }
+
+  getEraProgress(eraId) {
+    const nodes = this._getAllTechs().filter(tech => tech.eraId === eraId);
+    if (nodes.length === 0) return 0;
+    return nodes.filter(tech => this._researched.has(tech.id)).length / nodes.length;
   }
 
   getUnitResearch() {
@@ -106,8 +116,14 @@ export class TechSystem {
     if (this._currentResearch) return { valid: false, reason: '正在研究中' };
     const tech = this.getTech(techId);
     if (!tech) return { valid: false, reason: '科技不存在' };
+    if (tech.eraId) {
+      const currentOrder = this._eraSystem?.getCurrentEra?.()?.order ?? 0;
+      const targetOrder = configRegistry.getHistoricalContent().eras.find(era => era.id === tech.eraId)?.order ?? 0;
+      if (targetOrder > currentOrder) return { valid: false, reason: '尚未进入该科技所属时代' };
+    }
     if (this._researched.has(techId)) return { valid: false, reason: '已研究完成' };
     if (!this._canResearch(tech)) return { valid: false, reason: '前置科技未完成' };
+    if (tech.pointCost && this._sciencePoints < tech.pointCost) return { valid: false, reason: `科技点不足（${this._sciencePoints}/${tech.pointCost}）` };
 
     // 检查资源消耗
     if (tech.cost && tech.cost.length > 0 && this._resourceSystem) {
@@ -123,6 +139,8 @@ export class TechSystem {
     if (!check.valid) return false;
 
     const tech = this.getTech(techId);
+
+    if (tech.pointCost) this._sciencePoints = Math.max(0, this._sciencePoints - tech.pointCost);
 
     // 消耗资源
     if (tech.cost && tech.cost.length > 0 && this._resourceSystem) {
@@ -177,7 +195,12 @@ export class TechSystem {
 
   /** Tick推进 */
   _onTick(data) {
-    if (!this._currentResearch) return;
+    const scienceOutput = this._buildingSystem?.getWorkforceOutputs?.().science || 0;
+    if (scienceOutput > 0) this._sciencePoints += scienceOutput;
+    if (!this._currentResearch) {
+      if (scienceOutput > 0) this._updateStore();
+      return;
+    }
 
     const tech = this.getTech(this._currentResearch.techId);
     if (!tech) {
@@ -249,7 +272,8 @@ export class TechSystem {
     store.setState({
       techResearched: [...this._researched],
       techCurrent: this._currentResearch ? { ...this._currentResearch } : null,
-      unitResearch: [...this._unitResearch]
+      unitResearch: [...this._unitResearch],
+      sciencePoints: this._sciencePoints
     });
   }
 
@@ -259,7 +283,8 @@ export class TechSystem {
     return {
       researched: [...this._researched],
       currentResearch: this._currentResearch ? { ...this._currentResearch } : null,
-      unitResearch: [...this._unitResearch]
+      unitResearch: [...this._unitResearch],
+      sciencePoints: this._sciencePoints
     };
   }
 
@@ -268,6 +293,7 @@ export class TechSystem {
     this._researched = new Set(state.researched || []);
     this._currentResearch = state.currentResearch || null;
     this._unitResearch = new Set(state.unitResearch || []);
+    this._sciencePoints = Number.isFinite(state.sciencePoints) ? state.sciencePoints : 0;
     this._ensureBaseUnitResearch();
     this._updateStore();
   }

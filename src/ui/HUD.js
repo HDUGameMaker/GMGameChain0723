@@ -54,6 +54,7 @@ export class HUD {
     this.expeditionStatus = document.getElementById('expedition-status');
     this.deferredEventTray = document.getElementById('deferred-event-tray');
     this.techStatus = document.getElementById('tech-status');
+    this.btnEra = document.getElementById('btn-era');
     if (this.weatherDisplay) {
       this.weatherDisplay.style.display = 'none';
     }
@@ -63,6 +64,9 @@ export class HUD {
   }
 
   _bindButtons() {
+    this.btnEra?.addEventListener('click', () => {
+      this.popupManager.open('era_civilization', { eraSystem: this.systems.era });
+    });
     // 科技树
     this.btnTech.addEventListener('click', () => {
       this.popupManager.open('tech_tree', {});
@@ -70,7 +74,7 @@ export class HUD {
 
     // 人文树
     this.btnCulture.addEventListener('click', () => {
-      this.popupManager.open('doctrine_panel', {});
+      this.popupManager.open('culture_tree', {});
     });
 
     // 炼金

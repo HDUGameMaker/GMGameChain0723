@@ -22,6 +22,7 @@ export class CultureSystem {
     this._government = null;
     /** @type {Set<string>} 已研发的军事传统/阵型ID */
     this._formationResearch = new Set();
+    this._civicPoints = 0;
     /** 政策卡切换冷却：下次可切换的游戏日 */
     this._policyCooldownUntilDay = 0;
 
@@ -40,11 +41,12 @@ export class CultureSystem {
   setTimeSystem(ts) { this._timeSystem = ts; }
   setTechSystem(ts) { this._techSystem = ts; }
   setHeroSystem(hs) { this._heroSystem = hs; }
+  setEraSystem(es) { this._eraSystem = es; }
 
   init() {
     // tier 0 自动完成
     for (const c of this._getAll()) {
-      if (c.tier === 0) {
+      if (c.tier === 0 && !c.eraId) {
         this._researched.add(c.id);
         // tier 0 政策卡默认激活
         if (c.policyType === 'policy') this._activatedPolicies.add(c.id);
@@ -88,6 +90,13 @@ export class CultureSystem {
   _getUnitConfigs() { return configRegistry.get('enemies')?.units || []; }
 
   getCurrentResearch() { return this._currentResearch ? { ...this._currentResearch } : null; }
+  getCivicPoints() { return this._civicPoints; }
+
+  getEraProgress(eraId) {
+    const nodes = this._getAll().filter(node => node.eraId === eraId);
+    if (nodes.length === 0) return 0;
+    return nodes.filter(node => this._researched.has(node.id)).length / nodes.length;
+  }
 
   /** 可研究：前置满足且未研究 */
   _canResearch(c) {
@@ -108,8 +117,14 @@ export class CultureSystem {
     if (this._currentResearch) return { valid: false, reason: '正在研究中' };
     const c = this.get(id);
     if (!c) return { valid: false, reason: '节点不存在' };
+    if (c.eraId) {
+      const currentOrder = this._eraSystem?.getCurrentEra?.()?.order ?? 0;
+      const targetOrder = configRegistry.getHistoricalContent().eras.find(era => era.id === c.eraId)?.order ?? 0;
+      if (targetOrder > currentOrder) return { valid: false, reason: '尚未进入该人文所属时代' };
+    }
     if (this._researched.has(id)) return { valid: false, reason: '已研究完成' };
     if (!this._canResearch(c)) return { valid: false, reason: '前置未完成' };
+    if (c.pointCost && this._civicPoints < c.pointCost) return { valid: false, reason: `人文点不足（${this._civicPoints}/${c.pointCost}）` };
     // 政体：已选过任何政体则不可再研究
     if (c.policyType === 'government' && this._government) {
       return { valid: false, reason: '已选定政体，不可更改' };
@@ -124,6 +139,7 @@ export class CultureSystem {
     const check = this.canStartResearch(id);
     if (!check.valid) return false;
     const c = this.get(id);
+    if (c.pointCost) this._civicPoints = Math.max(0, this._civicPoints - c.pointCost);
     if (c.cost && c.cost.length > 0 && this._resourceSystem) {
       this._resourceSystem.consumeAll(c.cost);
     }
@@ -139,7 +155,12 @@ export class CultureSystem {
   }
 
   _onTick(data) {
-    if (!this._currentResearch) return;
+    const civicOutput = this._buildingSystem?.getWorkforceOutputs?.().civics || 0;
+    if (civicOutput > 0) this._civicPoints += civicOutput;
+    if (!this._currentResearch) {
+      if (civicOutput > 0) this._updateStore();
+      return;
+    }
     const c = this.get(this._currentResearch.id);
     if (!c) { this._currentResearch = null; this._updateStore(); return; }
     // 研究速度受政体/政策效果影响
@@ -360,6 +381,7 @@ export class CultureSystem {
       cultureActivated: [...this._activatedPolicies],
       cultureGovernment: this._government,
       formationResearch: [...this._formationResearch],
+      civicPoints: this._civicPoints,
       cultureVersion: Date.now()
     });
   }
@@ -372,7 +394,8 @@ export class CultureSystem {
       activatedPolicies: [...this._activatedPolicies],
       government: this._government,
       policyCooldownUntilDay: this._policyCooldownUntilDay,
-      formationResearch: [...this._formationResearch]
+      formationResearch: [...this._formationResearch],
+      civicPoints: this._civicPoints
     };
   }
 
@@ -384,6 +407,7 @@ export class CultureSystem {
     this._government = state.government || null;
     this._policyCooldownUntilDay = state.policyCooldownUntilDay || 0;
     this._formationResearch = new Set(state.formationResearch || []);
+    this._civicPoints = Number.isFinite(state.civicPoints) ? state.civicPoints : 0;
     this._updateStore();
   }
 }

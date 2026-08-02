@@ -30,6 +30,7 @@ import { SpellSystem } from './systems/SpellSystem.js';
 import { BuildingTechSystem } from './systems/BuildingTechSystem.js';
 import { DiplomacySystem } from './systems/DiplomacySystem.js';
 import { HeroSystem } from './systems/HeroSystem.js';
+import { EraSystem } from './systems/EraSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
@@ -117,6 +118,7 @@ class Game {
 
     // 人文政策树系统
     this.systems.culture = new CultureSystem();
+    this.systems.era = new EraSystem();
 
     // 炼金系统
     this.systems.alchemy = new AlchemySystem();
@@ -213,7 +215,11 @@ class Game {
     this.systems.culture.setTimeSystem(this.systems.time);
     this.systems.culture.setTechSystem(this.systems.tech);
     this.systems.culture.setHeroSystem(this.systems.hero);
+    this.systems.tech.setEraSystem(this.systems.era);
+    this.systems.culture.setEraSystem(this.systems.era);
     this.systems.culture.init();
+    this.systems.era.setTechSystem(this.systems.tech);
+    this.systems.era.setCultureSystem(this.systems.culture);
     this.systems.diplomacy.setSystems({
       resource: this.systems.resource,
       culture: this.systems.culture,
@@ -501,6 +507,8 @@ class Game {
     this.systems.diplomacy.initNew();
     // 初始化酒馆英雄轮换
     this.systems.hero.initNew();
+    // 初始化时代与文明选择
+    this.systems.era.initNew();
 
     // 初始化事件标记状态（新游戏 = 无已移除标记）
     store.setState({ removedEventMarkers: [] });
@@ -569,6 +577,8 @@ class Game {
     } else {
       this.systems.hero.initNew();
     }
+    if (saveData.era) this.systems.era.restoreState(saveData.era);
+    else this.systems.era.initNew();
     if (saveData.weather) {
       this.systems.weather.restoreState(saveData.weather);
     }
@@ -644,6 +654,7 @@ class Game {
       buildingTech: this.systems.buildingTech.getState(),
       diplomacy: this.systems.diplomacy.getState(),
       heroes: this.systems.hero.getState(),
+      era: this.systems.era.getState(),
       audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
       armies: store.getState('armies'),

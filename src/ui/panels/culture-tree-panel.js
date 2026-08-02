@@ -1,219 +1,55 @@
-/**
- * culture-tree-panel.js - 人文政策树面板
- * 与科技树相同的树状结构模板，支持政策卡激活/取消 + 政体选定（不可逆）
- * 数据源：config/culture.json + CultureSystem
- */
 import { configRegistry } from '../../core/ConfigRegistry.js';
-import { eventBus } from '../../core/EventBus.js';
 
 export function renderCultureTreePanel(data, body, pm) {
-  const cs = pm._cultureSystem;
-  if (!cs) {
-    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">人文系统未加载</div>';
-    return;
+  const system = window.__game?.systems?.culture;
+  const eraSystem = window.__game?.systems?.era;
+  if (!system || !eraSystem) return;
+  const content = configRegistry.getHistoricalContent();
+  const eras = content.eras || [];
+  const currentEra = eraSystem.getCurrentEra();
+  const selectedEra = eras.find(era => era.id === data?.eraId) || currentEra;
+  const points = system.getCivicPoints();
+  const researched = new Set(system.getResearched());
+  const current = system.getCurrentResearch();
+  const container = document.createElement('div');
+  container.style.cssText = 'display:flex;flex-direction:column;gap:12px;color:#ece8dc;min-width:min(760px,85vw);';
+  const top = document.createElement('div');
+  top.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(125,91,140,.14);border:1px solid rgba(184,133,199,.4);border-radius:10px;';
+  top.innerHTML = `<div><b style="color:#dfb9e8">人文树 · ${selectedEra.name}</b><div style="font-size:11px;color:#999">制度、公共生活与文明认同</div></div><div style="font-size:16px">人文点：<b>${Math.floor(points)}</b></div>`;
+  container.appendChild(top);
+  const tabs = document.createElement('div');
+  tabs.style.cssText = 'display:flex;gap:6px;overflow-x:auto;';
+  for (const era of eras) {
+    const tab = document.createElement('button');
+    const locked = era.order > currentEra.order;
+    tab.textContent = `${locked ? '🔒 ' : ''}${era.name}`;
+    tab.style.cssText = `white-space:nowrap;padding:7px 10px;border-radius:7px;border:1px solid ${era.id === selectedEra.id ? '#ad79bb' : '#444'};background:${era.id === selectedEra.id ? '#54345d' : '#242730'};color:${locked ? '#777' : '#ddd'};cursor:pointer;`;
+    tab.addEventListener('click', () => renderCultureTreePanel({ eraId: era.id }, body, pm));
+    tabs.appendChild(tab);
   }
-
-  const all = cs._getAll();
-  if (!all || all.length === 0) {
-    body.innerHTML = `
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 40px;text-align:center;">
-        <div style="font-size:64px;margin-bottom:16px;">📜</div>
-        <div style="font-size:20px;font-weight:600;color:#ececf0;margin-bottom:8px;">人文树</div>
-        <div style="font-size:14px;color:#6a6a82;max-width:400px;">未加载 culture.json 配置。</div>
-      </div>`;
-    return;
-  }
-
-  const researched = cs.getResearched();
-  const current = cs.getCurrentResearch();
-  const available = cs.getAvailable().map(c => c.id);
-  const activated = cs.getActivatedPolicies();
-  const government = cs.getGovernment();
-
-  function getResName(id) {
-    const r = configRegistry.getResource(id);
-    return r ? r.name : id;
-  }
-
-  const NODE_W = 220;
-  const NODE_H = 120;
-  const GAP_X = 30;
-  const GAP_Y = 70;
-
-  const positions = {};
-  for (const c of all) {
-    const x = (c.pos?.x ?? 0) * (NODE_W + GAP_X);
-    const y = c.tier * (NODE_H + GAP_Y);
-    positions[c.id] = { x, y };
-  }
-
-  let maxX = 0, maxY = 0;
-  for (const p of Object.values(positions)) {
-    maxX = Math.max(maxX, p.x + NODE_W);
-    maxY = Math.max(maxY, p.y + NODE_H);
-  }
-  maxX += 40;
-  maxY += 40;
-
-  const edges = [];
-  for (const c of all) {
-    if (c.prerequisites && c.prerequisites.length > 0) {
-      for (const preId of c.prerequisites) edges.push({ from: preId, to: c.id });
+  container.appendChild(tabs);
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(4,minmax(145px,1fr));gap:10px;';
+  for (const node of content.civics.filter(item => item.eraId === selectedEra.id)) {
+    const done = researched.has(node.id);
+    const active = current?.id === node.id;
+    const can = system.canStartResearch(node.id);
+    const card = document.createElement('article');
+    card.style.cssText = `min-height:178px;padding:10px;border-radius:10px;border:1px solid ${done ? '#5ba66f' : active ? '#ac75bd' : '#474a54'};background:${done ? 'rgba(54,105,68,.18)' : 'rgba(18,21,29,.88)'};display:flex;flex-direction:column;gap:6px;`;
+    card.innerHTML = `<img src="${node.icon}" alt="${node.name}" style="width:42px;height:42px;object-fit:contain;align-self:center" onerror="this.style.visibility='hidden'"><b style="text-align:center;color:${done ? '#8ed39c' : '#ead8ae'}">${node.name}</b><span style="font-size:10px;color:#8f93a0;text-align:center">${node.pointCost} 人文点 · ${node.researchTime} tick</span><span style="font-size:10px;color:#aaa;flex:1">${done ? '已研究完成' : active ? `研究中 ${Math.floor(current.progressTicks || 0)}/${node.researchTime}` : can.reason || '可以研究'}</span>`;
+    if (!done && !active) {
+      const button = document.createElement('button');
+      button.textContent = '开始研究';
+      button.disabled = !can.valid;
+      button.style.cssText = `padding:6px;border-radius:6px;border:1px solid ${can.valid ? '#9d69aa' : '#444'};background:${can.valid ? '#4b2854' : '#2b2b2b'};color:${can.valid ? '#f0d1f6' : '#777'};cursor:${can.valid ? 'pointer' : 'not-allowed'};`;
+      button.addEventListener('click', () => {
+        if (!system.startResearch(node.id)) pm.alert(system.canStartResearch(node.id).reason);
+        renderCultureTreePanel({ eraId: selectedEra.id }, body, pm);
+      });
+      card.appendChild(button);
     }
+    grid.appendChild(card);
   }
-
-  const svgWidth = Math.max(maxX + 40, 1400);
-  let html = `<div style="display:flex;justify-content:center;padding:16px;">`;
-  html += `<svg viewBox="0 0 ${svgWidth} ${maxY}" style="width:100%;height:auto;max-width:100%;">`;
-
-  // 连线
-  for (const edge of edges) {
-    const from = positions[edge.from];
-    const to = positions[edge.to];
-    if (!from || !to) continue;
-    const x1 = from.x + NODE_W / 2, y1 = from.y + NODE_H;
-    const x2 = to.x + NODE_W / 2, y2 = to.y;
-    const fromResearched = researched.includes(edge.from);
-    const strokeColor = fromResearched ? '#4ecb71' : '#4a4a6a';
-    const strokeWidth = fromResearched ? 2.5 : 1.5;
-    html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${strokeColor}" stroke-width="${strokeWidth}" opacity="0.6" />`;
-    const angle = Math.atan2(y2 - y1, x2 - x1);
-    const arrowSize = 6;
-    const ax = x2 - arrowSize * 0.5 * Math.cos(angle);
-    const ay = y2 - arrowSize * 0.5 * Math.sin(angle);
-    html += `<polygon points="${ax},${ay} ${ax - arrowSize * Math.cos(angle - 0.4)},${ay - arrowSize * Math.sin(angle - 0.4)} ${ax - arrowSize * Math.cos(angle + 0.4)},${ay - arrowSize * Math.sin(angle + 0.4)}" fill="${strokeColor}" opacity="0.6" />`;
-  }
-
-  // 节点
-  for (const c of all) {
-    const pos = positions[c.id];
-    if (!pos) continue;
-
-    const isDone = researched.includes(c.id);
-    const isCurrent = current && current.id === c.id;
-    const isAvail = available.includes(c.id);
-    const isLocked = !isDone && !isAvail && !isCurrent;
-    const isGov = c.policyType === 'government';
-    const isActivated = activated.includes(c.id);
-    const isGovSelected = isGov && government === c.id;
-    const govAlreadyChosen = isGov && government && !isGovSelected;
-
-    let bgC, borderC, txtC;
-    if (isGovSelected) { bgC = 'rgba(255,107,107,0.18)'; borderC = '#ff6b6b'; }
-    else if (isActivated) { bgC = 'rgba(91,141,239,0.2)'; borderC = '#5b8def'; }
-    else if (isDone) { bgC = 'rgba(78,203,113,0.2)'; borderC = '#4ecb71'; }
-    else if (isCurrent) { bgC = 'rgba(91,141,239,0.2)'; borderC = '#5b8def'; }
-    else if (isAvail) { bgC = 'rgba(78,203,113,0.08)'; borderC = 'rgba(78,203,113,0.4)'; }
-    else { bgC = 'rgba(255,255,255,0.03)'; borderC = '#3a3a5a'; }
-    txtC = isLocked ? '#6a6a82' : '#ececf0';
-
-    let costStr = '';
-    if (c.cost && c.cost.length > 0 && !isDone) {
-      costStr = c.cost.map(x => `${getResName(x.resourceId)} ${x.amount}`).join(' ');
-    }
-
-    const canClickResearch = isAvail && !isCurrent && !govAlreadyChosen;
-    const canToggleActivate = isDone && !isGov; // 政策卡可激活/取消
-    const cursor = (canClickResearch || canToggleActivate) ? 'pointer' : 'default';
-
-    const typeLabel = isGov ? '🏛️ 政体' : '📜 政策';
-
-    html += `<foreignObject x="${pos.x}" y="${pos.y}" width="${NODE_W}" height="${NODE_H}">
-      <div xmlns="http://www.w3.org/1999/xhtml" style="
-        width:100%;height:100%;
-        background:${bgC}; border:2px solid ${borderC}; border-radius:10px;
-        display:flex;flex-direction:column;align-items:center;justify-content:center;
-        cursor:${cursor}; box-sizing:border-box; padding:4px;
-        transition:border-color 0.2s,background 0.2s;
-      " data-id="${c.id}"
-         data-research="${canClickResearch}"
-         data-activate="${isDone && !isGov && !isActivated}"
-         data-deactivate="${isActivated && c.tier !== 0}">`;
-
-    html += `<div style="font-size:11px;color:#808098;margin-bottom:1px;">${typeLabel}</div>`;
-    html += `<div style="font-size:16px;font-weight:600;color:${txtC};text-align:center;line-height:1.2;">${c.name}</div>`;
-
-    if (isGovSelected) {
-      html += `<div style="font-size:12px;color:#ff6b6b;margin-top:2px;">✓ 已选定政体</div>`;
-    } else if (isActivated) {
-      html += `<div style="font-size:12px;color:#5b8def;margin-top:2px;">🔵 已激活（点击取消）</div>`;
-    } else if (isDone && !isGov) {
-      html += `<div style="font-size:12px;color:#4ecb71;margin-top:2px;">✓ 已解锁（点击激活）</div>`;
-    } else if (isCurrent) {
-      const pct = Math.round((current.progressTicks / c.researchTime) * 100);
-      html += `<div style="width:90%;margin-top:4px;">
-        <div style="height:5px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;">
-          <div style="height:100%;width:${pct}%;background:#5b8def;border-radius:2px;"></div>
-        </div>
-        <div style="font-size:12px;color:#5b8def;text-align:center;">${Math.floor(current.progressTicks)}/${c.researchTime}</div>
-      </div>`;
-    } else if (govAlreadyChosen) {
-      html += `<div style="font-size:12px;color:#6a6a82;margin-top:2px;">已选其他政体</div>`;
-    } else if (costStr && !isLocked) {
-      html += `<div style="font-size:12px;color:#f0a040;text-align:center;margin-top:2px;line-height:1.3;">${costStr}</div>`;
-      if (c.researchTime > 0) html += `<div style="font-size:12px;color:#808098;">⏱${c.researchTime}tick</div>`;
-    } else if (isLocked && c.researchTime > 0) {
-      html += `<div style="font-size:12px;color:#6a6a82;">⏱${c.researchTime}tick</div>`;
-    }
-
-    // 效果简述
-    if (c.description) {
-      const descColor = isLocked ? '#5a5a72' : '#9aa';
-      html += `<div style="font-size:11px;color:${descColor};text-align:center;margin-top:2px;line-height:1.2;">${c.description}</div>`;
-    }
-
-    html += `</div></foreignObject>`;
-  }
-
-  html += `</svg></div>`;
-
-  // 说明栏
-  html += `<div style="padding:0 16px 16px;font-size:12px;color:#808098;line-height:1.6;">
-    <b style="color:#ececf0;">说明：</b>📜政策卡解锁后可激活/取消（切换冷却 3 游戏日，基础政策不可取消）；
-    🏛️政体选定后<b style="color:#ff6b6b;">不可更改</b>。蓝色=已激活，绿色=已解锁，红色=已选定政体。
-  </div>`;
-
-  body.innerHTML = html;
-
-  // 点击：研究
-  body.querySelectorAll('[data-research="true"]').forEach(el => {
-    el.addEventListener('click', () => {
-      const id = el.dataset.id;
-      const r = cs.startResearch(id);
-      if (!r) {
-        const check = cs.canStartResearch(id);
-        eventBusEmit(pm, check.reason || '无法研究');
-        return;
-      }
-      pm.close();
-      pm.open('culture_tree', {});
-    });
-  });
-
-  // 点击：激活政策卡
-  body.querySelectorAll('[data-activate="true"]').forEach(el => {
-    el.addEventListener('click', () => {
-      const id = el.dataset.id;
-      const r = cs.activatePolicy(id);
-      if (!r.valid) { eventBusEmit(pm, r.reason); return; }
-      pm.close();
-      pm.open('culture_tree', {});
-    });
-  });
-
-  // 点击：取消激活政策卡
-  body.querySelectorAll('[data-deactivate="true"]').forEach(el => {
-    el.addEventListener('click', () => {
-      const id = el.dataset.id;
-      const r = cs.deactivatePolicy(id);
-      if (!r.valid) { eventBusEmit(pm, r.reason); return; }
-      pm.close();
-      pm.open('culture_tree', {});
-    });
-  });
-}
-
-// 简易 toast 提示（复用 combatBroadcast 渠道，由 MessageLog 显示）
-function eventBusEmit(pm, msg) {
-  eventBus.emit('combatBroadcast', { message: `📜 ${msg}` });
+  container.appendChild(grid);
+  body.replaceChildren(container);
 }
