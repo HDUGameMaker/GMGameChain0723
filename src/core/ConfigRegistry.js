@@ -24,6 +24,7 @@ class ConfigRegistry {
       'eventsBase': 'config/events/events_base.json',
       'eventsExpedition': 'config/events/events_expedition.json',
       'eventsMap': 'config/events/events_map.json',
+      'eventsHistorical': 'config/events/events_historical.json',
       'sound': 'config/sound.json',
       'adjacency_bonuses': 'config/adjacency-bonuses.json',
       'roads': 'config/roads.json',
@@ -149,6 +150,10 @@ class ConfigRegistry {
     }
     if (Array.isArray(this._configs['eventsMap'])) {
       events.push(...this._configs['eventsMap']);
+    }
+    if (Array.isArray(this._configs.eventsHistorical)) {
+      const ids = new Set(events.map(event => event.id));
+      events.push(...this._configs.eventsHistorical.filter(event => !ids.has(event.id)));
     }
     if (Array.isArray(this._configs.eaIntegration?.events)) {
       const ids = new Set(events.map(event => event.id));

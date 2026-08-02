@@ -1,0 +1,2258 @@
+[
+  {
+    "id": "historical_ancient_01",
+    "name": "丰收祭议",
+    "icon": "assets/historical-icons/events/historical_ancient_01.svg",
+    "description": "丰收祭议正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "agriculture",
+    "priority": 3,
+    "cooldownTicks": 24,
+    "maxTriggers": 2,
+    "probability": 0.45,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "ancient"
+      ],
+      "minDay": 1
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 12
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "food",
+            "amount": 30
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 16
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_ancient_02",
+    "name": "河道改线",
+    "icon": "assets/historical-icons/events/historical_ancient_02.svg",
+    "description": "河道改线正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "infrastructure",
+    "priority": 4,
+    "cooldownTicks": 28,
+    "maxTriggers": 2,
+    "probability": 0.55,
+    "triggerConditions": {
+      "timePeriods": [
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "ancient"
+      ],
+      "minDay": 1
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 12
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 33
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "stone",
+            "amount": 16
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_ancient_03",
+    "name": "部族迁徙",
+    "icon": "assets/historical-icons/events/historical_ancient_03.svg",
+    "description": "部族迁徙正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "population",
+    "priority": 5,
+    "cooldownTicks": 32,
+    "maxTriggers": 2,
+    "probability": 0.65,
+    "triggerConditions": {
+      "timePeriods": [
+        "evening"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "ancient"
+      ],
+      "minDay": 1
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 12
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 6
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "food",
+            "amount": 16
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_ancient_04",
+    "name": "兽群来临",
+    "icon": "assets/historical-icons/events/historical_ancient_04.svg",
+    "description": "兽群来临正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "disaster",
+    "priority": 6,
+    "cooldownTicks": 36,
+    "maxTriggers": 2,
+    "probability": 0.75,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "ancient"
+      ],
+      "minDay": 1
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 12
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "gold",
+            "amount": 39
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "gold",
+            "amount": 16
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_ancient_05",
+    "name": "陶器集市",
+    "icon": "assets/historical-icons/events/historical_ancient_05.svg",
+    "description": "陶器集市正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "trade",
+    "priority": 7,
+    "cooldownTicks": 40,
+    "maxTriggers": 2,
+    "probability": 0.45,
+    "triggerConditions": {
+      "timePeriods": [
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "ancient"
+      ],
+      "minDay": 1
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 12
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "food",
+            "amount": 42
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 16
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_ancient_06",
+    "name": "边境烽烟",
+    "icon": "assets/historical-icons/events/historical_ancient_06.svg",
+    "description": "边境烽烟正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "military",
+    "priority": 8,
+    "cooldownTicks": 24,
+    "maxTriggers": 2,
+    "probability": 0.55,
+    "triggerConditions": {
+      "timePeriods": [
+        "evening"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "ancient"
+      ],
+      "minDay": 1
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 12
+          },
+          {
+            "type": "add_strategy_card",
+            "strategyId": "false_intelligence",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "stone",
+            "amount": 16
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_classical_01",
+    "name": "商路使团",
+    "icon": "assets/historical-icons/events/historical_classical_01.svg",
+    "description": "商路使团正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "diplomacy",
+    "priority": 3,
+    "cooldownTicks": 28,
+    "maxTriggers": 2,
+    "probability": 0.65,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "classical"
+      ],
+      "minDay": 13
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 16
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "stone",
+            "amount": 48
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "food",
+            "amount": 19
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_classical_02",
+    "name": "公民大会争辩",
+    "icon": "assets/historical-icons/events/historical_classical_02.svg",
+    "description": "公民大会争辩正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "civic",
+    "priority": 4,
+    "cooldownTicks": 32,
+    "maxTriggers": 2,
+    "probability": 0.75,
+    "triggerConditions": {
+      "timePeriods": [
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "classical"
+      ],
+      "minDay": 13
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 16
+          },
+          {
+            "type": "add_civic",
+            "amount": 39
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "gold",
+            "amount": 19
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_classical_03",
+    "name": "粮仓火患",
+    "icon": "assets/historical-icons/events/historical_classical_03.svg",
+    "description": "粮仓火患正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "research",
+    "priority": 5,
+    "cooldownTicks": 36,
+    "maxTriggers": 2,
+    "probability": 0.45,
+    "triggerConditions": {
+      "timePeriods": [
+        "evening"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "classical"
+      ],
+      "minDay": 13
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 16
+          },
+          {
+            "type": "add_science",
+            "amount": 41
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 19
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_classical_04",
+    "name": "新式方阵",
+    "icon": "assets/historical-icons/events/historical_classical_04.svg",
+    "description": "新式方阵正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "naval",
+    "priority": 6,
+    "cooldownTicks": 40,
+    "maxTriggers": 2,
+    "probability": 0.55,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "classical"
+      ],
+      "minDay": 13
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 16
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 57
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "stone",
+            "amount": 19
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_classical_05",
+    "name": "港湾税争",
+    "icon": "assets/historical-icons/events/historical_classical_05.svg",
+    "description": "港湾税争正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "luxury",
+    "priority": 7,
+    "cooldownTicks": 24,
+    "maxTriggers": 2,
+    "probability": 0.65,
+    "triggerConditions": {
+      "timePeriods": [
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "classical"
+      ],
+      "minDay": 13
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 16
+          },
+          {
+            "type": "add_luxury",
+            "luxuryId": "jade",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "food",
+            "amount": 19
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_classical_06",
+    "name": "异域香料",
+    "icon": "assets/historical-icons/events/historical_classical_06.svg",
+    "description": "异域香料正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "city_state",
+    "priority": 8,
+    "cooldownTicks": 28,
+    "maxTriggers": 2,
+    "probability": 0.75,
+    "triggerConditions": {
+      "timePeriods": [
+        "evening"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "classical"
+      ],
+      "minDay": 13
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 16
+          },
+          {
+            "type": "add_strategy_card",
+            "strategyId": "false_intelligence",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "gold",
+            "amount": 19
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_medieval_01",
+    "name": "行会请愿",
+    "icon": "assets/historical-icons/events/historical_medieval_01.svg",
+    "description": "行会请愿正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "public_order",
+    "priority": 3,
+    "cooldownTicks": 32,
+    "maxTriggers": 2,
+    "probability": 0.45,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "medieval"
+      ],
+      "minDay": 25
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 20
+          },
+          {
+            "type": "add_civic",
+            "amount": 49
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 22
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_medieval_02",
+    "name": "城墙修缮",
+    "icon": "assets/historical-icons/events/historical_medieval_02.svg",
+    "description": "城墙修缮正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "exploration",
+    "priority": 4,
+    "cooldownTicks": 36,
+    "maxTriggers": 2,
+    "probability": 0.55,
+    "triggerConditions": {
+      "timePeriods": [
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "medieval"
+      ],
+      "minDay": 25
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 20
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 69
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "stone",
+            "amount": 22
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_medieval_03",
+    "name": "骑士比武",
+    "icon": "assets/historical-icons/events/historical_medieval_03.svg",
+    "description": "骑士比武正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "agriculture",
+    "priority": 5,
+    "cooldownTicks": 40,
+    "maxTriggers": 2,
+    "probability": 0.65,
+    "triggerConditions": {
+      "timePeriods": [
+        "evening"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "medieval"
+      ],
+      "minDay": 25
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 20
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "stone",
+            "amount": 72
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "food",
+            "amount": 22
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_medieval_04",
+    "name": "典籍抄本",
+    "icon": "assets/historical-icons/events/historical_medieval_04.svg",
+    "description": "典籍抄本正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "infrastructure",
+    "priority": 6,
+    "cooldownTicks": 24,
+    "maxTriggers": 2,
+    "probability": 0.75,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "medieval"
+      ],
+      "minDay": 25
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 20
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "gold",
+            "amount": 75
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "gold",
+            "amount": 22
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_medieval_05",
+    "name": "海盗勒索",
+    "icon": "assets/historical-icons/events/historical_medieval_05.svg",
+    "description": "海盗勒索正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "population",
+    "priority": 7,
+    "cooldownTicks": 28,
+    "maxTriggers": 2,
+    "probability": 0.45,
+    "triggerConditions": {
+      "timePeriods": [
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "medieval"
+      ],
+      "minDay": 25
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 20
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 6
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 22
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_medieval_06",
+    "name": "黑麦歉收",
+    "icon": "assets/historical-icons/events/historical_medieval_06.svg",
+    "description": "黑麦歉收正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "disaster",
+    "priority": 8,
+    "cooldownTicks": 32,
+    "maxTriggers": 2,
+    "probability": 0.55,
+    "triggerConditions": {
+      "timePeriods": [
+        "evening"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "medieval"
+      ],
+      "minDay": 25
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 20
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 81
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "stone",
+            "amount": 22
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_exploration_01",
+    "name": "新航线传闻",
+    "icon": "assets/historical-icons/events/historical_exploration_01.svg",
+    "description": "新航线传闻正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "trade",
+    "priority": 3,
+    "cooldownTicks": 36,
+    "maxTriggers": 2,
+    "probability": 0.65,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "exploration"
+      ],
+      "minDay": 37
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 24
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "stone",
+            "amount": 84
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "food",
+            "amount": 25
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_exploration_02",
+    "name": "海图争夺",
+    "icon": "assets/historical-icons/events/historical_exploration_02.svg",
+    "description": "海图争夺正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "military",
+    "priority": 4,
+    "cooldownTicks": 40,
+    "maxTriggers": 2,
+    "probability": 0.75,
+    "triggerConditions": {
+      "timePeriods": [
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "exploration"
+      ],
+      "minDay": 37
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 24
+          },
+          {
+            "type": "add_strategy_card",
+            "strategyId": "forced_march",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "gold",
+            "amount": 25
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_exploration_03",
+    "name": "远洋商社",
+    "icon": "assets/historical-icons/events/historical_exploration_03.svg",
+    "description": "远洋商社正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "diplomacy",
+    "priority": 5,
+    "cooldownTicks": 24,
+    "maxTriggers": 2,
+    "probability": 0.45,
+    "triggerConditions": {
+      "timePeriods": [
+        "evening"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "exploration"
+      ],
+      "minDay": 37
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 24
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "food",
+            "amount": 90
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 25
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_exploration_04",
+    "name": "火器试验",
+    "icon": "assets/historical-icons/events/historical_exploration_04.svg",
+    "description": "火器试验正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "civic",
+    "priority": 6,
+    "cooldownTicks": 28,
+    "maxTriggers": 2,
+    "probability": 0.55,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "exploration"
+      ],
+      "minDay": 37
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 24
+          },
+          {
+            "type": "add_civic",
+            "amount": 67
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "stone",
+            "amount": 25
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_exploration_05",
+    "name": "外交使节",
+    "icon": "assets/historical-icons/events/historical_exploration_05.svg",
+    "description": "外交使节正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "research",
+    "priority": 7,
+    "cooldownTicks": 32,
+    "maxTriggers": 2,
+    "probability": 0.65,
+    "triggerConditions": {
+      "timePeriods": [
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "exploration"
+      ],
+      "minDay": 37
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 24
+          },
+          {
+            "type": "add_science",
+            "amount": 69
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "food",
+            "amount": 25
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_exploration_06",
+    "name": "远洋风暴",
+    "icon": "assets/historical-icons/events/historical_exploration_06.svg",
+    "description": "远洋风暴正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "naval",
+    "priority": 8,
+    "cooldownTicks": 36,
+    "maxTriggers": 2,
+    "probability": 0.75,
+    "triggerConditions": {
+      "timePeriods": [
+        "evening"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "exploration"
+      ],
+      "minDay": 37
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 24
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "gold",
+            "amount": 99
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "gold",
+            "amount": 25
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_industrial_01",
+    "name": "铁路选线",
+    "icon": "assets/historical-icons/events/historical_industrial_01.svg",
+    "description": "铁路选线正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "luxury",
+    "priority": 3,
+    "cooldownTicks": 40,
+    "maxTriggers": 2,
+    "probability": 0.45,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "industrial"
+      ],
+      "minDay": 49
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 28
+          },
+          {
+            "type": "add_luxury",
+            "luxuryId": "silk",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 28
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_industrial_02",
+    "name": "工人请愿",
+    "icon": "assets/historical-icons/events/historical_industrial_02.svg",
+    "description": "工人请愿正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "city_state",
+    "priority": 4,
+    "cooldownTicks": 24,
+    "maxTriggers": 2,
+    "probability": 0.55,
+    "triggerConditions": {
+      "timePeriods": [
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "industrial"
+      ],
+      "minDay": 49
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 28
+          },
+          {
+            "type": "add_strategy_card",
+            "strategyId": "forced_march",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "stone",
+            "amount": 28
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_industrial_03",
+    "name": "工厂事故",
+    "icon": "assets/historical-icons/events/historical_industrial_03.svg",
+    "description": "工厂事故正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "public_order",
+    "priority": 5,
+    "cooldownTicks": 28,
+    "maxTriggers": 2,
+    "probability": 0.65,
+    "triggerConditions": {
+      "timePeriods": [
+        "evening"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "industrial"
+      ],
+      "minDay": 49
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 28
+          },
+          {
+            "type": "add_civic",
+            "amount": 77
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "food",
+            "amount": 28
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_industrial_04",
+    "name": "电报网络",
+    "icon": "assets/historical-icons/events/historical_industrial_04.svg",
+    "description": "电报网络正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "exploration",
+    "priority": 6,
+    "cooldownTicks": 32,
+    "maxTriggers": 2,
+    "probability": 0.75,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "industrial"
+      ],
+      "minDay": 49
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 28
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "gold",
+            "amount": 111
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "gold",
+            "amount": 28
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_industrial_05",
+    "name": "煤价波动",
+    "icon": "assets/historical-icons/events/historical_industrial_05.svg",
+    "description": "煤价波动正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "agriculture",
+    "priority": 7,
+    "cooldownTicks": 36,
+    "maxTriggers": 2,
+    "probability": 0.45,
+    "triggerConditions": {
+      "timePeriods": [
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "industrial"
+      ],
+      "minDay": 49
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 28
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "food",
+            "amount": 114
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 28
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_industrial_06",
+    "name": "城市卫生",
+    "icon": "assets/historical-icons/events/historical_industrial_06.svg",
+    "description": "城市卫生正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "infrastructure",
+    "priority": 8,
+    "cooldownTicks": 40,
+    "maxTriggers": 2,
+    "probability": 0.55,
+    "triggerConditions": {
+      "timePeriods": [
+        "evening"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "industrial"
+      ],
+      "minDay": 49
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 28
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 117
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "stone",
+            "amount": 28
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_modern_01",
+    "name": "总动员令",
+    "icon": "assets/historical-icons/events/historical_modern_01.svg",
+    "description": "总动员令正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "population",
+    "priority": 3,
+    "cooldownTicks": 24,
+    "maxTriggers": 2,
+    "probability": 0.65,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "modern"
+      ],
+      "minDay": 61
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 32
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 6
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "food",
+            "amount": 31
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_modern_02",
+    "name": "无线电广播",
+    "icon": "assets/historical-icons/events/historical_modern_02.svg",
+    "description": "无线电广播正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "disaster",
+    "priority": 4,
+    "cooldownTicks": 28,
+    "maxTriggers": 2,
+    "probability": 0.75,
+    "triggerConditions": {
+      "timePeriods": [
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "modern"
+      ],
+      "minDay": 61
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 32
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "gold",
+            "amount": 123
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "gold",
+            "amount": 31
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_modern_03",
+    "name": "装甲演习",
+    "icon": "assets/historical-icons/events/historical_modern_03.svg",
+    "description": "装甲演习正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "trade",
+    "priority": 5,
+    "cooldownTicks": 32,
+    "maxTriggers": 2,
+    "probability": 0.45,
+    "triggerConditions": {
+      "timePeriods": [
+        "evening"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "modern"
+      ],
+      "minDay": 61
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 32
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "food",
+            "amount": 126
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 31
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_modern_04",
+    "name": "难民安置",
+    "icon": "assets/historical-icons/events/historical_modern_04.svg",
+    "description": "难民安置正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "military",
+    "priority": 6,
+    "cooldownTicks": 36,
+    "maxTriggers": 2,
+    "probability": 0.55,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "modern"
+      ],
+      "minDay": 61
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 32
+          },
+          {
+            "type": "add_strategy_card",
+            "strategyId": "fortify",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "stone",
+            "amount": 31
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_modern_05",
+    "name": "国际会议",
+    "icon": "assets/historical-icons/events/historical_modern_05.svg",
+    "description": "国际会议正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "diplomacy",
+    "priority": 7,
+    "cooldownTicks": 40,
+    "maxTriggers": 2,
+    "probability": 0.65,
+    "triggerConditions": {
+      "timePeriods": [
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "modern"
+      ],
+      "minDay": 61
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 32
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "stone",
+            "amount": 132
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "food",
+            "amount": 31
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_modern_06",
+    "name": "石油禁运",
+    "icon": "assets/historical-icons/events/historical_modern_06.svg",
+    "description": "石油禁运正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "civic",
+    "priority": 8,
+    "cooldownTicks": 24,
+    "maxTriggers": 2,
+    "probability": 0.75,
+    "triggerConditions": {
+      "timePeriods": [
+        "evening"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "modern"
+      ],
+      "minDay": 61
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 32
+          },
+          {
+            "type": "add_civic",
+            "amount": 95
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "gold",
+            "amount": 31
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_information_01",
+    "name": "卫星测绘",
+    "icon": "assets/historical-icons/events/historical_information_01.svg",
+    "description": "卫星测绘正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "research",
+    "priority": 3,
+    "cooldownTicks": 28,
+    "maxTriggers": 2,
+    "probability": 0.45,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "information"
+      ],
+      "minDay": 73
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 36
+          },
+          {
+            "type": "add_science",
+            "amount": 97
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 34
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_information_02",
+    "name": "网络舆情",
+    "icon": "assets/historical-icons/events/historical_information_02.svg",
+    "description": "网络舆情正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "naval",
+    "priority": 4,
+    "cooldownTicks": 32,
+    "maxTriggers": 2,
+    "probability": 0.55,
+    "triggerConditions": {
+      "timePeriods": [
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "information"
+      ],
+      "minDay": 73
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 36
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 141
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "stone",
+            "amount": 34
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_information_03",
+    "name": "自动化浪潮",
+    "icon": "assets/historical-icons/events/historical_information_03.svg",
+    "description": "自动化浪潮正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "luxury",
+    "priority": 5,
+    "cooldownTicks": 36,
+    "maxTriggers": 2,
+    "probability": 0.65,
+    "triggerConditions": {
+      "timePeriods": [
+        "evening"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "information"
+      ],
+      "minDay": 73
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 36
+          },
+          {
+            "type": "add_luxury",
+            "luxuryId": "jade",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "food",
+            "amount": 34
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_information_04",
+    "name": "全球供应链",
+    "icon": "assets/historical-icons/events/historical_information_04.svg",
+    "description": "全球供应链正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "city_state",
+    "priority": 6,
+    "cooldownTicks": 40,
+    "maxTriggers": 2,
+    "probability": 0.75,
+    "triggerConditions": {
+      "timePeriods": [
+        "morning"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "information"
+      ],
+      "minDay": 73
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 36
+          },
+          {
+            "type": "add_strategy_card",
+            "strategyId": "fortify",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "gold",
+            "amount": 34
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_information_05",
+    "name": "科研合作",
+    "icon": "assets/historical-icons/events/historical_information_05.svg",
+    "description": "科研合作正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "public_order",
+    "priority": 7,
+    "cooldownTicks": 24,
+    "maxTriggers": 2,
+    "probability": 0.45,
+    "triggerConditions": {
+      "timePeriods": [
+        "afternoon"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "information"
+      ],
+      "minDay": 73
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "food",
+            "amount": 36
+          },
+          {
+            "type": "add_civic",
+            "amount": 105
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 34
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "historical_information_06",
+    "name": "数据安全",
+    "icon": "assets/historical-icons/events/historical_information_06.svg",
+    "description": "数据安全正在影响城市。你需要在短期收益、长期秩序与时代发展之间作出取舍。",
+    "category": "exploration",
+    "priority": 8,
+    "cooldownTicks": 28,
+    "maxTriggers": 2,
+    "probability": 0.55,
+    "triggerConditions": {
+      "timePeriods": [
+        "evening"
+      ],
+      "requiredItems": [],
+      "requiredBuildings": [],
+      "eraIds": [
+        "information"
+      ],
+      "minDay": 73
+    },
+    "effects": [],
+    "options": [
+      {
+        "text": "组织力量积极应对",
+        "effects": [
+          {
+            "type": "consume_resource",
+            "resourceId": "gold",
+            "amount": 36
+          },
+          {
+            "type": "add_resource",
+            "resourceId": "wood",
+            "amount": 153
+          }
+        ]
+      },
+      {
+        "text": "保持克制，优先稳定",
+        "effects": [
+          {
+            "type": "add_resource",
+            "resourceId": "stone",
+            "amount": 34
+          },
+          {
+            "type": "modify_satisfaction",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  }
+]

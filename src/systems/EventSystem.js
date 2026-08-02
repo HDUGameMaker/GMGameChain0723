@@ -62,7 +62,7 @@ export class EventSystem {
     eventBus.on('popupClosed', () => this._onPopupClosed());
   }
 
-  setSystems({ resource, item, building, time, gameLoop, alchemy, diplomacy }) {
+  setSystems({ resource, item, building, time, gameLoop, alchemy, diplomacy, luxury, strategy, era }) {
     this._resourceSystem = resource;
     this._itemSystem = item;
     this._buildingSystem = building;
@@ -70,6 +70,9 @@ export class EventSystem {
     this._gameLoop = gameLoop;
     this._alchemySystem = alchemy || null;
     this._diplomacySystem = diplomacy || null;
+    this._luxurySystem = luxury || null;
+    this._strategySystem = strategy || null;
+    this._eraSystem = era || null;
 
     // 从全局配置读取事件参数
     const globalConfig = configRegistry.get('global');
@@ -128,6 +131,26 @@ export class EventSystem {
 
     this.registerEffect('add_inspiration', (params) => {
       store.setState({ inspiration: Math.max(0, (store.getState('inspiration') || 0) + (Number(params.amount) || 0)) });
+    });
+
+    this.registerEffect('add_luxury', (params) => {
+      this._luxurySystem?.addLuxury(params.luxuryId, params.amount || 1);
+    });
+
+    this.registerEffect('add_strategy_card', (params) => {
+      this._strategySystem?.gainCard(params.strategyId, params.amount || 1);
+    });
+
+    this.registerEffect('modify_satisfaction', (params) => {
+      store.setState({ populationSatisfaction: Math.max(0, Math.min(100, (store.getState('populationSatisfaction') || 50) + (Number(params.amount) || 0))) });
+    });
+
+    this.registerEffect('add_science', (params) => {
+      store.setState({ sciencePoints: Math.max(0, (store.getState('sciencePoints') || 0) + (Number(params.amount) || 0)) });
+    });
+
+    this.registerEffect('add_civic', (params) => {
+      store.setState({ civicPoints: Math.max(0, (store.getState('civicPoints') || 0) + (Number(params.amount) || 0)) });
     });
 
     this.registerEffect('modify_outpost_relation', (params) => {
@@ -298,6 +321,14 @@ export class EventSystem {
   _checkTriggerConditions(evt, currentPeriod) {
     const cond = evt.triggerConditions;
     if (!cond) return true;
+
+    const day = store.getState('timeDay') || 1;
+    if (cond.minDay != null && day < cond.minDay) return false;
+    if (cond.maxDay != null && day > cond.maxDay) return false;
+    if (cond.eraIds?.length) {
+      const eraId = this._eraSystem?.getCurrentEra?.()?.id;
+      if (!eraId || !cond.eraIds.includes(eraId)) return false;
+    }
 
     // timePeriods: OR（满足任一即通过），空=任意
     if (cond.timePeriods && cond.timePeriods.length > 0) {

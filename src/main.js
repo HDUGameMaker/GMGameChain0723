@@ -254,7 +254,10 @@ class Game {
       building: this.systems.building,
       time: this.systems.time,
       gameLoop: gameLoop,
-      diplomacy: this.systems.diplomacy
+      diplomacy: this.systems.diplomacy,
+      luxury: this.systems.luxury,
+      strategy: this.systems.strategy,
+      era: this.systems.era
     });
     this.systems.expedition.setSystems({
       resource: this.systems.resource,
