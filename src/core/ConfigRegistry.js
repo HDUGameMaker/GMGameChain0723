@@ -37,6 +37,7 @@ class ConfigRegistry {
       'territory': 'config/territory.json',
       'enemyExpansion': 'config/enemy_expansion.json',
       'buildingTech': 'config/building_tech.json',
+      'economicOrders': 'config/economic-orders.json',
       'eaIntegration': 'config/ea_integration.json',
       'historicalContent': 'config/historical_content.json'
     };

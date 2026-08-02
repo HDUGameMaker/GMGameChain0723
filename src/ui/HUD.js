@@ -54,6 +54,7 @@ export class HUD {
     this.btnEra = document.getElementById('btn-era');
     this.btnLuxury = document.getElementById('btn-luxury');
     this.btnStrategy = document.getElementById('btn-strategy');
+    this.btnEconomyOrders = document.getElementById('btn-economy-orders');
     if (this.weatherDisplay) {
       this.weatherDisplay.style.display = 'none';
     }
@@ -68,6 +69,7 @@ export class HUD {
     });
     this.btnLuxury?.addEventListener('click', () => this.popupManager.open('luxury_trade', {}));
     this.btnStrategy?.addEventListener('click', () => this.popupManager.open('strategy_cards', {}));
+    this.btnEconomyOrders?.addEventListener('click', () => this.popupManager.open('economic_orders', {}));
     // 科技树
     this.btnTech.addEventListener('click', () => {
       this.popupManager.open('tech_tree', {});

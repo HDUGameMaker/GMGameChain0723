@@ -1,0 +1,117 @@
+{
+  "crops": [
+    {
+      "id": "grain",
+      "name": "谷物",
+      "description": "稳定的主粮作物，专注提供食物。",
+      "icon": "🌾",
+      "maxWorkers": 6,
+      "outputs": [{ "resourceId": "food", "amount": 1.4 }]
+    },
+    {
+      "id": "legumes",
+      "name": "豆类",
+      "description": "耐贫瘠的轮作作物，提供可靠食物。",
+      "icon": "🫘",
+      "maxWorkers": 6,
+      "outputs": [{ "resourceId": "food", "amount": 1.2 }]
+    },
+    {
+      "id": "vegetables",
+      "name": "果蔬",
+      "description": "改善饮食，并带来少量市场收入。",
+      "icon": "🥬",
+      "maxWorkers": 6,
+      "outputs": [
+        { "resourceId": "food", "amount": 1.1 },
+        { "resourceId": "gold", "amount": 0.1 }
+      ]
+    },
+    {
+      "id": "grapes",
+      "name": "葡萄",
+      "description": "兼顾口粮与贸易，可周期性酿成葡萄酒奢侈品。",
+      "icon": "🍇",
+      "maxWorkers": 6,
+      "outputs": [
+        { "resourceId": "food", "amount": 0.6 },
+        { "resourceId": "gold", "amount": 0.35 }
+      ],
+      "luxury": { "id": "wine", "intervalWorkerTicks": 8 }
+    },
+    {
+      "id": "cotton",
+      "name": "棉花",
+      "description": "主要用于贸易，并周期性提供棉花奢侈品。",
+      "icon": "☁️",
+      "maxWorkers": 6,
+      "outputs": [{ "resourceId": "gold", "amount": 0.6 }],
+      "luxury": { "id": "cotton", "intervalWorkerTicks": 6 }
+    },
+    {
+      "id": "flax",
+      "name": "亚麻",
+      "description": "纤维秸秆可补充木材，并产生贸易收入。",
+      "icon": "🌿",
+      "maxWorkers": 6,
+      "outputs": [
+        { "resourceId": "wood", "amount": 0.25 },
+        { "resourceId": "gold", "amount": 0.35 }
+      ]
+    },
+    {
+      "id": "spices",
+      "name": "香料",
+      "description": "高价值经济作物，可周期性提供香料奢侈品。",
+      "icon": "🌶️",
+      "maxWorkers": 6,
+      "outputs": [{ "resourceId": "gold", "amount": 0.8 }],
+      "luxury": { "id": "spices", "intervalWorkerTicks": 10 }
+    },
+    {
+      "id": "sugarcane",
+      "name": "甘蔗",
+      "description": "提供少量食物和较高贸易收入。",
+      "icon": "🎋",
+      "maxWorkers": 6,
+      "outputs": [
+        { "resourceId": "food", "amount": 0.5 },
+        { "resourceId": "gold", "amount": 0.7 }
+      ]
+    }
+  ],
+  "gathering": [
+    {
+      "id": "woodcutting",
+      "name": "伐木作业",
+      "description": "组织工人持续采伐木材。",
+      "icon": "🪓",
+      "maxWorkers": 8,
+      "outputs": [{ "resourceId": "wood", "amount": 1.2 }]
+    },
+    {
+      "id": "stonecutting",
+      "name": "采石作业",
+      "description": "组织工人持续开采石材。",
+      "icon": "⛏️",
+      "maxWorkers": 8,
+      "outputs": [{ "resourceId": "stone", "amount": 1.0 }]
+    },
+    {
+      "id": "foraging",
+      "name": "采集狩猎",
+      "description": "从野外持续取得食物。",
+      "icon": "🧺",
+      "maxWorkers": 8,
+      "outputs": [{ "resourceId": "food", "amount": 1.0 }]
+    },
+    {
+      "id": "prospecting",
+      "name": "淘金勘探",
+      "description": "小规模勘探与淘洗黄金。",
+      "icon": "🪙",
+      "maxWorkers": 8,
+      "outputs": [{ "resourceId": "gold", "amount": 0.4 }]
+    }
+  ]
+}

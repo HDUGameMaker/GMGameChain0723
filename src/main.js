@@ -31,6 +31,7 @@ import { HeroSystem } from './systems/HeroSystem.js';
 import { EraSystem } from './systems/EraSystem.js';
 import { LuxurySystem } from './systems/LuxurySystem.js';
 import { StrategySystem } from './systems/StrategySystem.js';
+import { EconomyOrderSystem } from './systems/EconomyOrderSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
@@ -121,6 +122,7 @@ class Game {
     this.systems.era = new EraSystem();
     this.systems.luxury = new LuxurySystem();
     this.systems.strategy = new StrategySystem();
+    this.systems.economyOrders = new EconomyOrderSystem();
 
     // 建筑科技树（永久被动加成 + T2 建筑解锁）
     this.systems.buildingTech = new BuildingTechSystem();
@@ -212,6 +214,11 @@ class Game {
     this.systems.era.setTechSystem(this.systems.tech);
     this.systems.era.setCultureSystem(this.systems.culture);
     this.systems.luxury.setSystems({ resource: this.systems.resource, building: this.systems.building, diplomacy: this.systems.diplomacy });
+    this.systems.economyOrders.setSystems({
+      population: this.systems.population,
+      resource: this.systems.resource,
+      luxury: this.systems.luxury
+    });
     this.systems.building.setLuxurySystem(this.systems.luxury);
     this.systems.population.setLuxurySystem(this.systems.luxury);
     this.systems.diplomacy.setSystems({ luxury: this.systems.luxury });
@@ -497,6 +504,7 @@ class Game {
     // 初始化奢侈品库存与产地发现
     this.systems.luxury.initNew();
     this.systems.strategy.initNew();
+    this.systems.economyOrders.initNew();
 
     // 初始化事件标记状态（新游戏 = 无已移除标记）
     store.setState({ removedEventMarkers: [] });
@@ -505,7 +513,6 @@ class Game {
     store.setState({
       armies: [],
       availableUnits: [],
-      economicOrders: { nextId: 1, orders: [] },
       tradeRoutes: { nextId: 1, routes: [], conversionCounters: {} },
       factions: { states: {}, relations: {}, lastSyncDay: 0 },
       eraMusic: { currentEraId: 'primitive', currentTrackId: null }
@@ -571,6 +578,8 @@ class Game {
     else this.systems.luxury.initNew();
     if (saveData.strategies) this.systems.strategy.restoreState(saveData.strategies);
     else this.systems.strategy.initNew();
+    if (saveData.economicOrders) this.systems.economyOrders.restoreState(saveData.economicOrders);
+    else this.systems.economyOrders.initNew();
     if (saveData.weather) {
       this.systems.weather.restoreState(saveData.weather);
     }
@@ -592,7 +601,6 @@ class Game {
       store.setState({ availableUnits: saveData.availableUnits });
     }
     store.setState({
-      economicOrders: saveData.economicOrders || { nextId: 1, orders: [] },
       tradeRoutes: saveData.tradeRoutes || { nextId: 1, routes: [], conversionCounters: {} },
       factions: saveData.factions || { states: {}, relations: {}, lastSyncDay: 0 },
       eraMusic: saveData.eraMusic || { currentEraId: saveData.era?.currentEraId || 'primitive', currentTrackId: null }
@@ -657,7 +665,7 @@ class Game {
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
       armies: store.getState('armies'),
       availableUnits: store.getState('availableUnits'),
-      economicOrders: store.getState('economicOrders'),
+      economicOrders: this.systems.economyOrders.getState(),
       tradeRoutes: store.getState('tradeRoutes'),
       factions: store.getState('factions'),
       eraMusic: store.getState('eraMusic'),

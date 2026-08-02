@@ -357,6 +357,7 @@ export class PopupManager {
       'era_civilization': '时代与文明',
       'luxury_trade': '奢侈品与贸易',
       'strategy_cards': '历史策略',
+      'economic_orders': '农业与采集作业',
       'tutorial_prompt': '新手教程',
       'quest_panel': '任务'
     };
@@ -456,6 +457,9 @@ export class PopupManager {
     });
     import('./panels/strategy-cards-panel.js').then(m => {
       this.register('strategy_cards', m.renderStrategyCardsPanel);
+    });
+    import('./panels/economic-orders-panel.js').then(m => {
+      this.register('economic_orders', m.renderEconomicOrdersPanel);
     });
   }
 }

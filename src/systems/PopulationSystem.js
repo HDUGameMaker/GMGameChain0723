@@ -24,6 +24,7 @@ export class PopulationSystem {
     this._expeditionWorkers = 0;
     this._constructionWorkers = 0;
     this._buildingSystem = null;
+    this._workerProviders = new Map();
     this._resourceSystem = null;
     this._weatherSystem = null;
     // 流民系统：超过住宅的人口每3tick离开
@@ -53,6 +54,19 @@ export class PopulationSystem {
 
   setBuildingSystem(buildingSystem) {
     this._buildingSystem = buildingSystem;
+  }
+
+  registerWorkerProvider(id, provider) {
+    if (!id || !provider) return false;
+    this._workerProviders.set(id, provider);
+    this._updateStore();
+    return true;
+  }
+
+  unregisterWorkerProvider(id) {
+    const removed = this._workerProviders.delete(id);
+    if (removed) this._updateStore();
+    return removed;
   }
 
   setResourceSystem(resourceSystem) {
@@ -106,8 +120,11 @@ export class PopulationSystem {
    * 获取已分配工人总数
    */
   getAssignedWorkers() {
-    if (!this._buildingSystem) return 0;
-    return this._buildingSystem.getTotalAssignedWorkers();
+    const buildingWorkers = this._buildingSystem?.getTotalAssignedWorkers?.() || 0;
+    const externalWorkers = [...this._workerProviders.values()].reduce((sum, provider) => {
+      return sum + Math.max(0, provider?.getAssignedWorkers?.() || 0);
+    }, 0);
+    return buildingWorkers + externalWorkers;
   }
 
   _getUnitPopulationRequired(unitId) {
@@ -145,7 +162,12 @@ export class PopulationSystem {
     const work = assigned + expedition + construction;
     const idle = Math.max(0, total - work - military);
 
-    const jobs = this._buildingSystem?.getAssignedWorkersByJob?.() || {};
+    const jobs = { ...(this._buildingSystem?.getAssignedWorkersByJob?.() || {}) };
+    for (const provider of this._workerProviders.values()) {
+      for (const [job, count] of Object.entries(provider?.getJobs?.() || {})) {
+        jobs[job] = (jobs[job] || 0) + Math.max(0, count || 0);
+      }
+    }
     return {
       idle,
       work,
