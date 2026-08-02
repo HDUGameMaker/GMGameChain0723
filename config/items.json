@@ -54,7 +54,7 @@
     "expeditionEffects": [
       {
         "type": "yield_flat_bonus",
-        "resourceId": "coal",
+        "resourceId": "stone",
         "value": 15,
         "regions": [
           "mine_periphery"
@@ -62,7 +62,7 @@
       },
       {
         "type": "yield_flat_bonus",
-        "resourceId": "hematite",
+        "resourceId": "stone",
         "value": 10,
         "regions": [
           "mine_periphery"
@@ -136,7 +136,7 @@
     "expeditionEffects": [
       {
         "type": "yield_flat_bonus",
-        "resourceId": "coal",
+        "resourceId": "stone",
         "value": 80,
         "regions": [
           "mine_interior"
@@ -144,7 +144,7 @@
       },
       {
         "type": "yield_flat_bonus",
-        "resourceId": "hematite",
+        "resourceId": "stone",
         "value": 80,
         "regions": [
           "mine_interior"

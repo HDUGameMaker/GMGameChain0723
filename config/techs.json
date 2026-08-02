@@ -134,7 +134,7 @@
     "tier": 2,
     "cost": [
       {
-        "resourceId": "plank",
+        "resourceId": "wood",
         "amount": 30
       }
     ],
@@ -157,7 +157,7 @@
     "tier": 2,
     "cost": [
       {
-        "resourceId": "iron_ingot",
+        "resourceId": "gold",
         "amount": 100
       }
     ],
@@ -183,7 +183,7 @@
     "tier": 2,
     "cost": [
       {
-        "resourceId": "plank",
+        "resourceId": "wood",
         "amount": 50
       }
     ],
@@ -233,7 +233,7 @@
     "tier": 2,
     "cost": [
       {
-        "resourceId": "plank",
+        "resourceId": "wood",
         "amount": 40
       }
     ],
@@ -302,7 +302,7 @@
     "tier": 3,
     "cost": [
       {
-        "resourceId": "plank",
+        "resourceId": "wood",
         "amount": 100
       }
     ],
@@ -325,7 +325,7 @@
     "tier": 3,
     "cost": [
       {
-        "resourceId": "steel",
+        "resourceId": "gold",
         "amount": 30
       }
     ],
@@ -351,7 +351,7 @@
     "tier": 3,
     "cost": [
       {
-        "resourceId": "brick",
+        "resourceId": "stone",
         "amount": 50
       }
     ],
@@ -376,7 +376,7 @@
     "tier": 3,
     "cost": [
       {
-        "resourceId": "brick",
+        "resourceId": "stone",
         "amount": 30
       }
     ],
@@ -426,11 +426,11 @@
     "tier": 3,
     "cost": [
       {
-        "resourceId": "iron_ingot",
+        "resourceId": "gold",
         "amount": 100
       },
       {
-        "resourceId": "plank",
+        "resourceId": "wood",
         "amount": 80
       }
     ],
@@ -453,11 +453,11 @@
     "tier": 4,
     "cost": [
       {
-        "resourceId": "steel",
+        "resourceId": "gold",
         "amount": 40
       },
       {
-        "resourceId": "machine_part",
+        "resourceId": "gold",
         "amount": 10
       }
     ],
@@ -480,7 +480,7 @@
     "tier": 4,
     "cost": [
       {
-        "resourceId": "machine_part",
+        "resourceId": "gold",
         "amount": 15
       }
     ],
@@ -504,7 +504,7 @@
     "tier": 4,
     "cost": [
       {
-        "resourceId": "machine_part",
+        "resourceId": "gold",
         "amount": 20
       }
     ],
@@ -531,7 +531,7 @@
     "tier": 4,
     "cost": [
       {
-        "resourceId": "machine_part",
+        "resourceId": "gold",
         "amount": 5
       }
     ],
@@ -554,7 +554,7 @@
     "tier": 1,
     "cost": [
       {
-        "resourceId": "plank",
+        "resourceId": "wood",
         "amount": 50
       }
     ],
@@ -577,7 +577,7 @@
     "tier": 5,
     "cost": [
       {
-        "resourceId": "electronic_part",
+        "resourceId": "gold",
         "amount": 20
       }
     ],
@@ -603,7 +603,7 @@
     "tier": 6,
     "cost": [
       {
-        "resourceId": "electronic_part",
+        "resourceId": "gold",
         "amount": 30
       }
     ],
@@ -627,11 +627,11 @@
     "tier": 4,
     "cost": [
       {
-        "resourceId": "plank",
+        "resourceId": "wood",
         "amount": 30
       },
       {
-        "resourceId": "iron_ingot",
+        "resourceId": "gold",
         "amount": 20
       }
     ],
@@ -654,11 +654,11 @@
     "tier": 5,
     "cost": [
       {
-        "resourceId": "plank",
+        "resourceId": "wood",
         "amount": 80
       },
       {
-        "resourceId": "iron_ingot",
+        "resourceId": "gold",
         "amount": 30
       }
     ],
@@ -679,15 +679,15 @@
     "tier": 6,
     "cost": [
       {
-        "resourceId": "plank",
+        "resourceId": "wood",
         "amount": 100
       },
       {
-        "resourceId": "fur",
+        "resourceId": "food",
         "amount": 30
       },
       {
-        "resourceId": "steel",
+        "resourceId": "gold",
         "amount": 20
       }
     ],
@@ -714,7 +714,7 @@
         "amount": 200
       },
       {
-        "resourceId": "plank",
+        "resourceId": "wood",
         "amount": 100
       }
     ],
@@ -750,7 +750,7 @@
         "amount": 50
       },
       {
-        "resourceId": "iron_ingot",
+        "resourceId": "gold",
         "amount": 30
       }
     ],
@@ -780,11 +780,11 @@
     "icon": "",
     "cost": [
       {
-        "resourceId": "gear",
+        "resourceId": "gold",
         "amount": 20
       },
       {
-        "resourceId": "iron_ingot",
+        "resourceId": "gold",
         "amount": 20
       }
     ],
@@ -814,11 +814,11 @@
     "icon": "",
     "cost": [
       {
-        "resourceId": "coal",
+        "resourceId": "stone",
         "amount": 80
       },
       {
-        "resourceId": "iron_ingot",
+        "resourceId": "gold",
         "amount": 40
       }
     ],
@@ -848,15 +848,15 @@
     "icon": "",
     "cost": [
       {
-        "resourceId": "steel",
+        "resourceId": "gold",
         "amount": 60
       },
       {
-        "resourceId": "machine_part",
+        "resourceId": "gold",
         "amount": 25
       },
       {
-        "resourceId": "coal",
+        "resourceId": "stone",
         "amount": 120
       }
     ],
@@ -886,15 +886,15 @@
     "icon": "",
     "cost": [
       {
-        "resourceId": "steel",
+        "resourceId": "gold",
         "amount": 80
       },
       {
-        "resourceId": "machine_part",
+        "resourceId": "gold",
         "amount": 35
       },
       {
-        "resourceId": "gear",
+        "resourceId": "gold",
         "amount": 35
       }
     ],
@@ -924,15 +924,15 @@
     "icon": "",
     "cost": [
       {
-        "resourceId": "steel",
+        "resourceId": "gold",
         "amount": 90
       },
       {
-        "resourceId": "machine_part",
+        "resourceId": "gold",
         "amount": 40
       },
       {
-        "resourceId": "fur",
+        "resourceId": "food",
         "amount": 40
       }
     ],
@@ -962,15 +962,15 @@
     "icon": "",
     "cost": [
       {
-        "resourceId": "steel",
+        "resourceId": "gold",
         "amount": 80
       },
       {
-        "resourceId": "machine_part",
+        "resourceId": "gold",
         "amount": 30
       },
       {
-        "resourceId": "electronic_part",
+        "resourceId": "gold",
         "amount": 8
       }
     ],
@@ -1000,15 +1000,15 @@
     "icon": "",
     "cost": [
       {
-        "resourceId": "steel",
+        "resourceId": "gold",
         "amount": 120
       },
       {
-        "resourceId": "machine_part",
+        "resourceId": "gold",
         "amount": 50
       },
       {
-        "resourceId": "electronic_part",
+        "resourceId": "gold",
         "amount": 20
       }
     ],
@@ -1038,15 +1038,15 @@
     "icon": "",
     "cost": [
       {
-        "resourceId": "steel",
+        "resourceId": "gold",
         "amount": 140
       },
       {
-        "resourceId": "machine_part",
+        "resourceId": "gold",
         "amount": 60
       },
       {
-        "resourceId": "electronic_part",
+        "resourceId": "gold",
         "amount": 24
       }
     ],

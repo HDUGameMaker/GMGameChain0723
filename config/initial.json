@@ -9,35 +9,35 @@
       "amount": 150
     },
     {
-      "resourceId": "plank",
+      "resourceId": "wood",
       "amount": 0
     },
     {
-      "resourceId": "hematite",
+      "resourceId": "stone",
       "amount": 0
     },
     {
-      "resourceId": "coal",
+      "resourceId": "stone",
       "amount": 0
     },
     {
-      "resourceId": "iron_ingot",
+      "resourceId": "gold",
       "amount": 0
     },
     {
-      "resourceId": "machine_part",
+      "resourceId": "gold",
       "amount": 0
     },
     {
-      "resourceId": "steel",
+      "resourceId": "gold",
       "amount": 0
     },
     {
-      "resourceId": "brick",
+      "resourceId": "stone",
       "amount": 0
     },
     {
-      "resourceId": "electronic_part",
+      "resourceId": "gold",
       "amount": 0
     },
     {
@@ -45,7 +45,7 @@
       "amount": 100
     },
     {
-      "resourceId": "fur",
+      "resourceId": "food",
       "amount": 0
     }
   ],

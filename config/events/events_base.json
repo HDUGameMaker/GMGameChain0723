@@ -140,7 +140,7 @@
         "effects": [
           {
             "type": "add_resource",
-            "resourceId": "hematite",
+            "resourceId": "stone",
             "amount": 20
           }
         ]
@@ -150,7 +150,7 @@
         "effects": [
           {
             "type": "add_resource",
-            "resourceId": "coal",
+            "resourceId": "stone",
             "amount": 30
           }
         ]
@@ -199,12 +199,12 @@
         "effects": [
           {
             "type": "consume_resource",
-            "resourceId": "iron_ingot",
+            "resourceId": "gold",
             "amount": 100
           },
           {
             "type": "add_resource",
-            "resourceId": "steel",
+            "resourceId": "gold",
             "amount": 5
           },
           {
@@ -313,7 +313,7 @@
         "effects": [
           {
             "type": "consume_resource",
-            "resourceId": "machine_part",
+            "resourceId": "gold",
             "amount": 5
           },
           {

@@ -1,10 +1,16 @@
 {
-    "global": {
+  "global": {
     "minPopulation": 12,
     "minTotalArmyPower": 18,
-    "offerIntervalDays": { "min": 5, "max": 8 },
+    "offerIntervalDays": {
+      "min": 5,
+      "max": 8
+    },
     "offerChanceOnCheck": 0.6,
-    "invasionIntervalDays": { "min": 7, "max": 12 },
+    "invasionIntervalDays": {
+      "min": 7,
+      "max": 12
+    },
     "invasionChanceOnCheck": 0.35,
     "nativePowerMinMultiplier": 0.5,
     "nativePowerMaxMultiplier": 2,
@@ -19,7 +25,10 @@
       "dailyIncome": {
         "population": 1,
         "resources": [
-          { "resourceId": "food", "amount": 12 }
+          {
+            "resourceId": "food",
+            "amount": 12
+          }
         ]
       }
     },
@@ -30,8 +39,14 @@
       "dailyIncome": {
         "population": 0,
         "resources": [
-          { "resourceId": "brick", "amount": 10 },
-          { "resourceId": "food", "amount": 8 }
+          {
+            "resourceId": "stone",
+            "amount": 10
+          },
+          {
+            "resourceId": "food",
+            "amount": 8
+          }
         ]
       }
     },
@@ -42,8 +57,14 @@
       "dailyIncome": {
         "population": 1,
         "resources": [
-          { "resourceId": "plank", "amount": 8 },
-          { "resourceId": "coal", "amount": 6 }
+          {
+            "resourceId": "wood",
+            "amount": 8
+          },
+          {
+            "resourceId": "stone",
+            "amount": 6
+          }
         ]
       }
     },
@@ -54,8 +75,14 @@
       "dailyIncome": {
         "population": 0,
         "resources": [
-          { "resourceId": "hematite", "amount": 14 },
-          { "resourceId": "stone", "amount": 10 }
+          {
+            "resourceId": "stone",
+            "amount": 14
+          },
+          {
+            "resourceId": "stone",
+            "amount": 10
+          }
         ]
       }
     }

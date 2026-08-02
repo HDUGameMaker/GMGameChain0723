@@ -7,8 +7,11 @@
  * 通过此脚本生成清单文件供游戏/编辑器在运行时读取。
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const ASSETS_DIR = path.join(__dirname, '..', 'assets');
 const OUTPUT_FILE = path.join(ASSETS_DIR, 'manifest.json');
