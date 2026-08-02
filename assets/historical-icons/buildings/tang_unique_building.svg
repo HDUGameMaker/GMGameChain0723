@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="大明宫">
+  <title>大明宫</title>
+  <metadata>buildings:tang_unique_building</metadata>
+  <defs><radialGradient id="bg"><stop offset="0" stop-color="#111827"/><stop offset="1" stop-color="#05090d"/></radialGradient><filter id="shadow"><feDropShadow dx="0" dy="1" stdDeviation="1" flood-opacity=".55"/></filter></defs>
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="url(#bg)" stroke="#b78342" stroke-width="2"/>
+  <circle cx="32" cy="31" r="25" fill="none" stroke="#b78342" stroke-width="1" opacity=".46"/>
+  <g filter="url(#shadow)"><path fill="none" stroke="#f0d7a1" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M13 47h38M17 43h30M20 24h24v19H20zM16 24l16-10 16 10M26 29v14M38 29v14"/></g><circle cx="17" cy="54" r="1.4" fill="#b78342" opacity=".75"/><circle cx="27" cy="54" r="1.4" fill="#b78342" opacity=".75"/><circle cx="37" cy="54" r="1.4" fill="#b78342" opacity=".75"/><circle cx="47" cy="54" r="1.4" fill="#b78342" opacity=".75"/>
+  <path d="M10 9h12M42 9h12" stroke="#b78342" stroke-width="1.5" opacity=".7"/>
+</svg>

@@ -12,6 +12,7 @@ export class CommerceSystem {
     this._resource = null;
     this._building = null;
     this._diplomacy = null;
+    this._era = null;
     this._routes = [];
     this._conversions = [];
     this._nextId = 1;
@@ -20,10 +21,11 @@ export class CommerceSystem {
     eventBus.on('dayStart', ({ day } = {}) => this._onDayStart(day || 1));
   }
 
-  setSystems({ resource, building, diplomacy } = {}) {
+  setSystems({ resource, building, diplomacy, era } = {}) {
     this._resource = resource || null;
     this._building = building || null;
     this._diplomacy = diplomacy || null;
+    this._era = era || null;
   }
 
   initNew() {
@@ -148,7 +150,8 @@ export class CommerceSystem {
   }
 
   _getTradeValueMultiplier() {
-    let multiplier = 1;
+    const bonuses = this._era?.getBonuses?.() || {};
+    let multiplier = (bonuses.tradeValueMul || 1) * (bonuses.civilizationYieldMul || 1);
     for (const depot of this._activeBuildings('trade_depot')) {
       const config = configRegistry.getBuilding?.(depot.buildingId);
       multiplier *= config?.uniqueFunction?.tradeValueMul || 1.12;

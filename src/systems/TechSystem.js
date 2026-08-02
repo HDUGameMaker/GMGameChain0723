@@ -47,7 +47,10 @@ export class TechSystem {
 
   /** 获取所有科技配置 */
   _getAllTechs() {
-    return configRegistry.get('techs') || [];
+    const nodes = configRegistry.get('techs') || [];
+    return this._eraSystem?.getEffectiveResearchNode
+      ? nodes.map(node => this._eraSystem.getEffectiveResearchNode('tech', node))
+      : nodes;
   }
 
   /** 获取科技配置 */
@@ -80,10 +83,13 @@ export class TechSystem {
 
   getPointIncomeBreakdown() {
     const workforce = this._buildingSystem?.getWorkforceOutputs?.().science || 0;
+    const civilizationBonuses = this._eraSystem?.getBonuses?.() || {};
+    const civilizationMultiplier = (civilizationBonuses.sciencePointMul || 1) * (civilizationBonuses.civilizationYieldMul || 1);
     return {
       passive: PASSIVE_SCIENCE_PER_TICK,
       workforce,
-      total: PASSIVE_SCIENCE_PER_TICK + workforce
+      civilizationMultiplier,
+      total: (PASSIVE_SCIENCE_PER_TICK + workforce) * civilizationMultiplier
     };
   }
 

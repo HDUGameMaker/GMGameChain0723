@@ -55,6 +55,7 @@ export class BuildingSystem {
   setTerritorySystem(ts) { this._territorySystem = ts; }
   setHeroSystem(hs) { this._heroSystem = hs; }
   setLuxurySystem(ls) { this._luxurySystem = ls; }
+  setEraSystem(es) { this._eraSystem = es; }
 
   init() {
     this._mapConfig = configRegistry.get('map');
@@ -93,6 +94,7 @@ export class BuildingSystem {
   canPlaceAt(gridX, gridY, buildingId) {
     const config = configRegistry.getBuilding(buildingId);
     if (!config) return { valid: false, reason: '建筑不存在' };
+    if (!this.isUnlocked(buildingId)) return { valid: false, reason: '建筑尚未解锁' };
 
     const w = config.footprint.width;
     const h = config.footprint.height;
@@ -1427,6 +1429,8 @@ export class BuildingSystem {
           return this._cultureSystem ? this._cultureSystem.isResearched(cond.cultureId) : false;
         case 'doctrine':
           return this._cultureSystem ? this._cultureSystem.getDoctrineResearched().includes(cond.doctrineId) : false;
+        case 'civilization':
+          return this._eraSystem?.getCivilizationForEra?.(config.eraId)?.id === cond.civilizationId;
         default:
           return false;
       }
@@ -1477,6 +1481,12 @@ export class BuildingSystem {
           const d = doctrines.find(x => x.id === id);
           const met = this._cultureSystem ? this._cultureSystem.getDoctrineResearched().includes(id) : false;
           return { type: 'culture', desc: `文化: ${d ? d.name : id}`, met };
+        }
+        case 'civilization': {
+          const civilization = this._eraSystem?.getCivilizations?.().find(item => item.id === cond.civilizationId)
+            || configRegistry.getHistoricalContent().civilizations.find(item => item.id === cond.civilizationId);
+          const met = this._eraSystem?.getCivilizationForEra?.(config.eraId)?.id === cond.civilizationId;
+          return { type: 'civilization', desc: `文明限定: ${civilization?.name || cond.civilizationId}`, met };
         }
         default:
           return { type: 'unknown', desc: `条件: ${cond.type}`, met: false };

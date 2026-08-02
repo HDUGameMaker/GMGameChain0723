@@ -17,14 +17,16 @@ export class ArmySystem {
     this._building = null;
     this._hero = null;
     this._culture = null;
+    this._era = null;
     eventBus.on('tick', () => this._advanceMovement());
     eventBus.on('dayStart', () => this._resupplyGarrisons());
   }
 
-  setSystems({ building, hero, culture } = {}) {
+  setSystems({ building, hero, culture, era } = {}) {
     this._building = building || null;
     this._hero = hero || null;
     this._culture = culture || null;
+    this._era = era || null;
   }
 
   initNew() {
@@ -485,6 +487,8 @@ export class ArmySystem {
       const hero = (this._hero?.getRecruitedHeroes?.() || []).find(entry => (entry.heroId || entry.id) === army.heroId);
       power *= hero?.bonuses?.commanderPowerMul || hero?.bonuses?.combatPowerMul || 1;
     }
+    const civilizationBonuses = this._era?.getBonuses?.() || {};
+    power *= (civilizationBonuses.armyPowerMul || 1) * (civilizationBonuses.civilizationYieldMul || 1);
     return Math.round(power * 100) / 100;
   }
 

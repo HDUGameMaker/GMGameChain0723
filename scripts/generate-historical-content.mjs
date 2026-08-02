@@ -152,7 +152,14 @@ for (const era of eras) {
     civilizations.push({
       id, name, eraId: era.id, summary: `${name}的历史道路，以${legacyName}与${traitName}塑造当代。`,
       legacy: { name: legacyName, description: `${legacyName}成为跨时代永久遗产。`, effects: { legacyScoreBonus: 1 + era.order, legacyProductionMul: 1.01 + era.order * 0.005 } },
-      trait: { name: traitName, description: `${traitName}强化本时代的建设、外交或军事优势。`, effects: civilizationSpecializations[index % civilizationSpecializations.length] },
+      trait: {
+        name: traitName,
+        description: `${traitName}强化本时代的建设、外交或军事优势。`,
+        effects: {
+          ...civilizationSpecializations[index % civilizationSpecializations.length],
+          civilizationYieldMul: 1 + (era.order * 20 + index + 1) * 0.001
+        }
+      },
       uniqueUnitId,
       uniqueBuilding: { id: `${id}_unique_building`, name: buildingName, replaces: index % 2 ? 'civic_hall' : 'academy', description: `${name}的特色建筑替代项。` },
       technologyReplacement: { replaces: `tech_${era.id}_${(index % 8) + 1}`, name: `${traitName}技术`, effects: { researchSpeedMul: 1.03 + (index % 3) * 0.01 } },
@@ -294,7 +301,7 @@ const buildingDefs = [
   ['frontier_fort', '边境要塞', 'defense', 2, { garrisonCapacity: 2, garrisonDefenseMul: 1.3, garrisonSupplyRecovery: 0.15, garrisonMoraleRecovery: 6, visionRadius: 7, defensePower: 40 }, { width: 2, height: 2 }],
   ['grand_fortress', '大型城垒', 'defense', 4, { garrisonCapacity: 4, garrisonDefenseMul: 1.55, garrisonSupplyRecovery: 0.25, garrisonMoraleRecovery: 10, visionRadius: 11, defensePower: 90, armyCapacityBonus: 1 }, { width: 3, height: 3 }]
 ];
-const buildings = buildingDefs.map(([id, name, category, maxWorkers, uniqueFunction, footprint], index) => ({
+const baseBuildings = buildingDefs.map(([id, name, category, maxWorkers, uniqueFunction, footprint], index) => ({
   id, name, category, description: `${name}承担${category}体系中的独特职责。`, footprint: footprint || { width: index % 4 === 0 ? 2 : 1, height: index % 4 === 0 ? 2 : 1 },
   maxCount: null, initialBuilding: id === 'timber_house', maxWorkers, jobType: category,
   buildCost: cost(24 + index * 3, 12 + index * 2, index % 6 === 0 ? 10 : 0, Math.floor(index / 3) * 3),
@@ -306,6 +313,30 @@ const buildings = buildingDefs.map(([id, name, category, maxWorkers, uniqueFunct
   uniqueFunction, icon: icon('buildings', id), imageDetail: icon('buildings', id), mapIcon: icon('buildings', id),
   labelLayout: { nameOffsetY: 0, progressBarOffsetY: 0, workersOffsetY: 0 }, tags: [category]
 }));
+const civilizationBuildings = civilizations.map((civilization, index) => {
+  const replaces = civilization.uniqueBuilding.replaces;
+  const isResearch = replaces === 'academy';
+  const uniqueFunction = {
+    civilizationId: civilization.id,
+    replaces,
+    ...(isResearch ? { unlockSystem: 'tech', sciencePerWorker: 1.25 } : { unlockSystem: 'civics', civicPerWorker: 1.25 }),
+    ...civilization.trait.effects
+  };
+  return {
+    id: civilization.uniqueBuilding.id, name: civilization.uniqueBuilding.name,
+    category: isResearch ? 'research' : 'civic',
+    description: `${civilization.name}的特色建筑，替代${isResearch ? '学院' : '人文馆'}并体现${civilization.trait.name}。`,
+    civilizationId: civilization.id, eraId: civilization.eraId, replaces,
+    footprint: { width: index % 5 === 0 ? 2 : 1, height: index % 5 === 0 ? 2 : 1 },
+    maxCount: 1, initialBuilding: false, maxWorkers: 5, jobType: isResearch ? 'research' : 'civic',
+    buildCost: cost(55 + index * 2, 35 + index * 2, 10, 20 + index), buildTime: 2 + Math.floor(index / 20),
+    unlockConditions: [{ type: 'civilization', civilizationId: civilization.id }], production: null,
+    housingCapacity: 0, soldierCapacity: 0, uniqueFunction,
+    icon: icon('buildings', civilization.uniqueBuilding.id), imageDetail: icon('buildings', civilization.uniqueBuilding.id), mapIcon: icon('buildings', civilization.uniqueBuilding.id),
+    labelLayout: { nameOffsetY: 0, progressBarOffsetY: 0, workersOffsetY: 0 }, tags: ['civilization', isResearch ? 'research' : 'civic']
+  };
+});
+const buildings = [...baseBuildings, ...civilizationBuildings];
 
 const heroDefs = {
   ancient: [

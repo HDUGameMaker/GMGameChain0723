@@ -96,7 +96,8 @@
         "description": "采猎协作强化本时代的建设、外交或军事优势。",
         "effects": {
           "productionMul": 1.06,
-          "buildSpeedMul": 1.04
+          "buildSpeedMul": 1.04,
+          "civilizationYieldMul": 1.001
         }
       },
       "uniqueUnitId": "proto_civilization_unique_unit",
@@ -141,7 +142,8 @@
         "description": "礼乐秩序强化本时代的建设、外交或军事优势。",
         "effects": {
           "productionMul": 1.06,
-          "buildSpeedMul": 1.04
+          "buildSpeedMul": 1.04,
+          "civilizationYieldMul": 1.021
         }
       },
       "uniqueUnitId": "zhou_unique_unit",
@@ -186,7 +188,8 @@
         "description": "攻城传统强化本时代的建设、外交或军事优势。",
         "effects": {
           "tradeValueMul": 1.08,
-          "relationGainBonus": 2
+          "relationGainBonus": 2,
+          "civilizationYieldMul": 1.022
         }
       },
       "uniqueUnitId": "assyria_unique_unit",
@@ -231,7 +234,8 @@
         "description": "灌溉城市强化本时代的建设、外交或军事优势。",
         "effects": {
           "sciencePointMul": 1.08,
-          "researchSpeedMul": 1.04
+          "researchSpeedMul": 1.04,
+          "civilizationYieldMul": 1.023
         }
       },
       "uniqueUnitId": "neo_babylon_unique_unit",
@@ -276,7 +280,8 @@
         "description": "石工传统强化本时代的建设、外交或军事优势。",
         "effects": {
           "civicPointMul": 1.08,
-          "satisfactionBonus": 2
+          "satisfactionBonus": 2,
+          "civilizationYieldMul": 1.024
         }
       },
       "uniqueUnitId": "old_egypt_unique_unit",
@@ -321,7 +326,8 @@
         "description": "公民方阵强化本时代的建设、外交或军事优势。",
         "effects": {
           "armyPowerMul": 1.06,
-          "trainingSpeedMul": 1.05
+          "trainingSpeedMul": 1.05,
+          "civilizationYieldMul": 1.025
         }
       },
       "uniqueUnitId": "archaic_greece_unique_unit",
@@ -366,7 +372,8 @@
         "description": "祭礼传承强化本时代的建设、外交或军事优势。",
         "effects": {
           "navalPowerMul": 1.08,
-          "routeCapacityBonus": 1
+          "routeCapacityBonus": 1,
+          "civilizationYieldMul": 1.026
         }
       },
       "uniqueUnitId": "vedic_india_unique_unit",
@@ -411,7 +418,8 @@
         "description": "丝路商队强化本时代的建设、外交或军事优势。",
         "effects": {
           "productionMul": 1.06,
-          "buildSpeedMul": 1.04
+          "buildSpeedMul": 1.04,
+          "civilizationYieldMul": 1.041
         }
       },
       "uniqueUnitId": "han_unique_unit",
@@ -456,7 +464,8 @@
         "description": "军团工程强化本时代的建设、外交或军事优势。",
         "effects": {
           "tradeValueMul": 1.08,
-          "relationGainBonus": 2
+          "relationGainBonus": 2,
+          "civilizationYieldMul": 1.042
         }
       },
       "uniqueUnitId": "rome_unique_unit",
@@ -501,7 +510,8 @@
         "description": "回马箭强化本时代的建设、外交或军事优势。",
         "effects": {
           "sciencePointMul": 1.08,
-          "researchSpeedMul": 1.04
+          "researchSpeedMul": 1.04,
+          "civilizationYieldMul": 1.043
         }
       },
       "uniqueUnitId": "parthia_unique_unit",
@@ -546,7 +556,8 @@
         "description": "商道包容强化本时代的建设、外交或军事优势。",
         "effects": {
           "civicPointMul": 1.08,
-          "satisfactionBonus": 2
+          "satisfactionBonus": 2,
+          "civilizationYieldMul": 1.044
         }
       },
       "uniqueUnitId": "kushan_unique_unit",
@@ -591,7 +602,8 @@
         "description": "高原王国强化本时代的建设、外交或军事优势。",
         "effects": {
           "armyPowerMul": 1.06,
-          "trainingSpeedMul": 1.05
+          "trainingSpeedMul": 1.05,
+          "civilizationYieldMul": 1.045
         }
       },
       "uniqueUnitId": "aksum_unique_unit",
@@ -636,7 +648,8 @@
         "description": "黑曜石贸易强化本时代的建设、外交或军事优势。",
         "effects": {
           "navalPowerMul": 1.08,
-          "routeCapacityBonus": 1
+          "routeCapacityBonus": 1,
+          "civilizationYieldMul": 1.046
         }
       },
       "uniqueUnitId": "teotihuacan_unique_unit",
@@ -681,7 +694,8 @@
         "description": "雨林城邦强化本时代的建设、外交或军事优势。",
         "effects": {
           "productionMul": 1.06,
-          "buildSpeedMul": 1.04
+          "buildSpeedMul": 1.04,
+          "civilizationYieldMul": 1.047
         }
       },
       "uniqueUnitId": "maya_classic_unique_unit",
@@ -726,7 +740,8 @@
         "description": "稻作共同体强化本时代的建设、外交或军事优势。",
         "effects": {
           "tradeValueMul": 1.08,
-          "relationGainBonus": 2
+          "relationGainBonus": 2,
+          "civilizationYieldMul": 1.048
         }
       },
       "uniqueUnitId": "yamatai_unique_unit",
@@ -771,7 +786,8 @@
         "description": "均田府兵强化本时代的建设、外交或军事优势。",
         "effects": {
           "productionMul": 1.06,
-          "buildSpeedMul": 1.04
+          "buildSpeedMul": 1.04,
+          "civilizationYieldMul": 1.061
         }
       },
       "uniqueUnitId": "tang_unique_unit",
@@ -816,7 +832,8 @@
         "description": "商旅驿站强化本时代的建设、外交或军事优势。",
         "effects": {
           "tradeValueMul": 1.08,
-          "relationGainBonus": 2
+          "relationGainBonus": 2,
+          "civilizationYieldMul": 1.062
         }
       },
       "uniqueUnitId": "abbasid_unique_unit",
@@ -861,7 +878,8 @@
         "description": "希腊火防线强化本时代的建设、外交或军事优势。",
         "effects": {
           "sciencePointMul": 1.08,
-          "researchSpeedMul": 1.04
+          "researchSpeedMul": 1.04,
+          "civilizationYieldMul": 1.063
         }
       },
       "uniqueUnitId": "byzantium_unique_unit",
@@ -906,7 +924,8 @@
         "description": "骑士冲锋强化本时代的建设、外交或军事优势。",
         "effects": {
           "civicPointMul": 1.08,
-          "satisfactionBonus": 2
+          "satisfactionBonus": 2,
+          "civilizationYieldMul": 1.064
         }
       },
       "uniqueUnitId": "franks_unique_unit",
@@ -951,7 +970,8 @@
         "description": "盾墙传统强化本时代的建设、外交或军事优势。",
         "effects": {
           "armyPowerMul": 1.06,
-          "trainingSpeedMul": 1.05
+          "trainingSpeedMul": 1.05,
+          "civilizationYieldMul": 1.065
         }
       },
       "uniqueUnitId": "anglo_saxon_unique_unit",
@@ -996,7 +1016,8 @@
         "description": "群岛贸易强化本时代的建设、外交或军事优势。",
         "effects": {
           "navalPowerMul": 1.08,
-          "routeCapacityBonus": 1
+          "routeCapacityBonus": 1,
+          "civilizationYieldMul": 1.066
         }
       },
       "uniqueUnitId": "srivijaya_unique_unit",
@@ -1041,7 +1062,8 @@
         "description": "黄金税赋强化本时代的建设、外交或军事优势。",
         "effects": {
           "productionMul": 1.06,
-          "buildSpeedMul": 1.04
+          "buildSpeedMul": 1.04,
+          "civilizationYieldMul": 1.067
         }
       },
       "uniqueUnitId": "ghana_empire_unique_unit",
@@ -1086,7 +1108,8 @@
         "description": "庄园武备强化本时代的建设、外交或军事优势。",
         "effects": {
           "tradeValueMul": 1.08,
-          "relationGainBonus": 2
+          "relationGainBonus": 2,
+          "civilizationYieldMul": 1.068
         }
       },
       "uniqueUnitId": "heian_japan_unique_unit",
@@ -1131,7 +1154,8 @@
         "description": "远洋征服强化本时代的建设、外交或军事优势。",
         "effects": {
           "sciencePointMul": 1.08,
-          "researchSpeedMul": 1.04
+          "researchSpeedMul": 1.04,
+          "civilizationYieldMul": 1.069
         }
       },
       "uniqueUnitId": "chola_unique_unit",
@@ -1176,7 +1200,8 @@
         "description": "黑曜石军备强化本时代的建设、外交或军事优势。",
         "effects": {
           "civicPointMul": 1.08,
-          "satisfactionBonus": 2
+          "satisfactionBonus": 2,
+          "civilizationYieldMul": 1.07
         }
       },
       "uniqueUnitId": "toltec_unique_unit",
@@ -1221,7 +1246,8 @@
         "description": "火器营制强化本时代的建设、外交或军事优势。",
         "effects": {
           "productionMul": 1.06,
-          "buildSpeedMul": 1.04
+          "buildSpeedMul": 1.04,
+          "civilizationYieldMul": 1.081
         }
       },
       "uniqueUnitId": "ming_unique_unit",
@@ -1266,7 +1292,8 @@
         "description": "重炮攻城强化本时代的建设、外交或军事优势。",
         "effects": {
           "tradeValueMul": 1.08,
-          "relationGainBonus": 2
+          "relationGainBonus": 2,
+          "civilizationYieldMul": 1.082
         }
       },
       "uniqueUnitId": "ottoman_unique_unit",
@@ -1311,7 +1338,8 @@
         "description": "方阵火枪强化本时代的建设、外交或军事优势。",
         "effects": {
           "sciencePointMul": 1.08,
-          "researchSpeedMul": 1.04
+          "researchSpeedMul": 1.04,
+          "civilizationYieldMul": 1.083
         }
       },
       "uniqueUnitId": "spain_unique_unit",
@@ -1356,7 +1384,8 @@
         "description": "海图学派强化本时代的建设、外交或军事优势。",
         "effects": {
           "civicPointMul": 1.08,
-          "satisfactionBonus": 2
+          "satisfactionBonus": 2,
+          "civilizationYieldMul": 1.084
         }
       },
       "uniqueUnitId": "portugal_unique_unit",
@@ -1401,7 +1430,8 @@
         "description": "海权萌芽强化本时代的建设、外交或军事优势。",
         "effects": {
           "armyPowerMul": 1.06,
-          "trainingSpeedMul": 1.05
+          "trainingSpeedMul": 1.05,
+          "civilizationYieldMul": 1.085
         }
       },
       "uniqueUnitId": "england_exploration_unique_unit",
@@ -1446,7 +1476,8 @@
         "description": "低地水工强化本时代的建设、外交或军事优势。",
         "effects": {
           "navalPowerMul": 1.08,
-          "routeCapacityBonus": 1
+          "routeCapacityBonus": 1,
+          "civilizationYieldMul": 1.086
         }
       },
       "uniqueUnitId": "dutch_unique_unit",
@@ -1491,7 +1522,8 @@
         "description": "复合军团强化本时代的建设、外交或军事优势。",
         "effects": {
           "productionMul": 1.06,
-          "buildSpeedMul": 1.04
+          "buildSpeedMul": 1.04,
+          "civilizationYieldMul": 1.087
         }
       },
       "uniqueUnitId": "mughal_unique_unit",
@@ -1536,7 +1568,8 @@
         "description": "贡赋同盟强化本时代的建设、外交或军事优势。",
         "effects": {
           "tradeValueMul": 1.08,
-          "relationGainBonus": 2
+          "relationGainBonus": 2,
+          "civilizationYieldMul": 1.088
         }
       },
       "uniqueUnitId": "aztec_unique_unit",
@@ -1581,7 +1614,8 @@
         "description": "盐金贸易强化本时代的建设、外交或军事优势。",
         "effects": {
           "sciencePointMul": 1.08,
-          "researchSpeedMul": 1.04
+          "researchSpeedMul": 1.04,
+          "civilizationYieldMul": 1.089
         }
       },
       "uniqueUnitId": "songhai_unique_unit",
@@ -1626,7 +1660,8 @@
         "description": "兵农分离强化本时代的建设、外交或军事优势。",
         "effects": {
           "civicPointMul": 1.08,
-          "satisfactionBonus": 2
+          "satisfactionBonus": 2,
+          "civilizationYieldMul": 1.09
         }
       },
       "uniqueUnitId": "sengoku_japan_unique_unit",
@@ -1671,7 +1706,8 @@
         "description": "洋务自强强化本时代的建设、外交或军事优势。",
         "effects": {
           "productionMul": 1.06,
-          "buildSpeedMul": 1.04
+          "buildSpeedMul": 1.04,
+          "civilizationYieldMul": 1.101
         }
       },
       "uniqueUnitId": "qing_unique_unit",
@@ -1716,7 +1752,8 @@
         "description": "工业舰队强化本时代的建设、外交或军事优势。",
         "effects": {
           "tradeValueMul": 1.08,
-          "relationGainBonus": 2
+          "relationGainBonus": 2,
+          "civilizationYieldMul": 1.102
         }
       },
       "uniqueUnitId": "british_empire_unique_unit",
@@ -1761,7 +1798,8 @@
         "description": "军团制强化本时代的建设、外交或军事优势。",
         "effects": {
           "sciencePointMul": 1.08,
-          "researchSpeedMul": 1.04
+          "researchSpeedMul": 1.04,
+          "civilizationYieldMul": 1.103
         }
       },
       "uniqueUnitId": "french_empire_unique_unit",
@@ -1806,7 +1844,8 @@
         "description": "纵深防御强化本时代的建设、外交或军事优势。",
         "effects": {
           "civicPointMul": 1.08,
-          "satisfactionBonus": 2
+          "satisfactionBonus": 2,
+          "civilizationYieldMul": 1.104
         }
       },
       "uniqueUnitId": "russian_empire_unique_unit",
@@ -1851,7 +1890,8 @@
         "description": "任务式指挥强化本时代的建设、外交或军事优势。",
         "effects": {
           "armyPowerMul": 1.06,
-          "trainingSpeedMul": 1.05
+          "trainingSpeedMul": 1.05,
+          "civilizationYieldMul": 1.105
         }
       },
       "uniqueUnitId": "prussia_unique_unit",
@@ -1896,7 +1936,8 @@
         "description": "标准化生产强化本时代的建设、外交或军事优势。",
         "effects": {
           "navalPowerMul": 1.08,
-          "routeCapacityBonus": 1
+          "routeCapacityBonus": 1,
+          "civilizationYieldMul": 1.106
         }
       },
       "uniqueUnitId": "usa_industrial_unique_unit",
@@ -1941,7 +1982,8 @@
         "description": "富国强兵强化本时代的建设、外交或军事优势。",
         "effects": {
           "productionMul": 1.06,
-          "buildSpeedMul": 1.04
+          "buildSpeedMul": 1.04,
+          "civilizationYieldMul": 1.107
         }
       },
       "uniqueUnitId": "meiji_japan_unique_unit",
@@ -1986,7 +2028,8 @@
         "description": "新军训练强化本时代的建设、外交或军事优势。",
         "effects": {
           "tradeValueMul": 1.08,
-          "relationGainBonus": 2
+          "relationGainBonus": 2,
+          "civilizationYieldMul": 1.108
         }
       },
       "uniqueUnitId": "ottoman_reform_unique_unit",
@@ -2031,7 +2074,8 @@
         "description": "矿业出口强化本时代的建设、外交或军事优势。",
         "effects": {
           "sciencePointMul": 1.08,
-          "researchSpeedMul": 1.04
+          "researchSpeedMul": 1.04,
+          "civilizationYieldMul": 1.109
         }
       },
       "uniqueUnitId": "mexico_industrial_unique_unit",
@@ -2076,7 +2120,8 @@
         "description": "咖啡繁荣强化本时代的建设、外交或军事优势。",
         "effects": {
           "civicPointMul": 1.08,
-          "satisfactionBonus": 2
+          "satisfactionBonus": 2,
+          "civilizationYieldMul": 1.11
         }
       },
       "uniqueUnitId": "brazil_empire_unique_unit",
@@ -2121,7 +2166,8 @@
         "description": "纵深动员强化本时代的建设、外交或军事优势。",
         "effects": {
           "productionMul": 1.06,
-          "buildSpeedMul": 1.04
+          "buildSpeedMul": 1.04,
+          "civilizationYieldMul": 1.121
         }
       },
       "uniqueUnitId": "china_modern_unique_unit",
@@ -2166,7 +2212,8 @@
         "description": "联合兵种强化本时代的建设、外交或军事优势。",
         "effects": {
           "tradeValueMul": 1.08,
-          "relationGainBonus": 2
+          "relationGainBonus": 2,
+          "civilizationYieldMul": 1.1219999999999999
         }
       },
       "uniqueUnitId": "usa_modern_unique_unit",
@@ -2211,7 +2258,8 @@
         "description": "大纵深作战强化本时代的建设、外交或军事优势。",
         "effects": {
           "sciencePointMul": 1.08,
-          "researchSpeedMul": 1.04
+          "researchSpeedMul": 1.04,
+          "civilizationYieldMul": 1.123
         }
       },
       "uniqueUnitId": "russia_modern_unique_unit",
@@ -2256,7 +2304,8 @@
         "description": "特种作战强化本时代的建设、外交或军事优势。",
         "effects": {
           "civicPointMul": 1.08,
-          "satisfactionBonus": 2
+          "satisfactionBonus": 2,
+          "civilizationYieldMul": 1.124
         }
       },
       "uniqueUnitId": "uk_modern_unique_unit",
@@ -2301,7 +2350,8 @@
         "description": "机动作战强化本时代的建设、外交或军事优势。",
         "effects": {
           "armyPowerMul": 1.06,
-          "trainingSpeedMul": 1.05
+          "trainingSpeedMul": 1.05,
+          "civilizationYieldMul": 1.125
         }
       },
       "uniqueUnitId": "france_modern_unique_unit",
@@ -2346,7 +2396,8 @@
         "description": "任务式战术强化本时代的建设、外交或军事优势。",
         "effects": {
           "navalPowerMul": 1.08,
-          "routeCapacityBonus": 1
+          "routeCapacityBonus": 1,
+          "civilizationYieldMul": 1.126
         }
       },
       "uniqueUnitId": "germany_modern_unique_unit",
@@ -2391,7 +2442,8 @@
         "description": "高原防卫强化本时代的建设、外交或军事优势。",
         "effects": {
           "productionMul": 1.06,
-          "buildSpeedMul": 1.04
+          "buildSpeedMul": 1.04,
+          "civilizationYieldMul": 1.127
         }
       },
       "uniqueUnitId": "india_modern_unique_unit",
@@ -2436,7 +2488,8 @@
         "description": "岛链防御强化本时代的建设、外交或军事优势。",
         "effects": {
           "tradeValueMul": 1.08,
-          "relationGainBonus": 2
+          "relationGainBonus": 2,
+          "civilizationYieldMul": 1.1280000000000001
         }
       },
       "uniqueUnitId": "japan_modern_unique_unit",
@@ -2481,7 +2534,8 @@
         "description": "电子制造强化本时代的建设、外交或军事优势。",
         "effects": {
           "sciencePointMul": 1.08,
-          "researchSpeedMul": 1.04
+          "researchSpeedMul": 1.04,
+          "civilizationYieldMul": 1.129
         }
       },
       "uniqueUnitId": "korea_modern_unique_unit",
@@ -2526,7 +2580,8 @@
         "description": "雨林机动强化本时代的建设、外交或军事优势。",
         "effects": {
           "civicPointMul": 1.08,
-          "satisfactionBonus": 2
+          "satisfactionBonus": 2,
+          "civilizationYieldMul": 1.13
         }
       },
       "uniqueUnitId": "brazil_modern_unique_unit",
@@ -2571,7 +2626,8 @@
         "description": "区域联运强化本时代的建设、外交或军事优势。",
         "effects": {
           "armyPowerMul": 1.06,
-          "trainingSpeedMul": 1.05
+          "trainingSpeedMul": 1.05,
+          "civilizationYieldMul": 1.131
         }
       },
       "uniqueUnitId": "nigeria_modern_unique_unit",
@@ -2616,7 +2672,8 @@
         "description": "海峡控制强化本时代的建设、外交或军事优势。",
         "effects": {
           "navalPowerMul": 1.08,
-          "routeCapacityBonus": 1
+          "routeCapacityBonus": 1,
+          "civilizationYieldMul": 1.1320000000000001
         }
       },
       "uniqueUnitId": "indonesia_modern_unique_unit",
@@ -4781,6 +4838,3768 @@
       },
       "tags": [
         "defense"
+      ]
+    },
+    {
+      "id": "proto_civilization_unique_building",
+      "name": "氏族火塘",
+      "category": "research",
+      "description": "原始文明的特色建筑，替代学院并体现采猎协作。",
+      "civilizationId": "proto_civilization",
+      "eraId": "primitive",
+      "replaces": "academy",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 55
+        },
+        {
+          "resourceId": "stone",
+          "amount": 35
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 20
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "proto_civilization"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "proto_civilization",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "productionMul": 1.06,
+        "buildSpeedMul": 1.04,
+        "civilizationYieldMul": 1.001
+      },
+      "icon": "assets/historical-icons/buildings/proto_civilization_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/proto_civilization_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/proto_civilization_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "zhou_unique_building",
+      "name": "礼乐宗庙",
+      "category": "research",
+      "description": "周的特色建筑，替代学院并体现礼乐秩序。",
+      "civilizationId": "zhou",
+      "eraId": "ancient",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 57
+        },
+        {
+          "resourceId": "stone",
+          "amount": 37
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 21
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "zhou"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "zhou",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "productionMul": 1.06,
+        "buildSpeedMul": 1.04,
+        "civilizationYieldMul": 1.021
+      },
+      "icon": "assets/historical-icons/buildings/zhou_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/zhou_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/zhou_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "assyria_unique_building",
+      "name": "王家兵工场",
+      "category": "civic",
+      "description": "亚述的特色建筑，替代人文馆并体现攻城传统。",
+      "civilizationId": "assyria",
+      "eraId": "ancient",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 59
+        },
+        {
+          "resourceId": "stone",
+          "amount": 39
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 22
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "assyria"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "assyria",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "tradeValueMul": 1.08,
+        "relationGainBonus": 2,
+        "civilizationYieldMul": 1.022
+      },
+      "icon": "assets/historical-icons/buildings/assyria_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/assyria_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/assyria_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "neo_babylon_unique_building",
+      "name": "空中花园",
+      "category": "research",
+      "description": "新巴比伦的特色建筑，替代学院并体现灌溉城市。",
+      "civilizationId": "neo_babylon",
+      "eraId": "ancient",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 61
+        },
+        {
+          "resourceId": "stone",
+          "amount": 41
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 23
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "neo_babylon"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "neo_babylon",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "sciencePointMul": 1.08,
+        "researchSpeedMul": 1.04,
+        "civilizationYieldMul": 1.023
+      },
+      "icon": "assets/historical-icons/buildings/neo_babylon_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/neo_babylon_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/neo_babylon_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "old_egypt_unique_building",
+      "name": "尼罗河神庙",
+      "category": "civic",
+      "description": "古埃及的特色建筑，替代人文馆并体现石工传统。",
+      "civilizationId": "old_egypt",
+      "eraId": "ancient",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 63
+        },
+        {
+          "resourceId": "stone",
+          "amount": 43
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 24
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "old_egypt"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "old_egypt",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "civicPointMul": 1.08,
+        "satisfactionBonus": 2,
+        "civilizationYieldMul": 1.024
+      },
+      "icon": "assets/historical-icons/buildings/old_egypt_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/old_egypt_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/old_egypt_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "archaic_greece_unique_building",
+      "name": "卫城议事场",
+      "category": "research",
+      "description": "古希腊的特色建筑，替代学院并体现公民方阵。",
+      "civilizationId": "archaic_greece",
+      "eraId": "ancient",
+      "replaces": "academy",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 65
+        },
+        {
+          "resourceId": "stone",
+          "amount": 45
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 25
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "archaic_greece"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "archaic_greece",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "armyPowerMul": 1.06,
+        "trainingSpeedMul": 1.05,
+        "civilizationYieldMul": 1.025
+      },
+      "icon": "assets/historical-icons/buildings/archaic_greece_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/archaic_greece_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/archaic_greece_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "vedic_india_unique_building",
+      "name": "吠陀祭坛",
+      "category": "civic",
+      "description": "吠陀印度的特色建筑，替代人文馆并体现祭礼传承。",
+      "civilizationId": "vedic_india",
+      "eraId": "ancient",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 67
+        },
+        {
+          "resourceId": "stone",
+          "amount": 47
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 26
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "vedic_india"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "vedic_india",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "navalPowerMul": 1.08,
+        "routeCapacityBonus": 1,
+        "civilizationYieldMul": 1.026
+      },
+      "icon": "assets/historical-icons/buildings/vedic_india_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/vedic_india_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/vedic_india_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "han_unique_building",
+      "name": "长安宫阙",
+      "category": "research",
+      "description": "汉的特色建筑，替代学院并体现丝路商队。",
+      "civilizationId": "han",
+      "eraId": "classical",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 69
+        },
+        {
+          "resourceId": "stone",
+          "amount": 49
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 27
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "han"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "han",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "productionMul": 1.06,
+        "buildSpeedMul": 1.04,
+        "civilizationYieldMul": 1.041
+      },
+      "icon": "assets/historical-icons/buildings/han_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/han_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/han_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "rome_unique_building",
+      "name": "广场",
+      "category": "civic",
+      "description": "罗马的特色建筑，替代人文馆并体现军团工程。",
+      "civilizationId": "rome",
+      "eraId": "classical",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 71
+        },
+        {
+          "resourceId": "stone",
+          "amount": 51
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 28
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "rome"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "rome",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "tradeValueMul": 1.08,
+        "relationGainBonus": 2,
+        "civilizationYieldMul": 1.042
+      },
+      "icon": "assets/historical-icons/buildings/rome_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/rome_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/rome_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "parthia_unique_building",
+      "name": "商旅驿站",
+      "category": "research",
+      "description": "帕提亚的特色建筑，替代学院并体现回马箭。",
+      "civilizationId": "parthia",
+      "eraId": "classical",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 73
+        },
+        {
+          "resourceId": "stone",
+          "amount": 53
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 29
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "parthia"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "parthia",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "sciencePointMul": 1.08,
+        "researchSpeedMul": 1.04,
+        "civilizationYieldMul": 1.043
+      },
+      "icon": "assets/historical-icons/buildings/parthia_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/parthia_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/parthia_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "kushan_unique_building",
+      "name": "犍陀罗寺院",
+      "category": "civic",
+      "description": "贵霜的特色建筑，替代人文馆并体现商道包容。",
+      "civilizationId": "kushan",
+      "eraId": "classical",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 75
+        },
+        {
+          "resourceId": "stone",
+          "amount": 55
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 30
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "kushan"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "kushan",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "civicPointMul": 1.08,
+        "satisfactionBonus": 2,
+        "civilizationYieldMul": 1.044
+      },
+      "icon": "assets/historical-icons/buildings/kushan_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/kushan_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/kushan_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "aksum_unique_building",
+      "name": "方尖碑广场",
+      "category": "research",
+      "description": "阿克苏姆的特色建筑，替代学院并体现高原王国。",
+      "civilizationId": "aksum",
+      "eraId": "classical",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 77
+        },
+        {
+          "resourceId": "stone",
+          "amount": 57
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 31
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "aksum"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "aksum",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "armyPowerMul": 1.06,
+        "trainingSpeedMul": 1.05,
+        "civilizationYieldMul": 1.045
+      },
+      "icon": "assets/historical-icons/buildings/aksum_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/aksum_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/aksum_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "teotihuacan_unique_building",
+      "name": "太阳金字塔",
+      "category": "civic",
+      "description": "特奥蒂瓦坎的特色建筑，替代人文馆并体现黑曜石贸易。",
+      "civilizationId": "teotihuacan",
+      "eraId": "classical",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 79
+        },
+        {
+          "resourceId": "stone",
+          "amount": 59
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 32
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "teotihuacan"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "teotihuacan",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "navalPowerMul": 1.08,
+        "routeCapacityBonus": 1,
+        "civilizationYieldMul": 1.046
+      },
+      "icon": "assets/historical-icons/buildings/teotihuacan_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/teotihuacan_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/teotihuacan_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "maya_classic_unique_building",
+      "name": "阶梯金字塔",
+      "category": "research",
+      "description": "古典玛雅的特色建筑，替代学院并体现雨林城邦。",
+      "civilizationId": "maya_classic",
+      "eraId": "classical",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 81
+        },
+        {
+          "resourceId": "stone",
+          "amount": 61
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 33
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "maya_classic"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "maya_classic",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "productionMul": 1.06,
+        "buildSpeedMul": 1.04,
+        "civilizationYieldMul": 1.047
+      },
+      "icon": "assets/historical-icons/buildings/maya_classic_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/maya_classic_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/maya_classic_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "yamatai_unique_building",
+      "name": "祭政宫馆",
+      "category": "civic",
+      "description": "邪马台的特色建筑，替代人文馆并体现稻作共同体。",
+      "civilizationId": "yamatai",
+      "eraId": "classical",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 83
+        },
+        {
+          "resourceId": "stone",
+          "amount": 63
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 34
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "yamatai"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "yamatai",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "tradeValueMul": 1.08,
+        "relationGainBonus": 2,
+        "civilizationYieldMul": 1.048
+      },
+      "icon": "assets/historical-icons/buildings/yamatai_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/yamatai_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/yamatai_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "tang_unique_building",
+      "name": "大明宫",
+      "category": "research",
+      "description": "唐的特色建筑，替代学院并体现均田府兵。",
+      "civilizationId": "tang",
+      "eraId": "medieval",
+      "replaces": "academy",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 85
+        },
+        {
+          "resourceId": "stone",
+          "amount": 65
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 35
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "tang"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "tang",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "productionMul": 1.06,
+        "buildSpeedMul": 1.04,
+        "civilizationYieldMul": 1.061
+      },
+      "icon": "assets/historical-icons/buildings/tang_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/tang_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/tang_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "abbasid_unique_building",
+      "name": "智慧宫",
+      "category": "civic",
+      "description": "阿拔斯的特色建筑，替代人文馆并体现商旅驿站。",
+      "civilizationId": "abbasid",
+      "eraId": "medieval",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 87
+        },
+        {
+          "resourceId": "stone",
+          "amount": 67
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 36
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "abbasid"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "abbasid",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "tradeValueMul": 1.08,
+        "relationGainBonus": 2,
+        "civilizationYieldMul": 1.062
+      },
+      "icon": "assets/historical-icons/buildings/abbasid_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/abbasid_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/abbasid_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "byzantium_unique_building",
+      "name": "狄奥多西城墙",
+      "category": "research",
+      "description": "拜占庭的特色建筑，替代学院并体现希腊火防线。",
+      "civilizationId": "byzantium",
+      "eraId": "medieval",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 89
+        },
+        {
+          "resourceId": "stone",
+          "amount": 69
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 37
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "byzantium"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "byzantium",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "sciencePointMul": 1.08,
+        "researchSpeedMul": 1.04,
+        "civilizationYieldMul": 1.063
+      },
+      "icon": "assets/historical-icons/buildings/byzantium_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/byzantium_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/byzantium_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "franks_unique_building",
+      "name": "加洛林宫廷",
+      "category": "civic",
+      "description": "法兰克的特色建筑，替代人文馆并体现骑士冲锋。",
+      "civilizationId": "franks",
+      "eraId": "medieval",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 91
+        },
+        {
+          "resourceId": "stone",
+          "amount": 71
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 38
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "franks"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "franks",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "civicPointMul": 1.08,
+        "satisfactionBonus": 2,
+        "civilizationYieldMul": 1.064
+      },
+      "icon": "assets/historical-icons/buildings/franks_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/franks_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/franks_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "anglo_saxon_unique_building",
+      "name": "木砦大厅",
+      "category": "research",
+      "description": "盎格鲁-撒克逊的特色建筑，替代学院并体现盾墙传统。",
+      "civilizationId": "anglo_saxon",
+      "eraId": "medieval",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 93
+        },
+        {
+          "resourceId": "stone",
+          "amount": 73
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 39
+        }
+      ],
+      "buildTime": 2,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "anglo_saxon"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "anglo_saxon",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "armyPowerMul": 1.06,
+        "trainingSpeedMul": 1.05,
+        "civilizationYieldMul": 1.065
+      },
+      "icon": "assets/historical-icons/buildings/anglo_saxon_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/anglo_saxon_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/anglo_saxon_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "srivijaya_unique_building",
+      "name": "海贸佛寺",
+      "category": "civic",
+      "description": "室利佛逝的特色建筑，替代人文馆并体现群岛贸易。",
+      "civilizationId": "srivijaya",
+      "eraId": "medieval",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 95
+        },
+        {
+          "resourceId": "stone",
+          "amount": 75
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 40
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "srivijaya"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "srivijaya",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "navalPowerMul": 1.08,
+        "routeCapacityBonus": 1,
+        "civilizationYieldMul": 1.066
+      },
+      "icon": "assets/historical-icons/buildings/srivijaya_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/srivijaya_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/srivijaya_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "ghana_empire_unique_building",
+      "name": "黄金商站",
+      "category": "research",
+      "description": "加纳帝国的特色建筑，替代学院并体现黄金税赋。",
+      "civilizationId": "ghana_empire",
+      "eraId": "medieval",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 97
+        },
+        {
+          "resourceId": "stone",
+          "amount": 77
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 41
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "ghana_empire"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "ghana_empire",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "productionMul": 1.06,
+        "buildSpeedMul": 1.04,
+        "civilizationYieldMul": 1.067
+      },
+      "icon": "assets/historical-icons/buildings/ghana_empire_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/ghana_empire_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/ghana_empire_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "heian_japan_unique_building",
+      "name": "平安京官署",
+      "category": "civic",
+      "description": "平安日本的特色建筑，替代人文馆并体现庄园武备。",
+      "civilizationId": "heian_japan",
+      "eraId": "medieval",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 99
+        },
+        {
+          "resourceId": "stone",
+          "amount": 79
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 42
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "heian_japan"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "heian_japan",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "tradeValueMul": 1.08,
+        "relationGainBonus": 2,
+        "civilizationYieldMul": 1.068
+      },
+      "icon": "assets/historical-icons/buildings/heian_japan_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/heian_japan_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/heian_japan_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "chola_unique_building",
+      "name": "石造神庙",
+      "category": "research",
+      "description": "朱罗的特色建筑，替代学院并体现远洋征服。",
+      "civilizationId": "chola",
+      "eraId": "medieval",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 101
+        },
+        {
+          "resourceId": "stone",
+          "amount": 81
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 43
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "chola"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "chola",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "sciencePointMul": 1.08,
+        "researchSpeedMul": 1.04,
+        "civilizationYieldMul": 1.069
+      },
+      "icon": "assets/historical-icons/buildings/chola_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/chola_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/chola_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "toltec_unique_building",
+      "name": "图拉武士柱殿",
+      "category": "civic",
+      "description": "托尔特克的特色建筑，替代人文馆并体现黑曜石军备。",
+      "civilizationId": "toltec",
+      "eraId": "medieval",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 103
+        },
+        {
+          "resourceId": "stone",
+          "amount": 83
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 44
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "toltec"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "toltec",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "civicPointMul": 1.08,
+        "satisfactionBonus": 2,
+        "civilizationYieldMul": 1.07
+      },
+      "icon": "assets/historical-icons/buildings/toltec_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/toltec_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/toltec_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "ming_unique_building",
+      "name": "宝船厂",
+      "category": "research",
+      "description": "明的特色建筑，替代学院并体现火器营制。",
+      "civilizationId": "ming",
+      "eraId": "exploration",
+      "replaces": "academy",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 105
+        },
+        {
+          "resourceId": "stone",
+          "amount": 85
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 45
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "ming"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "ming",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "productionMul": 1.06,
+        "buildSpeedMul": 1.04,
+        "civilizationYieldMul": 1.081
+      },
+      "icon": "assets/historical-icons/buildings/ming_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/ming_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/ming_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "ottoman_unique_building",
+      "name": "帝国兵工厂",
+      "category": "civic",
+      "description": "奥斯曼的特色建筑，替代人文馆并体现重炮攻城。",
+      "civilizationId": "ottoman",
+      "eraId": "exploration",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 107
+        },
+        {
+          "resourceId": "stone",
+          "amount": 87
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 46
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "ottoman"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "ottoman",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "tradeValueMul": 1.08,
+        "relationGainBonus": 2,
+        "civilizationYieldMul": 1.082
+      },
+      "icon": "assets/historical-icons/buildings/ottoman_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/ottoman_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/ottoman_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "spain_unique_building",
+      "name": "传教会所",
+      "category": "research",
+      "description": "西班牙的特色建筑，替代学院并体现方阵火枪。",
+      "civilizationId": "spain",
+      "eraId": "exploration",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 109
+        },
+        {
+          "resourceId": "stone",
+          "amount": 89
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 47
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "spain"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "spain",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "sciencePointMul": 1.08,
+        "researchSpeedMul": 1.04,
+        "civilizationYieldMul": 1.083
+      },
+      "icon": "assets/historical-icons/buildings/spain_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/spain_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/spain_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "portugal_unique_building",
+      "name": "航海学院",
+      "category": "civic",
+      "description": "葡萄牙的特色建筑，替代人文馆并体现海图学派。",
+      "civilizationId": "portugal",
+      "eraId": "exploration",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 111
+        },
+        {
+          "resourceId": "stone",
+          "amount": 91
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 48
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "portugal"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "portugal",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "civicPointMul": 1.08,
+        "satisfactionBonus": 2,
+        "civilizationYieldMul": 1.084
+      },
+      "icon": "assets/historical-icons/buildings/portugal_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/portugal_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/portugal_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "england_exploration_unique_building",
+      "name": "皇家交易所",
+      "category": "research",
+      "description": "英格兰的特色建筑，替代学院并体现海权萌芽。",
+      "civilizationId": "england_exploration",
+      "eraId": "exploration",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 113
+        },
+        {
+          "resourceId": "stone",
+          "amount": 93
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 49
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "england_exploration"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "england_exploration",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "armyPowerMul": 1.06,
+        "trainingSpeedMul": 1.05,
+        "civilizationYieldMul": 1.085
+      },
+      "icon": "assets/historical-icons/buildings/england_exploration_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/england_exploration_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/england_exploration_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "dutch_unique_building",
+      "name": "东印度商馆",
+      "category": "civic",
+      "description": "荷兰的特色建筑，替代人文馆并体现低地水工。",
+      "civilizationId": "dutch",
+      "eraId": "exploration",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 115
+        },
+        {
+          "resourceId": "stone",
+          "amount": 95
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 50
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "dutch"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "dutch",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "navalPowerMul": 1.08,
+        "routeCapacityBonus": 1,
+        "civilizationYieldMul": 1.086
+      },
+      "icon": "assets/historical-icons/buildings/dutch_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/dutch_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/dutch_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "mughal_unique_building",
+      "name": "红堡花园",
+      "category": "research",
+      "description": "莫卧儿的特色建筑，替代学院并体现复合军团。",
+      "civilizationId": "mughal",
+      "eraId": "exploration",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 117
+        },
+        {
+          "resourceId": "stone",
+          "amount": 97
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 51
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "mughal"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "mughal",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "productionMul": 1.06,
+        "buildSpeedMul": 1.04,
+        "civilizationYieldMul": 1.087
+      },
+      "icon": "assets/historical-icons/buildings/mughal_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/mughal_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/mughal_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "aztec_unique_building",
+      "name": "大神庙",
+      "category": "civic",
+      "description": "阿兹特克的特色建筑，替代人文馆并体现贡赋同盟。",
+      "civilizationId": "aztec",
+      "eraId": "exploration",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 119
+        },
+        {
+          "resourceId": "stone",
+          "amount": 99
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 52
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "aztec"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "aztec",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "tradeValueMul": 1.08,
+        "relationGainBonus": 2,
+        "civilizationYieldMul": 1.088
+      },
+      "icon": "assets/historical-icons/buildings/aztec_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/aztec_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/aztec_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "songhai_unique_building",
+      "name": "廷巴克图学宫",
+      "category": "research",
+      "description": "桑海的特色建筑，替代学院并体现盐金贸易。",
+      "civilizationId": "songhai",
+      "eraId": "exploration",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 121
+        },
+        {
+          "resourceId": "stone",
+          "amount": 101
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 53
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "songhai"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "songhai",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "sciencePointMul": 1.08,
+        "researchSpeedMul": 1.04,
+        "civilizationYieldMul": 1.089
+      },
+      "icon": "assets/historical-icons/buildings/songhai_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/songhai_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/songhai_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "sengoku_japan_unique_building",
+      "name": "山城天守",
+      "category": "civic",
+      "description": "战国日本的特色建筑，替代人文馆并体现兵农分离。",
+      "civilizationId": "sengoku_japan",
+      "eraId": "exploration",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 123
+        },
+        {
+          "resourceId": "stone",
+          "amount": 103
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 54
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "sengoku_japan"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "sengoku_japan",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "civicPointMul": 1.08,
+        "satisfactionBonus": 2,
+        "civilizationYieldMul": 1.09
+      },
+      "icon": "assets/historical-icons/buildings/sengoku_japan_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/sengoku_japan_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/sengoku_japan_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "qing_unique_building",
+      "name": "江南制造局",
+      "category": "research",
+      "description": "大清的特色建筑，替代学院并体现洋务自强。",
+      "civilizationId": "qing",
+      "eraId": "early_modern",
+      "replaces": "academy",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 125
+        },
+        {
+          "resourceId": "stone",
+          "amount": 105
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 55
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "qing"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "qing",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "productionMul": 1.06,
+        "buildSpeedMul": 1.04,
+        "civilizationYieldMul": 1.101
+      },
+      "icon": "assets/historical-icons/buildings/qing_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/qing_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/qing_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "british_empire_unique_building",
+      "name": "皇家船坞",
+      "category": "civic",
+      "description": "大英帝国的特色建筑，替代人文馆并体现工业舰队。",
+      "civilizationId": "british_empire",
+      "eraId": "early_modern",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 127
+        },
+        {
+          "resourceId": "stone",
+          "amount": 107
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 56
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "british_empire"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "british_empire",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "tradeValueMul": 1.08,
+        "relationGainBonus": 2,
+        "civilizationYieldMul": 1.102
+      },
+      "icon": "assets/historical-icons/buildings/british_empire_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/british_empire_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/british_empire_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "french_empire_unique_building",
+      "name": "凯旋门",
+      "category": "research",
+      "description": "法兰西的特色建筑，替代学院并体现军团制。",
+      "civilizationId": "french_empire",
+      "eraId": "early_modern",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 129
+        },
+        {
+          "resourceId": "stone",
+          "amount": 109
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 57
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "french_empire"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "french_empire",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "sciencePointMul": 1.08,
+        "researchSpeedMul": 1.04,
+        "civilizationYieldMul": 1.103
+      },
+      "icon": "assets/historical-icons/buildings/french_empire_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/french_empire_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/french_empire_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "russian_empire_unique_building",
+      "name": "冬宫兵工厂",
+      "category": "civic",
+      "description": "俄罗斯帝国的特色建筑，替代人文馆并体现纵深防御。",
+      "civilizationId": "russian_empire",
+      "eraId": "early_modern",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 131
+        },
+        {
+          "resourceId": "stone",
+          "amount": 111
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 58
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "russian_empire"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "russian_empire",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "civicPointMul": 1.08,
+        "satisfactionBonus": 2,
+        "civilizationYieldMul": 1.104
+      },
+      "icon": "assets/historical-icons/buildings/russian_empire_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/russian_empire_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/russian_empire_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "prussia_unique_building",
+      "name": "总参谋部",
+      "category": "research",
+      "description": "普鲁士的特色建筑，替代学院并体现任务式指挥。",
+      "civilizationId": "prussia",
+      "eraId": "early_modern",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 133
+        },
+        {
+          "resourceId": "stone",
+          "amount": 113
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 59
+        }
+      ],
+      "buildTime": 3,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "prussia"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "prussia",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "armyPowerMul": 1.06,
+        "trainingSpeedMul": 1.05,
+        "civilizationYieldMul": 1.105
+      },
+      "icon": "assets/historical-icons/buildings/prussia_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/prussia_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/prussia_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "usa_industrial_unique_building",
+      "name": "流水线工厂",
+      "category": "civic",
+      "description": "美国的特色建筑，替代人文馆并体现标准化生产。",
+      "civilizationId": "usa_industrial",
+      "eraId": "early_modern",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 135
+        },
+        {
+          "resourceId": "stone",
+          "amount": 115
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 60
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "usa_industrial"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "usa_industrial",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "navalPowerMul": 1.08,
+        "routeCapacityBonus": 1,
+        "civilizationYieldMul": 1.106
+      },
+      "icon": "assets/historical-icons/buildings/usa_industrial_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/usa_industrial_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/usa_industrial_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "meiji_japan_unique_building",
+      "name": "官营制铁所",
+      "category": "research",
+      "description": "明治日本的特色建筑，替代学院并体现富国强兵。",
+      "civilizationId": "meiji_japan",
+      "eraId": "early_modern",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 137
+        },
+        {
+          "resourceId": "stone",
+          "amount": 117
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 61
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "meiji_japan"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "meiji_japan",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "productionMul": 1.06,
+        "buildSpeedMul": 1.04,
+        "civilizationYieldMul": 1.107
+      },
+      "icon": "assets/historical-icons/buildings/meiji_japan_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/meiji_japan_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/meiji_japan_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "ottoman_reform_unique_building",
+      "name": "坦志麦特官署",
+      "category": "civic",
+      "description": "奥斯曼改革的特色建筑，替代人文馆并体现新军训练。",
+      "civilizationId": "ottoman_reform",
+      "eraId": "early_modern",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 139
+        },
+        {
+          "resourceId": "stone",
+          "amount": 119
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 62
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "ottoman_reform"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "ottoman_reform",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "tradeValueMul": 1.08,
+        "relationGainBonus": 2,
+        "civilizationYieldMul": 1.108
+      },
+      "icon": "assets/historical-icons/buildings/ottoman_reform_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/ottoman_reform_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/ottoman_reform_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "mexico_industrial_unique_building",
+      "name": "银矿庄园",
+      "category": "research",
+      "description": "墨西哥的特色建筑，替代学院并体现矿业出口。",
+      "civilizationId": "mexico_industrial",
+      "eraId": "early_modern",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 141
+        },
+        {
+          "resourceId": "stone",
+          "amount": 121
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 63
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "mexico_industrial"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "mexico_industrial",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "sciencePointMul": 1.08,
+        "researchSpeedMul": 1.04,
+        "civilizationYieldMul": 1.109
+      },
+      "icon": "assets/historical-icons/buildings/mexico_industrial_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/mexico_industrial_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/mexico_industrial_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "brazil_empire_unique_building",
+      "name": "咖啡出口港",
+      "category": "civic",
+      "description": "巴西帝国的特色建筑，替代人文馆并体现咖啡繁荣。",
+      "civilizationId": "brazil_empire",
+      "eraId": "early_modern",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 143
+        },
+        {
+          "resourceId": "stone",
+          "amount": 123
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 64
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "brazil_empire"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "brazil_empire",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "civicPointMul": 1.08,
+        "satisfactionBonus": 2,
+        "civilizationYieldMul": 1.11
+      },
+      "icon": "assets/historical-icons/buildings/brazil_empire_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/brazil_empire_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/brazil_empire_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "china_modern_unique_building",
+      "name": "大型联合工厂",
+      "category": "research",
+      "description": "中国的特色建筑，替代学院并体现纵深动员。",
+      "civilizationId": "china_modern",
+      "eraId": "modern",
+      "replaces": "academy",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 145
+        },
+        {
+          "resourceId": "stone",
+          "amount": 125
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 65
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "china_modern"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "china_modern",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "productionMul": 1.06,
+        "buildSpeedMul": 1.04,
+        "civilizationYieldMul": 1.121
+      },
+      "icon": "assets/historical-icons/buildings/china_modern_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/china_modern_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/china_modern_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "usa_modern_unique_building",
+      "name": "航空工业城",
+      "category": "civic",
+      "description": "美国的特色建筑，替代人文馆并体现联合兵种。",
+      "civilizationId": "usa_modern",
+      "eraId": "modern",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 147
+        },
+        {
+          "resourceId": "stone",
+          "amount": 127
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 66
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "usa_modern"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "usa_modern",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "tradeValueMul": 1.08,
+        "relationGainBonus": 2,
+        "civilizationYieldMul": 1.1219999999999999
+      },
+      "icon": "assets/historical-icons/buildings/usa_modern_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/usa_modern_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/usa_modern_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "russia_modern_unique_building",
+      "name": "重工业联合体",
+      "category": "research",
+      "description": "俄罗斯的特色建筑，替代学院并体现大纵深作战。",
+      "civilizationId": "russia_modern",
+      "eraId": "modern",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 149
+        },
+        {
+          "resourceId": "stone",
+          "amount": 129
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 67
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "russia_modern"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "russia_modern",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "sciencePointMul": 1.08,
+        "researchSpeedMul": 1.04,
+        "civilizationYieldMul": 1.123
+      },
+      "icon": "assets/historical-icons/buildings/russia_modern_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/russia_modern_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/russia_modern_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "uk_modern_unique_building",
+      "name": "雷达站",
+      "category": "civic",
+      "description": "英国的特色建筑，替代人文馆并体现特种作战。",
+      "civilizationId": "uk_modern",
+      "eraId": "modern",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 151
+        },
+        {
+          "resourceId": "stone",
+          "amount": 131
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 68
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "uk_modern"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "uk_modern",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "civicPointMul": 1.08,
+        "satisfactionBonus": 2,
+        "civilizationYieldMul": 1.124
+      },
+      "icon": "assets/historical-icons/buildings/uk_modern_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/uk_modern_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/uk_modern_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "france_modern_unique_building",
+      "name": "马奇诺要塞",
+      "category": "research",
+      "description": "法国的特色建筑，替代学院并体现机动作战。",
+      "civilizationId": "france_modern",
+      "eraId": "modern",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 153
+        },
+        {
+          "resourceId": "stone",
+          "amount": 133
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 69
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "france_modern"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "france_modern",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "armyPowerMul": 1.06,
+        "trainingSpeedMul": 1.05,
+        "civilizationYieldMul": 1.125
+      },
+      "icon": "assets/historical-icons/buildings/france_modern_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/france_modern_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/france_modern_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "germany_modern_unique_building",
+      "name": "精密机械厂",
+      "category": "civic",
+      "description": "德国的特色建筑，替代人文馆并体现任务式战术。",
+      "civilizationId": "germany_modern",
+      "eraId": "modern",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 155
+        },
+        {
+          "resourceId": "stone",
+          "amount": 135
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 70
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "germany_modern"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "germany_modern",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "navalPowerMul": 1.08,
+        "routeCapacityBonus": 1,
+        "civilizationYieldMul": 1.126
+      },
+      "icon": "assets/historical-icons/buildings/germany_modern_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/germany_modern_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/germany_modern_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "india_modern_unique_building",
+      "name": "国家理工学院",
+      "category": "research",
+      "description": "印度的特色建筑，替代学院并体现高原防卫。",
+      "civilizationId": "india_modern",
+      "eraId": "modern",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 157
+        },
+        {
+          "resourceId": "stone",
+          "amount": 137
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 71
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "india_modern"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "india_modern",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "productionMul": 1.06,
+        "buildSpeedMul": 1.04,
+        "civilizationYieldMul": 1.127
+      },
+      "icon": "assets/historical-icons/buildings/india_modern_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/india_modern_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/india_modern_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "japan_modern_unique_building",
+      "name": "综合制造所",
+      "category": "civic",
+      "description": "日本的特色建筑，替代人文馆并体现岛链防御。",
+      "civilizationId": "japan_modern",
+      "eraId": "modern",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 159
+        },
+        {
+          "resourceId": "stone",
+          "amount": 139
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 72
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "japan_modern"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "japan_modern",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "tradeValueMul": 1.08,
+        "relationGainBonus": 2,
+        "civilizationYieldMul": 1.1280000000000001
+      },
+      "icon": "assets/historical-icons/buildings/japan_modern_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/japan_modern_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/japan_modern_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "korea_modern_unique_building",
+      "name": "半导体园区",
+      "category": "research",
+      "description": "韩国的特色建筑，替代学院并体现电子制造。",
+      "civilizationId": "korea_modern",
+      "eraId": "modern",
+      "replaces": "academy",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 161
+        },
+        {
+          "resourceId": "stone",
+          "amount": 141
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 73
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "korea_modern"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "korea_modern",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "sciencePointMul": 1.08,
+        "researchSpeedMul": 1.04,
+        "civilizationYieldMul": 1.129
+      },
+      "icon": "assets/historical-icons/buildings/korea_modern_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/korea_modern_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/korea_modern_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "brazil_modern_unique_building",
+      "name": "生物科技园",
+      "category": "civic",
+      "description": "巴西的特色建筑，替代人文馆并体现雨林机动。",
+      "civilizationId": "brazil_modern",
+      "eraId": "modern",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 163
+        },
+        {
+          "resourceId": "stone",
+          "amount": 143
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 74
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "brazil_modern"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "brazil_modern",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "civicPointMul": 1.08,
+        "satisfactionBonus": 2,
+        "civilizationYieldMul": 1.13
+      },
+      "icon": "assets/historical-icons/buildings/brazil_modern_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/brazil_modern_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/brazil_modern_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
+      ]
+    },
+    {
+      "id": "nigeria_modern_unique_building",
+      "name": "拉各斯物流港",
+      "category": "research",
+      "description": "尼日利亚的特色建筑，替代学院并体现区域联运。",
+      "civilizationId": "nigeria_modern",
+      "eraId": "modern",
+      "replaces": "academy",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "research",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 165
+        },
+        {
+          "resourceId": "stone",
+          "amount": 145
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 75
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "nigeria_modern"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "nigeria_modern",
+        "replaces": "academy",
+        "unlockSystem": "tech",
+        "sciencePerWorker": 1.25,
+        "armyPowerMul": 1.06,
+        "trainingSpeedMul": 1.05,
+        "civilizationYieldMul": 1.131
+      },
+      "icon": "assets/historical-icons/buildings/nigeria_modern_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/nigeria_modern_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/nigeria_modern_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "research"
+      ]
+    },
+    {
+      "id": "indonesia_modern_unique_building",
+      "name": "群岛联运港",
+      "category": "civic",
+      "description": "印度尼西亚的特色建筑，替代人文馆并体现海峡控制。",
+      "civilizationId": "indonesia_modern",
+      "eraId": "modern",
+      "replaces": "civic_hall",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "maxWorkers": 5,
+      "jobType": "civic",
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 167
+        },
+        {
+          "resourceId": "stone",
+          "amount": 147
+        },
+        {
+          "resourceId": "food",
+          "amount": 10
+        },
+        {
+          "resourceId": "gold",
+          "amount": 76
+        }
+      ],
+      "buildTime": 4,
+      "unlockConditions": [
+        {
+          "type": "civilization",
+          "civilizationId": "indonesia_modern"
+        }
+      ],
+      "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "uniqueFunction": {
+        "civilizationId": "indonesia_modern",
+        "replaces": "civic_hall",
+        "unlockSystem": "civics",
+        "civicPerWorker": 1.25,
+        "navalPowerMul": 1.08,
+        "routeCapacityBonus": 1,
+        "civilizationYieldMul": 1.1320000000000001
+      },
+      "icon": "assets/historical-icons/buildings/indonesia_modern_unique_building.svg",
+      "imageDetail": "assets/historical-icons/buildings/indonesia_modern_unique_building.svg",
+      "mapIcon": "assets/historical-icons/buildings/indonesia_modern_unique_building.svg",
+      "labelLayout": {
+        "nameOffsetY": 0,
+        "progressBarOffsetY": 0,
+        "workersOffsetY": 0
+      },
+      "tags": [
+        "civilization",
+        "civic"
       ]
     }
   ],

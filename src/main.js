@@ -216,6 +216,7 @@ class Game {
     this.systems.culture.setHeroSystem(this.systems.hero);
     this.systems.tech.setEraSystem(this.systems.era);
     this.systems.culture.setEraSystem(this.systems.era);
+    this.systems.building.setEraSystem(this.systems.era);
     this.systems.culture.init();
     this.systems.era.setTechSystem(this.systems.tech);
     this.systems.era.setCultureSystem(this.systems.culture);
@@ -228,12 +229,14 @@ class Game {
     this.systems.commerce.setSystems({
       resource: this.systems.resource,
       building: this.systems.building,
-      diplomacy: this.systems.diplomacy
+      diplomacy: this.systems.diplomacy,
+      era: this.systems.era
     });
     this.systems.army.setSystems({
       building: this.systems.building,
       hero: this.systems.hero,
-      culture: this.systems.culture
+      culture: this.systems.culture,
+      era: this.systems.era
     });
     this.systems.wildSites.setSystems({ resource: this.systems.resource, era: this.systems.era, army: this.systems.army });
     this.systems.building.setLuxurySystem(this.systems.luxury);

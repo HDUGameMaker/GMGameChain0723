@@ -38,10 +38,28 @@ export class EraSystem {
     return this.getCivilizations().filter(civ => civ.eraId === eraId);
   }
 
-  getSelectedCivilization() {
-    const eraId = this.getCurrentEra()?.id;
+  getSelectedCivilization(eraId = this.getCurrentEra()?.id) {
     const id = this._selectedByEra[eraId];
     return id ? this.getCivilizations().find(civ => civ.id === id) || null : null;
+  }
+
+  getCivilizationForEra(eraId) { return this.getSelectedCivilization(eraId); }
+
+  getEffectiveResearchNode(kind, node) {
+    if (!node?.eraId) return node;
+    const civilization = this.getCivilizationForEra(node.eraId);
+    if (!civilization) return node;
+    const replacement = kind === 'tech' ? civilization.technologyReplacement : civilization.civicReplacement;
+    if (!replacement || replacement.replaces !== node.id) return node;
+    return {
+      ...node,
+      name: replacement.name,
+      description: `${replacement.name}是${civilization.name}对“${node.name}”的特色发展路线。${node.description || ''}`,
+      effects: { ...(node.effects || {}), ...(replacement.effects || {}) },
+      civilizationId: civilization.id,
+      originalName: node.name,
+      replacement: true
+    };
   }
 
   selectCivilization(civilizationId) {

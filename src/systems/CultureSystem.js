@@ -56,7 +56,12 @@ export class CultureSystem {
     this._updateStore();
   }
 
-  _getAll() { return configRegistry.get('culture') || []; }
+  _getAll() {
+    const nodes = configRegistry.get('culture') || [];
+    return this._eraSystem?.getEffectiveResearchNode
+      ? nodes.map(node => this._eraSystem.getEffectiveResearchNode('civic', node))
+      : nodes;
+  }
   get(id) { return this._getAll().find(c => c.id === id) || null; }
 
   getResearched() { return [...this._researched]; }
@@ -99,10 +104,13 @@ export class CultureSystem {
 
   getPointIncomeBreakdown() {
     const workforce = this._buildingSystem?.getWorkforceOutputs?.().civics || 0;
+    const civilizationBonuses = this._eraSystem?.getBonuses?.() || {};
+    const civilizationMultiplier = (civilizationBonuses.civicPointMul || 1) * (civilizationBonuses.civilizationYieldMul || 1);
     return {
       passive: PASSIVE_CIVICS_PER_TICK,
       workforce,
-      total: PASSIVE_CIVICS_PER_TICK + workforce
+      civilizationMultiplier,
+      total: (PASSIVE_CIVICS_PER_TICK + workforce) * civilizationMultiplier
     };
   }
 
