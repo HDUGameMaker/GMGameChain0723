@@ -109,6 +109,9 @@ class ConfigRegistry {
     };
 
     this._configs.buildings = mergeUnique(this._configs.buildings, content.buildings);
+    for (const building of this._configs.buildings || []) {
+      if ((building.tags || []).includes('naval_facility')) building.allowedGrounds = ['S', 'W'];
+    }
     this._configs.techs = mergeUnique(this._configs.techs, content.techs);
     this._configs.culture = mergeUnique(this._configs.culture, content.civics);
 

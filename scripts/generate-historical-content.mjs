@@ -253,7 +253,7 @@ const buildings = buildingDefs.map(([id, name, category, maxWorkers, uniqueFunct
   housingCapacity: uniqueFunction.housingCapacity || 0,
   soldierCapacity: uniqueFunction.soldierCapacity || 0,
   storageMultiplier: uniqueFunction.storageMultiplier || undefined,
-  allowedGrounds: id === 'forestry_camp' ? ['F'] : (id === 'stone_quarry' || id === 'gold_mine' ? ['R'] : (id === 'grain_farm' ? ['G', 'D'] : undefined)),
+  allowedGrounds: category === 'naval' ? ['S', 'W'] : (id === 'forestry_camp' ? ['F'] : (id === 'stone_quarry' || id === 'gold_mine' ? ['R'] : (id === 'grain_farm' ? ['G', 'D'] : undefined))),
   uniqueFunction, icon: icon('buildings', id), imageDetail: icon('buildings', id), mapIcon: icon('buildings', id),
   labelLayout: { nameOffsetY: 0, progressBarOffsetY: 0, workersOffsetY: 0 }, tags: [category]
 }));

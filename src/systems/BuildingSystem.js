@@ -433,7 +433,7 @@ export class BuildingSystem {
           const cx = b.gridX + dx;
           const cy = b.gridY + dy;
           if (cx < 0 || cy < 0 || cx >= map.gridWidth || cy >= map.gridHeight) continue;
-          if (map.grid[cy][cx] === 'W') waterCount++;
+          if (['S', 'W'].includes(map.grid[cy][cx])) waterCount++;
           if (waterCount >= 2) break;
         }
         if (waterCount >= 2) break;

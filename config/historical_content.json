@@ -3299,6 +3299,10 @@
       "production": null,
       "housingCapacity": 0,
       "soldierCapacity": 0,
+      "allowedGrounds": [
+        "S",
+        "W"
+      ],
       "uniqueFunction": {
         "routeCapacity": 2,
         "navalSupply": 10
@@ -3347,6 +3351,10 @@
       "production": null,
       "housingCapacity": 0,
       "soldierCapacity": 0,
+      "allowedGrounds": [
+        "S",
+        "W"
+      ],
       "uniqueFunction": {
         "trainsBranches": [
           "navy"
@@ -3397,6 +3405,10 @@
       "production": null,
       "housingCapacity": 0,
       "soldierCapacity": 0,
+      "allowedGrounds": [
+        "S",
+        "W"
+      ],
       "uniqueFunction": {
         "navalVisionRadius": 12,
         "navalSpeedMul": 1.08
