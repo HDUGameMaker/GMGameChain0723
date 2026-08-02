@@ -13,6 +13,7 @@
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
+import { getCounterAdjustedArmyPower } from './CombatResolver.js';
 
 export class EnemyExpansionSystem {
   constructor() {
@@ -56,17 +57,13 @@ export class EnemyExpansionSystem {
     return Math.max(1, Math.round((c.a || 2) + (c.b || 0.5) * day + (c.c || 0.02) * day * day));
   }
 
-  // ===== 军队战力（来自 availableUnits，纯 sum × combatPower） =====
-  getArmyPower() {
+  // ===== 军队战力（来自 availableUnits，可按敌方标签应用兵种克制） =====
+  getArmyPower(opponents = []) {
     const avail = store.getState('availableUnits') || {};
     const units = configRegistry.get('enemies')?.units || [];
-    const unitMap = {};
-    for (const u of units) unitMap[u.id] = u;
-    let total = 0;
-    for (const [id, n] of Object.entries(avail)) {
-      total += (n || 0) * (unitMap[id]?.combatPower || 1);
-    }
-    return total;
+    const unitIds = Object.entries(avail)
+      .flatMap(([id, count]) => Array(Math.max(0, count || 0)).fill(id));
+    return getCounterAdjustedArmyPower(unitIds, units, opponents).adjustedPower;
   }
 
   /** 从 availableUnits 移除总价 >= amount 的单位（便宜优先） */
@@ -233,7 +230,8 @@ export class EnemyExpansionSystem {
     // 炼金减益法术：区域内敌人强度被削减
     const penalty = this._spellSystem ? this._spellSystem.getStrengthPenaltyAt(x, y) : 0;
     const effStrength = Math.max(1, cell.strength - penalty);
-    const power = this.getArmyPower();
+    const opponents = cell.roleTags ? [{ domain: cell.domain || 'land', roleTags: cell.roleTags }] : [];
+    const power = this.getArmyPower(opponents);
     if (power < effStrength) {
       eventBus.emit('combatBroadcast', { message: `⚔️ 军队战力不足（${power} < ${effStrength}），需训练更多士兵` });
       return false;

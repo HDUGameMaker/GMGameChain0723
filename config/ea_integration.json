@@ -1,0 +1,54 @@
+{
+  "unitBranches": [
+    {"id":"archer","name":"弓弩兵","order":2},
+    {"id":"siege","name":"攻城器械","order":4}
+  ],
+  "unitProfiles": {
+    "warrior":{"roleTags":["light_infantry","melee"],"strongAgainst":["archer"],"weakAgainst":["mounted","armored"]},
+    "swordsman":{"roleTags":["heavy_infantry","melee","armored"],"strongAgainst":["light_infantry","archer"],"weakAgainst":["armor_piercing","siege"]},
+    "musketeer":{"roleTags":["gunpowder","ranged","armor_piercing"],"strongAgainst":["armored","heavy_infantry"],"weakAgainst":["mounted","siege"]},
+    "modern_infantry":{"roleTags":["gunpowder","ranged","mobile"],"strongAgainst":["light_infantry","mounted"],"weakAgainst":["artillery","air"]},
+    "knight":{"roleTags":["mounted","armored","melee"],"strongAgainst":["archer","siege"],"weakAgainst":["spear","gunpowder"]},
+    "armored_cavalry":{"roleTags":["mounted","armored","mobile"],"strongAgainst":["archer","artillery"],"weakAgainst":["spear","armor_piercing"]},
+    "biplane":{"roleTags":["air","mobile"],"strongAgainst":["siege","naval_light"],"weakAgainst":["anti_air","gunpowder"]},
+    "jet_fighter":{"roleTags":["air","modern","mobile"],"strongAgainst":["air","artillery"],"weakAgainst":["anti_air"]},
+    "cannon":{"roleTags":["artillery","siege","ranged"],"strongAgainst":["fortification","heavy_infantry"],"weakAgainst":["mounted","air"]},
+    "tank":{"roleTags":["armored","mobile","artillery"],"strongAgainst":["light_infantry","fortification"],"weakAgainst":["armor_piercing","air"]},
+    "rocket_artillery":{"roleTags":["artillery","ranged","modern"],"strongAgainst":["fortification","clustered"],"weakAgainst":["mobile","air"]},
+    "raft":{"roleTags":["naval_transport","naval_light"],"strongAgainst":[],"weakAgainst":["naval_raider","naval_heavy"]},
+    "sailing_ship":{"roleTags":["naval_raider","naval_medium"],"strongAgainst":["naval_transport","naval_light"],"weakAgainst":["naval_heavy","fire_ship"]},
+    "battleship":{"roleTags":["naval_heavy","artillery"],"strongAgainst":["naval_medium","fortification"],"weakAgainst":["fire_ship","air"]},
+    "missile_destroyer":{"roleTags":["naval_heavy","anti_air","modern"],"strongAgainst":["air","naval_heavy"],"weakAgainst":["naval_swarm"]}
+  },
+  "buildings": [
+    {"id":"dock","name":"码头","description":"建在水面并连接陆路，是训练和部署早期海军的基础设施。","icon":"","mapIcon":"","footprint":{"width":2,"height":2},"maxCount":3,"initialBuilding":false,"housingCapacity":0,"soldierCapacity":6,"maxWorkers":0,"buildCost":[{"resourceId":"wood","amount":80},{"resourceId":"stone","amount":40},{"resourceId":"gold","amount":15}],"buildTime":5,"upgradesFrom":null,"upgradesTo":"shipyard","upgradeCost":null,"production":null,"synthesisRecipes":[],"allowedGrounds":["W"],"tags":["dock","naval_facility"],"unlockConditions":[{"type":"tech","techId":"sail"}]},
+    {"id":"shipyard","name":"造船厂","description":"大型港口工场，提供更高海军容量和重型舰艇训练能力。","icon":"","mapIcon":"","footprint":{"width":3,"height":2},"maxCount":2,"initialBuilding":false,"housingCapacity":0,"soldierCapacity":12,"maxWorkers":0,"buildCost":[],"upgradeCost":[{"resourceId":"wood","amount":120},{"resourceId":"stone","amount":80},{"resourceId":"gold","amount":45}],"buildTime":8,"upgradesFrom":"dock","upgradesTo":null,"production":null,"synthesisRecipes":[],"allowedGrounds":["W"],"tags":["dock","shipyard","naval_facility"],"unlockConditions":[{"type":"tech","techId":"steam_engine"}]},
+    {"id":"coastal_watch","name":"海防哨塔","description":"监视近岸水域，提前发现海盗与海兽。","icon":"","mapIcon":"","footprint":{"width":1,"height":1},"maxCount":4,"initialBuilding":false,"housingCapacity":0,"maxWorkers":0,"buildCost":[{"resourceId":"wood","amount":30},{"resourceId":"stone","amount":35},{"resourceId":"gold","amount":8}],"buildTime":4,"upgradesFrom":null,"upgradesTo":null,"production":null,"synthesisRecipes":[],"tags":["defense","coastal_watch"],"unlockConditions":[{"type":"tech","techId":"sail"}]}
+  ],
+  "units": [
+    {"id":"spearman","name":"长矛兵","domain":"land","branch":"infantry","tier":0,"combatPower":4,"hp":8,"attack":3,"attackRange":1,"commandPoints":2,"researchCost":20,"prerequisiteTechs":["hunting"],"cost":[{"resourceId":"wood","amount":15},{"resourceId":"food","amount":12}],"unlocked":false,"roleTags":["spear","light_infantry","melee"],"strongAgainst":["mounted"],"weakAgainst":["archer","heavy_infantry"]},
+    {"id":"pikeman","name":"重装枪兵","domain":"land","branch":"infantry","tier":1,"combatPower":9,"hp":13,"attack":5,"attackRange":1,"commandPoints":4,"researchCost":55,"prerequisiteUnits":["spearman"],"prerequisiteTechs":["military_training"],"cost":[{"resourceId":"stone","amount":18},{"resourceId":"food","amount":20},{"resourceId":"gold","amount":5}],"unlocked":false,"roleTags":["spear","heavy_infantry","armored"],"strongAgainst":["mounted","armored"],"weakAgainst":["archer","artillery"]},
+    {"id":"archer","name":"弓箭手","domain":"land","branch":"archer","tier":0,"combatPower":4,"hp":6,"attack":3,"attackRange":3,"commandPoints":2,"researchCost":20,"prerequisiteTechs":["hunting"],"cost":[{"resourceId":"wood","amount":18},{"resourceId":"food","amount":12}],"unlocked":false,"roleTags":["archer","ranged"],"strongAgainst":["light_infantry","spear"],"weakAgainst":["mounted","armored"]},
+    {"id":"crossbowman","name":"弩兵","domain":"land","branch":"archer","tier":1,"combatPower":8,"hp":7,"attack":6,"attackRange":3,"commandPoints":3,"researchCost":55,"prerequisiteUnits":["archer"],"prerequisiteTechs":["precision_manufacturing"],"cost":[{"resourceId":"wood","amount":15},{"resourceId":"stone","amount":10},{"resourceId":"food","amount":18}],"unlocked":false,"roleTags":["archer","ranged","armor_piercing"],"strongAgainst":["armored","spear"],"weakAgainst":["mounted","siege"]},
+    {"id":"longbowman","name":"长弓手","domain":"land","branch":"archer","tier":2,"combatPower":14,"hp":8,"attack":9,"attackRange":5,"commandPoints":5,"researchCost":90,"prerequisiteUnits":["archer"],"prerequisiteTechs":["advanced_military"],"cost":[{"resourceId":"wood","amount":24},{"resourceId":"food","amount":25},{"resourceId":"gold","amount":8}],"unlocked":false,"roleTags":["archer","ranged","long_range"],"strongAgainst":["light_infantry","spear","artillery"],"weakAgainst":["mounted","armored"]},
+    {"id":"catapult","name":"投石车","domain":"land","branch":"siege","tier":1,"combatPower":11,"hp":11,"attack":9,"attackRange":4,"commandPoints":6,"researchCost":70,"prerequisiteTechs":["mechanical_engineering"],"cost":[{"resourceId":"wood","amount":35},{"resourceId":"stone","amount":15},{"resourceId":"gold","amount":5}],"unlocked":false,"roleTags":["siege","artillery","ranged"],"strongAgainst":["fortification","clustered"],"weakAgainst":["mounted","melee"]},
+    {"id":"trebuchet","name":"配重投石机","domain":"land","branch":"siege","tier":2,"combatPower":21,"hp":14,"attack":15,"attackRange":6,"commandPoints":9,"researchCost":120,"prerequisiteUnits":["catapult"],"prerequisiteTechs":["precision_manufacturing"],"cost":[{"resourceId":"wood","amount":55},{"resourceId":"stone","amount":25},{"resourceId":"gold","amount":12}],"unlocked":false,"roleTags":["siege","artillery","long_range"],"strongAgainst":["fortification","armored"],"weakAgainst":["mounted","air"]},
+    {"id":"siege_tower","name":"攻城塔","domain":"land","branch":"siege","tier":1,"combatPower":10,"hp":22,"attack":3,"attackRange":1,"commandPoints":7,"researchCost":75,"prerequisiteTechs":["military_training"],"cost":[{"resourceId":"wood","amount":50},{"resourceId":"stone","amount":25}],"unlocked":false,"roleTags":["siege","armored","transport"],"strongAgainst":["fortification","archer"],"weakAgainst":["fire","artillery"]},
+    {"id":"galley","name":"桨帆战船","domain":"naval","branch":"navy","tier":1,"combatPower":9,"hp":14,"attack":6,"attackRange":2,"commandPoints":5,"researchCost":55,"prerequisiteTechs":["sail"],"cost":[{"resourceId":"wood","amount":45},{"resourceId":"stone","amount":10},{"resourceId":"food","amount":30},{"resourceId":"gold","amount":5}],"unlocked":false,"roleTags":["naval_raider","naval_light"],"strongAgainst":["naval_transport","naval_light"],"weakAgainst":["naval_heavy","fire_ship"]},
+    {"id":"fire_ship","name":"火船","domain":"naval","branch":"navy","tier":2,"combatPower":15,"hp":8,"attack":14,"attackRange":1,"commandPoints":5,"researchCost":85,"prerequisiteUnits":["galley"],"prerequisiteTechs":["gunpowder","sail"],"cost":[{"resourceId":"wood","amount":30},{"resourceId":"stone","amount":25},{"resourceId":"food","amount":18},{"resourceId":"gold","amount":8}],"unlocked":false,"roleTags":["fire_ship","naval_swarm"],"strongAgainst":["naval_heavy","naval_medium"],"weakAgainst":["naval_light","ranged"]}
+  ],
+  "enemies": [
+    {"id":"wolf","name":"野狼","icon":"🐺","faction":"wildlife","domain":"land","roleTags":["beast","mobile"],"maxHp":5,"attack":2,"spawnConditions":{"minDay":2},"drops":[{"resourceId":"food","amount":2}]},
+    {"id":"boar","name":"野猪","icon":"🐗","faction":"wildlife","domain":"land","roleTags":["beast","armored"],"maxHp":9,"attack":3,"spawnConditions":{"minDay":4},"drops":[{"resourceId":"food","amount":4}]},
+    {"id":"bandit_raider","name":"掠夺者","icon":"🗡️","faction":"outpost","domain":"land","roleTags":["light_infantry","mobile"],"maxHp":10,"attack":4,"spawnConditions":{"minDay":7},"drops":[{"resourceId":"food","amount":5}]},
+    {"id":"bandit_archer","name":"盗匪弓手","icon":"🏹","faction":"outpost","domain":"land","roleTags":["archer","ranged"],"maxHp":8,"attack":4,"attackRange":3,"spawnConditions":{"minDay":9},"drops":[{"resourceId":"wood","amount":6}]},
+    {"id":"outpost_guard","name":"据点守卫","icon":"🛡️","faction":"outpost","domain":"land","roleTags":["heavy_infantry","armored"],"maxHp":15,"attack":5,"spawnConditions":{"minDay":14},"drops":[{"resourceId":"gold","amount":4}]},
+    {"id":"outpost_crossbow","name":"据点弩手","icon":"🎯","faction":"outpost","domain":"land","roleTags":["archer","armor_piercing"],"maxHp":12,"attack":6,"attackRange":3,"spawnConditions":{"minDay":16},"drops":[{"resourceId":"wood","amount":5}]},
+    {"id":"corsair_galley","name":"海盗桨船","icon":"🏴‍☠️","faction":"corsair","domain":"naval","roleTags":["naval_raider","naval_light"],"maxHp":18,"attack":6,"spawnConditions":{"minDay":10},"drops":[{"resourceId":"gold","amount":8}]},
+    {"id":"sea_serpent","name":"海蛇","icon":"🐉","faction":"wildlife","domain":"naval","roleTags":["beast","naval_heavy"],"maxHp":24,"attack":8,"spawnConditions":{"minDay":18},"drops":[{"resourceId":"food","amount":10}]}
+  ],
+  "outpostActions": [],
+  "outposts": [],
+  "heroes": [],
+  "events": []
+}

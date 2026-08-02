@@ -6,6 +6,7 @@
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
+import { getMatchupMultiplier, isDomainCompatible } from './CombatResolver.js';
 
 export class CombatSystem {
   constructor() {
@@ -156,6 +157,7 @@ export class CombatSystem {
         const x = nearGridX + dx;
         const y = nearGridY + dy;
         if (x < 0 || y < 0 || x >= this._mapConfig.gridWidth || y >= this._mapConfig.gridHeight) continue;
+        if (!isDomainCompatible(unitConfig.domain || 'land', this._mapConfig.grid[y]?.[x])) continue;
         if (this.getEnemyAt(x, y) || this.getUnitAt(x, y)) continue;
         let blocked = false;
         for (const b of this._buildingSystem.buildings) {
@@ -173,8 +175,8 @@ export class CombatSystem {
           attackRange: unitConfig.attackRange,
           attackCooldown: unitConfig.attackCooldown || 1,
           _cooldownTicks: 0,
-          // 训练营单位占用 1 个建造工人池名额，阵亡时需释放
-          occupiesWorker: true
+          // 主版本人口已退役，地图部署不再占用工人
+          occupiesWorker: false
         });
         this._notify();
         eventBus.emit('unitSpawned', { type, gridX: x, gridY: y });
@@ -189,7 +191,7 @@ export class CombatSystem {
     for (const cfg of this._enemyConfigs) {
       if (data.day < (cfg.spawnConditions?.minDay || 1)) continue;
       if (Math.random() > 0.15) continue;
-      const pos = this._findSpawnPosition();
+      const pos = this._findSpawnPosition(cfg);
       if (pos) this._spawnEnemyAt(cfg.id, pos.x, pos.y);
     }
   }
@@ -197,6 +199,7 @@ export class CombatSystem {
   _spawnEnemyAt(enemyId, gridX, gridY) {
     const cfg = this.getEnemyConfig(enemyId);
     if (!cfg) return false;
+    if (!isDomainCompatible(cfg.domain || 'land', this._mapConfig?.grid[gridY]?.[gridX])) return false;
     if (this.getEnemyAt(gridX, gridY)) return false;
     for (const b of this._buildingSystem.buildings) {
       const c = configRegistry.getBuilding(b.buildingId);
@@ -215,17 +218,18 @@ export class CombatSystem {
     return true;
   }
 
-  _findSpawnPosition() {
+  _findSpawnPosition(config = {}) {
     if (!this._mapConfig) return null;
     // 在光源边缘6~13格环带内刷新
     const ringPos = this._findSpawnOnVisibilityRing();
-    if (ringPos) return ringPos;
+    if (ringPos && isDomainCompatible(config.domain || 'land', this._mapConfig.grid[ringPos.y]?.[ringPos.x])) return ringPos;
     // 回退：全图随机（仅排除建筑/已占格/光照区域内）
     const visible = this._getVisibilityMatrix();
     for (let i = 0; i < 100; i++) {
       const x = Math.floor(Math.random() * this._mapConfig.gridWidth);
       const y = Math.floor(Math.random() * this._mapConfig.gridHeight);
       if (!this._mapConfig.grid[y]?.[x]) continue;
+      if (!isDomainCompatible(config.domain || 'land', this._mapConfig.grid[y][x])) continue;
       if (this._isBlocked(x, y)) continue;
       if (this.getEnemyAt(x, y) || this.getUnitAt(x, y)) continue;
       // 不在光照区域内
@@ -308,8 +312,10 @@ export class CombatSystem {
       const dist = Math.abs(unit.gridX - nearestEnemy.gridX) + Math.abs(unit.gridY - nearestEnemy.gridY);
 
       if (dist <= unit.attackRange) {
-        nearestEnemy.hp -= unit.attack;
         const unitConfig = this._getUnitConfig(unit.type);
+        const enemyConfig = this.getEnemyConfig(nearestEnemy.enemyId);
+        const attackMul = unit.source === 'tamed' ? 1 : getMatchupMultiplier(unitConfig, enemyConfig);
+        nearestEnemy.hp -= Math.max(1, Math.round(unit.attack * attackMul));
         const unitLabel = unit.source === 'tamed' ? (unit.tamedInfo?.name || '驯化单位') : (unitConfig?.name || unit.type || '战斗单位');
         this._broadcast(`⚔️ ${unitLabel} 攻击！${nearestEnemy.hp <= 0 ? '击杀敌人' : `敌人HP ${nearestEnemy.hp}`}`);
         if (nearestEnemy.hp <= 0) {
@@ -339,8 +345,9 @@ export class CombatSystem {
         // unitDamageTakenMul（炼金负面效果）：放大单位受到的伤害
         const aEffCombat = this._alchemySystem ? (this._alchemySystem.getEffects().combat || {}) : {};
         const takenMul = aEffCombat.unitDamageTakenMul || 1;
-        nearestUnit.hp -= Math.round((cfg.attack || 1) * takenMul);
         const unitConfig = this._getUnitConfig(nearestUnit.type);
+        const counterMul = nearestUnit.source === 'tamed' ? 1 : getMatchupMultiplier(cfg, unitConfig);
+        nearestUnit.hp -= Math.max(1, Math.round((cfg.attack || 1) * takenMul * counterMul));
         const unitLabel = nearestUnit.source === 'tamed' ? (nearestUnit.tamedInfo?.name || '驯化单位') : (unitConfig?.name || nearestUnit.type || '战斗单位');
         this._broadcast(`💥 ${cfg.name} 攻击${unitLabel}！`);
         if (nearestUnit.hp <= 0) {

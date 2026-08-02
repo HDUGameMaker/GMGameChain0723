@@ -9,7 +9,8 @@ const activeFiles = [
   'config/initial.json', 'config/items.json', 'config/buildings.json',
   'config/events/events_base.json', 'config/events/events_expedition.json', 'config/events/events_map.json',
   'config/techs.json', 'config/enemies.json', 'config/alchemy.json', 'config/colonies.json',
-  'config/building_tech.json', 'config/territory.json', 'config/enemy_expansion.json'
+  'config/building_tech.json', 'config/territory.json', 'config/enemy_expansion.json',
+  'config/ea_integration.json'
 ];
 
 function collectResourceIds(value, found = []) {

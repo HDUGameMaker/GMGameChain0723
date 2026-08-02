@@ -3,6 +3,7 @@
  * 消耗资源训练军事单位（受军营士兵上限约束）
  */
 import { eventBus } from '../../core/EventBus.js';
+import { evaluateTrainingEligibility } from '../../systems/TrainingRules.js';
 
 function _store() { return window.__game?.store; }
 function _cfg() { return window.__game?.configRegistry?.get('enemies')?.units || []; }
@@ -15,6 +16,12 @@ function _saveAvail(av) {
   eventBus.emit('armyChanged', { reason: 'training', version });
 }
 function _techSystem() { return window.__game?.systems?.tech; }
+function _hasNavalFacility() {
+  return (_building()?.buildings || []).some(building => {
+    if (building.status !== 'active') return false;
+    return window.__game?.configRegistry?.getBuilding(building.buildingId)?.tags?.includes('naval_facility');
+  });
+}
 
 /** 士兵总数 / 容纳上限（上限来自军营的 soldierCapacity） */
 function _soldierStats() {
@@ -77,6 +84,11 @@ export function renderTrainingPanel(data, body, pm) {
       '<span style="font-size:12px;color:#808098;">' + ((u.domain === 'naval') ? '海军' : '陆军') + ' · ⚔️' + u.combatPower + ' · CP' + (u.commandPoints||1) + '</span>';
     card.appendChild(top);
 
+    const counters = document.createElement('div');
+    counters.style.cssText = 'font-size:10px;color:#8fa5c6;margin:-4px 0 9px;';
+    counters.textContent = `克制：${(u.strongAgainst || []).join(' / ') || '无'}　受制：${(u.weakAgainst || []).join(' / ') || '无'}`;
+    card.appendChild(counters);
+
     /* 未解锁提示 */
     if (!_isUnitUnlocked(u)) {
       const lockMsg = document.createElement('div');
@@ -109,9 +121,15 @@ export function renderTrainingPanel(data, body, pm) {
     countLabel.textContent = '已训练: ' + availCount;
     btnRow.appendChild(countLabel);
 
-    const canAfford = resourceSys ? resourceSys.canAfford(costs) : false;
-    const hasCapacity = soldier.count < soldier.cap;
-    const canTrain = canAfford && hasCapacity;
+    const eligibility = evaluateTrainingEligibility({
+      unit: u,
+      canAfford: resourceSys ? resourceSys.canAfford(costs) : false,
+      soldierCount: soldier.count,
+      soldierCap: soldier.cap,
+      isUnlocked: _isUnitUnlocked(u),
+      hasNavalFacility: _hasNavalFacility()
+    });
+    const canTrain = eligibility.ok;
 
     const trainBtn = document.createElement('button');
     trainBtn.textContent = '训练 x1';
@@ -120,14 +138,16 @@ export function renderTrainingPanel(data, body, pm) {
     trainBtn.addEventListener('mouseleave', () => { if (canTrain) trainBtn.style.background = 'rgba(78,203,113,0.2)'; });
     trainBtn.addEventListener('click', () => {
       const s = _soldierStats(); // 重新读取，避免连点失同步
-      const afford = resourceSys ? resourceSys.canAfford(costs) : false;
-      const room = s.count < s.cap;
-      if (!afford || !room) {
-        let msg = '训练失败：';
-        const reasons = [];
-        if (!afford) reasons.push('资源不足');
-        if (!room) reasons.push('士兵已达上限 ' + s.cap + '（建造/升级军营）');
-        pm.alert(msg + reasons.join('，'));
+      const current = evaluateTrainingEligibility({
+        unit: u,
+        canAfford: resourceSys ? resourceSys.canAfford(costs) : false,
+        soldierCount: s.count,
+        soldierCap: s.cap,
+        isUnlocked: _isUnitUnlocked(u),
+        hasNavalFacility: _hasNavalFacility()
+      });
+      if (!current.ok) {
+        pm.alert('训练失败：' + current.reasons.join('，'));
         return;
       }
       if (resourceSys) resourceSys.consumeAll(costs);

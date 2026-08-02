@@ -36,7 +36,8 @@ class ConfigRegistry {
       'doctrines': 'config/doctrines.json',
       'territory': 'config/territory.json',
       'enemyExpansion': 'config/enemy_expansion.json',
-      'buildingTech': 'config/building_tech.json'
+      'buildingTech': 'config/building_tech.json',
+      'eaIntegration': 'config/ea_integration.json'
     };
 
     const loadPromises = Object.entries(configFiles).map(async ([key, path]) => {
@@ -56,10 +57,42 @@ class ConfigRegistry {
 
     await Promise.all(loadPromises);
 
+    this._applyEaIntegration();
+
     // 合成配方继承：高级建筑自动继承低级建筑的合成配方
     this._inheritSynthesisRecipes();
 
     console.log('[ConfigRegistry] All configs loaded:', Object.keys(this._configs));
+  }
+
+  /**
+   * 将 Early Assess 的兼容内容按 ID 追加到主版本。
+   * 主版本同 ID 配置永远优先，扩展只能补充标签或新增内容。
+   */
+  _applyEaIntegration() {
+    const content = this._configs.eaIntegration;
+    const enemies = this._configs.enemies;
+    if (!content || !enemies) return;
+    const mergeUnique = (base = [], additions = []) => {
+      const ids = new Set(base.map(item => item.id));
+      return [...base, ...additions.filter(item => !ids.has(item.id))];
+    };
+    enemies.unitBranches = mergeUnique(enemies.unitBranches, content.unitBranches);
+    enemies.units = (enemies.units || []).map(unit => ({ ...unit, ...(content.unitProfiles?.[unit.id] || {}) }));
+    enemies.units = mergeUnique(enemies.units, content.units);
+    enemies.enemies = mergeUnique(enemies.enemies, content.enemies);
+    this._configs.buildings = mergeUnique(this._configs.buildings, content.buildings);
+
+    for (const building of content.buildings || []) {
+      for (const condition of building.unlockConditions || []) {
+        if (condition.type !== 'tech') continue;
+        const tech = (this._configs.techs || []).find(node => node.id === condition.techId);
+        if (!tech) continue;
+        if (!tech.unlocks) tech.unlocks = {};
+        if (!Array.isArray(tech.unlocks.buildings)) tech.unlocks.buildings = [];
+        if (!tech.unlocks.buildings.includes(building.id)) tech.unlocks.buildings.push(building.id);
+      }
+    }
   }
 
   /**
