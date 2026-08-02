@@ -225,6 +225,15 @@ export function renderBuildingDetailPanel(data, body, pm) {
     avail.textContent = `可用工人: ${populationSystem.getAvailableWorkers()}`;
     workerSection.appendChild(avail);
 
+    const functionState = buildingSystem.getBuildingFunctionState?.(buildingIndex);
+    if (functionState) {
+      const jobInfo = document.createElement('div');
+      jobInfo.style.cssText = 'text-align:center;font-size:11px;color:#b8c7e0;margin-top:5px;';
+      const unlockText = functionState.unlockedSystem ? ` · 解锁 ${functionState.unlockedSystem === 'tech' ? '科技树' : functionState.unlockedSystem === 'civics' ? '人文树' : functionState.unlockedSystem}` : '';
+      jobInfo.textContent = `岗位：${functionState.jobType} · 当前岗位产出 ${functionState.outputPerTick}/tick${unlockText}`;
+      workerSection.appendChild(jobInfo);
+    }
+
     container.appendChild(workerSection);
   }
 

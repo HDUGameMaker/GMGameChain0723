@@ -389,6 +389,8 @@ export class HUD {
     store.subscribe('populationAvailable', () => this._refreshPopulation());
     store.subscribe('populationWork', () => this._refreshPopulation());
     store.subscribe('populationMilitary', () => this._refreshPopulation());
+    store.subscribe('populationSatisfaction', () => this._refreshPopulation());
+    store.subscribe('populationJobs', () => this._refreshPopulation());
     store.subscribe('populationExpeditionWorkers', () => this._refreshPopulation());
     store.subscribe('populationConstructionWorkers', () => this._refreshPopulation());
     store.subscribe('timePeriod', () => this._refreshTime());
@@ -707,6 +709,12 @@ export class HUD {
 
   _refreshPopulation() {
     const bs = this.systems.building;
+    const population = this.systems.population;
+    const stats = population?.getPopulationStats?.(this.systems.combat) || {};
+    const totalPopulation = stats.total || 0;
+    const housing = stats.housing || 0;
+    const idle = stats.idle || 0;
+    const satisfaction = Math.round(stats.satisfaction || 0);
     const soldierCount = bs ? bs.getTotalSoldierCount() : 0;
     const soldierCap = bs ? bs.getTotalSoldierCapacity() : 0;
     const armies = store.getState('armies') || [];
@@ -718,29 +726,31 @@ export class HUD {
 
     this.populationDisplay.innerHTML =
       `<div class="population-line">` +
-        `<span class="hud-info-main">⚔️ 士兵 <span style="color:${capColor}">${soldierCount}</span>/<span${capClass}>${soldierCap}</span></span>` +
-        `<span class="hud-info-sub">储备 ${reserve} · 军团 ${armies.length}</span>` +
+        `<span class="hud-info-main">👥 人口 ${totalPopulation}/${housing}</span>` +
+        `<span class="hud-info-sub">空闲 ${idle} · 岗位 ${stats.assigned || 0} · 满意 ${satisfaction}</span>` +
+        `<span class="hud-info-sub">⚔️ 军役 <span style="color:${capColor}">${soldierCount}</span>/<span${capClass}>${soldierCap}</span> · ${armies.length}支军团</span>` +
       `</div>`;
 
     // 士兵变化弹跳动画
-    if (this._prevPopulation !== 0 && this._prevPopulation !== soldierCount && window.gsap) {
+    if (this._prevPopulation !== 0 && this._prevPopulation !== totalPopulation && window.gsap) {
       gsap.fromTo(this.populationDisplay,
         { scale: 1.2 },
         { scale: 1, duration: 0.4, ease: 'back.out(3)' }
       );
     }
-    this._prevPopulation = soldierCount;
+    this._prevPopulation = totalPopulation;
 
     this.populationDisplay.onclick = (e) => {
       window.__game?.systems?.quest?.onPlayerAction('click_population');
       const foodAmount = this.systems.resource ? this.systems.resource.getAmount('food') : 0;
       const armyUnitTotal = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
       const armyDetail = armies.map(a => a.name + ':' + (a.unitIds || []).length + '单位').join(' · ');
+      const jobs = Object.entries(stats.jobs || {}).map(([job, amount]) => `${job}:${amount}`).join(' · ');
       const warn = soldierCap <= 0
         ? '\n⚠️ 尚无军营，无法训练士兵'
         : (atCap ? '\n⚠️ 已达士兵上限，建造/升级军营' : '');
       this._showPopover(e.target,
-        `士兵: ${soldierCount} / 上限 ${soldierCap}\n训练储备: ${reserve} 单位\n军团编制: ${armies.length}支 · ${armyUnitTotal}单位\n${armyDetail || ''}\n食物储备: ${foodAmount}${warn}`
+        `人口: ${totalPopulation} / 住房 ${housing}\n空闲人口: ${idle}\n建筑岗位: ${jobs || '无'}\n满意度: ${satisfaction}/100\n每日食物消耗: ${population.getFoodConsumptionAmount(totalPopulation)}\n士兵: ${soldierCount} / 上限 ${soldierCap}\n训练储备: ${reserve} 单位\n军团编制: ${armies.length}支 · ${armyUnitTotal}单位\n${armyDetail || ''}\n食物储备: ${foodAmount}${warn}`
       );
     };
   }

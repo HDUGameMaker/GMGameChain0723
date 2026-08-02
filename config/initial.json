@@ -9,56 +9,24 @@
       "amount": 150
     },
     {
-      "resourceId": "wood",
-      "amount": 0
-    },
-    {
-      "resourceId": "stone",
-      "amount": 0
-    },
-    {
-      "resourceId": "stone",
-      "amount": 0
-    },
-    {
-      "resourceId": "gold",
-      "amount": 0
-    },
-    {
-      "resourceId": "gold",
-      "amount": 0
-    },
-    {
-      "resourceId": "gold",
-      "amount": 0
-    },
-    {
-      "resourceId": "stone",
-      "amount": 0
-    },
-    {
-      "resourceId": "gold",
-      "amount": 0
-    },
-    {
       "resourceId": "food",
       "amount": 100
     },
     {
-      "resourceId": "food",
-      "amount": 0
+      "resourceId": "gold",
+      "amount": 50
     }
   ],
   "items": [],
   "population": {
-    "initial": 2
+    "initial": 12
   },
   "populationGrowth": {
     "min": 2,
     "max": 4
   },
   "inspirationPerPerson": 1,
-  "foodPerPerson": 5,
+  "foodPerPerson": 1,
   "capacities": {
     "expeditionResourceCapacity": 100,
     "backpackCapacity": 10

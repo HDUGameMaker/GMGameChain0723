@@ -391,6 +391,11 @@
       "buildingId": "warehouse",
       "gridX": 77,
       "gridY": 109
+    },
+    {
+      "buildingId": "timber_house",
+      "gridX": 82,
+      "gridY": 110
     }
   ],
   "viewportCenter": {

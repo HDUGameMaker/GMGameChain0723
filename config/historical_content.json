@@ -1940,8 +1940,10 @@
       "buildTime": 1,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 16,
+      "soldierCapacity": 0,
       "uniqueFunction": {
-        "housingCapacity": 6
+        "housingCapacity": 16
       },
       "icon": "assets/historical-icons/buildings/timber_house.svg",
       "imageDetail": "assets/historical-icons/buildings/timber_house.svg",
@@ -1981,6 +1983,8 @@
       "buildTime": 1,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 14,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "housingCapacity": 14
       },
@@ -2022,6 +2026,8 @@
       "buildTime": 1,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 24,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "housingCapacity": 24,
         "satisfactionBonus": 2
@@ -2076,6 +2082,11 @@
           }
         ]
       },
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "allowedGrounds": [
+        "F"
+      ],
       "uniqueFunction": {
         "resourceId": "wood",
         "amount": 2
@@ -2130,6 +2141,11 @@
           }
         ]
       },
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "allowedGrounds": [
+        "R"
+      ],
       "uniqueFunction": {
         "resourceId": "stone",
         "amount": 2
@@ -2184,6 +2200,12 @@
           }
         ]
       },
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "allowedGrounds": [
+        "G",
+        "D"
+      ],
       "uniqueFunction": {
         "resourceId": "food",
         "amount": 3
@@ -2242,6 +2264,11 @@
           }
         ]
       },
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "allowedGrounds": [
+        "R"
+      ],
       "uniqueFunction": {
         "resourceId": "gold",
         "amount": 1
@@ -2288,6 +2315,8 @@
       "buildTime": 1,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "foodStorageMul": 1.25,
         "spoilageMul": 0.8
@@ -2334,6 +2363,9 @@
       "buildTime": 1,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
+      "storageMultiplier": 1.25,
       "uniqueFunction": {
         "storageMultiplier": 1.25
       },
@@ -2379,6 +2411,8 @@
       "buildTime": 1,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "unlockSystem": "tech",
         "sciencePerWorker": 1
@@ -2425,6 +2459,8 @@
       "buildTime": 2,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "sciencePerWorker": 1.5,
         "researchSpeedMul": 1.05
@@ -2471,6 +2507,8 @@
       "buildTime": 2,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "unlockSystem": "civics",
         "civicPerWorker": 1
@@ -2521,6 +2559,8 @@
       "buildTime": 2,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "unlockSystem": "civics",
         "civicPerWorker": 1.5
@@ -2567,6 +2607,8 @@
       "buildTime": 2,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "civicPerWorker": 1,
         "administrationMul": 1.1
@@ -2613,6 +2655,8 @@
       "buildTime": 2,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "unlockSystem": "luxury_trade",
         "goldPerWorker": 1
@@ -2659,6 +2703,8 @@
       "buildTime": 2,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "tradeValueMul": 1.12,
         "routeCapacity": 1
@@ -2705,6 +2751,8 @@
       "buildTime": 2,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "luxuryYieldBonus": 1
       },
@@ -2750,6 +2798,8 @@
       "buildTime": 2,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "unlockSystem": "advanced_diplomacy",
         "relationGainBonus": 2
@@ -2800,6 +2850,8 @@
       "buildTime": 2,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "territoryUpkeepMul": 0.9
       },
@@ -2845,6 +2897,8 @@
       "buildTime": 2,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 10,
       "uniqueFunction": {
         "trainsBranches": [
           "infantry",
@@ -2894,6 +2948,8 @@
       "buildTime": 3,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "trainsBranches": [
           "ranged"
@@ -2942,6 +2998,8 @@
       "buildTime": 3,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "trainsBranches": [
           "cavalry"
@@ -2990,6 +3048,8 @@
       "buildTime": 3,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "trainsBranches": [
           "siege"
@@ -3038,6 +3098,8 @@
       "buildTime": 3,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "trainsBranches": [
           "special"
@@ -3090,6 +3152,8 @@
       "buildTime": 3,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 20,
       "uniqueFunction": {
         "soldierCapacity": 20,
         "defensePower": 60,
@@ -3137,6 +3201,8 @@
       "buildTime": 3,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "defensePower": 35,
         "blocksEnemyMovement": true
@@ -3183,6 +3249,8 @@
       "buildTime": 3,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "visionRadius": 8,
         "defensePower": 12
@@ -3229,6 +3297,8 @@
       "buildTime": 3,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "routeCapacity": 2,
         "navalSupply": 10
@@ -3275,6 +3345,8 @@
       "buildTime": 3,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "trainsBranches": [
           "navy"
@@ -3323,6 +3395,8 @@
       "buildTime": 3,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "navalVisionRadius": 12,
         "navalSpeedMul": 1.08
@@ -3373,6 +3447,8 @@
       "buildTime": 4,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "buildSpeedMul": 1.12,
         "repairMul": 1.2
@@ -3419,6 +3495,8 @@
       "buildTime": 4,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "meleePowerMul": 1.06
       },
@@ -3464,6 +3542,8 @@
       "buildTime": 4,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "unlockSystem": "heroes",
         "heroOfferBonus": 1
@@ -3510,6 +3590,8 @@
       "buildTime": 4,
       "unlockConditions": [],
       "production": null,
+      "housingCapacity": 0,
+      "soldierCapacity": 0,
       "uniqueFunction": {
         "unlockSystem": "strategies",
         "strategyCooldownMul": 0.9

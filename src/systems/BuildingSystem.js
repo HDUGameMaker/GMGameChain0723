@@ -852,12 +852,8 @@ export class BuildingSystem {
     building.buildProgress = null;
     building.startTick = undefined;
     building.startTimeProgress = undefined;
-    // 自动填充可用工人
-    if (config.maxWorkers && config.maxWorkers > 0 && this._populationSystem) {
-      const available = this._populationSystem.getAvailableWorkers();
-      const toAssign = Math.min(config.maxWorkers, available);
-      building.currentWorkers = toAssign;
-    }
+    // 岗位由玩家显式分配；建筑落成只保留合法的既有岗位数。
+    building.currentWorkers = Math.min(building.currentWorkers || 0, config.maxWorkers || 0);
     eventBus.emit('buildingComplete', { building });
     this._updateStorageMultiplier();
     this._checkNewUnlocks(building.buildingId);
@@ -971,8 +967,9 @@ export class BuildingSystem {
       if (b.status !== 'active') continue;
       if (b._invalid) continue; // 失效建筑不提供住宅上限
       const config = configRegistry.getBuilding(b.buildingId);
-      if (config && config.housingCapacity) {
-        total += config.housingCapacity;
+      const capacity = config?.housingCapacity ?? config?.uniqueFunction?.housingCapacity ?? 0;
+      if (capacity) {
+        total += capacity;
       }
     }
     return total;
@@ -1063,6 +1060,49 @@ export class BuildingSystem {
 
   getTotalAssignedWorkers() {
     return this.buildings.reduce((sum, b) => sum + (b.currentWorkers || 0), 0);
+  }
+
+  getAssignedWorkersByJob() {
+    const result = {};
+    for (const building of this.buildings) {
+      if (building.status !== 'active' || !building.currentWorkers) continue;
+      const config = configRegistry.getBuilding(building.buildingId);
+      const job = config?.jobType || config?.category || 'general';
+      result[job] = (result[job] || 0) + building.currentWorkers;
+    }
+    return result;
+  }
+
+  getWorkforceOutputs() {
+    const output = { science: 0, civics: 0, gold: 0, satisfaction: 0 };
+    for (const building of this.buildings) {
+      if (building.status !== 'active' || building._invalid) continue;
+      const config = configRegistry.getBuilding(building.buildingId);
+      const fn = config?.uniqueFunction || {};
+      const workers = Math.max(0, building.currentWorkers || 0);
+      output.science += workers * (fn.sciencePerWorker || 0);
+      output.civics += workers * (fn.civicPerWorker || 0);
+      output.gold += workers * (fn.goldPerWorker || 0);
+      output.satisfaction += fn.satisfactionBonus || 0;
+    }
+    return output;
+  }
+
+  getBuildingFunctionState(buildingIndex) {
+    const building = this.buildings[buildingIndex];
+    if (!building) return null;
+    const config = configRegistry.getBuilding(building.buildingId);
+    if (!config) return null;
+    const fn = config.uniqueFunction || {};
+    const workers = Math.max(0, building.currentWorkers || 0);
+    const perWorker = fn.sciencePerWorker || fn.civicPerWorker || fn.goldPerWorker || 0;
+    return {
+      unlockedSystem: fn.unlockSystem || null,
+      workers,
+      maxWorkers: config.maxWorkers || 0,
+      outputPerTick: workers * perWorker,
+      jobType: config.jobType || config.category || 'general'
+    };
   }
 
   /**

@@ -56,14 +56,14 @@
     "initialBuilding": false,
     "allowedGrounds": ["F"],
     "unlockConditions": [],
-    "maxWorkers": 0,
+    "maxWorkers": 5,
     "buildCost": [
       { "resourceId": "wood", "amount": 20 }
     ],
     "buildTime": 1,
     "upgradesTo": "logging_camp_t2",
     "production": {
-      "perWorker": false,
+      "perWorker": true,
       "output": [
         { "resourceId": "wood", "amount": 2 }
       ]
@@ -82,14 +82,14 @@
     "initialBuilding": false,
     "allowedGrounds": ["R"],
     "unlockConditions": [],
-    "maxWorkers": 0,
+    "maxWorkers": 5,
     "buildCost": [
       { "resourceId": "wood", "amount": 50 }
     ],
     "buildTime": 2,
     "upgradesTo": "stope_t2",
     "production": {
-      "perWorker": false,
+      "perWorker": true,
       "output": [
         { "resourceId": "stone", "amount": 2 }
       ]
@@ -108,14 +108,14 @@
     "initialBuilding": false,
     "allowedGrounds": ["G", "D"],
     "unlockConditions": [],
-    "maxWorkers": 0,
+    "maxWorkers": 6,
     "buildCost": [
       { "resourceId": "wood", "amount": 50 }
     ],
     "buildTime": 3,
     "upgradesTo": "farm_t2",
     "production": {
-      "perWorker": false,
+      "perWorker": true,
       "output": [
         { "resourceId": "food", "amount": 3 }
       ]
@@ -133,7 +133,7 @@
     "maxCount": null,
     "initialBuilding": false,
     "unlockConditions": [],
-    "maxWorkers": 0,
+    "maxWorkers": 4,
     "buildCost": [
       { "resourceId": "wood", "amount": 80 },
       { "resourceId": "stone", "amount": 60 }
@@ -141,7 +141,7 @@
     "buildTime": 3,
     "upgradesTo": "gold_mint_t2",
     "production": {
-      "perWorker": false,
+      "perWorker": true,
       "input": [
         { "resourceId": "wood", "amount": 3 },
         { "resourceId": "stone", "amount": 3 },
@@ -234,7 +234,7 @@
     "initialBuilding": false,
     "allowedGrounds": ["F"],
     "unlockConditions": [{ "type": "building_tech", "nodeId": "bt_logging_t2" }],
-    "maxWorkers": 0,
+    "maxWorkers": 8,
     "upgradesFrom": "logging_camp",
     "upgradeCost": [
       { "resourceId": "wood", "amount": 40 },
@@ -243,7 +243,7 @@
     "buildTime": 2,
     "upgradesTo": null,
     "production": {
-      "perWorker": false,
+      "perWorker": true,
       "output": [
         { "resourceId": "wood", "amount": 4 }
       ]
@@ -262,7 +262,7 @@
     "initialBuilding": false,
     "allowedGrounds": ["R"],
     "unlockConditions": [{ "type": "building_tech", "nodeId": "bt_mining_t2" }],
-    "maxWorkers": 0,
+    "maxWorkers": 8,
     "upgradesFrom": "stope",
     "upgradeCost": [
       { "resourceId": "wood", "amount": 60 },
@@ -271,7 +271,7 @@
     "buildTime": 2,
     "upgradesTo": null,
     "production": {
-      "perWorker": false,
+      "perWorker": true,
       "output": [
         { "resourceId": "stone", "amount": 4 }
       ]
@@ -290,7 +290,7 @@
     "initialBuilding": false,
     "allowedGrounds": ["G", "D"],
     "unlockConditions": [{ "type": "building_tech", "nodeId": "bt_farming_t2" }],
-    "maxWorkers": 0,
+    "maxWorkers": 10,
     "upgradesFrom": "farm",
     "upgradeCost": [
       { "resourceId": "wood", "amount": 80 },
@@ -299,7 +299,7 @@
     "buildTime": 3,
     "upgradesTo": null,
     "production": {
-      "perWorker": false,
+      "perWorker": true,
       "output": [
         { "resourceId": "food", "amount": 6 }
       ]
@@ -317,7 +317,7 @@
     "maxCount": null,
     "initialBuilding": false,
     "unlockConditions": [{ "type": "building_tech", "nodeId": "bt_minting_t2" }],
-    "maxWorkers": 0,
+    "maxWorkers": 6,
     "upgradesFrom": "gold_mint",
     "upgradeCost": [
       { "resourceId": "wood", "amount": 100 },
@@ -326,7 +326,7 @@
     "buildTime": 3,
     "upgradesTo": null,
     "production": {
-      "perWorker": false,
+      "perWorker": true,
       "input": [
         { "resourceId": "wood", "amount": 3 },
         { "resourceId": "stone", "amount": 3 },

@@ -11,9 +11,15 @@ export class PopulationSystem {
     const globalConfig = configRegistry.get('global');
     this.popConfig = globalConfig.population;
     const initConfig = configRegistry.get('initial') || {};
+    const historicalSettings = configRegistry.getHistoricalContent?.().populationSettings || {};
     this.growthConfig = initConfig.populationGrowth || this.popConfig.growthPerDay;
     this.inspirationPerPerson = initConfig.inspirationPerPerson ?? 1;
+    this.foodPerPerson = historicalSettings.foodPerPerson ?? initConfig.foodPerPerson ?? 1;
+    this.baseSatisfaction = historicalSettings.baseSatisfaction ?? 60;
+    this.starvationEmigrationThreshold = historicalSettings.starvationEmigrationThreshold ?? 35;
     this.current = 0;
+    this.satisfaction = this.baseSatisfaction;
+    this.starvationDays = 0;
     this.declineCountdown = 0;
     this._expeditionWorkers = 0;
     this._constructionWorkers = 0;
@@ -66,7 +72,11 @@ export class PopulationSystem {
   }
 
   initNew() {
-    this.current = 0; // 人口/工人已退役，仅为兼容休眠调用方
+    const initConfig = configRegistry.get('initial') || {};
+    const historicalSettings = configRegistry.getHistoricalContent?.().populationSettings || {};
+    this.current = Math.max(1, historicalSettings.initial ?? initConfig.population?.initial ?? 12);
+    this.satisfaction = this.baseSatisfaction;
+    this.starvationDays = 0;
     this.declineCountdown = 0;
     this._updateStore();
   }
@@ -132,6 +142,7 @@ export class PopulationSystem {
     const work = assigned + expedition + construction;
     const idle = Math.max(0, total - work - military);
 
+    const jobs = this._buildingSystem?.getAssignedWorkersByJob?.() || {};
     return {
       idle,
       work,
@@ -141,7 +152,9 @@ export class PopulationSystem {
       assigned,
       expedition,
       construction,
-      constructionTotal
+      constructionTotal,
+      jobs,
+      satisfaction: this.satisfaction
     };
   }
 
@@ -189,7 +202,7 @@ export class PopulationSystem {
   getFoodConsumptionAmount(population = this.current) {
     const aEffPop = this._alchemySystem ? (this._alchemySystem.getEffects().population || {}) : {};
     const foodConsumeMul = (this._cultureSystem ? (this._cultureSystem.getEffects().foodConsumeMul || 1) : 1) * (aEffPop.foodConsumeMul || 1);
-    return Math.ceil(Math.max(0, population || 0) * foodConsumeMul);
+    return Math.ceil(Math.max(0, population || 0) * this.foodPerPerson * foodConsumeMul);
   }
 
   getDailyFoodProductionPreview() {
@@ -257,9 +270,45 @@ export class PopulationSystem {
    * 4. 有空余住宅且粮食日净增为正时增长，否则只处理住房不足衰减
    */
   onDayStart() {
-    // 【玩法重设计】人口/工人已退役：不再按人口消耗食物、不再饥饿死亡、
-    // 不再 Pop<2 失败、不再增长/衰减。士兵上限改由军营(soldierCapacity)控制。
-    // 保留方法签名供休眠系统调用，仅同步 store。
+    const requiredFood = this.getFoodConsumptionAmount(this.current);
+    const availableFood = this._resourceSystem?.getAmount?.('food') || 0;
+    const consumed = Math.min(requiredFood, availableFood);
+    if (consumed > 0) this._resourceSystem.tryConsume('food', consumed);
+
+    if (consumed < requiredFood) {
+      const deficit = requiredFood - consumed;
+      const shortageRatio = requiredFood > 0 ? deficit / requiredFood : 0;
+      this.starvationDays += 1;
+      this.satisfaction = Math.max(0, this.satisfaction - Math.ceil(10 + shortageRatio * 20));
+
+      if (this.satisfaction <= this.starvationEmigrationThreshold) {
+        const emigrants = Math.min(this.current, Math.max(1, Math.ceil(deficit / Math.max(1, this.foodPerPerson) * 0.5)));
+        this.current -= emigrants;
+        eventBus.emit('combatBroadcast', { message: `🚶 粮食短缺，${emigrants}名居民离开了聚落` });
+      }
+
+      if (this.starvationDays >= 3 && this.current > 0) {
+        const deaths = Math.min(this.current, Math.max(1, Math.ceil(deficit / Math.max(1, this.foodPerPerson) * 0.25)));
+        this.current -= deaths;
+        eventBus.emit('combatBroadcast', { message: `⚠️ 连续饥荒造成${deaths}人死亡` });
+      }
+    } else {
+      this.starvationDays = 0;
+      this.satisfaction = Math.min(100, this.satisfaction + 2);
+      const housingRoom = Math.max(0, this.getHousingCapacity() - this.current);
+      const minBase = this.growthConfig?.min ?? 0;
+      const maxBase = this.growthConfig?.max ?? minBase;
+      if (housingRoom > 0 && maxBase > 0 && this.getDailyFoodNetPreview() >= 0 && this.satisfaction >= 50) {
+        const multiplier = this.getGrowthMultiplier();
+        const growth = Math.min(housingRoom, Math.max(0, Math.round(this._randomInt(minBase, maxBase) * multiplier)));
+        this.current += growth;
+      }
+    }
+
+    if (this.current > 0 && this.inspirationPerPerson > 0) {
+      store.setState({ inspiration: (store.getState('inspiration') || 0) + this.current * this.inspirationPerPerson });
+    }
+    if (this.current <= 0) eventBus.emit('gameOver', { reason: 'population_zero' });
     this._updateStore();
   }
 
@@ -282,6 +331,8 @@ export class PopulationSystem {
       populationConstructionWorkers: this._constructionWorkers,
       populationWork: stats.work,
       populationMilitary: stats.military,
+      populationJobs: stats.jobs,
+      populationSatisfaction: this.satisfaction,
       populationDeclineCountdown: this.declineCountdown
     });
   }
@@ -300,7 +351,9 @@ export class PopulationSystem {
       current: this.current,
       declineCountdown: this.declineCountdown,
       expeditionWorkers: this._expeditionWorkers,
-      constructionWorkers: this._constructionWorkers
+      constructionWorkers: this._constructionWorkers,
+      satisfaction: this.satisfaction,
+      starvationDays: this.starvationDays
     };
   }
 
@@ -310,6 +363,8 @@ export class PopulationSystem {
     this.declineCountdown = state.declineCountdown || 0;
     this._expeditionWorkers = state.expeditionWorkers || 0;
     this._constructionWorkers = state.constructionWorkers || 0;
+    this.satisfaction = Number.isFinite(state.satisfaction) ? state.satisfaction : this.baseSatisfaction;
+    this.starvationDays = state.starvationDays || 0;
     this._updateStore();
   }
 }

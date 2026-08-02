@@ -210,7 +210,7 @@ const luxuries = luxuryDefs.map(([id, name, groundType, effects], index) => ({
 }));
 
 const buildingDefs = [
-  ['timber_house', '木构民居', 'housing', 0, { housingCapacity: 6 }],
+  ['timber_house', '木构民居', 'housing', 0, { housingCapacity: 16 }],
   ['stone_tenement', '石砌民居', 'housing', 0, { housingCapacity: 14 }],
   ['manor', '庄园', 'housing', 2, { housingCapacity: 24, satisfactionBonus: 2 }],
   ['forestry_camp', '林业营地', 'gathering', 5, { resourceId: 'wood', amount: 2 }],
@@ -250,6 +250,10 @@ const buildings = buildingDefs.map(([id, name, category, maxWorkers, uniqueFunct
   maxCount: null, initialBuilding: id === 'timber_house', maxWorkers, jobType: category,
   buildCost: cost(24 + index * 3, 12 + index * 2, index % 6 === 0 ? 10 : 0, Math.floor(index / 3) * 3),
   buildTime: 1 + Math.floor(index / 10), unlockConditions: [], production: uniqueFunction.resourceId ? { perWorker: true, output: [{ resourceId: uniqueFunction.resourceId, amount: uniqueFunction.amount }] } : null,
+  housingCapacity: uniqueFunction.housingCapacity || 0,
+  soldierCapacity: uniqueFunction.soldierCapacity || 0,
+  storageMultiplier: uniqueFunction.storageMultiplier || undefined,
+  allowedGrounds: id === 'forestry_camp' ? ['F'] : (id === 'stone_quarry' || id === 'gold_mine' ? ['R'] : (id === 'grain_farm' ? ['G', 'D'] : undefined)),
   uniqueFunction, icon: icon('buildings', id), imageDetail: icon('buildings', id), mapIcon: icon('buildings', id),
   labelLayout: { nameOffsetY: 0, progressBarOffsetY: 0, workersOffsetY: 0 }, tags: [category]
 }));
