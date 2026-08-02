@@ -11,18 +11,15 @@ import {
 } from '../../utils/FormationUtils.js';
 import { eventBus } from '../../core/EventBus.js';
 
-const MAX_CP = 20;
 function _getMaxCP() {
-  var base = 20;
-  var culture = window.__game?.systems?.culture;
-  if (culture && culture.getCommandPointsBonus) base += culture.getCommandPointsBonus();
-  return base;
+  return _armySystem()?.getCommandPointLimit?.() || 20;
 }
 
 function _cfg() { return window.__game?.configRegistry?.get('enemies')?.units || []; }
 function _store() { return window.__game?.store; }
-function _armies() { return _store()?.getState('armies') || []; }
-function _avail() { return _store()?.getState('availableUnits') || {}; }
+function _armySystem() { return window.__game?.systems?.army; }
+function _armies() { return _armySystem()?.getArmies?.() || []; }
+function _avail() { return _armySystem()?.getAvailableUnits?.() || {}; }
 
 function _notifyArmyChanged(reason) {
   const version = (_store()?.getState('armyVersion') || 0) + 1;
@@ -30,15 +27,6 @@ function _notifyArmyChanged(reason) {
   eventBus.emit('armyChanged', { reason, version });
 }
 
-function _saveArmies(armies, reason = 'armies') {
-  _store()?.setState({ armies: [...armies] });
-  _notifyArmyChanged(reason);
-}
-
-function _saveAvail(avail, reason = 'availableUnits') {
-  _store()?.setState({ availableUnits: { ...avail } });
-  _notifyArmyChanged(reason);
-}
 function _techSys() { return window.__game?.systems?.tech; }
 function _formations() { return window.__game?.configRegistry?.get('enemies')?.formations || []; }
 
@@ -71,36 +59,16 @@ function getAvailCount(unitId) {
   return a[unitId] || 0;
 }
 
-function setAvailCount(unitId, n) {
-  const a = { ..._avail() };
-  a[unitId] = n;
-  _saveAvail(a);
-}
-
 function addToArmy(armies, ai, uid) {
-  if (getAvailCount(uid) <= 0) return false;
-  const usedCP = (armies[ai].unitIds || []).reduce((s, id) => s + calcCP(id), 0);
-  if (usedCP + calcCP(uid) > _getMaxCP()) return false;
-  armies[ai].unitIds.push(uid);
-  setAvailCount(uid, getAvailCount(uid) - 1);
-  _saveArmies(armies);
-  return true;
+  return _armySystem()?.addUnit?.(armies[ai].id, uid, 1).ok === true;
 }
 
 function removeFromArmy(armies, ai, uid) {
-  const idx = armies[ai].unitIds.lastIndexOf(uid);
-  if (idx < 0) return;
-  armies[ai].unitIds.splice(idx, 1);
-  setAvailCount(uid, getAvailCount(uid) + 1);
-  _saveArmies(armies);
+  _armySystem()?.removeUnit?.(armies[ai].id, uid, 1);
 }
 
 function dismissFromArmy(armies, ai, uid) {
-  const idx = armies[ai].unitIds.lastIndexOf(uid);
-  if (idx < 0) return false;
-  armies[ai].unitIds.splice(idx, 1);
-  _saveArmies(armies);
-  return true;
+  return _armySystem()?.dismissUnit?.(armies[ai].id, uid, 1).ok === true;
 }
 
 export function renderArmyPanel(data, body, pm) {
@@ -112,7 +80,7 @@ export function renderArmyPanel(data, body, pm) {
     _cfg().filter(u => _isUnitUnlocked(u.id)).forEach(u => {
       av[u.id] = 1;
     });
-    _saveAvail(av);
+    _armySystem()?.setAvailableUnits?.(av);
   }
   body.style.cssText = 'padding:20px 24px;max-height:70vh;overflow-y:auto;';
 
@@ -126,13 +94,17 @@ export function renderArmyPanel(data, body, pm) {
   header.innerHTML = '<span style="font-size:18px;font-weight:700;color:#ececf0;">⚔️ 军队管理</span>';
   const createBtn = document.createElement('button');
   createBtn.textContent = '+ 创建部队';
+  createBtn.disabled = armies.length >= (_armySystem()?.getArmyCapacity?.() || 2);
   createBtn.style.cssText = 'padding:8px 18px;border:none;border-radius:8px;background:rgba(78,203,113,0.25);color:#4ecb71;cursor:pointer;font-size:13px;font-weight:600;';
   createBtn.addEventListener('mouseenter', () => createBtn.style.background = 'rgba(78,203,113,0.4)');
   createBtn.addEventListener('mouseleave', () => createBtn.style.background = 'rgba(78,203,113,0.25)');
   createBtn.addEventListener('click', () => {
     const n = _armies().length + 1;
-    const newArmies = [..._armies(), { id: 'army_' + Date.now(), name: '第' + n + '军团', unitIds: [], formationId: null }];
-    _saveArmies(newArmies);
+    const result = _armySystem()?.createArmy?.('第' + n + '军团');
+    if (!result?.ok) {
+      pm.alert('军团数量已达上限，需要军事学院、城堡或谋略府提升上限。');
+      return;
+    }
     renderArmyPanel(data, body, pm);
   });
   header.appendChild(createBtn);
@@ -140,7 +112,7 @@ export function renderArmyPanel(data, body, pm) {
 
   const info = document.createElement('div');
   info.style.cssText = 'font-size:12px;color:#808098;margin-bottom:14px;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:8px;';
-  info.textContent = '💡 每支部队指挥点上限 ' + _getMaxCP() + '，战斗力=兵种和+阵型加成；阵型按完整组数触发，数量不足不加成，数量翻倍则加成翻倍';
+  info.textContent = '💡 军团 ' + armies.length + '/' + (_armySystem()?.getArmyCapacity?.() || 2) + '；每军团指挥点上限 ' + _getMaxCP() + '。军事学院、城堡与谋略府可提高军团上限。';
   body.appendChild(info);
 
   /* 已解锁战阵介绍 */
@@ -193,9 +165,7 @@ export function renderArmyPanel(data, body, pm) {
     nameInput.value = army.name;
     nameInput.style.cssText = 'flex:1;font-size:15px;font-weight:600;color:#ececf0;background:transparent;border:none;outline:none;padding:2px 0;min-width:0;';
     nameInput.addEventListener('change', () => {
-      const a = _armies();
-      a[ai].name = nameInput.value || '未命名';
-      _saveArmies(a);
+      _armySystem()?.renameArmy?.(army.id, nameInput.value || '未命名');
     });
     row.appendChild(nameInput);
 
@@ -228,9 +198,7 @@ export function renderArmyPanel(data, body, pm) {
       formationSelect.appendChild(opt);
     });
     formationSelect.addEventListener('change', () => {
-      const a = _armies();
-      a[ai].formationId = formationSelect.value || null;
-      _saveArmies(a);
+      _armySystem()?.setFormation?.(army.id, formationSelect.value || null);
       renderArmyPanel(data, body, pm);
     });
     row.appendChild(formationSelect);
@@ -244,17 +212,39 @@ export function renderArmyPanel(data, body, pm) {
     delBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
       if (!await pm.confirm('确认删除「' + army.name + '」？')) return;
-      /* 归还所有单位到可用池 */
-      const a = _armies();
-      const av = { ..._avail() };
-      (a[ai].unitIds || []).forEach(uid => { av[uid] = (av[uid] || 0) + 1; });
-      _saveAvail(av);
-      a.splice(ai, 1);
-      _saveArmies(a);
+      _armySystem()?.disbandArmy?.(army.id);
       renderArmyPanel(data, body, pm);
     });
     row.appendChild(delBtn);
     card.appendChild(row);
+
+    const commandRow = document.createElement('div');
+    commandRow.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:11px;color:#a0a0ba;';
+    const commanderSelect = document.createElement('select');
+    commanderSelect.style.cssText = 'padding:4px 7px;border-radius:5px;border:1px solid rgba(255,255,255,.12);background:#242938;color:#e7e7ed;';
+    commanderSelect.innerHTML = '<option value="">不配置统帅</option>';
+    const commanders = (window.__game?.systems?.hero?.getRecruitedHeroes?.() || []).filter(hero => (hero.role === 'commander' || hero.heroClass === 'military') && hero.status !== 'injured');
+    for (const hero of commanders) {
+      const option = document.createElement('option');
+      option.value = hero.heroId || hero.id;
+      option.textContent = hero.name;
+      option.selected = army.heroId === option.value;
+      commanderSelect.appendChild(option);
+    }
+    commanderSelect.addEventListener('change', () => {
+      const result = commanderSelect.value
+        ? _armySystem()?.assignHero?.(army.id, commanderSelect.value)
+        : { ok: _armySystem()?.unassignHero?.(army.id) };
+      if (!result?.ok) pm.alert(result?.reason || '统帅任命失败');
+      renderArmyPanel(data, body, pm);
+    });
+    commandRow.innerHTML = '<span>统帅</span>';
+    commandRow.appendChild(commanderSelect);
+    const location = document.createElement('span');
+    location.style.marginLeft = 'auto';
+    location.textContent = `位置 ${army.gridX},${army.gridY} · 士气 ${army.morale}`;
+    commandRow.appendChild(location);
+    card.appendChild(commandRow);
 
     if (army.formationId) {
       const status = document.createElement('div');
@@ -306,12 +296,7 @@ export function renderArmyPanel(data, body, pm) {
       clearBtn.textContent = '清空';
       clearBtn.style.cssText = 'padding:3px 10px;border:none;border-radius:4px;background:rgba(255,107,107,0.08);color:#ff6b6b;cursor:pointer;font-size:11px;margin-top:6px;';
       clearBtn.addEventListener('click', () => {
-        const a = _armies();
-        const av = { ..._avail() };
-        (a[ai].unitIds || []).forEach(uid => { av[uid] = (av[uid] || 0) + 1; });
-        _saveAvail(av);
-        a[ai].unitIds = [];
-        _saveArmies(a);
+        _armySystem()?.clearArmy?.(army.id, true);
         renderArmyPanel(data, body, pm);
       });
       unitsBody.appendChild(clearBtn);

@@ -33,6 +33,7 @@ import { LuxurySystem } from './systems/LuxurySystem.js';
 import { StrategySystem } from './systems/StrategySystem.js';
 import { EconomyOrderSystem } from './systems/EconomyOrderSystem.js';
 import { CommerceSystem } from './systems/CommerceSystem.js';
+import { ArmySystem } from './systems/ArmySystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
@@ -125,6 +126,7 @@ class Game {
     this.systems.strategy = new StrategySystem();
     this.systems.economyOrders = new EconomyOrderSystem();
     this.systems.commerce = new CommerceSystem();
+    this.systems.army = new ArmySystem();
 
     // 建筑科技树（永久被动加成 + T2 建筑解锁）
     this.systems.buildingTech = new BuildingTechSystem();
@@ -225,6 +227,11 @@ class Game {
       resource: this.systems.resource,
       building: this.systems.building,
       diplomacy: this.systems.diplomacy
+    });
+    this.systems.army.setSystems({
+      building: this.systems.building,
+      hero: this.systems.hero,
+      culture: this.systems.culture
     });
     this.systems.building.setLuxurySystem(this.systems.luxury);
     this.systems.population.setLuxurySystem(this.systems.luxury);
@@ -513,14 +520,13 @@ class Game {
     this.systems.strategy.initNew();
     this.systems.economyOrders.initNew();
     this.systems.commerce.initNew();
+    this.systems.army.initNew();
 
     // 初始化事件标记状态（新游戏 = 无已移除标记）
     store.setState({ removedEventMarkers: [] });
     /* 初始化文化系统 */
     store.setState({ doctrineResearched: [], doctrineResearchLevels: {}, inspiration: 0, formationResearch: [] });
     store.setState({
-      armies: [],
-      availableUnits: [],
       factions: { states: {}, relations: {}, lastSyncDay: 0 },
       eraMusic: { currentEraId: 'primitive', currentTrackId: null }
     });
@@ -603,12 +609,11 @@ class Game {
     if (saveData.quest) {
       this.systems.quest.restoreState(saveData.quest);
     }
-    if (saveData.armies) {
-      store.setState({ armies: saveData.armies });
-    }
-    if (saveData.availableUnits) {
-      store.setState({ availableUnits: saveData.availableUnits });
-    }
+    this.systems.army.restoreState(saveData.armyState || {
+      armies: saveData.armies || [],
+      availableUnits: saveData.availableUnits || {},
+      nextId: (saveData.armies?.length || 0) + 1
+    });
     store.setState({
       factions: saveData.factions || { states: {}, relations: {}, lastSyncDay: 0 },
       eraMusic: saveData.eraMusic || { currentEraId: saveData.era?.currentEraId || 'primitive', currentTrackId: null }
@@ -671,8 +676,9 @@ class Game {
       strategies: this.systems.strategy.getState(),
       audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
-      armies: store.getState('armies'),
-      availableUnits: store.getState('availableUnits'),
+      armyState: this.systems.army.getState(),
+      armies: this.systems.army.getState().armies,
+      availableUnits: this.systems.army.getAvailableUnits(),
       economicOrders: this.systems.economyOrders.getState(),
       tradeRoutes: this.systems.commerce.getState(),
       factions: store.getState('factions'),

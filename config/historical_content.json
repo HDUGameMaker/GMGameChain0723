@@ -3104,7 +3104,8 @@
         "trainsBranches": [
           "special"
         ],
-        "commandPointsBonus": 5
+        "commandPointsBonus": 5,
+        "armyCapacityBonus": 1
       },
       "icon": "assets/historical-icons/buildings/war_academy.svg",
       "imageDetail": "assets/historical-icons/buildings/war_academy.svg",
@@ -3157,7 +3158,9 @@
       "uniqueFunction": {
         "soldierCapacity": 20,
         "defensePower": 60,
-        "unlockEliteUnits": true
+        "unlockEliteUnits": true,
+        "armyCapacityBonus": 1,
+        "garrisonCapacity": 2
       },
       "icon": "assets/historical-icons/buildings/castle.svg",
       "imageDetail": "assets/historical-icons/buildings/castle.svg",
@@ -3606,7 +3609,8 @@
       "soldierCapacity": 0,
       "uniqueFunction": {
         "unlockSystem": "strategies",
-        "strategyCooldownMul": 0.9
+        "strategyCooldownMul": 0.9,
+        "armyCapacityBonus": 1
       },
       "icon": "assets/historical-icons/buildings/strategy_office.svg",
       "imageDetail": "assets/historical-icons/buildings/strategy_office.svg",

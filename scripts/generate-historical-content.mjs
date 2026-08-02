@@ -261,8 +261,8 @@ const buildingDefs = [
   ['archery_range', '靶场', 'military', 4, { trainsBranches: ['ranged'], rangedTrainingMul: 1.15 }],
   ['stable', '马厩', 'military', 5, { trainsBranches: ['cavalry'], cavalryTrainingMul: 1.15 }],
   ['siege_workshop', '攻城工坊', 'military', 6, { trainsBranches: ['siege'], siegePowerMul: 1.08 }],
-  ['war_academy', '军事学院', 'military', 5, { trainsBranches: ['special'], commandPointsBonus: 5 }],
-  ['castle', '城堡', 'defense', 3, { soldierCapacity: 20, defensePower: 60, unlockEliteUnits: true }],
+  ['war_academy', '军事学院', 'military', 5, { trainsBranches: ['special'], commandPointsBonus: 5, armyCapacityBonus: 1 }],
+  ['castle', '城堡', 'defense', 3, { soldierCapacity: 20, defensePower: 60, unlockEliteUnits: true, armyCapacityBonus: 1, garrisonCapacity: 2 }],
   ['city_wall', '城墙', 'defense', 3, { defensePower: 35, blocksEnemyMovement: true }],
   ['watch_tower', '瞭望塔', 'defense', 2, { visionRadius: 8, defensePower: 12 }],
   ['harbor', '港口', 'naval', 5, { routeCapacity: 2, navalSupply: 10 }],
@@ -271,7 +271,7 @@ const buildingDefs = [
   ['engineers_guild', '工程师行会', 'industry', 5, { buildSpeedMul: 1.12, repairMul: 1.2 }],
   ['blacksmith', '铁匠铺', 'industry', 5, { meleePowerMul: 1.06 }],
   ['tavern_hall', '历史酒馆', 'hero', 3, { unlockSystem: 'heroes', heroOfferBonus: 1 }],
-  ['strategy_office', '谋略府', 'strategy', 4, { unlockSystem: 'strategies', strategyCooldownMul: 0.9 }]
+  ['strategy_office', '谋略府', 'strategy', 4, { unlockSystem: 'strategies', strategyCooldownMul: 0.9, armyCapacityBonus: 1 }]
 ];
 const buildings = buildingDefs.map(([id, name, category, maxWorkers, uniqueFunction], index) => ({
   id, name, category, description: `${name}承担${category}体系中的独特职责。`, footprint: { width: index % 4 === 0 ? 2 : 1, height: index % 4 === 0 ? 2 : 1 },

@@ -9,11 +9,9 @@ function _store() { return window.__game?.store; }
 function _cfg() { return window.__game?.configRegistry?.get('enemies')?.units || []; }
 function _resource() { return window.__game?.systems?.resource; }
 function _building() { return window.__game?.systems?.building; }
-function _avail() { return _store()?.getState('availableUnits') || {}; }
+function _avail() { return window.__game?.systems?.army?.getAvailableUnits?.() || {}; }
 function _saveAvail(av) {
-  const version = (_store()?.getState('armyVersion') || 0) + 1;
-  _store()?.setState({ availableUnits: { ...av }, armyVersion: version });
-  eventBus.emit('armyChanged', { reason: 'training', version });
+  window.__game?.systems?.army?.setAvailableUnits?.(av);
 }
 function _techSystem() { return window.__game?.systems?.tech; }
 function _eraSystem() { return window.__game?.systems?.era; }
