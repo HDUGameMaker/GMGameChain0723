@@ -24,13 +24,22 @@ function collectResourceIds(value, result = []) {
   return result;
 }
 
-test('historical content provides seven eras with eight civilizations and symmetric research pages', () => {
+test('historical content provides the approved seven eras, 57 civilizations and symmetric research pages', () => {
   assert.ok(existsSync(contentPath), 'historical content config is missing');
   const content = loadContent();
-  assert.equal(content.eras.length, 7);
-  assert.equal(content.civilizations.length, 56);
+  assert.deepEqual(content.eras.map(era => [era.id, era.name]), [
+    ['primitive', '原始时代'],
+    ['ancient', '上古时代'],
+    ['classical', '古典时代'],
+    ['medieval', '中世纪'],
+    ['exploration', '探索时代'],
+    ['early_modern', '近代'],
+    ['modern', '现代']
+  ]);
+  const civilizationCounts = { primitive: 1, ancient: 6, classical: 8, medieval: 10, exploration: 10, early_modern: 10, modern: 12 };
+  assert.equal(content.civilizations.length, 57);
   for (const era of content.eras) {
-    assert.equal(content.civilizations.filter(civ => civ.eraId === era.id).length, 8, `${era.id} civilizations`);
+    assert.equal(content.civilizations.filter(civ => civ.eraId === era.id).length, civilizationCounts[era.id], `${era.id} civilizations`);
     assert.equal(content.techs.filter(node => node.eraId === era.id).length, 8, `${era.id} techs`);
     assert.equal(content.civics.filter(node => node.eraId === era.id).length, 8, `${era.id} civics`);
   }
@@ -48,7 +57,7 @@ test('historical economy and content breadth meet the design contract', () => {
   assert.equal(content.luxuries.length, 20);
   assert.ok(content.buildings.length >= 24, 'historical building additions');
   assert.ok(content.units.length >= 70, 'historical units');
-  assert.ok(content.heroes.length >= 35, 'historical heroes');
+  assert.equal(content.heroes.length, 60, 'historical hero additions combine with 12 EA heroes into 72 unique heroes');
   assert.ok(content.strategies.length >= 20, 'historical strategies');
   for (const luxury of content.luxuries) {
     assert.ok(Object.keys(luxury.effects || {}).length > 0, `${luxury.id} has no effect`);
@@ -90,7 +99,7 @@ test('ConfigRegistry merges historical additions without overriding main ids', a
   registry._applyHistoricalContent();
   assert.equal(registry.getBuilding('academy').name, '主版学院');
   assert.equal(registry.get('enemies').units.find(unit => unit.id === 'warrior').name, '主版战士');
-  assert.equal(registry.get('enemies').units.find(unit => unit.id === 'warrior').eraId, 'ancient');
+  assert.equal(registry.get('enemies').units.find(unit => unit.id === 'warrior').eraId, 'primitive');
   assert.equal(registry.get('enemies').units.find(unit => unit.id === 'warrior').branch, 'infantry');
   assert.ok(registry.getBuilding('new_hall'));
   assert.ok(registry.get('enemies').units.some(unit => unit.id === 'new_guard'));

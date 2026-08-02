@@ -59,6 +59,7 @@ function svgFor(type, item) {
   const dots = Array.from({ length: 1 + variant % 4 }, (_, index) => `<circle cx="${17 + index * 10}" cy="54" r="1.4" fill="${bronze}" opacity=".75"/>`).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="${item.name || item.id}">
   <title>${item.name || item.id}</title>
+  <metadata>${type}:${item.id}</metadata>
   <defs><radialGradient id="bg"><stop offset="0" stop-color="${background}"/><stop offset="1" stop-color="#05090d"/></radialGradient><filter id="shadow"><feDropShadow dx="0" dy="1" stdDeviation="1" flood-opacity=".55"/></filter></defs>
   <rect x="2" y="2" width="60" height="60" rx="12" fill="url(#bg)" stroke="${bronze}" stroke-width="2"/>
   <circle cx="32" cy="31" r="25" fill="none" stroke="${bronze}" stroke-width="1" opacity=".46"/>

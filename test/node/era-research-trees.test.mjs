@@ -37,10 +37,10 @@ test('zero research workers keep both trees slowly advancing through settlement 
   eventBus.emit('tick', {});
   assert.equal(tech.getSciencePoints(), 0.2);
   assert.equal(culture.getCivicPoints(), 0.2);
-  assert.equal(tech.canStartResearch('tech_ancient_1').valid, false);
-  assert.match(tech.canStartResearch('tech_ancient_1').reason, /科技点/);
-  assert.equal(culture.canStartResearch('civic_ancient_1').valid, false);
-  assert.match(culture.canStartResearch('civic_ancient_1').reason, /人文点/);
+  assert.equal(tech.canStartResearch('tech_primitive_1').valid, false);
+  assert.match(tech.canStartResearch('tech_primitive_1').reason, /科技点/);
+  assert.equal(culture.canStartResearch('civic_primitive_1').valid, false);
+  assert.match(culture.canStartResearch('civic_primitive_1').reason, /人文点/);
 });
 
 test('staffed academy and civic hall generate points that pay for current-era research', () => {
@@ -48,23 +48,23 @@ test('staffed academy and civic hall generate points that pay for current-era re
   for (let i = 0; i < 4; i++) eventBus.emit('tick', {});
   assert.equal(tech.getSciencePoints(), 12.8);
   assert.equal(culture.getCivicPoints(), 16.8);
-  assert.equal(tech.startResearch('tech_ancient_1'), true);
-  assert.equal(culture.startResearch('civic_ancient_1'), true);
+  assert.equal(tech.startResearch('tech_primitive_1'), true);
+  assert.equal(culture.startResearch('civic_primitive_1'), true);
   assert.equal(tech.getSciencePoints(), 0.8);
   assert.equal(culture.getCivicPoints(), 4.8);
   for (let i = 0; i < 4; i++) eventBus.emit('tick', {});
-  assert.equal(tech.isResearched('tech_ancient_1'), true);
-  assert.equal(culture.isResearched('civic_ancient_1'), true);
-  assert.equal(tech.getEraProgress('ancient'), 1 / 8);
-  assert.equal(culture.getEraProgress('ancient'), 1 / 8);
+  assert.equal(tech.isResearched('tech_primitive_1'), true);
+  assert.equal(culture.isResearched('civic_primitive_1'), true);
+  assert.equal(tech.getEraProgress('primitive'), 1 / 8);
+  assert.equal(culture.getEraProgress('primitive'), 1 / 8);
 });
 
 test('future-era research remains locked even when points are abundant', () => {
   const { tech, culture } = setup();
   tech.restoreState({ researched: [], unitResearch: [], sciencePoints: 999 });
   culture.restoreState({ researched: [], civicPoints: 999 });
-  assert.equal(tech.canStartResearch('tech_classical_1').valid, false);
-  assert.match(tech.canStartResearch('tech_classical_1').reason, /时代/);
-  assert.equal(culture.canStartResearch('civic_classical_1').valid, false);
-  assert.match(culture.canStartResearch('civic_classical_1').reason, /时代/);
+  assert.equal(tech.canStartResearch('tech_ancient_1').valid, false);
+  assert.match(tech.canStartResearch('tech_ancient_1').reason, /时代/);
+  assert.equal(culture.canStartResearch('civic_ancient_1').valid, false);
+  assert.match(culture.canStartResearch('civic_ancient_1').reason, /时代/);
 });

@@ -54,7 +54,9 @@ test('heroes require an active tavern and assigned heroes aggregate bonuses', ()
 
 test('hero recruitment and assignment survive save restore', () => {
   const system = setup(true);
-  const hero = system.getAvailableHeroes()[0];
+  const hero = system.getRecruitableHeroes().find(item => item.heroClass === 'military');
+  assert.ok(hero);
+  system._availableIds = [hero.id];
   system.recruitHero(hero.id);
   system.assignHero(hero.id, 'army');
   const restored = setup(true);

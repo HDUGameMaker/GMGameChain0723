@@ -31,13 +31,33 @@ export class HeroSystem {
     const historical = configRegistry.getHistoricalContent();
     const eras = historical.eras || [];
     const eraNames = Object.fromEntries(eras.map(era => [era.id, era.name]));
-    const base = (integration.heroes || []).map(hero => ({
-      ...hero,
-      icon: hero.iconAsset || (String(hero.icon || '').includes('/') ? hero.icon : `assets/historical-icons/heroes/${hero.id}.svg`),
-      cost: hero.cost || hero.recruitCost || []
-    }));
+    const legacyEraIds = {
+      sun_tzu: 'ancient', zhuge_liang: 'classical', yue_fei: 'medieval', zheng_he: 'exploration',
+      li_shizhen: 'exploration', shen_kuo: 'medieval', zhang_heng: 'classical', hua_mulan: 'medieval',
+      saladin: 'medieval', hannibal: 'classical', leonardo: 'exploration', joan_of_arc: 'medieval'
+    };
+    const normalize = hero => {
+      const heroClass = hero.heroClass || (['commander', 'admiral', 'strategist'].includes(hero.role) ? 'military' : 'civil');
+      const assignmentTargets = hero.assignmentTargets || (heroClass === 'military' ? ['army'] : this._civilTargets(hero.role));
+      return {
+        ...hero,
+        eraId: hero.eraId || legacyEraIds[hero.id] || 'ancient',
+        heroClass,
+        assignmentTargets,
+        title: hero.title || (heroClass === 'military' ? '历史武将' : '历史文臣'),
+        description: hero.description || `${hero.name}可在酒馆招募并为文明提供长期支持。`,
+        skills: hero.skills?.length ? hero.skills : [{
+          id: `${hero.id}_signature`, name: hero.skillName || this._roleName(hero.role),
+          description: hero.skillDescription || `${this._roleName(hero.role)}专长会在任命期间持续生效。`,
+          trigger: heroClass === 'military' ? 'battle_phase' : 'assignment_tick', effects: hero.bonuses || {}
+        }],
+        icon: hero.iconAsset || (String(hero.icon || '').includes('/') ? hero.icon : `assets/historical-icons/heroes/${hero.id}.svg`),
+        cost: hero.cost || hero.recruitCost || []
+      };
+    };
+    const base = (integration.heroes || []).map(normalize);
     const ids = new Set(base.map(hero => hero.id));
-    const additions = (historical.heroes || []).filter(hero => !ids.has(hero.id)).map(hero => ({
+    const additions = (historical.heroes || []).filter(hero => !ids.has(hero.id)).map(hero => normalize({
       ...hero,
       era: eraNames[hero.eraId] || hero.eraId,
       title: hero.title || this._roleName(hero.role),
@@ -47,8 +67,15 @@ export class HeroSystem {
     return [...base, ...additions];
   }
 
+  _civilTargets(role) {
+    return {
+      scholar: ['academy', 'library'], engineer: ['engineers_guild', 'building'], diplomat: ['embassy', 'diplomatic_mission'],
+      explorer: ['settlement', 'trade_route'], physician: ['settlement', 'hospital'], governor: ['settlement', 'council_hall']
+    }[role] || ['settlement', 'council_hall'];
+  }
+
   _roleName(role) {
-    return { commander: '统帅', diplomat: '外交家', engineer: '工程师', explorer: '探险家', physician: '医师', scholar: '学者', governor: '总督' }[role] || role;
+    return { commander: '统帅', admiral: '海军统帅', strategist: '军事家', diplomat: '外交家', engineer: '工程师', explorer: '探险家', physician: '医师', scholar: '学者', governor: '总督' }[role] || role;
   }
 
   getHero(id) { return this.getAllHeroes().find(hero => hero.id === id) || null; }
@@ -98,6 +125,9 @@ export class HeroSystem {
   }
 
   getAvailableHeroes() { return this._availableIds.map(id => this.getHero(id)).filter(Boolean); }
+  getRecruitableHeroes() { return this._eligibleHeroes(); }
+  getMilitaryHeroes() { return this.getAllHeroes().filter(hero => hero.heroClass === 'military'); }
+  getCivilHeroes() { return this.getAllHeroes().filter(hero => hero.heroClass === 'civil'); }
   getRecruitedHeroes() {
     const day = store.getState('timeDay') || 1;
     return Object.values(this._recruited).map(entry => ({
@@ -128,6 +158,11 @@ export class HeroSystem {
   assignHero(id, assignment) {
     const entry = this._recruited[id];
     if (!entry) return { ok: false, reason: '人物尚未招募' };
+    const hero = this.getHero(id);
+    const assignmentType = typeof assignment === 'string' ? assignment : assignment?.type;
+    const isArmyAssignment = assignmentType === 'army';
+    if (assignment && hero?.heroClass === 'military' && !isArmyAssignment) return { ok: false, reason: '武将只能任命到军团' };
+    if (assignment && hero?.heroClass === 'civil' && isArmyAssignment) return { ok: false, reason: '文臣不能带领军团' };
     const activeCount = Object.values(this._recruited).filter(hero => hero.assignment && hero.heroId !== id).length;
     if (assignment && activeCount >= this.getAssignmentLimit()) return { ok: false, reason: '人物任命席位已满' };
     entry.assignment = assignment || null;

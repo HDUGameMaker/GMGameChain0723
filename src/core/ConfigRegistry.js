@@ -127,15 +127,15 @@ class ConfigRegistry {
     // 旧主版本与 EA 单位没有时代字段。这里仅补充分类元数据，不覆盖其既有数值，
     // 使它们能够进入正确的时代分页并服从时代训练限制。
     const legacyUnitMetadata = {
-      warrior: ['ancient', 'infantry'], raft: ['ancient', 'navy'],
-      spearman: ['ancient', 'anti_cavalry'], archer: ['ancient', 'ranged'],
+      warrior: ['primitive', 'infantry'], raft: ['primitive', 'navy'],
+      spearman: ['primitive', 'anti_cavalry'], archer: ['primitive', 'ranged'],
       swordsman: ['classical', 'infantry'], catapult: ['classical', 'siege'], galley: ['classical', 'navy'],
       knight: ['medieval', 'cavalry'], armored_cavalry: ['medieval', 'cavalry'], pikeman: ['medieval', 'anti_cavalry'],
       crossbowman: ['medieval', 'ranged'], longbowman: ['medieval', 'ranged'], trebuchet: ['medieval', 'siege'], siege_tower: ['medieval', 'siege'],
       musketeer: ['exploration', 'ranged'], sailing_ship: ['exploration', 'navy'], fire_ship: ['exploration', 'navy'],
-      cannon: ['industrial', 'siege'], biplane: ['industrial', 'special'], tank: ['industrial', 'special'],
+      cannon: ['early_modern', 'siege'], biplane: ['early_modern', 'special'], tank: ['early_modern', 'special'],
       modern_infantry: ['modern', 'infantry'], jet_fighter: ['modern', 'special'],
-      rocket_artillery: ['modern', 'siege'], battleship: ['modern', 'navy'], missile_destroyer: ['information', 'navy']
+      rocket_artillery: ['modern', 'siege'], battleship: ['modern', 'navy'], missile_destroyer: ['modern', 'navy']
     };
     this._configs.enemies.units = this._configs.enemies.units.map(unit => {
       const metadata = legacyUnitMetadata[unit.id];
