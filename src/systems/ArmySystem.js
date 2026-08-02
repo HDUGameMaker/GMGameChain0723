@@ -6,12 +6,14 @@ import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
 import { getArmyCombatPower } from '../utils/FormationUtils.js';
+import { resolvePhasedArmyBattle } from './CombatResolver.js';
 
 export class ArmySystem {
   constructor() {
     this._armies = [];
     this._availableUnits = {};
     this._nextId = 1;
+    this._battleHistory = [];
     this._building = null;
     this._hero = null;
     this._culture = null;
@@ -28,6 +30,7 @@ export class ArmySystem {
     this._armies = [];
     this._availableUnits = {};
     this._nextId = 1;
+    this._battleHistory = [];
     this._notify('init');
   }
 
@@ -179,6 +182,17 @@ export class ArmySystem {
     }
     army.formationId = formationId || null;
     this._notify('formation');
+    return { ok: true };
+  }
+
+  getTactics() { return configRegistry.get('militaryTactics')?.tactics || []; }
+
+  setTactic(armyId, tacticId) {
+    const army = this._findArmy(armyId);
+    if (!army) return { ok: false, reason: 'unknown_army' };
+    if (tacticId && !this.getTactics().some(tactic => tactic.id === tacticId)) return { ok: false, reason: 'unknown_tactic' };
+    army.tacticId = tacticId || null;
+    this._notify('tactic');
     return { ok: true };
   }
 
@@ -370,6 +384,56 @@ export class ArmySystem {
     return config?.uniqueFunction?.garrisonDefenseMul || 1.25;
   }
 
+  resolveEngagement(attackerId, defenderId, context = {}) {
+    const attacker = this._findArmy(attackerId);
+    const defender = this._findArmy(defenderId);
+    if (!attacker || !defender) return { ok: false, reason: 'unknown_army' };
+    if (!attacker.unitIds.length || !defender.unitIds.length) return { ok: false, reason: 'empty_army' };
+    const result = resolvePhasedArmyBattle(
+      attacker,
+      defender,
+      configRegistry.get('enemies')?.units || [],
+      this.getTactics(),
+      {
+        ...context,
+        attackerDefenseMultiplier: this.getArmyDefenseMultiplier(attackerId),
+        defenderDefenseMultiplier: this.getArmyDefenseMultiplier(defenderId)
+      }
+    );
+    this._applyCasualties(attacker, result.casualties.attacker);
+    this._applyCasualties(defender, result.casualties.defender);
+    attacker.supply = Math.max(0.25, attacker.supply - 0.15);
+    defender.supply = Math.max(0.25, defender.supply - 0.15);
+    if (result.winner === 'attacker') {
+      attacker.morale = Math.min(100, attacker.morale + 4);
+      defender.morale = Math.max(0, defender.morale - 20);
+    } else if (result.winner === 'defender') {
+      defender.morale = Math.min(100, defender.morale + 4);
+      attacker.morale = Math.max(0, attacker.morale - 20);
+    } else {
+      attacker.morale = Math.max(0, attacker.morale - 10);
+      defender.morale = Math.max(0, defender.morale - 10);
+    }
+    if (!attacker.unitIds.length && attacker.heroId) this._hero?.injureHero?.(attacker.heroId);
+    if (!defender.unitIds.length && defender.heroId) this._hero?.injureHero?.(defender.heroId);
+    const record = { id: `battle_${Date.now()}_${this._battleHistory.length}`, attackerId, defenderId, ...result };
+    this._battleHistory.push(record);
+    this._battleHistory = this._battleHistory.slice(-20);
+    this._notify('battle');
+    eventBus.emit('armyBattleResolved', structuredClone(record));
+    eventBus.emit('combatBroadcast', { message: `⚔️ ${attacker.name}与${defender.name}交战：${result.winner === 'attacker' ? attacker.name + '获胜' : result.winner === 'defender' ? defender.name + '获胜' : '双方战平'}` });
+    return { ok: true, ...structuredClone(record) };
+  }
+
+  _applyCasualties(army, count) {
+    if (count <= 0) return;
+    const unitMap = new Map((configRegistry.get('enemies')?.units || []).map(unit => [unit.id, unit]));
+    army.unitIds.sort((left, right) => (unitMap.get(left)?.combatPower || 1) - (unitMap.get(right)?.combatPower || 1));
+    army.unitIds.splice(0, Math.min(count, army.unitIds.length));
+  }
+
+  getBattleHistory() { return structuredClone(this._battleHistory); }
+
   getArmyPower(armyId) {
     const army = this._findArmy(armyId);
     if (!army) return 0;
@@ -403,7 +467,8 @@ export class ArmySystem {
     return {
       nextId: this._nextId,
       armies: structuredClone(this._armies),
-      availableUnits: { ...this._availableUnits }
+      availableUnits: { ...this._availableUnits },
+      battleHistory: structuredClone(this._battleHistory)
     };
   }
 
@@ -426,6 +491,7 @@ export class ArmySystem {
     }));
     this._availableUnits = Object.fromEntries(Object.entries(state?.availableUnits || {}).filter(([id]) => validUnits.has(id)).map(([id, count]) => [id, Math.max(0, Math.floor(Number(count) || 0))]));
     this._nextId = Math.max(1, Math.floor(state?.nextId || this._armies.length + 1));
+    this._battleHistory = Array.isArray(state?.battleHistory) ? structuredClone(state.battleHistory).slice(-20) : [];
     this._notify('restore');
   }
 

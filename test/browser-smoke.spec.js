@@ -16,5 +16,8 @@ test('new game opens economy panels without browser errors', async ({ page }) =>
   await page.locator('#popup-close-btn').click();
   await page.getByRole('button', { name: /商业/ }).click();
   await expect(page.getByText('商业中心与自动贸易')).toBeVisible();
+  await page.locator('#popup-close-btn').click();
+  await page.getByRole('button', { name: /军队/ }).click();
+  await expect(page.getByText('军队管理')).toBeVisible();
   expect(errors).toEqual([]);
 });

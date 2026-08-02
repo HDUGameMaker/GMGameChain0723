@@ -39,6 +39,7 @@ class ConfigRegistry {
       'buildingTech': 'config/building_tech.json',
       'economicOrders': 'config/economic-orders.json',
       'commerce': 'config/commerce.json',
+      'militaryTactics': 'config/military-tactics.json',
       'eaIntegration': 'config/ea_integration.json',
       'historicalContent': 'config/historical_content.json'
     };

@@ -203,6 +203,24 @@ export function renderArmyPanel(data, body, pm) {
     });
     row.appendChild(formationSelect);
 
+    const tacticSelect = document.createElement('select');
+    tacticSelect.style.cssText = formationSelect.style.cssText;
+    tacticSelect.title = '固定军事策略会改变分阶段战斗中的优势环节';
+    tacticSelect.innerHTML = '<option value="">默认策略</option>';
+    for (const tactic of _armySystem()?.getTactics?.() || []) {
+      const option = document.createElement('option');
+      option.value = tactic.id;
+      option.textContent = tactic.name;
+      option.title = tactic.description;
+      option.selected = army.tacticId === tactic.id;
+      tacticSelect.appendChild(option);
+    }
+    tacticSelect.addEventListener('change', () => {
+      _armySystem()?.setTactic?.(army.id, tacticSelect.value || null);
+      renderArmyPanel(data, body, pm);
+    });
+    row.appendChild(tacticSelect);
+
     const delBtn = document.createElement('button');
     delBtn.textContent = '🗑';
     delBtn.style.cssText = 'padding:4px 8px;border:none;border-radius:5px;background:rgba(255,107,107,0.15);color:#ff6b6b;cursor:pointer;font-size:14px;';
@@ -306,6 +324,34 @@ export function renderArmyPanel(data, body, pm) {
       movementRow.append(garrisonSelect, garrisonButton);
     }
     card.appendChild(movementRow);
+
+    const opponents = armies.filter(other => other.id !== army.id && other.unitIds?.length);
+    if (army.unitIds?.length && opponents.length) {
+      const battleRow = document.createElement('div');
+      battleRow.style.cssText = 'display:flex;align-items:center;gap:7px;padding:8px 16px;border-bottom:1px solid rgba(255,255,255,.06);font-size:11px;color:#c4a7a7;';
+      battleRow.append('战斗推演');
+      const opponentSelect = document.createElement('select');
+      opponentSelect.style.cssText = 'padding:4px 7px;border:1px solid #704f53;border-radius:5px;background:#302225;color:#f4e4e4;';
+      for (const opponent of opponents) {
+        const option = document.createElement('option');
+        option.value = opponent.id;
+        option.textContent = `${opponent.name}（战力 ${opponent.power}）`;
+        opponentSelect.appendChild(option);
+      }
+      const battleButton = document.createElement('button');
+      battleButton.textContent = '开始交战';
+      battleButton.style.cssText = 'padding:4px 9px;border:1px solid #9a5555;border-radius:5px;background:#612f35;color:#ffe8e8;cursor:pointer;';
+      battleButton.addEventListener('click', async () => {
+        if (!await pm.confirm('交战会造成真实伤亡、士气与补给损失，是否继续？')) return;
+        const result = _armySystem()?.resolveEngagement?.(army.id, opponentSelect.value);
+        if (!result?.ok) return pm.alert(result?.reason || '无法交战');
+        const phaseLines = result.phases.map(phase => `${phase.name}：${phase.attackerPower} / ${phase.defenderPower}`).join('\n');
+        await pm.alert(`${result.winner === 'attacker' ? army.name + '获胜' : result.winner === 'defender' ? '对方获胜' : '双方战平'}\n${phaseLines}\n伤亡：我方 ${result.casualties.attacker}，对方 ${result.casualties.defender}`);
+        renderArmyPanel(data, body, pm);
+      });
+      battleRow.append(opponentSelect, battleButton);
+      card.appendChild(battleRow);
+    }
 
     if (army.formationId) {
       const status = document.createElement('div');
