@@ -47,8 +47,29 @@
     {"id":"corsair_galley","name":"海盗桨船","icon":"🏴‍☠️","faction":"corsair","domain":"naval","roleTags":["naval_raider","naval_light"],"maxHp":18,"attack":6,"spawnConditions":{"minDay":10},"drops":[{"resourceId":"gold","amount":8}]},
     {"id":"sea_serpent","name":"海蛇","icon":"🐉","faction":"wildlife","domain":"naval","roleTags":["beast","naval_heavy"],"maxHp":24,"attack":8,"spawnConditions":{"minDay":18},"drops":[{"resourceId":"food","amount":10}]}
   ],
-  "outpostActions": [],
-  "outposts": [],
+  "outpostActions": {
+    "talk":{"name":"交谈","description":"了解对方诉求并缓和紧张。","relationDelta":5,"basic":true},
+    "gift":{"name":"赠礼","description":"赠送粮食表达善意。","cost":[{"resourceId":"food","amount":30}],"relationDelta":15,"basic":true},
+    "aid":{"name":"援助","description":"提供木材和粮食协助据点。","cost":[{"resourceId":"wood","amount":25},{"resourceId":"food","amount":25}],"relationDelta":22,"basic":true},
+    "negotiate":{"name":"正式谈判","description":"派遣使者推动停战和边界安排。","cost":[{"resourceId":"gold","amount":8}],"relationDelta":12,"cultureUnlock":"diplomatic_corps"},
+    "ceasefire":{"name":"缔结停战","description":"结束敌对状态，恢复有限往来。","cost":[{"resourceId":"food","amount":40},{"resourceId":"gold","amount":12}],"minimumRelation":-45,"relationDelta":25,"forceStatus":"neutral","cultureUnlock":"peace_treaty"},
+    "trade":{"name":"互市贸易","description":"交换货物并逐步提高互信。","cost":[{"resourceId":"wood","amount":20}],"rewards":[{"resourceId":"food","amount":35}],"minimumRelation":0,"relationDelta":4,"cultureUnlock":"market_customs"},
+    "open_borders":{"name":"开放边界","description":"允许探险队安全通过据点控制区。","minimumRelation":25,"relationDelta":8,"forceStatus":"friendly","cultureUnlock":"open_borders"},
+    "non_aggression":{"name":"互不侵犯","description":"承诺长期不主动攻击。","cost":[{"resourceId":"gold","amount":15}],"minimumRelation":40,"relationDelta":10,"forceStatus":"friendly","cultureUnlock":"peace_treaty"},
+    "joint_patrol":{"name":"联合巡逻","description":"共同清剿野兽和海盗。","cost":[{"resourceId":"food","amount":35},{"resourceId":"gold","amount":10}],"minimumRelation":45,"relationDelta":12,"cultureUnlock":"joint_command"},
+    "alliance":{"name":"结盟","description":"建立正式同盟并获得周期性支援。","cost":[{"resourceId":"gold","amount":30}],"minimumRelation":60,"relationDelta":20,"forceStatus":"allied","cultureUnlock":"grand_alliance"}
+  },
+  "cultureDiplomacyUnlocks": {
+    "new_policy":["negotiate","trade","ceasefire","open_borders","non_aggression","joint_patrol","alliance"]
+  },
+  "outposts": [
+    {"id":"forest_camp","name":"林地匪寨","icon":"🏕️","description":"控制林道的松散盗匪营地，既会劫掠，也愿意为利益谈判。","gridX":65,"gridY":115,"domain":"land","faction":"bandits","develops":false,"initialRelation":-35,"militaryStrength":34,"garrison":[{"enemyId":"bandit_raider","count":4},{"enemyId":"bandit_archer","count":2}],"actions":["talk","gift","aid","negotiate","ceasefire","trade","non_aggression","alliance"]},
+    {"id":"iron_watch","name":"铁岭守备所","icon":"🏰","description":"占据旧矿道的纪律化守军，重视力量、边界与正式条约。","gridX":110,"gridY":95,"domain":"land","faction":"outpost","develops":false,"initialRelation":-55,"militaryStrength":62,"garrison":[{"enemyId":"outpost_guard","count":5},{"enemyId":"outpost_crossbow","count":3}],"actions":["talk","gift","negotiate","ceasefire","open_borders","non_aggression","joint_patrol","alliance"]},
+    {"id":"hill_clan","name":"丘陵氏族","icon":"⛺","description":"以狩猎和牧养为生的氏族聚落，尊重援助与共同作战。","gridX":55,"gridY":125,"domain":"land","faction":"clan","develops":false,"initialRelation":5,"militaryStrength":28,"garrison":[{"enemyId":"bandit_raider","count":3}],"actions":["talk","gift","aid","trade","open_borders","joint_patrol","alliance"]},
+    {"id":"free_market","name":"自由市集","icon":"🏘️","description":"不隶属任何大势力的固定商站，以互市和道路安全为核心。","gridX":110,"gridY":125,"domain":"land","faction":"merchants","develops":false,"initialRelation":15,"militaryStrength":22,"garrison":[{"enemyId":"outpost_guard","count":2}],"actions":["talk","gift","aid","trade","open_borders","non_aggression","alliance"]},
+    {"id":"corsair_anchorage","name":"海盗锚地","icon":"🏴‍☠️","description":"隐藏在水道中的海盗锚地，可被征服、招安或纳入海上贸易。","gridX":95,"gridY":110,"domain":"naval","faction":"corsair","develops":false,"initialRelation":-65,"militaryStrength":58,"garrison":[{"enemyId":"corsair_galley","count":5}],"actions":["talk","gift","negotiate","ceasefire","trade","non_aggression","alliance"]},
+    {"id":"river_shrine","name":"河湾圣所","icon":"⛩️","description":"守护河湾和渡口的古老共同体，偏好礼法、援助和和平往来。","gridX":145,"gridY":100,"domain":"land","faction":"shrine","develops":false,"initialRelation":25,"militaryStrength":31,"garrison":[{"enemyId":"outpost_crossbow","count":2},{"enemyId":"outpost_guard","count":1}],"actions":["talk","gift","aid","trade","open_borders","joint_patrol","alliance"]}
+  ],
   "heroes": [],
   "events": []
 }

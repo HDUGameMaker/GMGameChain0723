@@ -359,6 +359,7 @@ export class PopupManager {
       'potion_inventory': '药剂库存',
       'tamed_pool': '驯养管理',
       'unit_research': '兵种研发',
+      'outpost_diplomacy': data?.outpostName || '据点外交',
       'tutorial_prompt': '新手教程',
       'quest_panel': '任务'
     };
@@ -463,6 +464,9 @@ export class PopupManager {
     import('./panels/doctrine-panel.js').then(m => {
       this.register('doctrine_panel', m.renderDoctrinePanel);
       this.register('military_tradition', m.renderMilitaryTraditionPanel);
+    });
+    import('./panels/outpost-diplomacy-panel.js').then(m => {
+      this.register('outpost_diplomacy', m.renderOutpostDiplomacyPanel);
     });
   }
 }

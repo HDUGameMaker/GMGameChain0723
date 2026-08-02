@@ -28,6 +28,7 @@ import { TerritorySystem } from './systems/TerritorySystem.js';
 import { EnemyExpansionSystem } from './systems/EnemyExpansionSystem.js';
 import { SpellSystem } from './systems/SpellSystem.js';
 import { BuildingTechSystem } from './systems/BuildingTechSystem.js';
+import { DiplomacySystem } from './systems/DiplomacySystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
@@ -138,6 +139,9 @@ class Game {
     // 敌人 x2 扩张系统
     this.systems.enemyExpansion = new EnemyExpansionSystem();
 
+    // 固定 NPC 据点外交（不参与玩家式发展）
+    this.systems.diplomacy = new DiplomacySystem();
+
     // 音效系统
     this.systems.audio = new AudioSystem();
 
@@ -204,6 +208,10 @@ class Game {
     this.systems.culture.setTimeSystem(this.systems.time);
     this.systems.culture.setTechSystem(this.systems.tech);
     this.systems.culture.init();
+    this.systems.diplomacy.setSystems({
+      resource: this.systems.resource,
+      culture: this.systems.culture
+    });
     this.systems.alchemy.setResourceSystem(this.systems.resource);
     this.systems.alchemy.setItemSystem(this.systems.item);
     this.systems.alchemy.setBuildingSystem(this.systems.building);
@@ -268,6 +276,11 @@ class Game {
     // 注册建筑点击事件
     eventBus.on('buildingClicked', ({ buildingIndex }) => {
       this.popupManager.open('building_detail', { buildingIndex });
+    });
+
+    eventBus.on('outpostClicked', (outpost) => {
+      this.systems.diplomacy.discoverOutpost(outpost.id);
+      this.popupManager.open('outpost_diplomacy', { outpostId: outpost.id, outpostName: outpost.name });
     });
 
     // 道路编辑模式切换时，退出建筑放置模式
@@ -336,6 +349,7 @@ class Game {
     this.mapRenderer = new MapRenderer(this.app, this.systems.building, this.systems.torch, this.systems.road, this.systems.combat, this.systems.territory);
     this.mapRenderer.setEnemyExpansion(this.systems.enemyExpansion);
     this.mapRenderer.setSpellSystem(this.systems.spell);
+    this.mapRenderer.setDiplomacySystem(this.systems.diplomacy);
     await this.mapRenderer.init();
 
     // 6.05 加载存档后恢复相机位置（覆盖 _centerView 的默认/配置位置）
@@ -468,6 +482,8 @@ class Game {
     this.systems.spell.initNew();
     // 初始化建筑科技树
     this.systems.buildingTech.initNew();
+    // 初始化固定 NPC 据点关系
+    this.systems.diplomacy.initNew();
 
     // 初始化事件标记状态（新游戏 = 无已移除标记）
     store.setState({ removedEventMarkers: [] });
@@ -525,6 +541,11 @@ class Game {
       this.systems.buildingTech.restoreState(saveData.buildingTech);
     } else {
       this.systems.buildingTech.initNew();
+    }
+    if (saveData.diplomacy) {
+      this.systems.diplomacy.restoreState(saveData.diplomacy);
+    } else {
+      this.systems.diplomacy.initNew();
     }
     if (saveData.weather) {
       this.systems.weather.restoreState(saveData.weather);
@@ -599,6 +620,7 @@ class Game {
       enemyExpansion: this.systems.enemyExpansion.getState(),
       spell: this.systems.spell.getState(),
       buildingTech: this.systems.buildingTech.getState(),
+      diplomacy: this.systems.diplomacy.getState(),
       audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
       armies: store.getState('armies'),

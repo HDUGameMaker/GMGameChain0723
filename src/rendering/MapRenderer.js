@@ -152,6 +152,7 @@ export class MapRenderer {
 
   setEnemyExpansion(ees) { this._enemyExpansion = ees || null; }
   setSpellSystem(ss) { this._spellSystem = ss || null; }
+  setDiplomacySystem(ds) { this._diplomacySystem = ds || null; }
 
   async init() {
     await this._preloadTerrainTextures();
@@ -159,6 +160,7 @@ export class MapRenderer {
     this._drawTerrainChunk();
     // this._drawExpeditionEntrances(); // 重设计：隐藏探险入口（探险系统已移出核心循环）
     this._drawEventMarkers();
+    this._drawOutposts();
     this._drawEnemies();
     this._drawTerritory();
     this._drawEnemyExpansion();
@@ -442,6 +444,44 @@ export class MapRenderer {
     this._eventMarkerData = [];
     // 重新绘制
     this._drawEventMarkers();
+  }
+
+  // ===== 固定 NPC 据点 =====
+
+  _drawOutposts() {
+    for (const sprite of this._outpostSprites || []) {
+      this.worldContainer.removeChild(sprite);
+      sprite.destroy({ children: true });
+    }
+    this._outpostSprites = [];
+    this._outpostData = this._diplomacySystem?.getAllOutposts?.() || [];
+    const states = store.getState('outpostStates') || {};
+    const colors = { hostile: 0xc74b4b, wary: 0xd18b3d, neutral: 0x85859b, friendly: 0x4eaa70, allied: 0x4f7fda, defeated: 0x79639f };
+    const ts = this.tileSize;
+    for (const outpost of this._outpostData) {
+      const state = states[outpost.id] || {};
+      const color = colors[state.status] || colors.neutral;
+      const x = outpost.gridX * ts;
+      const y = outpost.gridY * ts;
+      const container = new PIXI.Container();
+      const bg = new PIXI.Graphics();
+      bg.roundRect(x - 2, y - 2, ts + 4, ts + 4, 6);
+      bg.fill({ color, alpha: 0.82 });
+      bg.roundRect(x - 2, y - 2, ts + 4, ts + 4, 6);
+      bg.stroke({ color: 0xffffff, alpha: 0.72, width: 2 });
+      container.addChild(bg);
+      const icon = new PIXI.Text({ text: outpost.icon || '🏰', style: { fontSize: 22, fill: 0xffffff, align: 'center' } });
+      icon.anchor.set(0.5);
+      icon.x = x + ts / 2;
+      icon.y = y + ts / 2;
+      container.addChild(icon);
+      this.worldContainer.addChild(container);
+      this._outpostSprites.push(container);
+    }
+  }
+
+  _isClickOnOutpost(col, row) {
+    return (this._outpostData || []).find(outpost => outpost.gridX === col && outpost.gridY === row) || null;
   }
 
   // ===== 敌人渲染 =====
@@ -1761,6 +1801,12 @@ export class MapRenderer {
     } else {
       // 检查迷雾门控
       if (!this._isTileRevealed(gridPos.col, gridPos.row)) return;
+
+      const clickedOutpost = this._isClickOnOutpost(gridPos.col, gridPos.row);
+      if (clickedOutpost) {
+        eventBus.emit('outpostClicked', clickedOutpost);
+        return;
+      }
 
       // 检查是否点击了事件标记（"?"）
       const clickedMarker = this._isClickOnEventMarker(gridPos.col, gridPos.row);
@@ -3151,6 +3197,7 @@ export class MapRenderer {
     store.subscribe('removedEventMarkers', () => {
       this._refreshEventMarkers();
     });
+    store.subscribe('outpostVersion', () => this._drawOutposts());
   }
 
   /**

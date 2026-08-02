@@ -62,6 +62,17 @@ export class CultureSystem {
   isResearched(id) { return this._researched.has(id); }
   isActivated(id) { return this._activatedPolicies.has(id); }
 
+  /** 外交扩展只读取已有文化节点状态，不替换主版本文化树。 */
+  getUnlockedDiplomacyActions() {
+    const result = new Set(['talk', 'gift', 'aid']);
+    const unlocks = configRegistry.get('eaIntegration')?.cultureDiplomacyUnlocks || {};
+    for (const [cultureId, actionIds] of Object.entries(unlocks)) {
+      if (!this._researched.has(cultureId) && !this._activatedPolicies.has(cultureId) && this._government !== cultureId) continue;
+      for (const actionId of actionIds || []) result.add(actionId);
+    }
+    return [...result];
+  }
+
   /** 已通过灵感研究的信条（doctrines.json） */
   getDoctrineResearched() { return store.getState('doctrineResearched') || []; }
   getDoctrineResearchLevels() { return store.getState('doctrineResearchLevels') || {}; }
