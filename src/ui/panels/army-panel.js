@@ -246,6 +246,67 @@ export function renderArmyPanel(data, body, pm) {
     commandRow.appendChild(location);
     card.appendChild(commandRow);
 
+    const movementRow = document.createElement('div');
+    movementRow.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 16px;border-bottom:1px solid rgba(255,255,255,.06);font-size:11px;color:#9ba7b8;';
+    const coordinateInput = (value, label) => {
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.value = value;
+      input.title = label;
+      input.style.cssText = 'width:58px;padding:4px 5px;border:1px solid #4d5666;border-radius:4px;background:#202531;color:#e8edf5;';
+      return input;
+    };
+    const targetX = coordinateInput(army.gridX, '目标 X');
+    const targetY = coordinateInput(army.gridY, '目标 Y');
+    movementRow.append('目标格', targetX, targetY);
+    const moveButton = document.createElement('button');
+    moveButton.textContent = '下达移动';
+    moveButton.style.cssText = 'padding:4px 8px;border:1px solid #58759a;border-radius:5px;background:#2c4565;color:#e4efff;cursor:pointer;';
+    moveButton.addEventListener('click', () => {
+      const result = _armySystem()?.issueMoveOrder?.(army.id, Number(targetX.value), Number(targetY.value));
+      if (!result?.ok) pm.alert({ incompatible_terrain: '陆军不能直接进入水域；请先在港口登船。', no_path: '没有可通行路径', army_garrisoned: '请先撤出驻防' }[result?.reason] || result?.reason || '移动失败');
+      else renderArmyPanel(data, body, pm);
+    });
+    movementRow.appendChild(moveButton);
+    const embarkButton = document.createElement('button');
+    embarkButton.textContent = army.embarked ? '登陆目标格' : '在港口登船';
+    embarkButton.style.cssText = 'padding:4px 8px;border:1px solid #4b8594;border-radius:5px;background:#244d59;color:#dff8ff;cursor:pointer;';
+    embarkButton.addEventListener('click', () => {
+      const result = army.embarked
+        ? _armySystem()?.disembarkArmy?.(army.id, Number(targetX.value), Number(targetY.value))
+        : _armySystem()?.embarkArmy?.(army.id);
+      if (!result?.ok) pm.alert({ harbor_required: '军团必须位于港口或其相邻格', landing_not_adjacent: '登陆格必须与舰队相邻', invalid_landing: '只能登陆陆地格', transport_capacity_full: '港口运输容量不足' }[result?.reason] || result?.reason || '操作失败');
+      else renderArmyPanel(data, body, pm);
+    });
+    movementRow.appendChild(embarkButton);
+    const fortifications = (window.__game?.systems?.building?.buildings || []).map((building, index) => ({ building, index, config: window.__game?.configRegistry?.getBuilding(building.buildingId) })).filter(item => item.building.status === 'active' && (item.config?.uniqueFunction?.garrisonCapacity || ['castle', 'fort', 'citadel'].includes(item.building.buildingId)));
+    if (army.garrisonBuildingIndex != null) {
+      const leaveButton = document.createElement('button');
+      leaveButton.textContent = '撤出驻防';
+      leaveButton.style.cssText = 'padding:4px 8px;border:1px solid #8c744c;border-radius:5px;background:#514123;color:#ffe8ba;cursor:pointer;';
+      leaveButton.addEventListener('click', () => { _armySystem()?.ungarrisonArmy?.(army.id); renderArmyPanel(data, body, pm); });
+      movementRow.appendChild(leaveButton);
+    } else if (fortifications.length) {
+      const garrisonSelect = document.createElement('select');
+      garrisonSelect.style.cssText = 'padding:4px 6px;border:1px solid #5b5360;border-radius:5px;background:#26232b;color:#ece6f0;';
+      for (const item of fortifications) {
+        const option = document.createElement('option');
+        option.value = item.index;
+        option.textContent = `${item.config?.name || item.building.buildingId}(${item.building.gridX},${item.building.gridY})`;
+        garrisonSelect.appendChild(option);
+      }
+      const garrisonButton = document.createElement('button');
+      garrisonButton.textContent = '进入驻防';
+      garrisonButton.style.cssText = 'padding:4px 8px;border:1px solid #78628d;border-radius:5px;background:#49385a;color:#f1e1ff;cursor:pointer;';
+      garrisonButton.addEventListener('click', () => {
+        const result = _armySystem()?.garrisonArmy?.(army.id, Number(garrisonSelect.value));
+        if (!result?.ok) pm.alert(result?.reason === 'garrison_too_far' ? '军团必须先移动到要塞相邻格' : result?.reason || '驻防失败');
+        else renderArmyPanel(data, body, pm);
+      });
+      movementRow.append(garrisonSelect, garrisonButton);
+    }
+    card.appendChild(movementRow);
+
     if (army.formationId) {
       const status = document.createElement('div');
       status.style.cssText = 'font-size:11px;padding:6px 16px;border-top:1px solid rgba(255,255,255,0.06);';

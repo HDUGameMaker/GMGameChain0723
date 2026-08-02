@@ -3160,7 +3160,8 @@
         "defensePower": 60,
         "unlockEliteUnits": true,
         "armyCapacityBonus": 1,
-        "garrisonCapacity": 2
+        "garrisonCapacity": 2,
+        "garrisonDefenseMul": 1.35
       },
       "icon": "assets/historical-icons/buildings/castle.svg",
       "imageDetail": "assets/historical-icons/buildings/castle.svg",
@@ -3308,7 +3309,8 @@
       ],
       "uniqueFunction": {
         "routeCapacity": 2,
-        "navalSupply": 10
+        "navalSupply": 10,
+        "transportCapacity": 12
       },
       "icon": "assets/historical-icons/buildings/harbor.svg",
       "imageDetail": "assets/historical-icons/buildings/harbor.svg",

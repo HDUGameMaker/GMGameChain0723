@@ -15,6 +15,7 @@ export class ArmySystem {
     this._building = null;
     this._hero = null;
     this._culture = null;
+    eventBus.on('tick', () => this._advanceMovement());
   }
 
   setSystems({ building, hero, culture } = {}) {
@@ -203,6 +204,170 @@ export class ArmySystem {
     army.heroId = null;
     this._notify('hero');
     return true;
+  }
+
+  _getMap() { return configRegistry.get('map') || null; }
+
+  _groundAt(x, y) { return this._getMap()?.grid?.[y]?.[x] || null; }
+
+  _isWater(x, y) { return ['S', 'W'].includes(this._groundAt(x, y)); }
+
+  _armyIsNaval(army) {
+    return army.unitIds.length > 0 && army.unitIds.every(unitId => (this._unitConfig(unitId)?.domain || 'land') === 'naval');
+  }
+
+  _armyHasOnlyLandUnits(army) {
+    return army.unitIds.length > 0 && army.unitIds.every(unitId => (this._unitConfig(unitId)?.domain || 'land') !== 'naval');
+  }
+
+  _buildingDistance(army, building, config) {
+    const width = config?.footprint?.width || 1;
+    const height = config?.footprint?.height || 1;
+    const right = building.gridX + width - 1;
+    const bottom = building.gridY + height - 1;
+    const dx = Math.max(0, building.gridX - army.gridX, army.gridX - right);
+    const dy = Math.max(0, building.gridY - army.gridY, army.gridY - bottom);
+    return Math.max(dx, dy);
+  }
+
+  _nearbyHarbor(army) {
+    return this._activeBuildings().find(building => {
+      const config = configRegistry.getBuilding?.(building.buildingId);
+      const isHarbor = building.buildingId === 'harbor' || (config?.tags || []).some(tag => ['naval_facility', 'naval'].includes(tag));
+      return isHarbor && this._buildingDistance(army, building, config) <= 1;
+    }) || null;
+  }
+
+  embarkArmy(armyId) {
+    const army = this._findArmy(armyId);
+    if (!army) return { ok: false, reason: 'unknown_army' };
+    if (army.embarked) return { ok: false, reason: 'already_embarked' };
+    if (army.garrisonBuildingIndex != null) return { ok: false, reason: 'army_garrisoned' };
+    if (!this._armyHasOnlyLandUnits(army)) return { ok: false, reason: 'land_units_required' };
+    const harbor = this._nearbyHarbor(army);
+    if (!harbor) return { ok: false, reason: 'harbor_required' };
+    const config = configRegistry.getBuilding?.(harbor.buildingId);
+    const capacity = config?.uniqueFunction?.transportCapacity || config?.uniqueFunction?.navalSupply || 10;
+    if (army.unitIds.length > capacity) return { ok: false, reason: 'transport_capacity_full' };
+    army.embarked = true;
+    army.movePath = [];
+    this._notify('embark');
+    return { ok: true };
+  }
+
+  disembarkArmy(armyId, targetX, targetY) {
+    const army = this._findArmy(armyId);
+    if (!army) return { ok: false, reason: 'unknown_army' };
+    if (!army.embarked) return { ok: false, reason: 'not_embarked' };
+    if (Math.abs(army.gridX - targetX) + Math.abs(army.gridY - targetY) !== 1) return { ok: false, reason: 'landing_not_adjacent' };
+    if (!this._groundAt(targetX, targetY) || this._isWater(targetX, targetY)) return { ok: false, reason: 'invalid_landing' };
+    army.gridX = targetX;
+    army.gridY = targetY;
+    army.embarked = false;
+    army.movePath = [];
+    this._notify('disembark');
+    return { ok: true };
+  }
+
+  _canOccupyForMovement(army, x, y, start) {
+    const ground = this._groundAt(x, y);
+    if (!ground) return false;
+    if (army.embarked) return this._isWater(x, y) || (x === start.x && y === start.y);
+    if (this._armyIsNaval(army)) return this._isWater(x, y);
+    return !this._isWater(x, y);
+  }
+
+  _findPath(army, targetX, targetY) {
+    const map = this._getMap();
+    if (!map) return [];
+    const start = { x: army.gridX, y: army.gridY };
+    const targetKey = `${targetX},${targetY}`;
+    const queue = [start];
+    let cursor = 0;
+    const previous = new Map([[`${start.x},${start.y}`, null]]);
+    const directions = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+    while (cursor < queue.length) {
+      const current = queue[cursor++];
+      if (`${current.x},${current.y}` === targetKey) break;
+      for (const [dx, dy] of directions) {
+        const next = { x: current.x + dx, y: current.y + dy };
+        if (next.x < 0 || next.y < 0 || next.x >= map.gridWidth || next.y >= map.gridHeight) continue;
+        const key = `${next.x},${next.y}`;
+        if (previous.has(key) || !this._canOccupyForMovement(army, next.x, next.y, start)) continue;
+        if (this._armies.some(other => other.id !== army.id && other.gridX === next.x && other.gridY === next.y && other.garrisonBuildingIndex == null)) continue;
+        previous.set(key, current);
+        queue.push(next);
+      }
+    }
+    if (!previous.has(targetKey)) return [];
+    const path = [];
+    let current = { x: targetX, y: targetY };
+    while (current && (current.x !== start.x || current.y !== start.y)) {
+      path.unshift(current);
+      current = previous.get(`${current.x},${current.y}`);
+    }
+    return path;
+  }
+
+  issueMoveOrder(armyId, targetX, targetY) {
+    const army = this._findArmy(armyId);
+    if (!army) return { ok: false, reason: 'unknown_army' };
+    if (army.garrisonBuildingIndex != null) return { ok: false, reason: 'army_garrisoned' };
+    if (!Number.isInteger(targetX) || !Number.isInteger(targetY) || !this._groundAt(targetX, targetY)) return { ok: false, reason: 'invalid_target' };
+    const targetIsWater = this._isWater(targetX, targetY);
+    if ((army.embarked || this._armyIsNaval(army)) !== targetIsWater) return { ok: false, reason: 'incompatible_terrain' };
+    const path = this._findPath(army, targetX, targetY);
+    if (!path.length && (army.gridX !== targetX || army.gridY !== targetY)) return { ok: false, reason: 'no_path' };
+    army.movePath = path;
+    this._notify('move_order');
+    return { ok: true, path: structuredClone(path) };
+  }
+
+  _advanceMovement() {
+    let changed = false;
+    for (const army of this._armies) {
+      if (army.garrisonBuildingIndex != null || !army.movePath?.length) continue;
+      const next = army.movePath.shift();
+      army.gridX = next.x;
+      army.gridY = next.y;
+      changed = true;
+      eventBus.emit('armyMoved', { armyId: army.id, gridX: army.gridX, gridY: army.gridY, remaining: army.movePath.length });
+    }
+    if (changed) this._notify('movement');
+  }
+
+  garrisonArmy(armyId, buildingIndex) {
+    const army = this._findArmy(armyId);
+    const building = this._building?.buildings?.[buildingIndex];
+    const config = building ? configRegistry.getBuilding?.(building.buildingId) : null;
+    if (!army || !building || building.status !== 'active' || !config) return { ok: false, reason: 'invalid_garrison' };
+    if (army.embarked || this._armyIsNaval(army)) return { ok: false, reason: 'land_army_required' };
+    const capacity = config.uniqueFunction?.garrisonCapacity || (['castle', 'fort', 'citadel'].includes(building.buildingId) ? 1 : 0);
+    if (capacity <= 0) return { ok: false, reason: 'not_a_fortification' };
+    if (this._buildingDistance(army, building, config) > 1) return { ok: false, reason: 'garrison_too_far' };
+    if (this._armies.filter(item => item.garrisonBuildingIndex === buildingIndex && item.id !== armyId).length >= capacity) return { ok: false, reason: 'garrison_full' };
+    army.garrisonBuildingIndex = buildingIndex;
+    army.gridX = building.gridX;
+    army.gridY = building.gridY;
+    army.movePath = [];
+    this._notify('garrison');
+    return { ok: true };
+  }
+
+  ungarrisonArmy(armyId) {
+    const army = this._findArmy(armyId);
+    if (!army || army.garrisonBuildingIndex == null) return { ok: false, reason: 'not_garrisoned' };
+    army.garrisonBuildingIndex = null;
+    this._notify('ungarrison');
+    return { ok: true };
+  }
+
+  getArmyDefenseMultiplier(armyId) {
+    const army = this._findArmy(armyId);
+    if (!army || army.garrisonBuildingIndex == null) return 1;
+    const building = this._building?.buildings?.[army.garrisonBuildingIndex];
+    const config = building ? configRegistry.getBuilding?.(building.buildingId) : null;
+    return config?.uniqueFunction?.garrisonDefenseMul || 1.25;
   }
 
   getArmyPower(armyId) {
