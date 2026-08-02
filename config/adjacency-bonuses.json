@@ -42,5 +42,49 @@
     "effectValue": 0.5,
     "applyToField": "production",
     "applyTo": "stone"
+  },
+  {
+    "id": "grain_farm_granary_aura",
+    "name": "粮仓辐射·就近储运",
+    "sourceBuildingId": "grain_farm",
+    "targetBuildingId": "granary_hall",
+    "maxDistance": 2,
+    "effectType": "multiplier",
+    "effectValue": 1.15,
+    "applyToField": "production",
+    "applyTo": "food"
+  },
+  {
+    "id": "forestry_warehouse_aura",
+    "name": "仓储辐射·木材调度",
+    "sourceBuildingId": "forestry_camp",
+    "targetBuildingId": "central_warehouse",
+    "maxDistance": 2,
+    "effectType": "multiplier",
+    "effectValue": 1.12,
+    "applyToField": "production",
+    "applyTo": "wood"
+  },
+  {
+    "id": "quarry_warehouse_aura",
+    "name": "仓储辐射·石料转运",
+    "sourceBuildingId": "stone_quarry",
+    "targetBuildingId": "central_warehouse",
+    "maxDistance": 2,
+    "effectType": "multiplier",
+    "effectValue": 1.12,
+    "applyToField": "production",
+    "applyTo": "stone"
+  },
+  {
+    "id": "gold_mine_market_aura",
+    "name": "市场辐射·贵金属流通",
+    "sourceBuildingId": "gold_mine",
+    "targetBuildingId": "market_square",
+    "maxDistance": 3,
+    "effectType": "multiplier",
+    "effectValue": 1.15,
+    "applyToField": "production",
+    "applyTo": "gold"
   }
 ]

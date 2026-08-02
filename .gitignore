@@ -16,6 +16,9 @@ output.txt
 log/*
 !log/.gitkeep
 .playwright-cli/
+node_modules/
+test-results/
+playwright-report/
 
 # 第五棒开发者本地身份信息文件（仅本地参考，不入库）
 第五棒开发者身份信息.md

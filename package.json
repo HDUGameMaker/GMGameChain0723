@@ -5,8 +5,15 @@
   "type": "module",
   "scripts": {
     "test": "node --test \"test/node/*.test.mjs\"",
+    "test:browser": "playwright test test/browser-smoke.spec.js",
     "check": "npm run test && node scripts/check-js-syntax.cjs",
     "verify": "npm run check"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "http-server": "^14.1.1"
+  }
 }

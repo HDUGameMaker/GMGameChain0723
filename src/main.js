@@ -32,6 +32,7 @@ import { EraSystem } from './systems/EraSystem.js';
 import { LuxurySystem } from './systems/LuxurySystem.js';
 import { StrategySystem } from './systems/StrategySystem.js';
 import { EconomyOrderSystem } from './systems/EconomyOrderSystem.js';
+import { CommerceSystem } from './systems/CommerceSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
@@ -123,6 +124,7 @@ class Game {
     this.systems.luxury = new LuxurySystem();
     this.systems.strategy = new StrategySystem();
     this.systems.economyOrders = new EconomyOrderSystem();
+    this.systems.commerce = new CommerceSystem();
 
     // 建筑科技树（永久被动加成 + T2 建筑解锁）
     this.systems.buildingTech = new BuildingTechSystem();
@@ -218,6 +220,11 @@ class Game {
       population: this.systems.population,
       resource: this.systems.resource,
       luxury: this.systems.luxury
+    });
+    this.systems.commerce.setSystems({
+      resource: this.systems.resource,
+      building: this.systems.building,
+      diplomacy: this.systems.diplomacy
     });
     this.systems.building.setLuxurySystem(this.systems.luxury);
     this.systems.population.setLuxurySystem(this.systems.luxury);
@@ -505,6 +512,7 @@ class Game {
     this.systems.luxury.initNew();
     this.systems.strategy.initNew();
     this.systems.economyOrders.initNew();
+    this.systems.commerce.initNew();
 
     // 初始化事件标记状态（新游戏 = 无已移除标记）
     store.setState({ removedEventMarkers: [] });
@@ -513,7 +521,6 @@ class Game {
     store.setState({
       armies: [],
       availableUnits: [],
-      tradeRoutes: { nextId: 1, routes: [], conversionCounters: {} },
       factions: { states: {}, relations: {}, lastSyncDay: 0 },
       eraMusic: { currentEraId: 'primitive', currentTrackId: null }
     });
@@ -580,6 +587,8 @@ class Game {
     else this.systems.strategy.initNew();
     if (saveData.economicOrders) this.systems.economyOrders.restoreState(saveData.economicOrders);
     else this.systems.economyOrders.initNew();
+    if (saveData.tradeRoutes) this.systems.commerce.restoreState(saveData.tradeRoutes);
+    else this.systems.commerce.initNew();
     if (saveData.weather) {
       this.systems.weather.restoreState(saveData.weather);
     }
@@ -601,7 +610,6 @@ class Game {
       store.setState({ availableUnits: saveData.availableUnits });
     }
     store.setState({
-      tradeRoutes: saveData.tradeRoutes || { nextId: 1, routes: [], conversionCounters: {} },
       factions: saveData.factions || { states: {}, relations: {}, lastSyncDay: 0 },
       eraMusic: saveData.eraMusic || { currentEraId: saveData.era?.currentEraId || 'primitive', currentTrackId: null }
     });
@@ -666,7 +674,7 @@ class Game {
       armies: store.getState('armies'),
       availableUnits: store.getState('availableUnits'),
       economicOrders: this.systems.economyOrders.getState(),
-      tradeRoutes: store.getState('tradeRoutes'),
+      tradeRoutes: this.systems.commerce.getState(),
       factions: store.getState('factions'),
       eraMusic: store.getState('eraMusic'),
       doctrineResearched: store.getState('doctrineResearched') || [],

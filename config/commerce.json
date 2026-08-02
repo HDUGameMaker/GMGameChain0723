@@ -1,0 +1,65 @@
+{
+  "tradeRoutes": [
+    {
+      "id": "export_food",
+      "name": "粮食换黄金",
+      "description": "向友好城邦稳定输出粮食，换取黄金。",
+      "input": [{ "resourceId": "food", "amount": 10 }],
+      "output": [{ "resourceId": "gold", "amount": 8 }]
+    },
+    {
+      "id": "timber_for_stone",
+      "name": "木材换石料",
+      "description": "以木材交换城邦开采的石料。",
+      "input": [{ "resourceId": "wood", "amount": 12 }],
+      "output": [{ "resourceId": "stone", "amount": 8 }]
+    },
+    {
+      "id": "stone_for_timber",
+      "name": "石料换木材",
+      "description": "以石料换取建筑急需的木材。",
+      "input": [{ "resourceId": "stone", "amount": 10 }],
+      "output": [{ "resourceId": "wood", "amount": 10 }]
+    },
+    {
+      "id": "import_food",
+      "name": "黄金购粮",
+      "description": "用黄金购买粮食，应对扩军和饥荒。",
+      "input": [{ "resourceId": "gold", "amount": 6 }],
+      "output": [{ "resourceId": "food", "amount": 13 }]
+    }
+  ],
+  "conversionOrders": [
+    {
+      "id": "charcoal_trade",
+      "name": "木炭与木器贸易",
+      "description": "工坊将木材加工为高价值商品并出售。",
+      "input": [{ "resourceId": "wood", "amount": 12 }],
+      "output": [{ "resourceId": "gold", "amount": 6 }]
+    },
+    {
+      "id": "masonry_recycling",
+      "name": "石料再加工",
+      "description": "将石料加工成标准构件，换取木材。",
+      "input": [{ "resourceId": "stone", "amount": 8 }],
+      "output": [{ "resourceId": "wood", "amount": 7 }]
+    },
+    {
+      "id": "preserved_rations",
+      "name": "加工军粮",
+      "description": "消耗食物与木材，形成可出售的耐储军粮。",
+      "input": [
+        { "resourceId": "food", "amount": 10 },
+        { "resourceId": "wood", "amount": 2 }
+      ],
+      "output": [{ "resourceId": "gold", "amount": 7 }]
+    },
+    {
+      "id": "emergency_grain",
+      "name": "紧急粮食采购",
+      "description": "由商业工坊拆兑库存，为聚落采购粮食。",
+      "input": [{ "resourceId": "gold", "amount": 5 }],
+      "output": [{ "resourceId": "food", "amount": 10 }]
+    }
+  ]
+}
