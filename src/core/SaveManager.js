@@ -9,12 +9,15 @@ const STORE_NAME = 'saves';
 const SAVE_KEY = 'currentSave';
 
 export class SaveManager {
+  static CURRENT_VERSION = 8;
   static _db = null;
 
   static migrate(raw) {
-    if (!raw || !Number.isFinite(raw.version) || raw.version < 5 || raw.version > 7) return null;
+    if (!raw || !Number.isFinite(raw.version) || raw.version < 5 || raw.version > SaveManager.CURRENT_VERSION) return null;
     const state = structuredClone(raw);
-    const history = [state.version];
+    const history = Array.isArray(state.migrationHistory) && state.migrationHistory.length > 0
+      ? [...state.migrationHistory]
+      : [state.version];
 
     if (state.version === 5) {
       state.territory ??= {};
@@ -75,8 +78,65 @@ export class SaveManager {
       history.push(7);
     }
 
-    state.migrationHistory = state.migrationHistory || history;
+    if (state.version === 7) {
+      SaveManager._migrateEraStateToV8(state);
+      state.version = 8;
+      history.push(8);
+    }
+
+    if (state.version === 8) {
+      SaveManager._applyV8Defaults(state);
+    }
+
+    state.migrationHistory = [...new Set(history)];
     return state;
+  }
+
+  static _migrateEraStateToV8(state) {
+    const eraMap = {
+      ancient: 'primitive',
+      classical: 'classical',
+      medieval: 'medieval',
+      exploration: 'exploration',
+      industrial: 'early_modern',
+      modern: 'modern',
+      information: 'modern'
+    };
+    const previous = state.era || {};
+    const remapRecord = (record = {}) => {
+      const mapped = {};
+      for (const [eraId, value] of Object.entries(record)) {
+        const targetId = eraMap[eraId] || eraId;
+        if (!(targetId in mapped) || eraId !== 'information') mapped[targetId] = value;
+      }
+      return mapped;
+    };
+
+    state.era = {
+      ...previous,
+      currentEraId: eraMap[previous.currentEraId] || previous.currentEraId || 'primitive',
+      selectedCivilizations: remapRecord(previous.selectedCivilizations),
+      legacyCivilizationIds: Array.isArray(previous.legacyCivilizationIds) ? previous.legacyCivilizationIds : [],
+      eraStars: remapRecord(previous.eraStars)
+    };
+  }
+
+  static _applyV8Defaults(state) {
+    const eraId = state.era?.currentEraId || 'primitive';
+    state.armies = Array.isArray(state.armies) ? state.armies : [];
+    state.availableUnits = Array.isArray(state.availableUnits) ? state.availableUnits : [];
+    state.economicOrders = state.economicOrders && Array.isArray(state.economicOrders.orders)
+      ? state.economicOrders
+      : { nextId: 1, orders: [] };
+    state.tradeRoutes = state.tradeRoutes && Array.isArray(state.tradeRoutes.routes)
+      ? state.tradeRoutes
+      : { nextId: 1, routes: [], conversionCounters: {} };
+    state.factions = state.factions && typeof state.factions === 'object'
+      ? state.factions
+      : { states: {}, relations: {}, lastSyncDay: 0 };
+    state.eraMusic = state.eraMusic && typeof state.eraMusic === 'object'
+      ? state.eraMusic
+      : { currentEraId: eraId, currentTrackId: null };
   }
 
   static async _getDB() {

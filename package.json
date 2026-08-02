@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "node --test \"test/node/*.test.mjs\"",
-    "check": "npm run test && node scripts/check-js-syntax.cjs"
+    "check": "npm run test && node scripts/check-js-syntax.cjs",
+    "verify": "npm run check"
   },
   "engines": { "node": ">=20" }
 }

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { SaveManager } from '../../src/core/SaveManager.js';
 
-test('v6 saves migrate to v7 historical state without retaining fantasy payloads', () => {
+test('v6 saves migrate through v7 into current historical state without retaining fantasy payloads', () => {
   const source = {
     version: 6,
     resources: {
@@ -16,7 +16,7 @@ test('v6 saves migrate to v7 historical state without retaining fantasy payloads
     spell: { zones: [{ x: 1, y: 1 }] }
   };
   const migrated = SaveManager.migrate(source);
-  assert.equal(migrated.version, 7);
+  assert.equal(migrated.version, SaveManager.CURRENT_VERSION);
   assert.deepEqual(Object.keys(migrated.resources).sort(), ['__storageMultiplier', 'food', 'gold', 'stone', 'wood']);
   assert.equal(migrated.resources.wood.current, 40);
   assert.equal(migrated.population.satisfaction, 60);
@@ -27,13 +27,13 @@ test('v6 saves migrate to v7 historical state without retaining fantasy payloads
   assert.equal(source.version, 6, 'migration does not mutate original save');
 });
 
-test('v5 saves pass through v6 compatibility defaults before v7 migration', () => {
+test('v5 saves pass through v6 and v7 compatibility defaults before current migration', () => {
   const migrated = SaveManager.migrate({ version: 5, resources: {}, buildings: [] });
-  assert.equal(migrated.version, 7);
+  assert.equal(migrated.version, SaveManager.CURRENT_VERSION);
   for (const key of ['territory', 'enemyExpansion', 'buildingTech', 'diplomacy', 'heroes', 'era', 'luxuries', 'strategies']) {
     assert.ok(key in migrated, key);
   }
-  assert.deepEqual(migrated.migrationHistory, [5, 6, 7]);
+  assert.deepEqual(migrated.migrationHistory, [5, 6, 7, 8]);
 });
 
 test('unsupported legacy or invalid saves are rejected', () => {

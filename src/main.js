@@ -347,7 +347,7 @@ class Game {
     // 5. 尝试加载存档
     const rawSave = options.forceNew ? null : await SaveManager.load();
     // 重设计后存档结构不兼容，旧存档(version<5)强制开新局
-    const saveData = (rawSave && rawSave.version === 7) ? rawSave : null;
+    const saveData = (rawSave && rawSave.version === SaveManager.CURRENT_VERSION) ? rawSave : null;
     if (rawSave && !saveData) console.log('[Game] 旧存档不兼容重设计，开始新游戏');
     if (saveData) {
       this.restoreFromSave(saveData);
@@ -502,6 +502,14 @@ class Game {
     store.setState({ removedEventMarkers: [] });
     /* 初始化文化系统 */
     store.setState({ doctrineResearched: [], doctrineResearchLevels: {}, inspiration: 0, formationResearch: [] });
+    store.setState({
+      armies: [],
+      availableUnits: [],
+      economicOrders: { nextId: 1, orders: [] },
+      tradeRoutes: { nextId: 1, routes: [], conversionCounters: {} },
+      factions: { states: {}, relations: {}, lastSyncDay: 0 },
+      eraMusic: { currentEraId: 'primitive', currentTrackId: null }
+    });
   }
 
   restoreFromSave(saveData) {
@@ -584,6 +592,12 @@ class Game {
       store.setState({ availableUnits: saveData.availableUnits });
     }
     store.setState({
+      economicOrders: saveData.economicOrders || { nextId: 1, orders: [] },
+      tradeRoutes: saveData.tradeRoutes || { nextId: 1, routes: [], conversionCounters: {} },
+      factions: saveData.factions || { states: {}, relations: {}, lastSyncDay: 0 },
+      eraMusic: saveData.eraMusic || { currentEraId: saveData.era?.currentEraId || 'primitive', currentTrackId: null }
+    });
+    store.setState({
       doctrineResearched: saveData.doctrineResearched || [],
       doctrineResearchLevels: saveData.doctrineResearchLevels || {},
       inspiration: saveData.inspiration || 0
@@ -613,7 +627,7 @@ class Game {
   async saveGame() {
     if (this._resetting || this._gameOver) return false;
     const state = {
-      version: 7,
+      version: SaveManager.CURRENT_VERSION,
       timestamp: Date.now(),
       time: this.systems.time.getState(),
       population: this.systems.population.getState(),
@@ -643,6 +657,10 @@ class Game {
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
       armies: store.getState('armies'),
       availableUnits: store.getState('availableUnits'),
+      economicOrders: store.getState('economicOrders'),
+      tradeRoutes: store.getState('tradeRoutes'),
+      factions: store.getState('factions'),
+      eraMusic: store.getState('eraMusic'),
       doctrineResearched: store.getState('doctrineResearched') || [],
       doctrineResearchLevels: store.getState('doctrineResearchLevels') || {},
       inspiration: store.getState('inspiration') || 0,

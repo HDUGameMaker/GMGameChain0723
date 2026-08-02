@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { configRegistry } from '../../src/core/ConfigRegistry.js';
 import { EventSystem } from '../../src/systems/EventSystem.js';
+import { SaveManager } from '../../src/core/SaveManager.js';
 
 const integration = JSON.parse(await readFile(new URL('../../config/ea_integration.json', import.meta.url), 'utf8'));
 const buildings = JSON.parse(await readFile(new URL('../../config/buildings.json', import.meta.url), 'utf8'));
@@ -32,9 +33,10 @@ test('event system supports inspiration and fixed-outpost relation effects', () 
   assert.equal(typeof system._effectHandlers.modify_outpost_relation, 'function');
 });
 
-test('save schema is v7 and persists historical state after SaveManager migration', () => {
-  assert.match(mainSource, /rawSave\.version\s*===\s*7/);
-  assert.match(mainSource, /version:\s*7/);
+test('save schema uses the current version and persists historical state after migration', () => {
+  assert.equal(SaveManager.CURRENT_VERSION, 8);
+  assert.match(mainSource, /rawSave\.version\s*===\s*SaveManager\.CURRENT_VERSION/);
+  assert.match(mainSource, /version:\s*SaveManager\.CURRENT_VERSION/);
   for (const key of ['territory', 'enemyExpansion', 'buildingTech', 'diplomacy', 'heroes', 'era', 'luxuries', 'strategies']) {
     assert.match(mainSource, new RegExp(`${key}:\\s*this\\.systems\\.`));
   }
