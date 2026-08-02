@@ -454,7 +454,7 @@ export class MapRenderer {
       sprite.destroy({ children: true });
     }
     this._outpostSprites = [];
-    this._outpostData = this._diplomacySystem?.getAllOutposts?.() || [];
+    this._outpostData = this._diplomacySystem?.getVisibleOutposts?.() || [];
     const states = store.getState('outpostStates') || {};
     const colors = { hostile: 0xc74b4b, wary: 0xd18b3d, neutral: 0x85859b, friendly: 0x4eaa70, allied: 0x4f7fda, defeated: 0x79639f };
     const ts = this.tileSize;
@@ -464,6 +464,13 @@ export class MapRenderer {
       const x = outpost.gridX * ts;
       const y = outpost.gridY * ts;
       const container = new PIXI.Container();
+      for (const cell of state.controlledCells || []) {
+        const zone = new PIXI.Graphics();
+        zone.rect(cell.x * ts, cell.y * ts, ts, ts);
+        zone.fill({ color, alpha: 0.16 });
+        zone.stroke({ color, alpha: 0.34, width: 1 });
+        container.addChild(zone);
+      }
       const bg = new PIXI.Graphics();
       bg.roundRect(x - 2, y - 2, ts + 4, ts + 4, 6);
       bg.fill({ color, alpha: 0.82 });
