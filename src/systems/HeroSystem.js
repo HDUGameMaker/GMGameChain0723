@@ -31,7 +31,11 @@ export class HeroSystem {
     const historical = configRegistry.getHistoricalContent();
     const eras = historical.eras || [];
     const eraNames = Object.fromEntries(eras.map(era => [era.id, era.name]));
-    const base = (integration.heroes || []).map(hero => ({ ...hero, cost: hero.cost || hero.recruitCost || [] }));
+    const base = (integration.heroes || []).map(hero => ({
+      ...hero,
+      icon: hero.iconAsset || (String(hero.icon || '').includes('/') ? hero.icon : `assets/historical-icons/heroes/${hero.id}.svg`),
+      cost: hero.cost || hero.recruitCost || []
+    }));
     const ids = new Set(base.map(hero => hero.id));
     const additions = (historical.heroes || []).filter(hero => !ids.has(hero.id)).map(hero => ({
       ...hero,

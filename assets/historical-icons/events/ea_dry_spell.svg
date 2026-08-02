@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="短期旱情">
+  <title>短期旱情</title>
+  <defs><radialGradient id="bg"><stop offset="0" stop-color="#201713"/><stop offset="1" stop-color="#05090d"/></radialGradient><filter id="shadow"><feDropShadow dx="0" dy="1" stdDeviation="1" flood-opacity=".55"/></filter></defs>
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="url(#bg)" stroke="#d0a25c" stroke-width="2"/>
+  <circle cx="32" cy="31" r="25" fill="none" stroke="#d0a25c" stroke-width="1" opacity=".46"/>
+  <g filter="url(#shadow)"><path fill="#8b5a3c" stroke="#ecd9b7" stroke-width="2.5" d="M32 13l18 35H14z"/><path fill="none" stroke="#ecd9b7" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M32 24v12M32 42h.1"/></g><circle cx="17" cy="54" r="1.4" fill="#d0a25c" opacity=".75"/>
+  <path d="M10 9h12M42 9h12" stroke="#d0a25c" stroke-width="1.5" opacity=".7"/>
+</svg>

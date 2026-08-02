@@ -130,7 +130,15 @@ export function renderBuildingSelectPanel(data, body, pm) {
       display: flex; align-items: center; justify-content: center;
       font-size: 20px; flex-shrink: 0;
     `;
-    iconEl.textContent = b.icon || '🏠';
+    if (b.icon?.includes('/')) {
+      const image = document.createElement('img');
+      image.src = b.icon;
+      image.alt = b.name;
+      image.style.cssText = 'width:38px;height:38px;object-fit:contain;border-radius:8px;';
+      iconEl.appendChild(image);
+    } else {
+      iconEl.textContent = b.icon || '🏠';
+    }
 
     // 建筑信息
     const infoEl = document.createElement('div');

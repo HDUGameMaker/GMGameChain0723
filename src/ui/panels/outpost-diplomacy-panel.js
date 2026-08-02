@@ -26,7 +26,7 @@ export function renderOutpostDiplomacyPanel(data, body, pm) {
   const garrison = (outpost.garrison || []).map(entry => `${enemies.find(item => item.id === entry.enemyId)?.name || entry.enemyId}×${entry.count}`).join(' · ');
   body.innerHTML = `
     <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px">
-      <div style="font-size:42px">${outpost.icon}</div>
+      <img src="${outpost.iconAsset || `assets/historical-icons/outposts/${outpost.id}.svg`}" alt="" style="width:48px;height:48px;border-radius:10px">
       <div style="flex:1"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><b style="font-size:19px;color:#ececf0">${outpost.name}</b><span style="color:${color};font-weight:700">${STATUS_LABELS[state.status]} · ${state.relation}</span></div>
       <div style="font-size:12px;color:#a0a0ba;line-height:1.6;margin-top:5px">${outpost.description}</div></div>
     </div>

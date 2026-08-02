@@ -60,6 +60,7 @@ class ConfigRegistry {
 
     this._applyEaIntegration();
     this._applyHistoricalContent();
+    this._ensureContentIcons();
 
     // 合成配方继承：高级建筑自动继承低级建筑的合成配方
     this._inheritSynthesisRecipes();
@@ -125,6 +126,24 @@ class ConfigRegistry {
       eras: [], civilizations: [], luxuries: [], buildings: [], techs: [],
       civics: [], units: [], heroes: [], strategies: []
     };
+  }
+
+  _ensureContentIcons() {
+    const apply = (items, type) => {
+      for (const item of items || []) {
+        if (!item?.id) continue;
+        const path = `assets/historical-icons/${type}/${item.id}.svg`;
+        if (!item.icon || !String(item.icon).includes('/')) item.icon = path;
+        if (!item.iconAsset) item.iconAsset = path;
+      }
+    };
+    apply(this._configs.buildings, 'buildings');
+    apply(this._configs.techs, 'techs');
+    apply(this._configs.culture, 'civics');
+    apply(this._configs.enemies?.units, 'units');
+    apply(this._configs.eventsHistorical, 'events');
+    apply(this._configs.eaIntegration?.heroes, 'heroes');
+    apply(this._configs.eaIntegration?.outposts, 'outposts');
   }
 
   /**

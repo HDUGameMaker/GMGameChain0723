@@ -117,7 +117,7 @@ export function renderTrainingPanel(data, body, pm) {
     /* 名称 & 属性 */
     const top = document.createElement('div');
     top.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:10px;';
-    top.innerHTML = '<span style="font-size:15px;font-weight:600;color:#ececf0;">' + (_isUnitUnlocked(u) ? '' : '🔒 ') + u.name + '</span>' +
+    top.innerHTML = '<img src="' + u.icon + '" alt="" style="width:42px;height:42px;object-fit:contain;border-radius:8px"><span style="font-size:15px;font-weight:600;color:#ececf0;">' + (_isUnitUnlocked(u) ? '' : '🔒 ') + u.name + '</span>' +
       '<span style="font-size:12px;color:#808098;">' + ((u.domain === 'naval') ? '海军' : '陆军') + ' · ⚔️' + u.combatPower + ' · CP' + (u.commandPoints||1) + '</span>';
     card.appendChild(top);
 
