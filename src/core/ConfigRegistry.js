@@ -33,7 +33,10 @@ class ConfigRegistry {
       'alchemy': 'config/alchemy.json',
       'quests': 'config/quests.json',
       'colonies': 'config/colonies.json',
-      'doctrines': 'config/doctrines.json'
+      'doctrines': 'config/doctrines.json',
+      'territory': 'config/territory.json',
+      'enemyExpansion': 'config/enemy_expansion.json',
+      'buildingTech': 'config/building_tech.json'
     };
 
     const loadPromises = Object.entries(configFiles).map(async ([key, path]) => {
@@ -170,6 +173,40 @@ class ConfigRegistry {
   getAlchemyEffect(id) {
     const alchemy = this.getAlchemy();
     return (alchemy.effects || []).find(e => e.id === id) || null;
+  }
+
+  /**
+   * 获取炼金法术成长树节点列表
+   * @returns {Array}
+   */
+  getSpellTree() {
+    return this.getAlchemy().spellTree || [];
+  }
+
+  /**
+   * 获取所有法术定义
+   * @returns {Array}
+   */
+  getSpellDefs() {
+    return this.getAlchemy().spellDefs || [];
+  }
+
+  /**
+   * 根据ID获取法术定义
+   * @param {string} id
+   * @returns {object|null}
+   */
+  getSpellDef(id) {
+    return this.getSpellDefs().find(s => s.id === id) || null;
+  }
+
+  /**
+   * 获取建筑科技树节点列表
+   * @returns {Array}
+   */
+  getBuildingTech() {
+    const cfg = this._configs['buildingTech'];
+    return (cfg && cfg.nodes) || [];
   }
 
   /**

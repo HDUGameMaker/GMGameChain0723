@@ -1,13 +1,13 @@
 /**
  * training-panel.js - 军事训练面板
- * 消耗资源和工人训练军事单位
+ * 消耗资源训练军事单位（受军营士兵上限约束）
  */
 import { eventBus } from '../../core/EventBus.js';
 
 function _store() { return window.__game?.store; }
 function _cfg() { return window.__game?.configRegistry?.get('enemies')?.units || []; }
 function _resource() { return window.__game?.systems?.resource; }
-function _population() { return window.__game?.systems?.population; }
+function _building() { return window.__game?.systems?.building; }
 function _avail() { return _store()?.getState('availableUnits') || {}; }
 function _saveAvail(av) {
   const version = (_store()?.getState('armyVersion') || 0) + 1;
@@ -16,11 +16,11 @@ function _saveAvail(av) {
 }
 function _techSystem() { return window.__game?.systems?.tech; }
 
-function _releaseUnitWorker(unit) {
-  const popSys = _population();
-  if (!popSys || !unit) return;
-  const required = unit.populationRequired || 0;
-  if (required > 0) popSys.releaseFromConstruction(required);
+/** 士兵总数 / 容纳上限（上限来自军营的 soldierCapacity） */
+function _soldierStats() {
+  const bs = _building();
+  if (!bs) return { count: 0, cap: 0 };
+  return { count: bs.getTotalSoldierCount(), cap: bs.getTotalSoldierCapacity() };
 }
 
 /** 检查单位是否已解锁（配置 unlocked=true 或 被科技解锁） */
@@ -36,8 +36,7 @@ export function renderTrainingPanel(data, body, pm) {
 
   const units = _cfg();
   const resourceSys = _resource();
-  const popSys = _population();
-  const availWorkers = popSys ? popSys.getAvailableWorkers() : 0;
+  const soldier = _soldierStats();
 
   /* 头部 */
   const header = document.createElement('div');
@@ -50,11 +49,13 @@ export function renderTrainingPanel(data, body, pm) {
   header.appendChild(researchBtn);
   body.appendChild(header);
 
-  /* 工人信息栏 */
-  const workerBar = document.createElement('div');
-  workerBar.style.cssText = 'display:flex;gap:16px;margin-bottom:14px;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06);font-size:13px;';
-  workerBar.innerHTML = '<span style="color:#4ecb71;">👷 可用工人: ' + availWorkers + '</span>';
-  body.appendChild(workerBar);
+  /* 士兵上限信息栏 */
+  const soldierBar = document.createElement('div');
+  const atCap = soldier.count >= soldier.cap && soldier.cap > 0;
+  soldierBar.style.cssText = 'display:flex;gap:16px;margin-bottom:14px;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06);font-size:13px;';
+  soldierBar.innerHTML = '<span style="color:' + (atCap ? '#ff6b6b' : '#4ecb71') + ';">⚔️ 士兵: ' + soldier.count + '/' + soldier.cap + '</span>' +
+    (soldier.cap <= 0 ? '<span style="color:#f0a040;">（建造军营以解锁训练）</span>' : (atCap ? '<span style="color:#f0a040;">（已达上限，建造/升级军营）</span>' : ''));
+  body.appendChild(soldierBar);
 
   if (units.length === 0) {
     const empty = document.createElement('div');
@@ -73,7 +74,7 @@ export function renderTrainingPanel(data, body, pm) {
     const top = document.createElement('div');
     top.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:10px;';
     top.innerHTML = '<span style="font-size:15px;font-weight:600;color:#ececf0;">' + (_isUnitUnlocked(u) ? '' : '🔒 ') + u.name + '</span>' +
-      '<span style="font-size:12px;color:#808098;">' + ((u.domain === 'naval') ? '海军' : '陆军') + ' · ⚔️' + u.combatPower + ' · CP' + (u.commandPoints||1) + ' · 👷需求' + (u.populationRequired||0) + '</span>';
+      '<span style="font-size:12px;color:#808098;">' + ((u.domain === 'naval') ? '海军' : '陆军') + ' · ⚔️' + u.combatPower + ' · CP' + (u.commandPoints||1) + '</span>';
     card.appendChild(top);
 
     /* 未解锁提示 */
@@ -109,8 +110,8 @@ export function renderTrainingPanel(data, body, pm) {
     btnRow.appendChild(countLabel);
 
     const canAfford = resourceSys ? resourceSys.canAfford(costs) : false;
-    const hasWorkers = (u.populationRequired || 0) <= availWorkers;
-    const canTrain = canAfford && hasWorkers;
+    const hasCapacity = soldier.count < soldier.cap;
+    const canTrain = canAfford && hasCapacity;
 
     const trainBtn = document.createElement('button');
     trainBtn.textContent = '训练 x1';
@@ -118,21 +119,22 @@ export function renderTrainingPanel(data, body, pm) {
     trainBtn.addEventListener('mouseenter', () => { if (canTrain) trainBtn.style.background = 'rgba(78,203,113,0.35)'; });
     trainBtn.addEventListener('mouseleave', () => { if (canTrain) trainBtn.style.background = 'rgba(78,203,113,0.2)'; });
     trainBtn.addEventListener('click', () => {
-      if (!canTrain) {
+      const s = _soldierStats(); // 重新读取，避免连点失同步
+      const afford = resourceSys ? resourceSys.canAfford(costs) : false;
+      const room = s.count < s.cap;
+      if (!afford || !room) {
         let msg = '训练失败：';
         const reasons = [];
-        if (!canAfford) reasons.push('资源不足');
-        if (!hasWorkers) reasons.push('可用工人不足（需要' + (u.populationRequired||0) + '，可用' + availWorkers + '）');
+        if (!afford) reasons.push('资源不足');
+        if (!room) reasons.push('士兵已达上限 ' + s.cap + '（建造/升级军营）');
         pm.alert(msg + reasons.join('，'));
         return;
       }
       if (resourceSys) resourceSys.consumeAll(costs);
-      /* 占用工人：人口变为受训部队，不再作为可用工人 */
-      if (popSys && u.populationRequired) popSys.occupyForConstruction(u.populationRequired);
       const av = { ..._avail() };
       av[u.id] = (av[u.id] || 0) + 1;
       _saveAvail(av);
-      /* 刷新面板让可用工人数实时更新 */
+      /* 刷新面板让士兵数实时更新 */
       renderTrainingPanel(data, body, pm);
     });
     btnRow.appendChild(trainBtn);
@@ -141,7 +143,7 @@ export function renderTrainingPanel(data, body, pm) {
     dismissBtn.textContent = '遣散 x1';
     const canDismiss = availCount > 0 && _isUnitUnlocked(u);
     dismissBtn.style.cssText = 'padding:6px 14px;border:none;border-radius:6px;background:' + (canDismiss ? 'rgba(240,160,64,0.16)' : 'rgba(128,128,152,0.12)') + ';color:' + (canDismiss ? '#f0a040' : '#808098') + ';cursor:' + (canDismiss ? 'pointer' : 'default') + ';font-size:12px;font-weight:600;';
-    dismissBtn.title = '遣散后返还该单位占用的工人';
+    dismissBtn.title = '遣散后释放士兵名额';
     dismissBtn.addEventListener('mouseenter', () => { if (canDismiss) dismissBtn.style.background = 'rgba(240,160,64,0.28)'; });
     dismissBtn.addEventListener('mouseleave', () => { if (canDismiss) dismissBtn.style.background = 'rgba(240,160,64,0.16)'; });
     dismissBtn.addEventListener('click', () => {
@@ -149,7 +151,6 @@ export function renderTrainingPanel(data, body, pm) {
       const av = { ..._avail() };
       av[u.id] = Math.max(0, (av[u.id] || 0) - 1);
       _saveAvail(av);
-      _releaseUnitWorker(u);
       renderTrainingPanel(data, body, pm);
     });
     btnRow.appendChild(dismissBtn);

@@ -26,6 +26,8 @@ export class AlchemySystem {
     this._magnumOpusStage = 'none';
     /** @type {Array.<{effectId: string, quality: string, ticksRemaining: number, modifiers: Object}>} */
     this._activeEffects = [];
+    /** @type {number} 炼金放大等级（黄金投入提升产出乘法，放大引擎） */
+    this._ampLevel = 0;
 
     // 交叉引用
     this._resourceSystem = null;
@@ -745,7 +747,38 @@ export class AlchemySystem {
     for (const active of this._activeEffects) {
       mergeModifierTree(result, active.modifiers);
     }
+    // 炼金放大引擎：黄金投入提升产出乘法（养数值轴）
+    const ampMul = this._getAmpMultiplier();
+    if (ampMul > 1) {
+      if (!result.building) result.building = {};
+      result.building.productionMul = (result.building.productionMul || 1) * ampMul;
+    }
     return result;
+  }
+
+  // ===== 炼金放大（黄金投入 -> 产出乘法） =====
+  _getAmpMultiplier() {
+    const perLevel = this._getGlobal().ampProductionMulBonus ?? 0.5;
+    return 1 + (this._ampLevel || 0) * perLevel;
+  }
+  getAmpLevel() { return this._ampLevel || 0; }
+  getAmpCost() {
+    const g = this._getGlobal();
+    const base = g.ampCostBase ?? 50;
+    const growth = g.ampCostGrowth ?? 1.6;
+    return Math.max(1, Math.round(base * Math.pow(growth, this._ampLevel || 0)));
+  }
+  investAmplification() {
+    const cost = this.getAmpCost();
+    if (!this._resourceSystem || !this._resourceSystem.tryConsume('gold', cost)) {
+      eventBus.emit('combatBroadcast', { message: `💰 黄金不足（炼金放大需 ${cost}）` });
+      return false;
+    }
+    this._ampLevel = (this._ampLevel || 0) + 1;
+    this._updateStore();
+    eventBus.emit('combatBroadcast', { message: `🜂 炼金放大 → ${this._ampLevel} 级（产出 ×${this._getAmpMultiplier().toFixed(1)}）` });
+    eventBus.emit('alchemyAmpChanged');
+    return true;
   }
 
   // ===== 盐管理 =====
@@ -847,6 +880,9 @@ export class AlchemySystem {
       alchemyBrewing: this._brewingState ? { ...this._brewingState } : null,
       alchemyMagnumOpus: this._magnumOpusStage,
       alchemyActiveEffects: this._activeEffects.length,
+      alchemyAmpLevel: this._ampLevel,
+      alchemyAmpMul: this._getAmpMultiplier(),
+      alchemyAmpCost: this.getAmpCost(),
       alchemyVersion: Date.now()
     });
   }
@@ -861,7 +897,8 @@ export class AlchemySystem {
       brewingState: this._brewingState ? { ...this._brewingState } : null,
       salts: { ...this._salts },
       magnumOpusStage: this._magnumOpusStage,
-      activeEffects: this._activeEffects.map(e => ({ ...e }))
+      activeEffects: this._activeEffects.map(e => ({ ...e })),
+      ampLevel: this._ampLevel
     };
   }
 
@@ -875,6 +912,7 @@ export class AlchemySystem {
     this._salts = state.salts || { void: 0, moon: 0, sun: 0, life: 0, philosopher: 0 };
     this._magnumOpusStage = state.magnumOpusStage || 'none';
     this._activeEffects = state.activeEffects || [];
+    this._ampLevel = state.ampLevel || 0;
     this._updateStore();
   }
 }

@@ -1,0 +1,12 @@
+{
+  "firstSpawnDay": 10,
+  "spawnIntervalDays": 1,
+  "spawnCountBase": 1,
+  "spawnCountPerDay": 0.5,
+  "countdownStart": 2,
+  "expansionMaxNewCells": 200,
+  "strengthCurve": { "a": 2, "b": 0.5, "c": 0.02 },
+  "failThresholdCells": 40,
+  "failThresholdRatio": 0.5,
+  "clearLossRate": 0.5
+}

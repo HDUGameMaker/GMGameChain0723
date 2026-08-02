@@ -1,14 +1,14 @@
 /**
  * unit-research-panel.js - 兵种专项研发
- * 普通科技提供前置条件，兵种研发消耗灵感并最终开放训练。
+ * 消耗四基础资源（wood/stone/food/gold）解锁兵种，解锁后可在训练面板生产。
+ * 旧「灵感 + 科技前置」机制已废弃：科技树休眠，研发只看兵种链 + 四物资。
  */
-import { store } from '../../core/Store.js';
 import { configRegistry } from '../../core/ConfigRegistry.js';
 
 function _tech() { return window.__game?.systems?.tech; }
+function _resource() { return window.__game?.systems?.resource; }
 function _combatConfig() { return configRegistry.get('enemies') || {}; }
 function _units() { return _combatConfig().units || []; }
-function _inspiration() { return store.getState('inspiration') || 0; }
 
 function _branchConfigs() {
   const configured = _combatConfig().unitBranches || [];
@@ -31,11 +31,6 @@ function _domainLabel(domain) {
   return _domainConfigs().find(d => d.id === domain)?.name || domain || '';
 }
 
-function _techName(id) {
-  const tech = _tech()?.getTech(id);
-  return tech ? tech.name : id;
-}
-
 function _unitName(id) {
   const unit = _units().find(u => u.id === id);
   return unit ? unit.name : id;
@@ -46,8 +41,15 @@ function _branchOrder(branch) {
   return Number.isFinite(cfg?.order) ? cfg.order : Number.MAX_SAFE_INTEGER;
 }
 
-function _renderCost(cost) {
-  return '💡 ' + (cost || 0);
+function _resName(id) {
+  const r = configRegistry.getResource(id);
+  return r ? r.name : id;
+}
+
+/** 渲染四物资解锁成本 */
+function _renderCost(unlockCost) {
+  if (!Array.isArray(unlockCost) || unlockCost.length === 0) return '自动解锁';
+  return unlockCost.map(c => _resName(c.resourceId) + ' ' + c.amount).join(' · ');
 }
 
 export function renderUnitResearchPanel(data, body, pm) {
@@ -60,7 +62,7 @@ export function renderUnitResearchPanel(data, body, pm) {
   body.innerHTML = '';
   body.style.cssText = 'padding:20px 24px;max-height:70vh;overflow-y:auto;';
 
-  const inspiration = _inspiration();
+  const resourceSys = _resource();
   const researched = techSystem.getUnitResearch();
   const units = _units()
     .filter(u => u.branch)
@@ -73,12 +75,12 @@ export function renderUnitResearchPanel(data, body, pm) {
   const header = document.createElement('div');
   header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;';
   header.innerHTML = '<div style="font-size:18px;font-weight:700;color:#ececf0;">⚔️ 兵种研发</div>' +
-    '<div style="font-size:13px;color:#c98500;">💡 灵感: ' + inspiration + '</div>';
+    '<div style="font-size:13px;color:#8fb1ff;">已解锁 ' + researched.length + ' / ' + units.length + '</div>';
   body.appendChild(header);
 
   const note = document.createElement('div');
   note.style.cssText = 'font-size:12px;color:#a0a0ba;line-height:1.5;margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;';
-  note.textContent = '普通科技只提供研发前置；完成兵种研发后，该单位才会出现在训练与编队中。海军不能防御陆地入侵，殖民地相关战斗可按规则调用海军战力。';
+  note.textContent = '消耗四基础资源解锁兵种，解锁后即可在「军事训练」中生产。兵种按链路递进，需先研发前置兵种。';
   body.appendChild(note);
 
   const grouped = {};
@@ -102,10 +104,11 @@ export function renderUnitResearchPanel(data, body, pm) {
     list.forEach(unit => {
       const done = researched.includes(unit.id);
       const check = techSystem.canResearchUnit(unit.id);
-      const prereqs = Array.isArray(unit.prerequisiteTechs) ? unit.prerequisiteTechs : [];
       const unitPrereqs = Array.isArray(unit.prerequisiteUnits) ? unit.prerequisiteUnits : [];
-      const missing = prereqs.filter(id => !techSystem.isResearched(id));
       const missingUnits = unitPrereqs.filter(id => !techSystem.isUnitUnlockedByTech(id));
+      const unlockCost = Array.isArray(unit.unlockCost) ? unit.unlockCost : [];
+      const isBase = unlockCost.length === 0; // 自动解锁（如 warrior）
+      const canAfford = resourceSys ? resourceSys.canAfford(unlockCost) : false;
       const canClick = !done && check.valid;
 
       const card = document.createElement('div');
@@ -120,13 +123,8 @@ export function renderUnitResearchPanel(data, body, pm) {
 
       const stats = document.createElement('div');
       stats.style.cssText = 'font-size:12px;color:#a0a0ba;line-height:1.4;';
-      stats.textContent = '战力 ' + unit.combatPower + ' · CP ' + (unit.commandPoints || 1) + ' · 人口 ' + (unit.populationRequired || 1);
+      stats.textContent = '战力 ' + unit.combatPower + ' · CP ' + (unit.commandPoints || 1);
       card.appendChild(stats);
-
-      const prereq = document.createElement('div');
-      prereq.style.cssText = 'font-size:11px;color:' + (missing.length ? '#f0a040' : '#808098') + ';line-height:1.4;min-height:30px;';
-      prereq.textContent = prereqs.length ? ('前置: ' + prereqs.map(_techName).join(' / ')) : '前置: 无';
-      card.appendChild(prereq);
 
       const unitPrereq = document.createElement('div');
       unitPrereq.style.cssText = 'font-size:11px;color:' + (missingUnits.length ? '#f0a040' : '#808098') + ';line-height:1.4;min-height:18px;';
@@ -136,12 +134,15 @@ export function renderUnitResearchPanel(data, body, pm) {
       const actionRow = document.createElement('div');
       actionRow.style.cssText = 'margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px;';
       const cost = document.createElement('span');
-      cost.style.cssText = 'font-size:12px;color:' + (inspiration >= (unit.researchCost || 0) ? '#c98500' : '#f0a040') + ';';
-      cost.textContent = _renderCost(unit.researchCost);
+      const costColor = isBase ? '#808098' : (canAfford ? '#4ecb71' : '#f0a040');
+      cost.style.cssText = 'font-size:12px;color:' + costColor + ';';
+      cost.textContent = _renderCost(unlockCost);
       actionRow.appendChild(cost);
 
       const btn = document.createElement('button');
-      btn.textContent = done ? '已完成' : (missing.length ? '前置不足' : (inspiration < (unit.researchCost || 0) ? '灵感不足' : '研发'));
+      btn.textContent = done ? '已完成'
+        : (missingUnits.length ? '前置不足'
+           : (isBase ? '已解锁' : (canAfford ? '研发' : '资源不足')));
       btn.style.cssText = 'padding:6px 12px;border:none;border-radius:6px;background:' + (canClick ? 'rgba(91,141,239,0.22)' : 'rgba(128,128,152,0.14)') + ';color:' + (canClick ? '#8fb1ff' : '#808098') + ';cursor:' + (canClick ? 'pointer' : 'default') + ';font-size:12px;font-weight:600;';
       btn.addEventListener('click', () => {
         if (!canClick) {

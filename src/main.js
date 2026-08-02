@@ -24,6 +24,10 @@ import { WeatherSystem } from './systems/WeatherSystem.js';
 import { QuestSystem } from './systems/QuestSystem.js';
 import { InvasionSystem } from './systems/InvasionSystem.js';
 import { ColonySystem } from './systems/ColonySystem.js';
+import { TerritorySystem } from './systems/TerritorySystem.js';
+import { EnemyExpansionSystem } from './systems/EnemyExpansionSystem.js';
+import { SpellSystem } from './systems/SpellSystem.js';
+import { BuildingTechSystem } from './systems/BuildingTechSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
@@ -115,12 +119,24 @@ class Game {
     // 炼金系统
     this.systems.alchemy = new AlchemySystem();
 
+    // 炼金法术系统（消耗品法术 + 成长树，炼金重定位后的主玩法）
+    this.systems.spell = new SpellSystem();
+
+    // 建筑科技树（永久被动加成 + T2 建筑解锁）
+    this.systems.buildingTech = new BuildingTechSystem();
+
     // 战斗系统
     this.systems.combat = new CombatSystem();
     // 入侵系统
     this.systems.invasion = new InvasionSystem();
     // 殖民地系统
     this.systems.colony = new ColonySystem();
+
+    // 占领系统 / 占有术
+    this.systems.territory = new TerritorySystem();
+
+    // 敌人 x2 扩张系统
+    this.systems.enemyExpansion = new EnemyExpansionSystem();
 
     // 音效系统
     this.systems.audio = new AudioSystem();
@@ -130,6 +146,8 @@ class Game {
 
     // 3.05 初始化弹窗管理器（需要先有 tech / culture / alchemy 系统）
     this.popupManager = new PopupManager(gameLoop, this.systems.tech, this.systems.culture, this.systems.alchemy, this.systems.combat);
+    this.popupManager.setSpellSystem(this.systems.spell);
+    this.popupManager.setBuildingTechSystem(this.systems.buildingTech);
 
     // 3.1 事件系统需要 popupManager
     this.systems.event = new EventSystem();
@@ -145,7 +163,25 @@ class Game {
     this.systems.building.setWeatherSystem(this.systems.weather);
     this.systems.building.setCultureSystem(this.systems.culture);
     this.systems.building.setAlchemySystem(this.systems.alchemy);
+    this.systems.building.setTerritorySystem(this.systems.territory);
     this.systems.building.init();
+    this.systems.territory.setBuildingSystem(this.systems.building);
+    this.systems.territory.setResourceSystem(this.systems.resource);
+    this.systems.territory.init();
+    this.systems.enemyExpansion.setTerritorySystem(this.systems.territory);
+    this.systems.enemyExpansion.setBuildingSystem(this.systems.building);
+    this.systems.enemyExpansion.init();
+    // 炼金法术系统接线：双向注入 building/enemyExpansion（产出效率乘法 + 敌人减益）
+    this.systems.spell.setResourceSystem(this.systems.resource);
+    this.systems.spell.setBuildingSystem(this.systems.building);
+    this.systems.spell.setEnemyExpansionSystem(this.systems.enemyExpansion);
+    this.systems.spell.init();
+    this.systems.building.setSpellSystem(this.systems.spell);
+    this.systems.enemyExpansion.setSpellSystem(this.systems.spell);
+    // 建筑科技树接线：注入 BuildingSystem（常驻产出乘法 + T2 解锁门禁）
+    this.systems.buildingTech.setResourceSystem(this.systems.resource);
+    this.systems.buildingTech.init();
+    this.systems.building.setBuildingTechSystem(this.systems.buildingTech);
     this.systems.torch.setResourceSystem(this.systems.resource);
     this.systems.torch.setBuildingSystem(this.systems.building);
     this.systems.torch.setRoadSystem(this.systems.road);
@@ -284,7 +320,10 @@ class Game {
     });
 
     // 5. 尝试加载存档
-    const saveData = options.forceNew ? null : await SaveManager.load();
+    const rawSave = options.forceNew ? null : await SaveManager.load();
+    // 重设计后存档结构不兼容，旧存档(version<5)强制开新局
+    const saveData = (rawSave && rawSave.version >= 5) ? rawSave : null;
+    if (rawSave && !saveData) console.log('[Game] 旧存档不兼容重设计，开始新游戏');
     if (saveData) {
       this.restoreFromSave(saveData);
       console.log('[Game] Save data restored');
@@ -294,7 +333,9 @@ class Game {
     }
 
     // 6. 初始化渲染器（先构造，再异步预加载纹理后绘制）
-    this.mapRenderer = new MapRenderer(this.app, this.systems.building, this.systems.torch, this.systems.road, this.systems.combat);
+    this.mapRenderer = new MapRenderer(this.app, this.systems.building, this.systems.torch, this.systems.road, this.systems.combat, this.systems.territory);
+    this.mapRenderer.setEnemyExpansion(this.systems.enemyExpansion);
+    this.mapRenderer.setSpellSystem(this.systems.spell);
     await this.mapRenderer.init();
 
     // 6.05 加载存档后恢复相机位置（覆盖 _centerView 的默认/配置位置）
@@ -332,10 +373,17 @@ class Game {
       if (q) eventBus.emit('questUpdated', { quest: q });
     }
 
-    // 7.05 新存档询问是否开启新手教程
+    // 7.05 新手教程（重设计后旧教程内容过时，暂禁用，待 Phase F 重写）
+    // if (!saveData) {
+    //   setTimeout(() => {
+    //     this.popupManager.open('tutorial_prompt', { questSystem: this.systems.quest });
+    //   }, 600);
+    // }
+
+    // 7.06 开局战役目标简报（仅新游戏，读档不弹；blocking 暂停游戏）
     if (!saveData) {
       setTimeout(() => {
-        this.popupManager.open('tutorial_prompt', { questSystem: this.systems.quest });
+        this.popupManager.open('objective', { briefing: true, blocking: true });
       }, 600);
     }
 
@@ -412,6 +460,15 @@ class Game {
     // 初始化炼金系统
     this.systems.alchemy.init();
 
+    // 初始化占领系统（占有术 + 建筑上限；在初始建筑放置后重建覆盖）
+    this.systems.territory.initNew();
+    // 初始化敌人扩张系统
+    this.systems.enemyExpansion.initNew();
+    // 初始化炼金法术系统
+    this.systems.spell.initNew();
+    // 初始化建筑科技树
+    this.systems.buildingTech.initNew();
+
     // 初始化事件标记状态（新游戏 = 无已移除标记）
     store.setState({ removedEventMarkers: [] });
     /* 初始化文化系统 */
@@ -448,6 +505,26 @@ class Game {
     }
     if (saveData.combat) {
       this.systems.combat.restoreState(saveData.combat);
+    }
+    if (saveData.territory) {
+      this.systems.territory.restoreState(saveData.territory);
+    } else {
+      this.systems.territory.initNew();
+    }
+    if (saveData.enemyExpansion) {
+      this.systems.enemyExpansion.restoreState(saveData.enemyExpansion);
+    } else {
+      this.systems.enemyExpansion.initNew();
+    }
+    if (saveData.spell) {
+      this.systems.spell.restoreState(saveData.spell);
+    } else {
+      this.systems.spell.initNew();
+    }
+    if (saveData.buildingTech) {
+      this.systems.buildingTech.restoreState(saveData.buildingTech);
+    } else {
+      this.systems.buildingTech.initNew();
     }
     if (saveData.weather) {
       this.systems.weather.restoreState(saveData.weather);
@@ -499,7 +576,7 @@ class Game {
   async saveGame() {
     if (this._resetting || this._gameOver) return false;
     const state = {
-      version: 1,
+      version: 5,
       timestamp: Date.now(),
       time: this.systems.time.getState(),
       population: this.systems.population.getState(),
@@ -518,6 +595,10 @@ class Game {
       weather: this.systems.weather.getState(),
       invasion: this.systems.invasion.getState(),
       colony: this.systems.colony.getState(),
+      territory: this.systems.territory.getState(),
+      enemyExpansion: this.systems.enemyExpansion.getState(),
+      spell: this.systems.spell.getState(),
+      buildingTech: this.systems.buildingTech.getState(),
       audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
       armies: store.getState('armies'),

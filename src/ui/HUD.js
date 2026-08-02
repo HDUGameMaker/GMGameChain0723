@@ -7,8 +7,8 @@ import { eventBus } from '../core/EventBus.js';
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { progressManager } from '../utils/ProgressManager.js';
 
-const PRIMARY_RESOURCE_IDS = ['wood', 'stone', 'coal', 'hematite', 'food', 'fur'];
-const SECONDARY_RESOURCE_IDS = ['plank', 'iron_ingot', 'steel', 'brick', 'machine_part', 'electronic_part', 'gear', 'icon_inspiration'];
+const PRIMARY_RESOURCE_IDS = ['wood', 'stone', 'food', 'gold'];
+const SECONDARY_RESOURCE_IDS = ['icon_inspiration'];
 
 export class HUD {
   constructor(systems, popupManager) {
@@ -33,6 +33,9 @@ export class HUD {
     this.populationDisplay = document.getElementById('population-display');
     this.timeDisplay = document.getElementById('time-display');
     this.btnBuild = document.getElementById('btn-build');
+    this.btnObjective = document.getElementById('btn-objective');
+    this.btnBuildingTree = document.getElementById('btn-building-tree');
+    this.btnSpellTree = document.getElementById('btn-spell-tree');
     this.btnTech = document.getElementById('btn-tech');
     this.btnCulture = document.getElementById('btn-culture');
     this.btnAlchemy = document.getElementById('btn-alchemy');
@@ -96,8 +99,89 @@ export class HUD {
       this.popupManager.open('training_panel', {});
     });
     this.btnBuild.addEventListener('click', () => {
+      this.systems.territory?.exitCastingMode();
       this.popupManager.open('building_select', {});
     });
+
+    // 战役目标（随时查看胜利/失败条件与实时进度）
+    if (this.btnObjective) {
+      this.btnObjective.addEventListener('click', () => {
+        this.popupManager.open('objective', {});
+      });
+    }
+
+    // 建筑科技树 / 炼金法术树：与建设按钮平级的直达入口（免去先开子菜单再进树的二级跳转）
+    if (this.btnBuildingTree) {
+      this.btnBuildingTree.addEventListener('click', () => {
+        this.popupManager.open('building_tree', {});
+      });
+    }
+    if (this.btnSpellTree) {
+      this.btnSpellTree.addEventListener('click', () => {
+        this.popupManager.open('spell_tree', {});
+      });
+    }
+
+    // 占有术施法按钮（动态创建，避免改 index.html）
+    this.btnPossession = document.createElement('button');
+    this.btnPossession.className = 'hud-btn';
+    this.btnPossession.innerHTML = '<span class="hud-btn-icon">✦</span><span class="hud-btn-label">占术</span>';
+    this.btnPossession.title = '占有术：消耗黄金标记格子，铺满地图通关';
+    if (this.btnBuild && this.btnBuild.parentNode) {
+      this.btnBuild.parentNode.insertBefore(this.btnPossession, this.btnBuild);
+    }
+    this.btnPossession.addEventListener('click', () => this._togglePossessionMode());
+
+    // 领地进度 / 建筑上限 状态条
+    this.territoryStatus = document.createElement('div');
+    this.territoryStatus.className = 'territory-status';
+    this.territoryStatus.style.cssText = 'position:fixed;top:54px;left:50%;transform:translateX(-50%);z-index:50;background:rgba(20,20,40,0.72);padding:4px 14px;border-radius:8px;font-size:12px;color:#ccc;pointer-events:none;backdrop-filter:blur(4px);white-space:nowrap;';
+    document.body.appendChild(this.territoryStatus);
+
+    eventBus.on('territoryCastingModeChanged', () => this._updatePossessionButton());
+    eventBus.on('territoryChanged', () => this._updateTerritoryStatus());
+    store.subscribe('territoryVersion', () => this._updateTerritoryStatus());
+    this._updatePossessionButton();
+    this._updateTerritoryStatus();
+
+    // 顶部游戏进度条（我方 vs 敌方占领拉锯，中线为 50% 胜负线）
+    this.gameProgressBar = document.createElement('div');
+    this.gameProgressBar.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:8px;z-index:10000;pointer-events:none;';
+    const gpTrack = document.createElement('div');
+    gpTrack.style.cssText = 'position:relative;width:100%;height:100%;background:rgba(255,255,255,0.08);';
+    this._gpMyFill = document.createElement('div');
+    this._gpMyFill.style.cssText = 'position:absolute;left:0;top:0;bottom:0;width:0%;background:linear-gradient(90deg,#7c3aed,#cc88ff);transition:width 0.3s ease;';
+    this._gpEnemyFill = document.createElement('div');
+    this._gpEnemyFill.style.cssText = 'position:absolute;right:0;top:0;bottom:0;width:0%;background:linear-gradient(270deg,#b91c1c,#ff6b6b);transition:width 0.3s ease;';
+    const gpMark = document.createElement('div');
+    gpMark.style.cssText = 'position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.65);transform:translateX(-50%);';
+    gpTrack.appendChild(this._gpMyFill);
+    gpTrack.appendChild(this._gpEnemyFill);
+    gpTrack.appendChild(gpMark);
+    this.gameProgressBar.appendChild(gpTrack);
+    document.body.appendChild(this.gameProgressBar);
+    this._updateGameProgress();
+
+    // 敌人压力 / 军队战力 状态条
+    this.enemyStatus = document.createElement('div');
+    this.enemyStatus.className = 'enemy-status';
+    this.enemyStatus.style.cssText = 'position:fixed;top:84px;left:50%;transform:translateX(-50%);z-index:50;background:rgba(40,16,16,0.72);padding:4px 14px;border-radius:8px;font-size:12px;color:#ccc;pointer-events:none;backdrop-filter:blur(4px);white-space:nowrap;';
+    document.body.appendChild(this.enemyStatus);
+    eventBus.on('enemyExpansionChanged', () => this._updateEnemyStatus());
+    eventBus.on('armyChanged', () => this._updateEnemyStatus());
+    store.subscribe('enemyExpansionVersion', () => this._updateEnemyStatus());
+    store.subscribe('availableUnits', () => this._updateEnemyStatus());
+    this._updateEnemyStatus();
+
+    // 炼金法术施法状态条
+    this.spellStatus = document.createElement('div');
+    this.spellStatus.className = 'spell-status';
+    this.spellStatus.style.cssText = 'position:fixed;top:114px;left:50%;transform:translateX(-50%);z-index:50;background:rgba(20,16,40,0.78);padding:4px 14px;border-radius:8px;font-size:12px;color:#ccc;pointer-events:none;backdrop-filter:blur(4px);white-space:nowrap;display:none;border:1px solid rgba(51,224,255,0.4);';
+    document.body.appendChild(this.spellStatus);
+    eventBus.on('spellCastingModeChanged', () => this._updateSpellStatus());
+    eventBus.on('spellZonesChanged', () => this._updateSpellStatus());
+    store.subscribe('spellVersion', () => this._updateSpellStatus());
+    this._updateSpellStatus();
 
     // 取消放置
     this.btnCancelPlace.addEventListener('click', () => {
@@ -147,10 +231,99 @@ export class HUD {
     if (!document.fullscreenEnabled) {
       this.btnFullscreen.style.display = 'none';
     }
+
+    // 重设计：隐藏已砍系统的入口按钮（代码保留，仅 UI 不可达）
+    ['btn-tech', 'btn-culture', 'btn-tame', 'btn-road', 'btn-quest'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
     document.addEventListener('fullscreenchange', () => {
       this.btnFullscreen.textContent = document.fullscreenElement ? '⛶' : '⛶';
       eventBus.emit('fullscreenToggled');
     });
+  }
+
+  _togglePossessionMode() {
+    const ts = this.systems.territory;
+    if (!ts) return;
+    if (ts.isCastingMode()) {
+      ts.exitCastingMode();
+    } else {
+      this.systems.road?.exitEditMode?.();
+      ts.enterCastingMode();
+    }
+  }
+
+  _updatePossessionButton() {
+    if (!this.btnPossession) return;
+    const ts = this.systems.territory;
+    const active = ts && ts.isCastingMode();
+    this.btnPossession.style.background = active ? 'rgba(170,85,255,0.35)' : '';
+    this.btnPossession.style.borderColor = active ? '#aa55ff' : '';
+    this.btnPossession.innerHTML = active
+      ? '<span class="hud-btn-icon">✕</span><span class="hud-btn-label">退出占术</span>'
+      : '<span class="hud-btn-icon">✦</span><span class="hud-btn-label">占术</span>';
+  }
+
+  _updateEnemyStatus() {
+    if (!this.enemyStatus) return;
+    const ee = this.systems.enemyExpansion;
+    if (!ee) { this.enemyStatus.style.display = 'none'; return; }
+    const power = ee.getArmyPower();
+    const count = ee.getCellCount();
+    const total = store.getState('enemyClaimableTotal') || 0;
+    const pct = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
+    const failRatioPct = (store.getState('enemyFailRatio') ?? 0.5) * 100;
+    const strength = ee.getStrengthForDay(store.getState('timeDay') || 1);
+    this.enemyStatus.style.display = 'block';
+    const danger = parseFloat(pct) >= failRatioPct * 0.6;
+    const pctColor = danger ? '#ff4444' : '#ff6b6b';
+    this.enemyStatus.innerHTML =
+      `👾 敌占 <b style="color:${pctColor}">${pct}%</b> (${count}格/危${failRatioPct.toFixed(0)}%) &nbsp; ⚔️ 战力 <b style="color:#4ecb71">${power}</b> · 强度 ${strength}`;
+    this._updateGameProgress();
+  }
+
+  _updateSpellStatus() {
+    if (!this.spellStatus) return;
+    const ss = this.systems.spell;
+    if (!ss || !ss.isCastingMode()) { this.spellStatus.style.display = 'none'; return; }
+    const active = ss.getActiveSpell();
+    this.spellStatus.style.display = 'block';
+    const name = active?.def?.name || '法术';
+    const radius = active?.def?.areaRadius || 0;
+    const rangeText = radius > 0 ? `${radius}格半径` : '全域';
+    this.spellStatus.innerHTML =
+      `🜂 <b style="color:#33e0ff">${name}</b> 施法中（${rangeText}）· 点击地图释放 · <b style="color:#aaa">Esc 取消</b>`;
+  }
+
+  _updateTerritoryStatus() {
+    if (!this.territoryStatus) return;
+    const ts = this.systems.territory;
+    if (!ts) { this.territoryStatus.style.display = 'none'; return; }
+    const owned = ts.getOwnedClaimableCount();
+    const total = ts.getClaimableCount();
+    const pct = total > 0 ? Math.round((owned / total) * 100) : 0;
+    const cap = ts.getBuildingCap();
+    const bCount = this.systems.building ? this.systems.building.buildings.length : 0;
+    const cost = ts.getCastCost();
+    this.territoryStatus.style.display = 'block';
+    this.territoryStatus.innerHTML =
+      `🜂 占领 <b style="color:#cc88ff">${pct}%</b> (${owned}/${total}) · 目标50% &nbsp; 💰占术${cost} 🏠${bCount}/${cap}`;
+    this._updateGameProgress();
+  }
+
+  /** 顶部进度条：我方占领%（紫，自左）vs 敌方占领%（红，自右），中线 50% 为胜负线 */
+  _updateGameProgress() {
+    if (!this.gameProgressBar) return;
+    const ts = this.systems.territory;
+    const ee = this.systems.enemyExpansion;
+    const total = ts ? ts.getClaimableCount() : 0;
+    const owned = ts ? ts.getOwnedClaimableCount() : 0;
+    const enemyCount = ee ? ee.getCellCount() : 0;
+    const myPct = total > 0 ? (owned / total) * 100 : 0;
+    const enemyPct = total > 0 ? (enemyCount / total) * 100 : 0;
+    if (this._gpMyFill) this._gpMyFill.style.width = Math.min(100, myPct).toFixed(2) + '%';
+    if (this._gpEnemyFill) this._gpEnemyFill.style.width = Math.min(100, enemyPct).toFixed(2) + '%';
   }
 
   _bindKeyboard() {
@@ -269,8 +442,12 @@ export class HUD {
   }
 
   _checkAdvancedUnlocks() {
-    const hasIndustrial = this.systems.building?.hasBuilding('industrial_warehouse');
-    this.btnAlchemy.style.display = hasIndustrial ? 'flex' : 'none';
+    const hasAlchemyLab = this.systems.building?.hasBuilding('alchemy_lab');
+    this.btnAlchemy.style.display = hasAlchemyLab ? 'flex' : 'none';
+    // 炼金法术树入口随炼金实验室解锁出现（与炼金工坊按钮同步）
+    if (this.btnSpellTree) {
+      this.btnSpellTree.style.display = hasAlchemyLab ? 'flex' : 'none';
+    }
   }
 
   _updateQuestWidget(quest) {
@@ -321,7 +498,6 @@ export class HUD {
 
   _refreshResources() {
     const resources = this.systems.resource.getHUDResources();
-    const dailyFlow = this._getDailyResourceFlow();
     const byId = {};
     for (const res of resources) {
       byId[res.id] = res;
@@ -332,7 +508,6 @@ export class HUD {
     /* 灵感显示 */
     const inspiration = store.getState('inspiration') || 0;
     const inspPerPerson = this.systems.population.inspirationPerPerson || 1;
-    const buildingInsp = dailyFlow.inspiration?.produced || 0;
 
     const specialResources = {
       icon_inspiration: {
@@ -342,7 +517,7 @@ export class HUD {
         current: inspiration,
         max: byId.icon_inspiration?.max || 100000,
         flowId: 'inspiration',
-        popoverExtra: '每人每日: +' + inspPerPerson + (buildingInsp ? '\n建筑每日: +' + buildingInsp : '')
+        popoverExtra: '每人每日: +' + inspPerPerson
       }
     };
 
@@ -361,8 +536,7 @@ export class HUD {
       for (const id of group.ids) {
         const res = specialResources[id] || byId[id];
         if (!res) continue;
-        const flow = dailyFlow[res.flowId || id] || { produced: 0, consumed: 0, net: 0 };
-        const item = this._createResourceItem(res, flow);
+        const item = this._createResourceItem(res);
         items.appendChild(item);
       }
       cluster.appendChild(items);
@@ -472,7 +646,7 @@ export class HUD {
     return clone;
   }
 
-  _createResourceItem(res, flow) {
+  _createResourceItem(res) {
     const isFull = res.current >= res.max;
     const item = document.createElement('div');
     item.className = 'resource-item' + (isFull ? ' full' : '');
@@ -481,14 +655,15 @@ export class HUD {
       ? `<img src="${res.icon}" alt="${res.name}" class="res-icon" onerror="this.replaceWith(document.createTextNode('${this._getResourceEmoji(res.id)}'))" />`
       : this._getResourceEmoji(res.id);
 
-    const netClass = flow.net >= 0 ? 'positive' : 'negative';
-    const netText = flow.net > 0 ? '+' + flow.net : String(flow.net);
+    // 重设计：顶部资源栏不再常驻显示"余"结余，产出改由建筑上的产出进度条呈现；
+    // 点击资源仍可查看每日产出/消耗/结余明细（按需计算，避免每次刷新都算）。
     const innerHTML =
-      `<span class="res-main"><span class="res-icon-wrap">${iconHtml}</span><span class="res-value">${res.current}</span></span>` +
-      `<span class="res-delta"><span class="res-rate ${netClass}" title="每日结余">余 ${netText}</span></span>`;
+      `<span class="res-main"><span class="res-icon-wrap">${iconHtml}</span><span class="res-value">${res.current}</span></span>`;
     item.innerHTML = innerHTML;
 
     item.addEventListener('click', (e) => {
+      const flow = (this._getDailyResourceFlow()[res.flowId || res.id]) || { produced: 0, consumed: 0, net: 0 };
+      const netText = flow.net > 0 ? '+' + flow.net : String(flow.net);
       const text = `${res.name}: ${res.current} / ${res.max}` +
         `\n每日产出: ${flow.produced}` +
         `\n每日消耗: ${flow.consumed}` +
@@ -524,88 +699,48 @@ export class HUD {
       food: '🍞',
       gear: '⚙️',
       fur: '🧶',
+      gold: '💰',
       icon_inspiration: '💡'
     };
     return emojis[id] || '📦';
   }
 
   _refreshPopulation() {
-    const stats = this.systems.population.getPopulationStats
-      ? this.systems.population.getPopulationStats(this.systems.combat)
-      : {
-          idle: this.systems.population.getAvailableWorkers(),
-          work: this.systems.population.getAssignedWorkers(),
-          military: 0,
-          total: this.systems.population.current || 0,
-          housing: this.systems.population.getHousingCapacity(),
-          assigned: this.systems.population.getAssignedWorkers(),
-          expedition: 0,
-          construction: 0
-        };
-    const idle = stats.idle;
-    const work = stats.work;
-    const military = stats.military;
-    const total = stats.total;
-    const housing = stats.housing;
+    const bs = this.systems.building;
+    const soldierCount = bs ? bs.getTotalSoldierCount() : 0;
+    const soldierCap = bs ? bs.getTotalSoldierCapacity() : 0;
     const armies = store.getState('armies') || [];
-    const landUnits = this._countMilitaryUnitsByDomain('land');
-    const navyUnits = this._countMilitaryUnitsByDomain('naval');
-    const growthPreview = this.systems.population.getDailyGrowthPreview
-      ? this.systems.population.getDailyGrowthPreview()
-      : { min: 0, max: 0, room: 0, multiplier: 1 };
-    const growthText = growthPreview.min === growthPreview.max
-      ? `+${growthPreview.max}`
-      : `+${growthPreview.min}~${growthPreview.max}`;
-
-    const housingClass = total >= housing ? ' class="bottleneck"' : '';
+    const availUnits = store.getState('availableUnits') || {};
+    const reserve = Object.values(availUnits).reduce((s, v) => s + (v || 0), 0);
+    const atCap = soldierCount >= soldierCap && soldierCap > 0;
+    const capColor = atCap ? '#ff6b6b' : '#4ecb71';
+    const capClass = atCap ? ' class="bottleneck"' : '';
 
     this.populationDisplay.innerHTML =
       `<div class="population-line">` +
-        `<span class="hud-info-main">👥 <span style="color:#4ecb71">${idle}</span>+<span style="color:#5b8def">${work}</span>+<span style="color:#c98500">${military}</span>/<span${housingClass}>${housing}</span></span>` +
-        `<span class="hud-info-sub">日增 ${growthText}</span>` +
-      `</div>` +
-      `<div class="military-line">` +
-        `<span class="hud-info-main">⚔️${armies.length}</span><span class="hud-info-sub">陆${landUnits}</span>` +
-        `<span class="hud-info-main">⚓${navyUnits}</span>` +
+        `<span class="hud-info-main">⚔️ 士兵 <span style="color:${capColor}">${soldierCount}</span>/<span${capClass}>${soldierCap}</span></span>` +
+        `<span class="hud-info-sub">储备 ${reserve} · 军团 ${armies.length}</span>` +
       `</div>`;
 
-    // 人口变化弹跳动画
-    if (this._prevPopulation !== 0 && this._prevPopulation !== total && window.gsap) {
+    // 士兵变化弹跳动画
+    if (this._prevPopulation !== 0 && this._prevPopulation !== soldierCount && window.gsap) {
       gsap.fromTo(this.populationDisplay,
         { scale: 1.2 },
         { scale: 1, duration: 0.4, ease: 'back.out(3)' }
       );
     }
-    this._prevPopulation = total;
+    this._prevPopulation = soldierCount;
 
     this.populationDisplay.onclick = (e) => {
       window.__game?.systems?.quest?.onPlayerAction('click_population');
-      const available = this.systems.population.getAvailableWorkers();
       const foodAmount = this.systems.resource ? this.systems.resource.getAmount('food') : 0;
-      // 获取地图部署单位数量
-      let deployedText = '无';
-      if (this.systems.combat) {
-        const unitConfigs = configRegistry.get('enemies')?.units || [];
-        const unitNames = {};
-        unitConfigs.forEach(u => { unitNames[u.id] = u.name; });
-        const counts = {};
-        const units = this.systems.combat.getAllUnits().filter(u => u.source !== 'tamed');
-        units.forEach(u => { counts[u.type] = (counts[u.type] || 0) + 1; });
-        deployedText = Object.entries(counts).map(([id, n]) => (unitNames[id] || id) + n).join(' / ') || '无';
-      }
-      const armies = store.getState('armies') || [];
-      const availUnits = store.getState('availableUnits') || {};
-      const totalAvail = Object.values(availUnits).reduce((s, v) => s + (v || 0), 0);
-      const totalArmyUnits = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
-      const armyDetail = armies.map(a => a.name + ':' + (a.unitIds||[]).length + '单位').join(' · ');
-      const growth = this.systems.population.getDailyGrowthPreview
-        ? this.systems.population.getDailyGrowthPreview()
-        : { min: 0, max: 0, room: 0, multiplier: 1 };
-      const growthDetail = growth.min === growth.max
-        ? `每日可新增: ${growth.max}`
-        : `每日可新增: ${growth.min}~${growth.max}`;
+      const armyUnitTotal = armies.reduce((s, a) => s + (a.unitIds || []).length, 0);
+      const armyDetail = armies.map(a => a.name + ':' + (a.unitIds || []).length + '单位').join(' · ');
+      const warn = soldierCap <= 0
+        ? '\n⚠️ 尚无军营，无法训练士兵'
+        : (atCap ? '\n⚠️ 已达士兵上限，建造/升级军营' : '');
       this._showPopover(e.target,
-        `总人口: ${total} / 住宅上限 ${housing}\n空闲人口: ${idle}\n工作人口: ${work}（建筑 ${stats.assigned}，修路/建造 ${stats.construction}，探险 ${stats.expedition}）\n军队人口: ${military}\n${growthDetail}（剩余住宅 ${growth.room}，倍率 ×${growth.multiplier.toFixed(2)}）\n可用工人: ${available}\n地图部署: ${deployedText}\n军团编制: ${armies.length}支 · ${totalArmyUnits}单位\n训练储备: ${totalAvail}单位\n海军单位: ${navyUnits}（殖民地战斗预留）\n${armyDetail || ''}\n食物储备: ${foodAmount}`
+        `士兵: ${soldierCount} / 上限 ${soldierCap}\n训练储备: ${reserve} 单位\n军团编制: ${armies.length}支 · ${armyUnitTotal}单位\n${armyDetail || ''}\n食物储备: ${foodAmount}${warn}`
       );
     };
   }

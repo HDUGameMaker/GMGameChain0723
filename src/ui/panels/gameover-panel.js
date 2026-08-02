@@ -1,112 +1,140 @@
 /**
  * gameover-panel - 游戏结束弹窗面板
- * 当人口降至 2 以下时触发，显示统计和重新开始选项
+ * 胜利 / 失败结算：评级称号 + 占领度统计 + 重新开始
  */
 export function renderGameOverPanel(data, body, pm) {
   const game = window.__game;
   if (!game) return;
 
-  const daysSurvived = data.day || (game.systems.time ? game.systems.time.day : '?');
-  const population = data.population || 0;
+  const systems = game.systems || {};
+  const ts = systems.territory;
+  const ee = systems.enemyExpansion;
+  const bs = systems.building;
+  const rs = systems.resource;
+
+  const daysSurvived = data.day || (systems.time ? systems.time.day : '?');
+  const soldierCount = bs ? bs.getTotalSoldierCount() : 0;
+
+  const total = ts ? ts.getClaimableCount() : 0;
+  const owned = ts ? ts.getOwnedClaimableCount() : 0;
+  const winPct = total > 0 ? (owned / total) * 100 : 0;
+  const enemyCount = ee ? ee.getCellCount() : 0;
+  const enemyPct = total > 0 ? (enemyCount / total) * 100 : 0;
+  const totalCleared = ee ? ee.getTotalCleared() : 0;
+  const buildingCount = bs ? bs.buildings.filter(b => b.status === 'active').length : 0;
+  const gold = rs ? rs.getAmount('gold') : 0;
+  const food = rs ? rs.getAmount('food') : 0;
+
+  const isWin = !!data.win;
+
+  // === 评级 / 称号 ===
+  let icon, mainTitle, mainColor, subtitle;
+  if (isWin) {
+    icon = '🏆';
+    mainTitle = '征服胜利';
+    mainColor = '#ffcc44';
+    if (daysSurvived <= 15) subtitle = '⚡ 极速征服者';
+    else if (daysSurvived <= 30) subtitle = '👑 征服之王';
+    else subtitle = '🛡️ 坚韧征服者';
+  } else {
+    icon = '💀';
+    mainTitle = data.reason === 'hqLost' ? '大本营沦陷' : '领地沦陷';
+    mainColor = '#ff6b6b';
+    if (winPct >= 40) subtitle = '💔 功亏一篑';
+    else if (winPct >= 20) subtitle = '⚔️ 顽强抵抗';
+    else subtitle = '🌑 初尝败绩';
+  }
 
   const container = document.createElement('div');
   container.style.cssText = 'display:flex;flex-direction:column;align-items:center;padding:8px 0;';
 
-  // === 游戏结束标题 ===
-  const icon = document.createElement('div');
-  icon.style.cssText = 'font-size:48px;margin-bottom:12px;';
-  icon.textContent = '💀';
+  // 标题
+  const iconEl = document.createElement('div');
+  iconEl.style.cssText = 'font-size:52px;margin-bottom:10px;';
+  iconEl.textContent = icon;
 
-  const title = document.createElement('div');
-  title.style.cssText = `
-    font-size: 22px; font-weight: 700; color: #ff6666;
-    margin-bottom: 8px; letter-spacing: 2px;
+  const titleEl = document.createElement('div');
+  titleEl.style.cssText = `
+    font-size:24px;font-weight:800;color:${mainColor};
+    margin-bottom:6px;letter-spacing:2px;
   `;
-  title.textContent = '游戏结束';
+  titleEl.textContent = mainTitle;
+
+  const subtitleEl = document.createElement('div');
+  subtitleEl.style.cssText = `font-size:14px;font-weight:600;color:${mainColor};opacity:0.85;margin-bottom:8px;letter-spacing:1px;`;
+  subtitleEl.textContent = subtitle;
 
   const reason = document.createElement('div');
-  reason.style.cssText = `
-    font-size: 13px; color: #888; margin-bottom: 20px; text-align: center;
-  `;
-  if (population <= 0) {
-    reason.textContent = '所有居民都已死亡，聚落覆灭了……';
+  reason.style.cssText = 'font-size:13px;color:#888;margin-bottom:18px;text-align:center;';
+  if (isWin) {
+    reason.textContent = '占有术与建筑占领了过半土地，炼金征服达成！';
+  } else if (data.reason === 'hqLost') {
+    reason.textContent = '大本营被敌人占领，指挥中心沦陷……';
+  } else if (data.reason === 'overwhelmed') {
+    reason.textContent = '被敌人 x2 扩张淹没，领地沦陷……';
   } else {
-    reason.textContent = '聚落人口不足，失去了延续的希望……';
+    reason.textContent = '营地沦陷……';
   }
 
-  // === 分隔线 ===
+  // 分隔线
   const divider = document.createElement('div');
   divider.style.cssText = `
-    width: 80%; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    margin-bottom: 20px;
+    width:80%;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);
+    margin-bottom:18px;
   `;
 
-  // === 统计信息 ===
+  // 统计
   const stats = document.createElement('div');
-  stats.style.cssText = `
-    display: flex; flex-direction: column; gap: 8px;
-    width: 100%; max-width: 240px; margin-bottom: 24px;
-  `;
-
+  stats.style.cssText = 'display:flex;flex-direction:column;gap:8px;width:100%;max-width:280px;margin-bottom:24px;';
   const statItems = [
     { label: '存活天数', value: `Day ${daysSurvived}` },
-    { label: '最终人口', value: `${population} 人` },
+    { label: '我方占领', value: `${owned}/${total}（${winPct.toFixed(1)}%）` },
+    { label: '敌方占领', value: `${enemyCount}/${total}（${enemyPct.toFixed(1)}%）` },
+    { label: '累计清敌', value: `${totalCleared}` },
+    { label: '活跃建筑', value: `${buildingCount} 座` },
+    { label: '士兵', value: `${soldierCount}` },
+    { label: '剩余黄金', value: `${gold}` },
+    { label: '剩余食物', value: `${food}` },
   ];
-
-  // 获取建筑数量
-  if (game.systems && game.systems.building) {
-    const buildingCount = game.systems.building.buildings.filter(
-      b => b.status === 'active'
-    ).length;
-    statItems.push({ label: '活跃建筑', value: `${buildingCount} 座` });
-  }
-
-  // 获取剩余食物
-  if (game.systems && game.systems.resource) {
-    const foodRemaining = game.systems.resource.getAmount('food');
-    statItems.push({ label: '剩余食物', value: `${foodRemaining}` });
-  }
-
   for (const item of statItems) {
     const row = document.createElement('div');
-    row.style.cssText = `
-      display: flex; justify-content: space-between;
-      font-size: 14px; padding: 4px 0;
-    `;
-    row.innerHTML = `
-      <span style="color:#888">${item.label}</span>
-      <span style="color:#ccc;font-weight:600">${item.value}</span>
-    `;
+    row.style.cssText = 'display:flex;justify-content:space-between;font-size:14px;padding:4px 0;';
+    row.innerHTML = `<span style="color:#888">${item.label}</span><span style="color:#ccc;font-weight:600">${item.value}</span>`;
     stats.appendChild(row);
   }
 
-  // === 返回主菜单按钮 ===
+  // 重开按钮
   const restartBtn = document.createElement('button');
+  const btnGrad = isWin
+    ? 'linear-gradient(135deg,#caa233,#ffcc44)'
+    : 'linear-gradient(135deg,#cc4444,#aa2222)';
+  const btnShadow = isWin ? 'rgba(255,204,68,0.25)' : 'rgba(204,68,68,0.25)';
+  const btnShadowH = isWin ? 'rgba(255,204,68,0.4)' : 'rgba(204,68,68,0.38)';
   restartBtn.style.cssText = `
-    padding: 10px 32px;
-    background: linear-gradient(135deg, #cc4444, #aa2222);
-    color: #fff; border: none; border-radius: 8px;
-    font-size: 15px; font-weight: 600; cursor: pointer;
-    letter-spacing: 1px;
-    transition: transform 0.15s, box-shadow 0.15s;
-    box-shadow: 0 4px 16px rgba(204,68,68,0.25);
+    padding:11px 36px;
+    background:${btnGrad};
+    color:#1a1a2e;border:none;border-radius:10px;
+    font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;
+    box-shadow:0 4px 16px ${btnShadow};
+    transition:transform 0.15s,box-shadow 0.15s;
   `;
-  restartBtn.textContent = '返回主菜单';
+  restartBtn.textContent = isWin ? '再次征服' : '卷土重来';
   restartBtn.addEventListener('mouseenter', () => {
     restartBtn.style.transform = 'scale(1.03)';
-    restartBtn.style.boxShadow = '0 6px 24px rgba(204,68,68,0.35)';
+    restartBtn.style.boxShadow = `0 6px 24px ${btnShadowH}`;
   });
   restartBtn.addEventListener('mouseleave', () => {
     restartBtn.style.transform = 'scale(1)';
-    restartBtn.style.boxShadow = '0 4px 16px rgba(204,68,68,0.25)';
+    restartBtn.style.boxShadow = `0 4px 16px ${btnShadow}`;
   });
   restartBtn.addEventListener('click', () => {
     game.returnToMainMenu?.();
   });
 
-  container.appendChild(icon);
-  container.appendChild(title);
+  container.appendChild(iconEl);
+  container.appendChild(titleEl);
+  container.appendChild(subtitleEl);
   container.appendChild(reason);
   container.appendChild(divider);
   container.appendChild(stats);

@@ -19,6 +19,8 @@ export class BuildingSystem {
     this._mapConfig = null;
     this._newlyUnlocked = new Set(); // 本轮新解锁的建筑ID
     this._adjacencyConfig = []; // 相邻加成配置
+    this._spellSystem = null; // 炼金法术系统（区域效率乘法）
+    this._buildingTechSystem = null; // 建筑科技树（常驻产出乘法 + T2 解锁）
 
     // 订阅 tick 事件处理建造和生产
     eventBus.on('workTick', (data) => this._onWorkTick(data));
@@ -46,6 +48,9 @@ export class BuildingSystem {
   setWeatherSystem(ws) { this._weatherSystem = ws; }
   setCultureSystem(cs) { this._cultureSystem = cs; }
   setAlchemySystem(as) { this._alchemySystem = as; }
+  setSpellSystem(ss) { this._spellSystem = ss; }
+  setBuildingTechSystem(bts) { this._buildingTechSystem = bts; }
+  setTerritorySystem(ts) { this._territorySystem = ts; }
 
   init() {
     this._mapConfig = configRegistry.get('map');
@@ -67,6 +72,15 @@ export class BuildingSystem {
     this.placingState = 'IDLE';
     this.placingBuildingId = null;
     store.setState({ placingState: 'IDLE', placingBuildingId: null });
+  }
+
+  /**
+   * 地形改造解锁：建筑科技树最终节点解锁后，带 allowedGrounds 的资源采集建筑
+   * 可忽略地形限制（仍不可建在 buildable:false 的山脉/屏障上）。
+   */
+  _terrainRestrictionBypassed(config) {
+    if (!this._buildingTechSystem || !config?.allowedGrounds || config.allowedGrounds.length === 0) return false;
+    return this._buildingTechSystem.isTerrainRestrictionRemoved();
   }
 
   /**
@@ -98,13 +112,13 @@ export class BuildingSystem {
           return { valid: false, reason: `${groundType.name}上不可建造` };
         }
         // 受限地形：仅特定建筑可建造（如采石场→裸露石头）
-        if (groundType.buildable === 'restricted') {
+        if (groundType.buildable === 'restricted' && !this._terrainRestrictionBypassed(config)) {
           if (!config.allowedGrounds || !config.allowedGrounds.includes(char)) {
             return { valid: false, reason: `该建筑不能建造在${groundType.name}上` };
           }
         }
         // 建筑有指定地形限制（如农田→草地、伐木营地→林地边缘）
-        if (config.allowedGrounds && config.allowedGrounds.length > 0) {
+        if (!this._terrainRestrictionBypassed(config) && config.allowedGrounds && config.allowedGrounds.length > 0) {
           if (!config.allowedGrounds.includes(char)) {
             const allowedNames = config.allowedGrounds
               .map(g => map.groundTypes[g]?.name || g).join('、');
@@ -149,6 +163,13 @@ export class BuildingSystem {
       }
     }
 
+    // 建筑数量上限（占有术系统）：超上限只能用占术占地
+    if (this._territorySystem) {
+      if (this.buildings.length >= this._territorySystem.getBuildingCap()) {
+        return { valid: false, reason: `已达建筑数量上限 ${this._territorySystem.getBuildingCap()}（升上限或用占术占地）` };
+      }
+    }
+
     // 道路依赖建筑：必须邻接道路
     if (config.roadRequired && this._roadSystem) {
       if (!this._satisfiesRoadDependency(gridX, gridY, w, h, buildingId)) {
@@ -179,18 +200,13 @@ export class BuildingSystem {
       if (!this._resourceSystem.consumeAll(scaledCost)) return false;
     }
 
-    // 获取当前时间状态
-    const state = store.getState();
-    const currentTick = state.timeTick ?? 0;
-    const currentT = state.timeProgress ?? 0;
+    // 取消建造时间机制：放下即落成可用（status 直接 active，不再走 constructing 倒计时）
     const building = {
       buildingId,
       gridX,
       gridY,
-      status: 'constructing',
-      buildProgress: 0,
-      startTick: currentTick,
-      startTimeProgress: currentT,
+      status: 'active',
+      buildProgress: null,
       currentWorkers: 0,
       synthesisProgress: null // { recipeId, progress }
     };
@@ -201,6 +217,8 @@ export class BuildingSystem {
     }
     this._updateStore();
     eventBus.emit('buildingPlaced', { building });
+    // 落成即完成：触发完成回调（存储上限重算 / 连锁解锁 / buildingComplete 事件）
+    this._completeConstruction(building, config);
     return true;
   }
 
@@ -262,18 +280,19 @@ export class BuildingSystem {
     const scaledUpgradeCost = check.cost.map(c => ({ ...c, amount: Math.max(1, Math.round(c.amount * buildCostMul)) }));
     this._resourceSystem.consumeAll(scaledUpgradeCost);
 
-    // 变为目标建筑，进入建造状态
-    const state = store.getState();
+    // 取消建造时间机制：升级即落成可用（status 直接 active，不再走 constructing 倒计时）
     building.buildingId = check.targetId;
-    building.status = 'constructing';
-    building.buildProgress = 0;
-    building.startTick = state.timeTick ?? 0;
-    building.startTimeProgress = state.timeProgress ?? 0;
+    building.status = 'active';
+    building.buildProgress = null;
+    building.startTick = undefined;
+    building.startTimeProgress = undefined;
     building.currentWorkers = 0; // 工人遣返
     // 清除遗留的合成进度（升级后建筑变体可能无对应合成配方，残留进度会导致 UI/逻辑异常）
     building.synthesisProgress = null;
 
     this._updateStore();
+    // 升级即落成：触发完成回调（存储上限重算 / 连锁解锁 / buildingComplete 事件）
+    this._completeConstruction(building, targetConfig);
     eventBus.emit('buildingUpgraded', { building });
     return true;
   }
@@ -476,7 +495,7 @@ export class BuildingSystem {
     const building = this.buildings[buildingIndex];
     const config = configRegistry.getBuilding(building.buildingId);
 
-    // demolishable 明确设为 false 的建筑不可拆除（如仓库），但敌人摧毁时忽略
+    // demolishable 明确设为 false 的建筑不可拆除（如大本营），但敌人摧毁时忽略
     if (!forced && config && config.demolishable === false) return false;
 
     // 建筑被摧毁时处理
@@ -512,6 +531,19 @@ export class BuildingSystem {
     return true;
   }
 
+  /** 找到覆盖 (x,y) 的建筑索引（无则 -1） */
+  getBuildingIndexAt(x, y) {
+    for (let i = 0; i < this.buildings.length; i++) {
+      const b = this.buildings[i];
+      const config = configRegistry.getBuilding(b.buildingId);
+      if (!config) continue;
+      const w = config.footprint.width;
+      const h = config.footprint.height;
+      if (x >= b.gridX && x < b.gridX + w && y >= b.gridY && y < b.gridY + h) return i;
+    }
+    return -1;
+  }
+
   /**
    * 检查建筑能否移动到新位置（与 canPlaceAt 类似，但排除建筑自身）
    */
@@ -545,12 +577,12 @@ export class BuildingSystem {
         if (groundType.buildable === false) {
           return { valid: false, reason: `${groundType.name}上不可建造` };
         }
-        if (groundType.buildable === 'restricted') {
+        if (groundType.buildable === 'restricted' && !this._terrainRestrictionBypassed(config)) {
           if (!config.allowedGrounds || !config.allowedGrounds.includes(char)) {
             return { valid: false, reason: `该建筑不能建造在${groundType.name}上` };
           }
         }
-        if (config.allowedGrounds && config.allowedGrounds.length > 0) {
+        if (!this._terrainRestrictionBypassed(config) && config.allowedGrounds && config.allowedGrounds.length > 0) {
           if (!config.allowedGrounds.includes(char)) {
             const allowedNames = config.allowedGrounds
               .map(g => map.groundTypes[g]?.name || g).join('、');
@@ -887,7 +919,7 @@ export class BuildingSystem {
       const skipOutputResourceIds = new Set(options.skipOutputResourceIds || []);
       for (const out of prod.output) {
         if (skipOutputResourceIds.has(out.resourceId)) continue;
-        const cultureProdMul = this._getProductionMultiplier(out.resourceId);
+        const cultureProdMul = this._getProductionMultiplier(out.resourceId, building);
         const baseAmount = out.amount * outputMultiplier * cultureProdMul;
         const adjusted = this.applyAdjacencyToProduction(
           building.buildingId, out.resourceId, baseAmount, 'production', bonuses
@@ -946,6 +978,37 @@ export class BuildingSystem {
   }
 
   /**
+   * 获取士兵容纳上限（军营/营房的 soldierCapacity 之和）
+   */
+  getTotalSoldierCapacity() {
+    let total = 0;
+    for (const b of this.buildings) {
+      if (b.status !== 'active') continue;
+      if (b._invalid) continue; // 失效建筑不提供士兵上限
+      const config = configRegistry.getBuilding(b.buildingId);
+      if (config && config.soldierCapacity) {
+        total += config.soldierCapacity;
+      }
+    }
+    return total;
+  }
+
+  /**
+   * 获取当前士兵总数（训练储备 + 军团编制，1 单位 = 1 士兵）
+   * 战斗部署单位属于已砍系统，实际为 0，故不计入。
+   */
+  getTotalSoldierCount() {
+    let total = 0;
+    const avail = store.getState('availableUnits') || {};
+    for (const n of Object.values(avail)) total += Math.max(0, n || 0);
+    const armies = store.getState('armies') || [];
+    for (const army of armies) {
+      total += (army.unitIds || []).length;
+    }
+    return total;
+  }
+
+  /**
    * 获取每天食物产出量（每工人每天产出 foodCapacity 食物）
    */
 
@@ -964,7 +1027,7 @@ export class BuildingSystem {
       const prod = config?.production;
       if (config && config.foodCapacity) {
         if (b.currentWorkers <= 0) continue;
-        const baseAmount = config.foodCapacity * b.currentWorkers * this._getProductionMultiplier('food');
+        const baseAmount = config.foodCapacity * b.currentWorkers * this._getProductionMultiplier('food', b);
         const bonuses = this.getAdjacencyBonuses(i);
         const adjusted = this.applyAdjacencyToProduction(
           b.buildingId, 'food', baseAmount, 'foodCapacity', bonuses
@@ -979,7 +1042,7 @@ export class BuildingSystem {
         const bonuses = this.getAdjacencyBonuses(i);
         for (const out of prod.output) {
           if (out.resourceId !== 'food') continue;
-          const baseAmount = out.amount * multiplier * this._getProductionMultiplier('food');
+          const baseAmount = out.amount * multiplier * this._getProductionMultiplier('food', b);
           const adjusted = this.applyAdjacencyToProduction(
             b.buildingId, 'food', baseAmount, 'production', bonuses
           );
@@ -1035,7 +1098,7 @@ export class BuildingSystem {
       // 产出（应用相邻加成）
       if (prod.output) {
         for (const out of prod.output) {
-          const cultureProdMul = this._getProductionMultiplier(out.resourceId);
+          const cultureProdMul = this._getProductionMultiplier(out.resourceId, building);
           const baseAmount = out.amount * multiplier * cultureProdMul;
           const adjusted = this.applyAdjacencyToProduction(
             building.buildingId, out.resourceId, baseAmount, 'production', bonuses
@@ -1096,7 +1159,7 @@ export class BuildingSystem {
       amount: Math.round(inp.amount * multiplier * cyclesPerDay)
     }));
     const dailyOutput = (prod.output || []).map(out => {
-      const cultureProdMul = this._getProductionMultiplier(out.resourceId);
+      const cultureProdMul = this._getProductionMultiplier(out.resourceId, building);
       const baseAmount = out.amount * multiplier * cultureProdMul;
       const adjusted = this.applyAdjacencyToProduction(
         building.buildingId, out.resourceId, baseAmount, 'production', bonuses
@@ -1154,12 +1217,18 @@ export class BuildingSystem {
     return Math.max(1, Math.floor(periodDuration / tickInterval));
   }
 
-  _getProductionMultiplier(resourceId) {
+  _getProductionMultiplier(resourceId, building = null) {
     const cultureEffects = this._cultureSystem ? this._cultureSystem.getEffects() : null;
     const globalCultureMul = cultureEffects?.productionMul || 1;
     const scopedCultureMul = resourceId ? (cultureEffects?.resourceProductionMul?.[resourceId] || 1) : 1;
-    return globalCultureMul * scopedCultureMul
-      * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).productionMul || 1) : 1);
+    const alchemyMul = this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).productionMul || 1) : 1;
+    // 炼金法术：区域内生产建筑效率乘法（按建筑所在区域连乘），叠入产出链
+    const spellMul = (this._spellSystem && building) ? this._spellSystem.getBuildingEfficiencyMul(building) : 1;
+    // 建筑科技树：永久常驻产出乘法（全局 + 按资源），叠入产出链
+    const btEffects = this._buildingTechSystem ? this._buildingTechSystem.getEffects() : null;
+    const btGlobal = btEffects?.productionMul || 1;
+    const btScoped = (resourceId && btEffects) ? (btEffects.resourceProductionMul?.[resourceId] || 1) : 1;
+    return globalCultureMul * scopedCultureMul * alchemyMul * spellMul * btGlobal * btScoped;
   }
 
   getBuildingCount(buildingId) {
@@ -1300,6 +1369,8 @@ export class BuildingSystem {
           return this.hasBuilding(cond.buildingId);
         case 'tech':
           return this._techSystem ? this._techSystem.isResearched(cond.techId) : false;
+        case 'building_tech':
+          return this._buildingTechSystem ? this._buildingTechSystem.isNodeUnlocked(cond.nodeId) : false;
         case 'culture':
         case 'doctrine':
           return this._cultureSystem ? this._cultureSystem.getDoctrineResearched().includes(cond.doctrineId || cond.cultureId) : false;
@@ -1334,6 +1405,12 @@ export class BuildingSystem {
           const name = t ? t.name : cond.techId;
           const met = this._techSystem ? this._techSystem.isResearched(cond.techId) : false;
           return { type: 'tech', desc: `科技: ${name}`, met };
+        }
+        case 'building_tech': {
+          const btNode = (configRegistry.getBuildingTech() || []).find(n => n.id === cond.nodeId);
+          const name = btNode ? btNode.name : cond.nodeId;
+          const met = this._buildingTechSystem ? this._buildingTechSystem.isNodeUnlocked(cond.nodeId) : false;
+          return { type: 'building_tech', desc: `建筑科技: ${name}`, met };
         }
         case 'culture':
         case 'doctrine': {

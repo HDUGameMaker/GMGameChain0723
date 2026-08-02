@@ -1,7 +1,7 @@
 {
-  "generated": "2026-07-30T12:26:29.270Z",
+  "generated": "2026-08-01T15:34:47.200Z",
   "basePath": "assets/",
-  "totalFiles": 41,
+  "totalFiles": 42,
   "categories": {
     "buildings/anim_plank_house": [
       "buildings/anim_plank_house/building_plank_house_0.png",
@@ -27,6 +27,7 @@
       "icon/icon_food.png",
       "icon/icon_gear.png",
       "icon/icon_hematite.png",
+      "icon/icon_inspiration.png",
       "icon/icon_iron.png",
       "icon/icon_koishi.png",
       "icon/icon_plank.png",
@@ -73,6 +74,7 @@
     "icon/icon_food.png",
     "icon/icon_gear.png",
     "icon/icon_hematite.png",
+    "icon/icon_inspiration.png",
     "icon/icon_iron.png",
     "icon/icon_koishi.png",
     "icon/icon_plank.png",

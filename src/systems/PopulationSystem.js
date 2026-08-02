@@ -66,7 +66,7 @@ export class PopulationSystem {
   }
 
   initNew() {
-    this.current = 2; // 初始人口
+    this.current = 0; // 人口/工人已退役，仅为兼容休眠调用方
     this.declineCountdown = 0;
     this._updateStore();
   }
@@ -257,78 +257,9 @@ export class PopulationSystem {
    * 4. 有空余住宅且粮食日净增为正时增长，否则只处理住房不足衰减
    */
   onDayStart() {
-    if (!this._buildingSystem || !this._resourceSystem) return;
-
-    const dailyFoodNet = this.getDailyFoodNetPreview();
-
-    // ===== 1.5 灵感产出：每人每天 N 灵感 =====
-    const totalPeople = this.current;
-    const curInspiration = store.getState('inspiration') || 0;
-    const inspPer = (typeof this.inspirationPerPerson === 'number' && isFinite(this.inspirationPerPerson)) ? this.inspirationPerPerson : 1;
-    const added = Math.round(totalPeople * inspPer);
-    store.setState({ inspiration: curInspiration + added });
-    console.log('[Population] Day start: +' + added + ' inspiration (total=' + (curInspiration + added) + ')');
-
-    // ===== 2. 食物消耗（受人文政策影响） =====
-    const foodPeople = this.current;
-    const foodAvailable = this._resourceSystem.getAmount('food');
-    const requiredFood = this.getFoodConsumptionAmount(foodPeople);
-    const consumeAmount = Math.min(foodAvailable, requiredFood);
-    if (consumeAmount > 0) {
-      this._resourceSystem.tryConsume('food', consumeAmount);
-    }
-
-    // ===== 3. 饥饿死亡 =====
-    const deficit = requiredFood - consumeAmount;
-    if (deficit > 0) {
-      const starvedBefore = this.current;
-      this.current -= deficit;
-      eventBus.emit('populationChanged', {
-        current: this.current,
-        direction: 'starve',
-        starved: deficit,
-        starvedBefore
-      });
-    }
-
-    // ===== 4. 游戏结束检查 =====
-    if (this.current < 2) {
-      this._updateStore();
-      eventBus.emit('gameOver', {
-        day: store.getState('timeDay') || this._getDay(),
-        population: this.current
-      });
-      return; // 游戏结束，不再处理增长/衰减
-    }
-
-    // ===== 5. 住房增长/衰减 =====
-    const housing = this.getHousingCapacity();
-
-    if (this.current < housing && deficit <= 0 && dailyFoodNet > 0) {
-      // 增长（受人文政策影响）
-      this.declineCountdown = 0;
-      const growthMul = this.getGrowthMultiplier();
-      const growth = Math.max(1, Math.round(this._randomInt(this.growthConfig.min, this.growthConfig.max) * growthMul));
-      this.current = Math.min(this.current + growth, housing);
-      eventBus.emit('populationChanged', { current: this.current, direction: 'grow' });
-    } else if (this.current > housing) {
-      // 需要减少（住房不足）
-      if (this.declineCountdown > 0) {
-        this.declineCountdown--;
-      } else if (this.declineCountdown === 0) {
-        // 开始倒计时
-        this.declineCountdown = this.popConfig.declineDelayDays;
-      }
-      // 倒计时结束后开始减少
-      if (this.declineCountdown === 0) {
-        const decline = this._randomInt(this.growthConfig.min, this.growthConfig.max);
-        this.current = Math.max(this.current - decline, housing);
-        eventBus.emit('populationChanged', { current: this.current, direction: 'decline' });
-      }
-    } else {
-      this.declineCountdown = 0;
-    }
-
+    // 【玩法重设计】人口/工人已退役：不再按人口消耗食物、不再饥饿死亡、
+    // 不再 Pop<2 失败、不再增长/衰减。士兵上限改由军营(soldierCapacity)控制。
+    // 保留方法签名供休眠系统调用，仅同步 store。
     this._updateStore();
   }
 

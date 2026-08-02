@@ -74,6 +74,24 @@
       "commandPoints": 3,
       "weight": 10,
       "researchCost": 40,
+      "unlockCost": [
+        {
+          "resourceId": "wood",
+          "amount": 25
+        },
+        {
+          "resourceId": "stone",
+          "amount": 15
+        },
+        {
+          "resourceId": "food",
+          "amount": 20
+        },
+        {
+          "resourceId": "gold",
+          "amount": 10
+        }
+      ],
       "prerequisiteUnits": [
         "warrior"
       ],
@@ -83,12 +101,16 @@
       ],
       "cost": [
         {
-          "resourceId": "iron_ingot",
-          "amount": 12
+          "resourceId": "wood",
+          "amount": 15
+        },
+        {
+          "resourceId": "stone",
+          "amount": 5
         },
         {
           "resourceId": "food",
-          "amount": 15
+          "amount": 20
         }
       ],
       "unlocked": false
@@ -107,6 +129,24 @@
       "commandPoints": 5,
       "weight": 25,
       "researchCost": 90,
+      "unlockCost": [
+        {
+          "resourceId": "wood",
+          "amount": 40
+        },
+        {
+          "resourceId": "stone",
+          "amount": 30
+        },
+        {
+          "resourceId": "food",
+          "amount": 35
+        },
+        {
+          "resourceId": "gold",
+          "amount": 25
+        }
+      ],
       "prerequisiteUnits": [
         "swordsman"
       ],
@@ -115,16 +155,20 @@
       ],
       "cost": [
         {
-          "resourceId": "gear",
-          "amount": 8
+          "resourceId": "wood",
+          "amount": 20
         },
         {
-          "resourceId": "iron_ingot",
-          "amount": 18
+          "resourceId": "stone",
+          "amount": 10
         },
         {
           "resourceId": "food",
-          "amount": 25
+          "amount": 30
+        },
+        {
+          "resourceId": "gold",
+          "amount": 10
         }
       ],
       "unlocked": false
@@ -143,6 +187,24 @@
       "commandPoints": 7,
       "weight": 55,
       "researchCost": 180,
+      "unlockCost": [
+        {
+          "resourceId": "wood",
+          "amount": 60
+        },
+        {
+          "resourceId": "stone",
+          "amount": 50
+        },
+        {
+          "resourceId": "food",
+          "amount": 55
+        },
+        {
+          "resourceId": "gold",
+          "amount": 45
+        }
+      ],
       "prerequisiteUnits": [
         "musketeer"
       ],
@@ -151,16 +213,20 @@
       ],
       "cost": [
         {
-          "resourceId": "steel",
-          "amount": 25
+          "resourceId": "wood",
+          "amount": 30
         },
         {
-          "resourceId": "electronic_part",
-          "amount": 4
+          "resourceId": "stone",
+          "amount": 20
         },
         {
           "resourceId": "food",
-          "amount": 40
+          "amount": 45
+        },
+        {
+          "resourceId": "gold",
+          "amount": 20
         }
       ],
       "unlocked": false
@@ -179,21 +245,39 @@
       "commandPoints": 4,
       "weight": 18,
       "researchCost": 55,
+      "unlockCost": [
+        {
+          "resourceId": "wood",
+          "amount": 25
+        },
+        {
+          "resourceId": "stone",
+          "amount": 15
+        },
+        {
+          "resourceId": "food",
+          "amount": 20
+        },
+        {
+          "resourceId": "gold",
+          "amount": 10
+        }
+      ],
       "prerequisiteTechs": [
         "domesticate_horses"
       ],
       "cost": [
         {
-          "resourceId": "iron_ingot",
-          "amount": 18
+          "resourceId": "wood",
+          "amount": 10
         },
         {
-          "resourceId": "plank",
+          "resourceId": "stone",
           "amount": 10
         },
         {
           "resourceId": "food",
-          "amount": 45
+          "amount": 25
         }
       ],
       "unlocked": false
@@ -212,6 +296,24 @@
       "commandPoints": 6,
       "weight": 35,
       "researchCost": 110,
+      "unlockCost": [
+        {
+          "resourceId": "wood",
+          "amount": 40
+        },
+        {
+          "resourceId": "stone",
+          "amount": 30
+        },
+        {
+          "resourceId": "food",
+          "amount": 35
+        },
+        {
+          "resourceId": "gold",
+          "amount": 25
+        }
+      ],
       "prerequisiteUnits": [
         "knight"
       ],
@@ -220,16 +322,20 @@
       ],
       "cost": [
         {
-          "resourceId": "steel",
-          "amount": 22
+          "resourceId": "wood",
+          "amount": 15
         },
         {
-          "resourceId": "machine_part",
-          "amount": 6
+          "resourceId": "stone",
+          "amount": 20
         },
         {
           "resourceId": "food",
-          "amount": 70
+          "amount": 35
+        },
+        {
+          "resourceId": "gold",
+          "amount": 10
         }
       ],
       "unlocked": false
@@ -248,6 +354,24 @@
       "commandPoints": 9,
       "weight": 70,
       "researchCost": 220,
+      "unlockCost": [
+        {
+          "resourceId": "wood",
+          "amount": 60
+        },
+        {
+          "resourceId": "stone",
+          "amount": 50
+        },
+        {
+          "resourceId": "food",
+          "amount": 55
+        },
+        {
+          "resourceId": "gold",
+          "amount": 45
+        }
+      ],
       "prerequisiteUnits": [
         "armored_cavalry"
       ],
@@ -256,16 +380,20 @@
       ],
       "cost": [
         {
-          "resourceId": "steel",
+          "resourceId": "wood",
+          "amount": 25
+        },
+        {
+          "resourceId": "stone",
+          "amount": 25
+        },
+        {
+          "resourceId": "food",
           "amount": 45
         },
         {
-          "resourceId": "machine_part",
-          "amount": 18
-        },
-        {
-          "resourceId": "gear",
-          "amount": 16
+          "resourceId": "gold",
+          "amount": 25
         }
       ],
       "unlocked": false
@@ -284,6 +412,24 @@
       "commandPoints": 12,
       "weight": 110,
       "researchCost": 420,
+      "unlockCost": [
+        {
+          "resourceId": "wood",
+          "amount": 90
+        },
+        {
+          "resourceId": "stone",
+          "amount": 80
+        },
+        {
+          "resourceId": "food",
+          "amount": 80
+        },
+        {
+          "resourceId": "gold",
+          "amount": 70
+        }
+      ],
       "prerequisiteUnits": [
         "biplane"
       ],
@@ -292,16 +438,20 @@
       ],
       "cost": [
         {
-          "resourceId": "steel",
-          "amount": 90
+          "resourceId": "wood",
+          "amount": 40
         },
         {
-          "resourceId": "machine_part",
-          "amount": 36
+          "resourceId": "stone",
+          "amount": 40
         },
         {
-          "resourceId": "electronic_part",
-          "amount": 16
+          "resourceId": "food",
+          "amount": 60
+        },
+        {
+          "resourceId": "gold",
+          "amount": 40
         }
       ],
       "unlocked": false
@@ -320,22 +470,44 @@
       "commandPoints": 6,
       "weight": 30,
       "researchCost": 80,
+      "unlockCost": [
+        {
+          "resourceId": "wood",
+          "amount": 25
+        },
+        {
+          "resourceId": "stone",
+          "amount": 15
+        },
+        {
+          "resourceId": "food",
+          "amount": 20
+        },
+        {
+          "resourceId": "gold",
+          "amount": 10
+        }
+      ],
       "prerequisiteTechs": [
         "smelting",
         "gunpowder"
       ],
       "cost": [
         {
-          "resourceId": "iron_ingot",
-          "amount": 35
+          "resourceId": "wood",
+          "amount": 5
         },
         {
-          "resourceId": "gear",
-          "amount": 6
+          "resourceId": "stone",
+          "amount": 25
         },
         {
           "resourceId": "food",
-          "amount": 40
+          "amount": 15
+        },
+        {
+          "resourceId": "gold",
+          "amount": 10
         }
       ],
       "unlocked": false
@@ -354,6 +526,24 @@
       "commandPoints": 10,
       "weight": 80,
       "researchCost": 260,
+      "unlockCost": [
+        {
+          "resourceId": "wood",
+          "amount": 40
+        },
+        {
+          "resourceId": "stone",
+          "amount": 30
+        },
+        {
+          "resourceId": "food",
+          "amount": 35
+        },
+        {
+          "resourceId": "gold",
+          "amount": 25
+        }
+      ],
       "prerequisiteUnits": [
         "cannon"
       ],
@@ -363,20 +553,20 @@
       ],
       "cost": [
         {
-          "resourceId": "steel",
-          "amount": 70
+          "resourceId": "wood",
+          "amount": 15
         },
         {
-          "resourceId": "machine_part",
-          "amount": 24
-        },
-        {
-          "resourceId": "gear",
-          "amount": 20
+          "resourceId": "stone",
+          "amount": 35
         },
         {
           "resourceId": "food",
-          "amount": 90
+          "amount": 30
+        },
+        {
+          "resourceId": "gold",
+          "amount": 20
         }
       ],
       "unlocked": false
@@ -395,6 +585,24 @@
       "commandPoints": 13,
       "weight": 120,
       "researchCost": 460,
+      "unlockCost": [
+        {
+          "resourceId": "wood",
+          "amount": 60
+        },
+        {
+          "resourceId": "stone",
+          "amount": 50
+        },
+        {
+          "resourceId": "food",
+          "amount": 55
+        },
+        {
+          "resourceId": "gold",
+          "amount": 45
+        }
+      ],
       "prerequisiteUnits": [
         "tank"
       ],
@@ -403,16 +611,20 @@
       ],
       "cost": [
         {
-          "resourceId": "steel",
-          "amount": 120
+          "resourceId": "wood",
+          "amount": 25
         },
         {
-          "resourceId": "machine_part",
-          "amount": 45
+          "resourceId": "stone",
+          "amount": 50
         },
         {
-          "resourceId": "electronic_part",
-          "amount": 18
+          "resourceId": "food",
+          "amount": 40
+        },
+        {
+          "resourceId": "gold",
+          "amount": 35
         }
       ],
       "unlocked": false
@@ -431,12 +643,30 @@
       "commandPoints": 2,
       "weight": 12,
       "researchCost": 25,
+      "unlockCost": [
+        {
+          "resourceId": "wood",
+          "amount": 25
+        },
+        {
+          "resourceId": "stone",
+          "amount": 15
+        },
+        {
+          "resourceId": "food",
+          "amount": 20
+        },
+        {
+          "resourceId": "gold",
+          "amount": 10
+        }
+      ],
       "prerequisiteTechs": [
         "wood_processing"
       ],
       "cost": [
         {
-          "resourceId": "plank",
+          "resourceId": "wood",
           "amount": 20
         },
         {
@@ -460,6 +690,24 @@
       "commandPoints": 5,
       "weight": 32,
       "researchCost": 95,
+      "unlockCost": [
+        {
+          "resourceId": "wood",
+          "amount": 40
+        },
+        {
+          "resourceId": "stone",
+          "amount": 30
+        },
+        {
+          "resourceId": "food",
+          "amount": 35
+        },
+        {
+          "resourceId": "gold",
+          "amount": 25
+        }
+      ],
       "prerequisiteUnits": [
         "raft"
       ],
@@ -468,16 +716,20 @@
       ],
       "cost": [
         {
-          "resourceId": "plank",
-          "amount": 80
+          "resourceId": "wood",
+          "amount": 30
         },
         {
-          "resourceId": "fur",
-          "amount": 20
+          "resourceId": "stone",
+          "amount": 5
         },
         {
           "resourceId": "food",
-          "amount": 35
+          "amount": 25
+        },
+        {
+          "resourceId": "gold",
+          "amount": 10
         }
       ],
       "unlocked": false
@@ -496,6 +748,24 @@
       "commandPoints": 11,
       "weight": 90,
       "researchCost": 300,
+      "unlockCost": [
+        {
+          "resourceId": "wood",
+          "amount": 60
+        },
+        {
+          "resourceId": "stone",
+          "amount": 50
+        },
+        {
+          "resourceId": "food",
+          "amount": 55
+        },
+        {
+          "resourceId": "gold",
+          "amount": 45
+        }
+      ],
       "prerequisiteUnits": [
         "sailing_ship"
       ],
@@ -504,20 +774,20 @@
       ],
       "cost": [
         {
-          "resourceId": "steel",
-          "amount": 120
+          "resourceId": "wood",
+          "amount": 30
         },
         {
-          "resourceId": "machine_part",
-          "amount": 35
-        },
-        {
-          "resourceId": "coal",
-          "amount": 120
+          "resourceId": "stone",
+          "amount": 40
         },
         {
           "resourceId": "food",
-          "amount": 120
+          "amount": 40
+        },
+        {
+          "resourceId": "gold",
+          "amount": 30
         }
       ],
       "unlocked": false
@@ -536,6 +806,24 @@
       "commandPoints": 14,
       "weight": 130,
       "researchCost": 520,
+      "unlockCost": [
+        {
+          "resourceId": "wood",
+          "amount": 90
+        },
+        {
+          "resourceId": "stone",
+          "amount": 80
+        },
+        {
+          "resourceId": "food",
+          "amount": 80
+        },
+        {
+          "resourceId": "gold",
+          "amount": 70
+        }
+      ],
       "prerequisiteUnits": [
         "battleship"
       ],
@@ -545,20 +833,20 @@
       ],
       "cost": [
         {
-          "resourceId": "steel",
-          "amount": 180
+          "resourceId": "wood",
+          "amount": 40
         },
         {
-          "resourceId": "machine_part",
-          "amount": 60
-        },
-        {
-          "resourceId": "electronic_part",
-          "amount": 28
+          "resourceId": "stone",
+          "amount": 55
         },
         {
           "resourceId": "food",
-          "amount": 160
+          "amount": 55
+        },
+        {
+          "resourceId": "gold",
+          "amount": 50
         }
       ],
       "unlocked": false

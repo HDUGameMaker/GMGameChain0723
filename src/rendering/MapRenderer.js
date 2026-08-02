@@ -10,12 +10,15 @@ import { gridToScreenTopLeft, screenToGrid } from '../utils/gridUtils.js';
 import { AnimatedSpriteHelper } from './AnimatedSpriteHelper.js';
 
 export class MapRenderer {
-  constructor(app, buildingSystem, torchSystem, roadSystem, combatSystem) {
+  constructor(app, buildingSystem, torchSystem, roadSystem, combatSystem, territorySystem) {
     this.app = app;
     this.buildingSystem = buildingSystem;
     this._torchSystem = torchSystem || null;
     this._roadSystem = roadSystem || null;
     this._combatSystem = combatSystem || null;
+    this._territorySystem = territorySystem || null;
+    this._spellSystem = null; // 炼金法术系统
+    this._spellHover = null;  // 施法模式下的悬停格子（AoE 预览）
     this.mapConfig = configRegistry.get('map');
     this.tileSize = this.mapConfig.tileSize;
 
@@ -98,6 +101,10 @@ export class MapRenderer {
     this._mapSynthFills = [];
     this._unregisterSynthBars = null;
 
+    // 地图上产出进度条的 PIXI 填充对象引用（活跃生产建筑，随 tick 进度填充）
+    this._mapProductionFills = [];
+    this._unregisterProductionBars = null;
+
     // 时段色调
     this._colorFilter = null;
     // 色调过渡动画状态
@@ -132,17 +139,30 @@ export class MapRenderer {
       () => this._updateMapSynthBars()
     );
 
+    // 注册地图产出进度回调（随 timeProgress 每帧重绘）
+    this._unregisterProductionBars = progressManager.registerCallback(
+      () => 0,
+      () => 1,
+      () => this._updateMapProductionBars()
+    );
+
     this._setupInteraction();
     this._subscribeEvents();
   }
+
+  setEnemyExpansion(ees) { this._enemyExpansion = ees || null; }
+  setSpellSystem(ss) { this._spellSystem = ss || null; }
 
   async init() {
     await this._preloadTerrainTextures();
     this._centerView();
     this._drawTerrainChunk();
-    this._drawExpeditionEntrances();
+    // this._drawExpeditionEntrances(); // 重设计：隐藏探险入口（探险系统已移出核心循环）
     this._drawEventMarkers();
     this._drawEnemies();
+    this._drawTerritory();
+    this._drawEnemyExpansion();
+    this._drawSpellZones();
     this._drawRoads();
     this._createFogCanvas();
     this.refreshBuildings();
@@ -1076,6 +1096,10 @@ export class MapRenderer {
     this.worldContainer.x = -this.camX;
     this.worldContainer.y = -this.camY;
     this._updateViewportCenter();
+    // 施法模式：相机移动后重绘视口内可占领空格标记
+    if (this._territorySystem && this._territorySystem.isCastingMode()) {
+      this._drawCastingHints();
+    }
   }
 
   /**
@@ -1282,6 +1306,13 @@ export class MapRenderer {
       if (this._combatSystem && this._combatSystem.isDeployTamedMode()) {
         this._updateDeployGhost(e.clientX, e.clientY);
       }
+
+      // 法术施法模式下更新悬停 AoE 预览
+      if (this._spellSystem && this._spellSystem.isCastingMode()) {
+        const sp = this._clientToGrid(e.clientX, e.clientY);
+        this._spellHover = sp ? { x: sp.col, y: sp.row } : null;
+        this._drawSpellZones();
+      }
     });
 
     canvas.addEventListener('pointerup', (e) => {
@@ -1373,6 +1404,14 @@ export class MapRenderer {
       if (e.key === 'Escape' && this._combatSystem && this._combatSystem.isDeployTamedMode()) {
         this._combatSystem.exitDeployTamedMode();
         this._clearGhost();
+      }
+      if (e.key === 'Escape' && this._territorySystem && this._territorySystem.isCastingMode()) {
+        this._territorySystem.exitCastingMode();
+        this._drawTerritory();
+      }
+      if (e.key === 'Escape' && this._spellSystem && this._spellSystem.isCastingMode()) {
+        this._spellSystem.exitCastingMode();
+        this._drawSpellZones();
       }
       // Esc 退出搬迁模式
       if (e.key === 'Escape' && this._relocateIndex !== null) {
@@ -1493,11 +1532,190 @@ export class MapRenderer {
     this._updateFogTexture();
   }
 
+  _drawSpellZones() {
+    if (!this._spellSystem) return;
+    const ts = this.tileSize;
+    if (this._spellZoneContainer) {
+      this.worldContainer.removeChild(this._spellZoneContainer);
+      this._spellZoneContainer.destroy({ children: true });
+    }
+    this._spellZoneContainer = new PIXI.Container();
+    this.worldContainer.addChild(this._spellZoneContainer);
+
+    // 活跃法术区域：buff 青色 / debuff 红色
+    for (const zone of this._spellSystem.getActiveZones()) {
+      const isBuff = zone.type === 'buff';
+      const color = isBuff ? 0x33e0ff : 0xff5555;
+      const r = zone.radius || 0;
+      // 全域法术（radius 0）：画一个淡色全屏提示框
+      if (r <= 0) {
+        const g = new PIXI.Graphics();
+        g.rect(0, 0, this.mapConfig.gridWidth * ts, this.mapConfig.gridHeight * ts);
+        g.fill({ color, alpha: 0.06 });
+        this._spellZoneContainer.addChild(g);
+        continue;
+      }
+      // 区域法术：覆盖 radius 范围内所有格子
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          const cx = zone.cx + dx, cy = zone.cy + dy;
+          if (cx < 0 || cy < 0 || cx >= this.mapConfig.gridWidth || cy >= this.mapConfig.gridHeight) continue;
+          const g = new PIXI.Graphics();
+          g.rect(cx * ts, cy * ts, ts, ts);
+          g.fill({ color, alpha: 0.18 });
+          g.rect(cx * ts + 2, cy * ts + 2, ts - 4, ts - 4);
+          g.stroke({ color, alpha: 0.5, width: 1.5 });
+          this._spellZoneContainer.addChild(g);
+        }
+      }
+      // 中心标记
+      const mark = new PIXI.Text({ text: isBuff ? '✦' : '☠', style: { fontSize: 16, fill: color } });
+      mark.anchor.set(0.5);
+      mark.x = zone.cx * ts + ts / 2;
+      mark.y = zone.cy * ts + ts / 2;
+      this._spellZoneContainer.addChild(mark);
+    }
+
+    // 施法模式：在悬停格周围画 AoE 预览
+    if (this._spellSystem.isCastingMode() && this._spellHover) {
+      const active = this._spellSystem.getActiveSpell();
+      const radius = active?.def?.areaRadius || 0;
+      const isBuff = active?.def?.type === 'buff';
+      const color = isBuff ? 0x33e0ff : 0xff5555;
+      const hx = this._spellHover.x, hy = this._spellHover.y;
+      if (radius > 0) {
+        for (let dy = -radius; dy <= radius; dy++) {
+          for (let dx = -radius; dx <= radius; dx++) {
+            const cx = hx + dx, cy = hy + dy;
+            if (cx < 0 || cy < 0 || cx >= this.mapConfig.gridWidth || cy >= this.mapConfig.gridHeight) continue;
+            const g = new PIXI.Graphics();
+            g.rect(cx * ts, cy * ts, ts, ts);
+            g.fill({ color, alpha: 0.10 });
+            g.stroke({ color, alpha: 0.6, width: 2 });
+            this._spellZoneContainer.addChild(g);
+          }
+        }
+      } else {
+        // 全域法术：高亮整图边框
+        const g = new PIXI.Graphics();
+        g.rect(0, 0, this.mapConfig.gridWidth * ts, this.mapConfig.gridHeight * ts);
+        g.stroke({ color, alpha: 0.6, width: 3 });
+        this._spellZoneContainer.addChild(g);
+      }
+    }
+  }
+
+  _drawEnemyExpansion() {
+    if (!this._enemyExpansion) return;
+    const ts = this.tileSize;
+    if (this._enemyExpansionContainer) {
+      this.worldContainer.removeChild(this._enemyExpansionContainer);
+      this._enemyExpansionContainer.destroy({ children: true });
+    }
+    this._enemyExpansionContainer = new PIXI.Container();
+    this.worldContainer.addChild(this._enemyExpansionContainer);
+
+    for (const cell of this._enemyExpansion.getAllCells()) {
+      const x = cell.x * ts, y = cell.y * ts;
+      const aboutToExpand = cell.countdown <= 1;
+      const g = new PIXI.Graphics();
+      g.rect(x + 2, y + 2, ts - 4, ts - 4);
+      g.fill({ color: aboutToExpand ? 0xdd2222 : 0x993333, alpha: 0.8 });
+      g.rect(x + 2, y + 2, ts - 4, ts - 4);
+      g.stroke({ color: aboutToExpand ? 0xff4444 : 0xff8888, alpha: 0.9, width: aboutToExpand ? 3 : 2 });
+      this._enemyExpansionContainer.addChild(g);
+
+      const txt = new PIXI.Text({
+        text: cell.strength + '\n⏱' + cell.countdown,
+        style: { fontSize: 12, fill: 0xffffff, align: 'center', lineHeight: 13 }
+      });
+      txt.anchor.set(0.5);
+      txt.x = x + ts / 2;
+      txt.y = y + ts / 2;
+      this._enemyExpansionContainer.addChild(txt);
+    }
+  }
+
+  _drawTerritory() {
+    if (!this._territorySystem) return;
+    const ts = this.tileSize;
+    if (this._territoryContainer) {
+      this.worldContainer.removeChild(this._territoryContainer);
+      this._territoryContainer.destroy({ children: true });
+    }
+    this._territoryContainer = new PIXI.Container();
+    this.worldContainer.addChild(this._territoryContainer);
+
+    // 占有术格子（半透明紫色覆盖 + 符文）
+    for (const key of this._territorySystem._possessions) {
+      const parts = key.split(',');
+      const cx = parseInt(parts[0], 10);
+      const cy = parseInt(parts[1], 10);
+      const x = cx * ts, y = cy * ts;
+      const g = new PIXI.Graphics();
+      g.rect(x, y, ts, ts);
+      g.fill({ color: 0xaa55ff, alpha: 0.30 });
+      g.rect(x + 2, y + 2, ts - 4, ts - 4);
+      g.stroke({ color: 0xcc88ff, alpha: 0.6, width: 1.5 });
+      this._territoryContainer.addChild(g);
+      const mark = new PIXI.Text({ text: '✦', style: { fontSize: 16, fill: 0xeeccff } });
+      mark.anchor.set(0.5);
+      mark.x = x + ts / 2;
+      mark.y = y + ts / 2;
+      this._territoryContainer.addChild(mark);
+    }
+
+    // 施法模式：视口内可占领空格淡绿底色（独立容器，相机移动时单独重绘）
+    this._drawCastingHints();
+  }
+
+  _drawCastingHints() {
+    const ts = this.tileSize;
+    if (this._castingHintContainer) {
+      this.worldContainer.removeChild(this._castingHintContainer);
+      this._castingHintContainer.destroy({ children: true });
+    }
+    this._castingHintContainer = new PIXI.Container();
+    this.worldContainer.addChild(this._castingHintContainer);
+    if (!this._territorySystem || !this._territorySystem.isCastingMode()) return;
+    const map = this.mapConfig;
+    const gw = map.gridWidth, gh = map.gridHeight;
+    const startCol = Math.max(0, Math.floor(this.camX / ts));
+    const endCol = Math.min(gw - 1, Math.ceil((this.camX + this.screenW) / ts));
+    const startRow = Math.max(0, Math.floor(this.camY / ts));
+    const endRow = Math.min(gh - 1, Math.ceil((this.camY + this.screenH) / ts));
+    for (let y = startRow; y <= endRow; y++) {
+      for (let x = startCol; x <= endCol; x++) {
+        if (!this._territorySystem.canCastAt(x, y).valid) continue;
+        const g = new PIXI.Graphics();
+        const sx = x * ts, sy = y * ts;
+        g.rect(sx, sy, ts, ts);
+        g.fill({ color: 0x4ecb71, alpha: 0.10 });
+        g.rect(sx + 3, sy + 3, ts - 6, ts - 6);
+        g.stroke({ color: 0x4ecb71, alpha: 0.4, width: 1.5 });
+        this._castingHintContainer.addChild(g);
+      }
+    }
+  }
+
   _onClick(e) {
     const clientX = e.clientX;
     const clientY = e.clientY;
     const gridPos = this._clientToGrid(clientX, clientY);
     if (!gridPos) return;
+
+    // 占有术施法模式
+    if (this._territorySystem && this._territorySystem.isCastingMode()) {
+      this._territorySystem.castPossession(gridPos.col, gridPos.row);
+      return;
+    }
+
+    // 炼金法术施法模式
+    if (this._spellSystem && this._spellSystem.isCastingMode()) {
+      this._spellSystem.castAt(gridPos.col, gridPos.row);
+      this._drawSpellZones();
+      return;
+    }
 
     // 放置敌人模式
     if (this._combatSystem && this._combatSystem.isPlaceEnemyMode()) {
@@ -1562,6 +1780,12 @@ export class MapRenderer {
       const buildingIndex = this._getBuildingAt(gridPos.col, gridPos.row);
       if (buildingIndex >= 0) {
         eventBus.emit('buildingClicked', { buildingIndex });
+        return;
+      }
+
+      // 敌人扩张格：派兵清敌
+      if (this._enemyExpansion && this._enemyExpansion.getCellAt(gridPos.col, gridPos.row)) {
+        this._enemyExpansion.clearEnemyCell(gridPos.col, gridPos.row);
         return;
       }
 
@@ -2236,6 +2460,7 @@ export class MapRenderer {
     this._buildingSprites = [];
     this._mapBuildFills = []; // 重建进度条引用列表
     this._mapSynthFills = []; // 重建合成进度条引用列表
+    this._mapProductionFills = []; // 重建产出进度条引用列表
 
     // 绘制所有建筑
     for (const building of this.buildingSystem.buildings) {
@@ -2347,6 +2572,11 @@ export class MapRenderer {
       // ===== 合成进度条（所有模式共用，琥珀色以区别于建造进度）=====
       if (building.status === 'active' && building.synthesisProgress) {
         this._addSynthProgressBar(container, building, x, w, progressBaseY, layout, centerX);
+      }
+
+      // ===== 产出进度条（活跃生产建筑，随 tick 进度填充，仅工作时段推进）=====
+      if (building.status === 'active' && config.production && (config.productionCycle || 'tick') === 'tick') {
+        this._addProductionBar(container, building, config, x, w, progressBaseY, layout);
       }
 
       // ===== 工人数（两种模式共用）=====
@@ -2646,6 +2876,61 @@ export class MapRenderer {
     }
   }
 
+  /**
+   * 添加地图产出进度条（活跃生产建筑；填充由 ProgressManager 每帧驱动）
+   */
+  _addProductionBar(container, building, config, x, w, progressBaseY, layout) {
+    const out = config.production.output?.[0];
+    if (!out) return;
+    const resId = out.resourceId === 'icon_inspiration' ? 'inspiration' : out.resourceId;
+    const PROD_COLORS = { wood: 0xb08968, stone: 0xc8c8c8, food: 0x5cdb82, gold: 0xffd24a, inspiration: 0x8b7cf0 };
+    const color = PROD_COLORS[resId] ?? 0x4ec9c1;
+
+    const barWidth = w * this.tileSize - 8;
+    const barHeight = 4;
+    const barX = x + 4;
+    const barY = progressBaseY + (layout.progressBarOffsetY || 0);
+
+    // 背景条
+    const barBg = new PIXI.Graphics();
+    barBg.rect(barX, barY, barWidth, barHeight);
+    barBg.fill({ color: 0x000000, alpha: 0.5 });
+    container.addChild(barBg);
+
+    // 填充条（每帧重绘）
+    const barFill = new PIXI.Graphics();
+    container.addChild(barFill);
+
+    const buildingIndex = this.buildingSystem.buildings.indexOf(building);
+    this._mapProductionFills.push({ fill: barFill, buildingIndex, barX, barY, barWidth, barHeight, color });
+  }
+
+  /**
+   * 由 ProgressManager 每帧回调，重绘所有活跃生产建筑的产出进度条。
+   * 工作时段：随 timeProgress（0→1）填充，tick 结算产出后回到 0 重新上涨；
+   * 非工作时段：建筑停产，进度条留空。
+   */
+  _updateMapProductionBars() {
+    const t = store.getState('timeProgress') || 0;
+    const period = store.getState('timePeriod') || '';
+    const workPeriods = configRegistry.get('global')?.WORK_PERIODS || [];
+    const isWorkPeriod = workPeriods.includes(period);
+    for (const ref of this._mapProductionFills) {
+      const b = this.buildingSystem.buildings[ref.buildingIndex];
+      if (!b || b.status !== 'active') continue;
+      const config = configRegistry.getBuilding(b.buildingId);
+      if (!config?.production) continue;
+      ref.fill.clear();
+      if (isWorkPeriod) {
+        const pct = Math.min(1, Math.max(0, t));
+        if (pct > 0) {
+          ref.fill.rect(ref.barX, ref.barY, ref.barWidth * pct, ref.barHeight);
+          ref.fill.fill({ color: ref.color, alpha: 0.9 });
+        }
+      }
+    }
+  }
+
   // ===== 时段色调 =====
 
   /**
@@ -2844,6 +3129,11 @@ export class MapRenderer {
     eventBus.on('unitSpawned', () => this._drawEnemies());
     eventBus.on('tamedCreatureGained', () => this._drawEnemies());
     store.subscribe('combatVersion', () => this._drawEnemies());
+    eventBus.on('territoryChanged', () => this._drawTerritory());
+    eventBus.on('territoryCastingModeChanged', () => this._drawTerritory());
+    eventBus.on('enemyExpansionChanged', () => this._drawEnemyExpansion());
+    eventBus.on('spellZonesChanged', () => this._drawSpellZones());
+    eventBus.on('spellCastingModeChanged', () => this._drawSpellZones());
 
     // 光照状态变化：重绘迷雾
     eventBus.on('torchStateChanged', () => {

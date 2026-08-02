@@ -1,0 +1,20 @@
+{
+  "claimArea": { "x0": 76, "y0": 106, "x1": 85, "y1": 115 },
+  "winThreshold": 0.5,
+  "possession": {
+    "baseCost": { "gold": 5 },
+    "inflationRate": 0.0,
+    "remoteUnlockAlchemyStage": "albedo"
+  },
+  "buildingCap": {
+    "initial": 100,
+    "upgradeAmount": 20,
+    "upgradeCostBase": [
+      { "resourceId": "gold", "amount": 50 },
+      { "resourceId": "wood", "amount": 30 },
+      { "resourceId": "stone", "amount": 30 }
+    ],
+    "upgradeCostGrowth": 1.6,
+    "maxLevel": 20
+  }
+}

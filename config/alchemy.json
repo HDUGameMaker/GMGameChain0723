@@ -315,5 +315,46 @@
     "heat": { "name": "加热", "description": "文火慢炖，萃取精微", "baseTicksMod": 1.0, "successMod": 0.0, "qualityMod": 0.05 },
     "stir": { "name": "搅拌", "description": "逆时针匀速搅拌", "baseTicksMod": 0.8, "successMod": 0.05, "qualityMod": 0.0 },
     "rest": { "name": "静置", "description": "静待日月精华沉淀", "baseTicksMod": 1.3, "successMod": 0.10, "qualityMod": 0.05 }
-  }
+  },
+
+  "spellTree": [
+    { "id": "st_catalyst", "name": "催化基础", "tier": 0, "pos": { "x": 0 }, "prerequisites": [],
+      "cost": [ { "resourceId": "wood", "amount": 20 }, { "resourceId": "stone", "amount": 20 } ],
+      "description": "解锁法术「催化之泽」", "unlocksSpell": "catalyst_mire" },
+    { "id": "st_corrosion", "name": "腐蚀研究", "tier": 0, "pos": { "x": 2 }, "prerequisites": [],
+      "cost": [ { "resourceId": "food", "amount": 20 }, { "resourceId": "gold", "amount": 10 } ],
+      "description": "解锁法术「腐蚀之雾」", "unlocksSpell": "corrosive_mist" },
+    { "id": "st_harvest", "name": "丰收祈灵", "tier": 1, "pos": { "x": 0 }, "prerequisites": ["st_catalyst"],
+      "cost": [ { "resourceId": "wood", "amount": 40 }, { "resourceId": "food", "amount": 30 }, { "resourceId": "gold", "amount": 10 } ],
+      "description": "解锁法术「丰收祈灵」", "unlocksSpell": "harvest_rite" },
+    { "id": "st_stasis", "name": "凝滞结界", "tier": 1, "pos": { "x": 2 }, "prerequisites": ["st_corrosion"],
+      "cost": [ { "resourceId": "stone", "amount": 40 }, { "resourceId": "gold", "amount": 15 } ],
+      "description": "解锁法术「凝滞结界」", "unlocksSpell": "stasis_field" },
+    { "id": "st_global", "name": "全域催化", "tier": 2, "pos": { "x": 1 }, "prerequisites": ["st_harvest", "st_stasis"],
+      "cost": [ { "resourceId": "wood", "amount": 60 }, { "resourceId": "stone", "amount": 60 }, { "resourceId": "food", "amount": 60 }, { "resourceId": "gold", "amount": 40 } ],
+      "description": "解锁法术「全域催化」（旧 amp 放大引擎的继承者）", "unlocksSpell": "global_catalyst" }
+  ],
+
+  "spellDefs": [
+    { "id": "catalyst_mire", "name": "催化之泽", "type": "buff",
+      "description": "区域内生产建筑效率 ×1.5，持续 12 tick", "areaRadius": 1, "durationTicks": 12, "chargesPerCraft": 3,
+      "craftCost": [ { "resourceId": "wood", "amount": 15 }, { "resourceId": "food", "amount": 10 } ],
+      "effect": { "efficiencyMul": 1.5 }, "requiredTreeNode": "st_catalyst" },
+    { "id": "corrosive_mist", "name": "腐蚀之雾", "type": "debuff",
+      "description": "区域内敌人强度 -3，持续 10 tick", "areaRadius": 1, "durationTicks": 10, "chargesPerCraft": 3,
+      "craftCost": [ { "resourceId": "stone", "amount": 15 }, { "resourceId": "gold", "amount": 5 } ],
+      "effect": { "strengthPenalty": 3 }, "requiredTreeNode": "st_corrosion" },
+    { "id": "harvest_rite", "name": "丰收祈灵", "type": "buff",
+      "description": "区域内生产建筑效率 ×2.0，持续 16 tick", "areaRadius": 2, "durationTicks": 16, "chargesPerCraft": 2,
+      "craftCost": [ { "resourceId": "wood", "amount": 30 }, { "resourceId": "food", "amount": 25 }, { "resourceId": "gold", "amount": 10 } ],
+      "effect": { "efficiencyMul": 2.0 }, "requiredTreeNode": "st_harvest" },
+    { "id": "stasis_field", "name": "凝滞结界", "type": "debuff",
+      "description": "区域内敌人扩张倒计时冻结、强度 -1，持续 12 tick", "areaRadius": 2, "durationTicks": 12, "chargesPerCraft": 2,
+      "craftCost": [ { "resourceId": "stone", "amount": 30 }, { "resourceId": "gold", "amount": 15 } ],
+      "effect": { "freezeCountdown": true, "strengthPenalty": 1 }, "requiredTreeNode": "st_stasis" },
+    { "id": "global_catalyst", "name": "全域催化", "type": "buff",
+      "description": "全场生产建筑效率 ×1.5，持续 20 tick", "areaRadius": 0, "durationTicks": 20, "chargesPerCraft": 1,
+      "craftCost": [ { "resourceId": "wood", "amount": 50 }, { "resourceId": "stone", "amount": 50 }, { "resourceId": "food", "amount": 50 }, { "resourceId": "gold", "amount": 30 } ],
+      "effect": { "globalEfficiencyMul": 1.5 }, "requiredTreeNode": "st_global" }
+  ]
 }

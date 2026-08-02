@@ -9,6 +9,9 @@ export function renderBuildingSelectPanel(data, body, pm) {
   const game = window.__game;
   if (!game) return;
 
+  /* 清空 body -- 修复升级上限后直接重渲染导致内容堆叠、UI 排布错乱 */
+  body.innerHTML = '';
+
   const buildings = configRegistry.get('buildings') || [];
   const resourceSystem = game.systems.resource;
   const buildingSystem = game.systems.building;
@@ -43,6 +46,45 @@ export function renderBuildingSelectPanel(data, body, pm) {
   hint.style.cssText = 'font-size:12px;color:#888;margin-bottom:12px;text-align:center;';
   hint.textContent = '选择建筑后点击地图放置';
   body.appendChild(hint);
+
+  // 建筑数量上限 + 升级（黄金去向之一）
+  const territory = game.systems.territory;
+  if (territory) {
+    const cap = territory.getBuildingCap();
+    const bCount = buildingSystem.buildings.length;
+    const cost = territory.getCapUpgradeCost();
+    const canUpgrade = resourceSystem.canAfford(cost);
+    const costText = (cost || []).map(c => {
+      const rCfg = configRegistry.getResource(c.resourceId);
+      return `${rCfg ? rCfg.name : c.resourceId}×${c.amount}`;
+    }).join('  ');
+    const capBar = document.createElement('div');
+    capBar.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:12px;background:rgba(255,200,60,0.08);border:1px solid rgba(255,200,60,0.25);border-radius:8px;font-size:12px;color:#ccc;';
+    const perLevel = territory.getCapUpgradeAmount();
+    capBar.innerHTML = `<span style="font-weight:600;color:#ffcc44;">🏗️ 建筑上限</span><span>${bCount}/${cap}</span><span style="font-size:11px;color:#888;">每次升级 +${perLevel}</span><span style="flex:1"></span>`;
+    const upBtn = document.createElement('button');
+    upBtn.textContent = '升级上限 ' + (costText || '');
+    upBtn.style.cssText = `padding:5px 12px;border:none;border-radius:6px;background:${canUpgrade ? 'rgba(255,200,60,0.22)' : 'rgba(128,128,152,0.15)'};color:${canUpgrade ? '#ffcc44' : '#808098'};cursor:${canUpgrade ? 'pointer' : 'default'};font-size:11px;font-weight:600;`;
+    upBtn.addEventListener('click', () => { if (territory.upgradeBuildingCap()) renderBuildingSelectPanel(data, body, pm); });
+    capBar.appendChild(upBtn);
+    body.appendChild(capBar);
+  }
+
+  // 建筑科技树入口
+  const buildingTech = game.systems.buildingTech;
+  if (buildingTech && pm) {
+    const treeBar = document.createElement('div');
+    treeBar.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:12px;background:rgba(255,204,68,0.08);border:1px solid rgba(255,204,68,0.25);border-radius:8px;font-size:12px;color:#ccc;';
+    const unlockedCount = buildingTech.getUnlockedNodes().length;
+    const totalCount = buildingTech.getNodes().length;
+    treeBar.innerHTML = `<span style="font-weight:600;color:#ffcc44;">🌳 建筑科技树</span><span>已解锁 ${unlockedCount}/${totalCount}</span><span style="flex:1"></span>`;
+    const treeBtn = document.createElement('button');
+    treeBtn.textContent = '查看科技树';
+    treeBtn.style.cssText = 'padding:5px 12px;border:none;border-radius:6px;background:rgba(255,204,68,0.22);color:#ffcc44;cursor:pointer;font-size:11px;font-weight:600;';
+    treeBtn.addEventListener('click', () => { pm.push('building_tree', { buildingTechSystem: buildingTech }); });
+    treeBar.appendChild(treeBtn);
+    body.appendChild(treeBar);
+  }
 
   const list = document.createElement('div');
   list.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
@@ -103,7 +145,7 @@ export function renderBuildingSelectPanel(data, body, pm) {
     const tags = [];
     if (b.isTorch) tags.push('🔥 照明');
     if (b.maxWorkers) tags.push(`👷 ${b.maxWorkers}`);
-    if (b.housingCapacity) tags.push(`🏠 +${b.housingCapacity}`);
+    if (b.soldierCapacity) tags.push(`⚔️ +${b.soldierCapacity} 士兵`);
     if (b.foodCapacity) tags.push(`🍞 +${b.foodCapacity}/天/工人`);
     if (b.roadRequired) tags.push('🛤️ 道路依赖');
 

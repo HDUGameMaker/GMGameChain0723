@@ -16,6 +16,8 @@ export class PopupManager {
     this._cultureSystem = cultureSystem || null;
     this._alchemySystem = alchemySystem || null;
     this._combatSystem = combatSystem || null;
+    this._spellSystem = null;
+    this._buildingTechSystem = null;
     this._stack = [];
     this._panels = {}; // 注册的面板渲染函数
     this._isOpen = false;
@@ -55,6 +57,9 @@ export class PopupManager {
   register(type, renderFn) {
     this._panels[type] = renderFn;
   }
+
+  setSpellSystem(ss) { this._spellSystem = ss || null; }
+  setBuildingTechSystem(bts) { this._buildingTechSystem = bts || null; }
 
   /**
    * 打开面板（清空栈）
@@ -337,17 +342,20 @@ export class PopupManager {
       'building_select': '选择建筑',
       'building_detail': '建筑详情',
       'event': data && data.event ? data.event.name : '事件',
-      'warehouse': '仓库',
+      'warehouse': '大本营',
       'settings': '设置',
       'expedition_prep': '探险准备',
       'expedition_detail': '探险详情',
       'item_detail': '物品详情',
       'torch_detail': '火把详情',
       'game_over': '游戏结束',
+      'objective': '战役目标',
       'tech_tree': '科技树',
       'culture_tree': '人文树',
       'military_tradition': '军事传统',
       'alchemy_lab': '炼金实验室',
+      'spell_tree': '炼金法术树',
+      'building_tree': '建筑科技树',
       'potion_inventory': '药剂库存',
       'tamed_pool': '驯养管理',
       'unit_research': '兵种研发',
@@ -404,6 +412,9 @@ export class PopupManager {
     import('./panels/gameover-panel.js').then(m => {
       this.register('game_over', m.renderGameOverPanel);
     });
+    import('./panels/objective-panel.js').then(m => {
+      this.register('objective', m.renderObjectivePanel);
+    });
     import('./panels/tech-tree-panel.js').then(m => {
       this.register('tech_tree', m.renderTechTreePanel);
     });
@@ -412,7 +423,17 @@ export class PopupManager {
     });
     import('./panels/alchemy-panel.js').then(m => {
       this.register('alchemy_lab', (data, body, pm) => {
-        m.renderAlchemyPanel({ ...data, alchemySystem: this._alchemySystem }, body, pm);
+        m.renderAlchemyPanel({ ...data, alchemySystem: this._alchemySystem, spellSystem: this._spellSystem }, body, pm);
+      });
+    });
+    import('./panels/spell-tree-panel.js').then(m => {
+      this.register('spell_tree', (data, body, pm) => {
+        m.renderSpellTreePanel({ ...data, spellSystem: this._spellSystem }, body, pm);
+      });
+    });
+    import('./panels/building-tree-panel.js').then(m => {
+      this.register('building_tree', (data, body, pm) => {
+        m.renderBuildingTreePanel({ ...data, buildingTechSystem: this._buildingTechSystem }, body, pm);
       });
     });
     import('./panels/potion-inventory-panel.js').then(m => {

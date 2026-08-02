@@ -139,17 +139,16 @@ export class TechSystem {
     const unit = this._getAllUnits().find(u => u.id === unitId);
     if (!unit) return { valid: false, reason: '兵种不存在' };
     if (this._unitResearch.has(unitId)) return { valid: false, reason: '已研发完成' };
-    const prereqs = Array.isArray(unit.prerequisiteTechs) ? unit.prerequisiteTechs : [];
-    for (const techId of prereqs) {
-      if (!this._researched.has(techId)) return { valid: false, reason: '前置科技未完成' };
-    }
+    // 兵种链前置（prerequisiteTechs 来自已休眠的科技树，不再检查）
     const unitPrereqs = Array.isArray(unit.prerequisiteUnits) ? unit.prerequisiteUnits : [];
     for (const preUnitId of unitPrereqs) {
       if (!this._unitResearch.has(preUnitId)) return { valid: false, reason: '前置兵种未研发' };
     }
-    const cost = unit.researchCost || 0;
-    const inspiration = store.getState('inspiration') || 0;
-    if (inspiration < cost) return { valid: false, reason: '灵感不足' };
+    // 解锁消耗四基础资源（原灵感机制已废弃）
+    const unlockCost = Array.isArray(unit.unlockCost) ? unit.unlockCost : [];
+    if (unlockCost.length && this._resourceSystem && !this._resourceSystem.canAfford(unlockCost)) {
+      return { valid: false, reason: '资源不足' };
+    }
     return { valid: true };
   }
 
@@ -157,9 +156,9 @@ export class TechSystem {
     const check = this.canResearchUnit(unitId);
     if (!check.valid) return false;
     const unit = this._getAllUnits().find(u => u.id === unitId);
-    const cost = unit?.researchCost || 0;
+    const unlockCost = Array.isArray(unit?.unlockCost) ? unit.unlockCost : [];
+    if (unlockCost.length && this._resourceSystem) this._resourceSystem.consumeAll(unlockCost);
     this._unitResearch.add(unitId);
-    store.setState({ inspiration: Math.max(0, (store.getState('inspiration') || 0) - cost) });
     this._updateStore();
     eventBus.emit('unitResearched', { unitId });
     eventBus.emit('combatBroadcast', { message: '⚔️ 完成兵种研发: ' + (unit?.name || unitId) });
@@ -168,7 +167,8 @@ export class TechSystem {
 
   _ensureBaseUnitResearch() {
     for (const unit of this._getAllUnits()) {
-      if (unit.unlocked === true || unit.researchCost === 0) {
+      // 仅 unlocked:true 自动解锁（旧 researchCost===0 灵感机制已废弃）
+      if (unit.unlocked === true) {
         this._unitResearch.add(unit.id);
       }
     }
