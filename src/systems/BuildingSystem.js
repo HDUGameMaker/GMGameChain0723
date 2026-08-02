@@ -52,6 +52,7 @@ export class BuildingSystem {
   setBuildingTechSystem(bts) { this._buildingTechSystem = bts; }
   setTerritorySystem(ts) { this._territorySystem = ts; }
   setHeroSystem(hs) { this._heroSystem = hs; }
+  setLuxurySystem(ls) { this._luxurySystem = ls; }
 
   init() {
     this._mapConfig = configRegistry.get('map');
@@ -1085,6 +1086,10 @@ export class BuildingSystem {
       output.gold += workers * (fn.goldPerWorker || 0);
       output.satisfaction += fn.satisfactionBonus || 0;
     }
+    const luxury = this._luxurySystem?.getBonuses?.() || {};
+    output.science *= luxury.sciencePointMul || 1;
+    output.civics *= luxury.civicPointMul || 1;
+    output.gold *= luxury.goldProductionMul || 1;
     return output;
   }
 
@@ -1270,7 +1275,9 @@ export class BuildingSystem {
     const btGlobal = btEffects?.productionMul || 1;
     const btScoped = (resourceId && btEffects) ? (btEffects.resourceProductionMul?.[resourceId] || 1) : 1;
     const heroMul = this._heroSystem?.getBonuses?.().productionMul || 1;
-    return globalCultureMul * scopedCultureMul * alchemyMul * spellMul * btGlobal * btScoped * heroMul;
+    const luxuryEffects = this._luxurySystem?.getBonuses?.() || {};
+    const luxuryMul = resourceId === 'gold' ? (luxuryEffects.goldProductionMul || 1) : 1;
+    return globalCultureMul * scopedCultureMul * alchemyMul * spellMul * btGlobal * btScoped * heroMul * luxuryMul;
   }
 
   getBuildingCount(buildingId) {

@@ -71,6 +71,8 @@ export class PopulationSystem {
     this._alchemySystem = alchemySystem;
   }
 
+  setLuxurySystem(luxurySystem) { this._luxurySystem = luxurySystem; }
+
   initNew() {
     const initConfig = configRegistry.get('initial') || {};
     const historicalSettings = configRegistry.getHistoricalContent?.().populationSettings || {};
@@ -89,7 +91,8 @@ export class PopulationSystem {
     // 人文政策最大人口加成
     const aEffPop = this._alchemySystem ? (this._alchemySystem.getEffects().population || {}) : {};
     const popBonus = (this._cultureSystem ? (this._cultureSystem.getEffects().maxPopBonus || 0) : 0) + (aEffPop.maxPopBonus || 0);
-    return this._buildingSystem.getTotalHousingCapacity() + popBonus;
+    const luxuryMul = this._luxurySystem?.getBonuses?.().housingCapacityMul || 1;
+    return Math.floor((this._buildingSystem.getTotalHousingCapacity() + popBonus) * luxuryMul);
   }
 
   /**
@@ -154,7 +157,7 @@ export class PopulationSystem {
       construction,
       constructionTotal,
       jobs,
-      satisfaction: this.satisfaction
+      satisfaction: Math.min(100, this.satisfaction + (this._luxurySystem?.getBonuses?.().satisfactionBonus || 0))
     };
   }
 
@@ -179,6 +182,7 @@ export class PopulationSystem {
       growthMul += (cEff.growthMul || 1) - 1;
     }
     if (aEffPop.growthMul) growthMul += aEffPop.growthMul - 1;
+    growthMul *= this._luxurySystem?.getBonuses?.().growthMul || 1;
     return Math.max(0, growthMul);
   }
 
@@ -203,7 +207,7 @@ export class PopulationSystem {
 
   getFoodConsumptionAmount(population = this.current) {
     const aEffPop = this._alchemySystem ? (this._alchemySystem.getEffects().population || {}) : {};
-    const foodConsumeMul = (this._cultureSystem ? (this._cultureSystem.getEffects().foodConsumeMul || 1) : 1) * (aEffPop.foodConsumeMul || 1);
+    const foodConsumeMul = (this._cultureSystem ? (this._cultureSystem.getEffects().foodConsumeMul || 1) : 1) * (aEffPop.foodConsumeMul || 1) * (this._luxurySystem?.getBonuses?.().foodConsumeMul || 1);
     return Math.ceil(Math.max(0, population || 0) * this.foodPerPerson * foodConsumeMul);
   }
 
@@ -334,7 +338,7 @@ export class PopulationSystem {
       populationWork: stats.work,
       populationMilitary: stats.military,
       populationJobs: stats.jobs,
-      populationSatisfaction: this.satisfaction,
+      populationSatisfaction: stats.satisfaction,
       populationDeclineCountdown: this.declineCountdown
     });
   }

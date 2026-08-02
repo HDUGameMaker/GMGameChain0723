@@ -16,6 +16,7 @@ export class DiplomacySystem {
     if (systems.resource) this._resourceSystem = systems.resource;
     if (systems.culture) this._cultureSystem = systems.culture;
     if (systems.hero) this._heroSystem = systems.hero;
+    if (systems.luxury) this._luxurySystem = systems.luxury;
   }
 
   get _config() {
@@ -88,7 +89,8 @@ export class DiplomacySystem {
     if (action.cost?.length) this._resourceSystem.consumeAll(action.cost);
     for (const reward of action.rewards || []) this._resourceSystem?.add(reward.resourceId, reward.amount);
     const heroBonus = Number(this._heroSystem?.getBonuses?.().diplomacyRelationBonus) || 0;
-    const relation = Math.max(-100, Math.min(100, state.relation + (action.relationDelta || 0) + heroBonus));
+    const luxuryBonus = Number(this._luxurySystem?.getBonuses?.().outpostRelationGainBonus) || 0;
+    const relation = Math.max(-100, Math.min(100, state.relation + (action.relationDelta || 0) + heroBonus + luxuryBonus));
     this._states[outpostId] = {
       ...state,
       relation,

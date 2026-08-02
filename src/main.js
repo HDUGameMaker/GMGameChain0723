@@ -31,6 +31,7 @@ import { BuildingTechSystem } from './systems/BuildingTechSystem.js';
 import { DiplomacySystem } from './systems/DiplomacySystem.js';
 import { HeroSystem } from './systems/HeroSystem.js';
 import { EraSystem } from './systems/EraSystem.js';
+import { LuxurySystem } from './systems/LuxurySystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
@@ -119,6 +120,7 @@ class Game {
     // 人文政策树系统
     this.systems.culture = new CultureSystem();
     this.systems.era = new EraSystem();
+    this.systems.luxury = new LuxurySystem();
 
     // 炼金系统
     this.systems.alchemy = new AlchemySystem();
@@ -220,6 +222,10 @@ class Game {
     this.systems.culture.init();
     this.systems.era.setTechSystem(this.systems.tech);
     this.systems.era.setCultureSystem(this.systems.culture);
+    this.systems.luxury.setSystems({ resource: this.systems.resource, building: this.systems.building, diplomacy: this.systems.diplomacy });
+    this.systems.building.setLuxurySystem(this.systems.luxury);
+    this.systems.population.setLuxurySystem(this.systems.luxury);
+    this.systems.diplomacy.setSystems({ luxury: this.systems.luxury });
     this.systems.diplomacy.setSystems({
       resource: this.systems.resource,
       culture: this.systems.culture,
@@ -509,6 +515,8 @@ class Game {
     this.systems.hero.initNew();
     // 初始化时代与文明选择
     this.systems.era.initNew();
+    // 初始化奢侈品库存与产地发现
+    this.systems.luxury.initNew();
 
     // 初始化事件标记状态（新游戏 = 无已移除标记）
     store.setState({ removedEventMarkers: [] });
@@ -579,6 +587,8 @@ class Game {
     }
     if (saveData.era) this.systems.era.restoreState(saveData.era);
     else this.systems.era.initNew();
+    if (saveData.luxuries) this.systems.luxury.restoreState(saveData.luxuries);
+    else this.systems.luxury.initNew();
     if (saveData.weather) {
       this.systems.weather.restoreState(saveData.weather);
     }
@@ -655,6 +665,7 @@ class Game {
       diplomacy: this.systems.diplomacy.getState(),
       heroes: this.systems.hero.getState(),
       era: this.systems.era.getState(),
+      luxuries: this.systems.luxury.getState(),
       audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
       armies: store.getState('armies'),

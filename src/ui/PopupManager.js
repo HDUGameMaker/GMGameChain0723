@@ -362,6 +362,7 @@ export class PopupManager {
       'outpost_diplomacy': data?.outpostName || '据点外交',
       'tavern_heroes': '历史英雄酒馆',
       'era_civilization': '时代与文明',
+      'luxury_trade': '奢侈品与贸易',
       'tutorial_prompt': '新手教程',
       'quest_panel': '任务'
     };
@@ -475,6 +476,9 @@ export class PopupManager {
     });
     import('./panels/era-civilization-panel.js').then(m => {
       this.register('era_civilization', m.renderEraCivilizationPanel);
+    });
+    import('./panels/luxury-trade-panel.js').then(m => {
+      this.register('luxury_trade', m.renderLuxuryTradePanel);
     });
   }
 }
