@@ -67,7 +67,7 @@ export function renderGameOverPanel(data, body, pm) {
   const reason = document.createElement('div');
   reason.style.cssText = 'font-size:13px;color:#888;margin-bottom:18px;text-align:center;';
   if (isWin) {
-    reason.textContent = '占有术与建筑占领了过半土地，炼金征服达成！';
+    reason.textContent = '建筑与边境拓土已经控制过半土地，你的文明完成了历史征服。';
   } else if (data.reason === 'hqLost') {
     reason.textContent = '大本营被敌人占领，指挥中心沦陷……';
   } else if (data.reason === 'overwhelmed') {

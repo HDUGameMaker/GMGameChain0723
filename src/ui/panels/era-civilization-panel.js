@@ -46,6 +46,7 @@ export function renderEraCivilizationPanel(data, body, pm) {
   const grid = el('div', 'civilization-grid');
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;';
   for (const civ of system.getAvailableCivilizations()) {
+    const uniqueUnit = system.getUnit?.(civ.uniqueUnitId);
     const card = el('article', 'civilization-card');
     card.style.cssText = `padding:12px;border:1px solid ${selected?.id === civ.id ? '#d8b55f' : 'rgba(255,255,255,.14)'};border-radius:10px;background:rgba(15,18,25,.78);`;
     card.innerHTML = `
@@ -53,7 +54,7 @@ export function renderEraCivilizationPanel(data, body, pm) {
       <div style="font-size:11px;color:#cdbb91;margin-top:7px">永久遗产：${civ.legacy.name}</div>
       <div style="font-size:11px;color:#aaa">${civ.legacy.description}</div>
       <div style="font-size:11px;color:#cdbb91;margin-top:5px">时代特色：${civ.trait.name}</div>
-      <div style="font-size:11px;color:#aaa">特色单位：${civ.uniqueUnitId.replace(/_unique_unit$/, '')} · 特色建筑：${civ.uniqueBuilding.name}</div>`;
+      <div style="font-size:11px;color:#aaa">特色单位：${uniqueUnit?.name || '待解锁'} · 特色建筑：${civ.uniqueBuilding.name}</div>`;
     if (!selected) {
       const button = el('button', '', `选择 ${civ.name}`);
       button.style.cssText = 'margin-top:10px;width:100%;padding:7px;border:1px solid #b18a42;border-radius:7px;background:#59431f;color:#f7e4b2;cursor:pointer;';

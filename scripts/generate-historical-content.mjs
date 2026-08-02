@@ -93,6 +93,26 @@ const civDefs = {
   ]
 };
 
+const uniqueUnitBranches = {
+  // 骑乘与高机动特色单位
+  '战车矛兵': 'cavalry', '三人战车': 'cavalry', '羽林骑': 'cavalry', '战象军': 'cavalry',
+  '法兰西骑士': 'cavalry', '马穆鲁克': 'cavalry', '怯薛骑射手': 'cavalry', '古拉姆骑兵': 'cavalry',
+  '征服者': 'cavalry', '火枪战象': 'cavalry', '哥萨克骑兵': 'cavalry', '乡村骑兵': 'cavalry',
+  // 远程与火器特色单位
+  '梅杰弓手': 'ranged', '投枪武士': 'ranged', '长弓卫队': 'ranged', '神机营': 'ranged',
+  '耶尼切里': 'ranged', '玻利维亚投石兵': 'ranged', '湘军火枪队': 'ranged', '边疆步枪手': 'ranged',
+  // 反骑与重型阵列
+  '城卫矛兵': 'anti_cavalry', '重装步兵': 'anti_cavalry', '斯巴达重步兵': 'anti_cavalry',
+  '不死军': 'anti_cavalry', '罗马军团': 'anti_cavalry',
+  // 明确的海军单位；名称含“海军”的陆战队仍归陆军
+  '海上乞丐': 'navy', '海上护卫队': 'navy', '先进护卫舰': 'navy',
+  // 现代合成、装甲和特战力量
+  '装甲特遣队': 'special', '近卫坦克军': 'special', '皇家突击队': 'special',
+  '装甲掷弹兵': 'special', '机械化步兵旅': 'special', '合成作战旅': 'special',
+  '数字化战斗旅': 'special', '信息化山地军': 'special', '网络化陆战队': 'special',
+  '丛林特战旅': 'special', '联合维和旅': 'special'
+};
+const branchForUniqueUnit = unitName => uniqueUnitBranches[unitName] || 'infantry';
 const branchCycle = ['infantry', 'ranged', 'anti_cavalry', 'cavalry', 'siege', 'special', 'navy', 'navy'];
 const laneFor = branch => ({ infantry: 'front', anti_cavalry: 'front', ranged: 'rear', cavalry: 'flank', siege: 'siege', special: 'support', navy: 'naval' }[branch]);
 const trainingFor = branch => ({ infantry: 'barracks_hall', ranged: 'archery_range', anti_cavalry: 'barracks_hall', cavalry: 'stable', siege: 'siege_workshop', special: 'war_academy', navy: 'grand_shipyard' }[branch]);
@@ -110,7 +130,7 @@ const uniqueUnits = [];
 for (const era of eras) {
   civDefs[era.id].forEach((entry, index) => {
     const [id, name, unitName, buildingName, legacyName, traitName] = entry;
-    const branch = branchCycle[index];
+    const branch = branchForUniqueUnit(unitName);
     const domain = branch === 'navy' ? 'naval' : 'land';
     const [strongAgainst, weakAgainst] = matchupFor(branch);
     const uniqueUnitId = `${id}_unique_unit`;
@@ -166,10 +186,10 @@ const genericNames = {
   ancient: ['氏族战士', '投石手', '猎矛兵', '早期战车', '冲车', '斥候', '独木舟', '战斗木舟'],
   classical: ['持盾剑士', '复合弓手', '方阵枪兵', '具装骑兵', '弩炮', '轻装标枪兵', '三列桨战船', '五列桨战船'],
   medieval: ['披甲步兵', '弩手', '长枪方阵', '重装骑士', '配重投石机', '边境游骑', '桨帆战船', '武装柯克船'],
-  exploration: ['长枪兵', '火绳枪手', '胸甲骑兵', '野战炮', '工兵队', '龙骑兵', '盖伦帆船', '火船'],
-  industrial: ['线列步兵', '后膛步枪兵', '枪骑兵', '榴弹炮', '野战工程兵', '机枪队', '铁甲舰', '鱼雷艇'],
-  modern: ['现代步兵', '摩托化步兵', '中型坦克', '自行火炮', '反坦克分队', '战斗机', '驱逐舰', '潜艇'],
-  information: ['机械化步兵', '特种作战队', '主战坦克', '远程火箭炮', '防空导弹队', '无人机分队', '导弹驱逐舰', '攻击核潜艇']
+  exploration: ['长枪兵', '火绳枪手', '拒马枪兵', '胸甲骑兵', '野战炮', '龙骑兵', '盖伦帆船', '火船'],
+  industrial: ['线列步兵', '后膛步枪兵', '反骑兵方阵', '枪骑兵', '榴弹炮', '机枪队', '铁甲舰', '鱼雷艇'],
+  modern: ['现代步兵', '摩托化步兵', '反坦克分队', '中型坦克', '自行火炮', '战斗机', '驱逐舰', '潜艇'],
+  information: ['机械化步兵', '特种作战队', '防空导弹队', '主战坦克', '远程火箭炮', '无人机分队', '导弹驱逐舰', '攻击核潜艇']
 };
 const genericUnits = [];
 for (const era of eras) {

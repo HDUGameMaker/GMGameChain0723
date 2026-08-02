@@ -7,7 +7,7 @@
     "scaleMode": "cover"
   },
   "logo": {
-    "type": "image",
+    "type": "text",
     "image": {
       "src": "assets/gui/logo.png",
       "position": {
@@ -25,18 +25,18 @@
       }
     },
     "text": {
-      "content": "GMGameChain",
+      "content": "文明纪元",
       "position": {
         "x": 50,
-        "y": 12
+        "y": 24
       },
       "offset": {
         "x": 0,
         "y": 0
       },
-      "fontSize": 48,
+      "fontSize": 64,
       "fontFamily": "inherit",
-      "fontColor": "#f0a040",
+      "fontColor": "#d2aa62",
       "fontWeight": "bold"
     }
   },
@@ -233,9 +233,9 @@
     }
   },
   "aboutContent": {
-    "title": "关于 GMGameChain",
-    "team": "GMGameChain 开发团队",
-    "message": "感谢游玩本游戏！\n这是一个末世生存建造游戏。\n希望你能在这个世界中找到乐趣。\n\n目前的游戏背景就是和智械危机相关的啦，后来的如果想完善的想改的请自便",
-    "version": "1.14.514"
+    "title": "关于《文明纪元》",
+    "team": "GMGameChain 历史策略项目",
+    "message": "从远古聚落出发，管理人口与四大资源，选择每个时代的文明，发展科技与人文，经营城邦外交，并通过陆海军扩张建立跨时代文明。",
+    "version": "0.7.0"
   }
 }

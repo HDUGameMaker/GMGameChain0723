@@ -11,6 +11,74 @@ const SAVE_KEY = 'currentSave';
 export class SaveManager {
   static _db = null;
 
+  static migrate(raw) {
+    if (!raw || !Number.isFinite(raw.version) || raw.version < 5 || raw.version > 7) return null;
+    const state = structuredClone(raw);
+    const history = [state.version];
+
+    if (state.version === 5) {
+      state.territory ??= {};
+      state.enemyExpansion ??= {};
+      state.buildingTech ??= {};
+      state.diplomacy ??= { states: {} };
+      state.heroes ??= { availableIds: [], recruited: {}, lastRefreshDay: 0 };
+      state.version = 6;
+      history.push(6);
+    }
+
+    if (state.version === 6) {
+      const defaults = {
+        wood: { current: 200, max: 1000 },
+        stone: { current: 150, max: 1000 },
+        food: { current: 220, max: 1000 },
+        gold: { current: 80, max: 1000 }
+      };
+      const previousResources = state.resources || {};
+      state.resources = {};
+      for (const id of ['wood', 'stone', 'food', 'gold']) {
+        const saved = previousResources[id];
+        state.resources[id] = saved && Number.isFinite(saved.current) && Number.isFinite(saved.max)
+          ? { current: Math.max(0, saved.current), max: Math.max(1, saved.max) }
+          : { ...defaults[id] };
+      }
+      state.resources.__storageMultiplier = Number.isFinite(previousResources.__storageMultiplier)
+        ? previousResources.__storageMultiplier
+        : 1;
+
+      state.population = {
+        current: 12,
+        declineCountdown: 0,
+        expeditionWorkers: 0,
+        constructionWorkers: 0,
+        satisfaction: 60,
+        starvationDays: 0,
+        ...(state.population || {})
+      };
+      if (Array.isArray(state.buildings)) {
+        state.buildings = state.buildings.map(building => ({ assignedWorkers: 0, ...building }));
+      }
+      state.era ??= { currentEraId: 'ancient', selectedCivilizations: {}, legacyCivilizationIds: [], eraStars: {} };
+      state.luxuries ??= { inventory: {}, deposits: [], discoveredDepositIds: [] };
+      state.strategies ??= {
+        cards: { forced_march: 1, harvest_drive: 1, fortify: 1 },
+        cooldowns: {},
+        activeEffects: []
+      };
+      state.territory ??= {};
+      state.enemyExpansion ??= {};
+      state.buildingTech ??= {};
+      state.diplomacy ??= { states: {} };
+      state.heroes ??= { availableIds: [], recruited: {}, lastRefreshDay: 0 };
+      delete state.alchemy;
+      delete state.spell;
+      state.version = 7;
+      history.push(7);
+    }
+
+    state.migrationHistory = state.migrationHistory || history;
+    return state;
+  }
+
   static async _getDB() {
     if (SaveManager._db) return SaveManager._db;
 
@@ -66,7 +134,7 @@ export class SaveManager {
         const tx = db.transaction(STORE_NAME, 'readonly');
         const store = tx.objectStore(STORE_NAME);
         const request = store.get(SAVE_KEY);
-        request.onsuccess = () => resolve(request.result || null);
+        request.onsuccess = () => resolve(SaveManager.migrate(request.result || null));
         request.onerror = () => resolve(null);
       });
     } catch (e) {

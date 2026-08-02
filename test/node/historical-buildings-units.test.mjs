@@ -23,7 +23,14 @@ test('historical roster covers every era and combat branch with land and naval u
   const expectedBranches = ['infantry', 'ranged', 'anti_cavalry', 'cavalry', 'siege', 'special', 'navy'];
   for (const era of content.eras) assert.ok(content.units.filter(unit => unit.eraId === era.id).length >= 16, era.id);
   for (const branch of expectedBranches) assert.ok(content.units.some(unit => unit.branch === branch), branch);
-  assert.ok(content.units.filter(unit => unit.domain === 'naval').length >= 20);
+  assert.ok(content.units.filter(unit => unit.domain === 'naval').length >= 14);
+  for (const era of content.eras) {
+    assert.ok(content.units.filter(unit => unit.eraId === era.id && unit.domain === 'naval').length >= 2,
+      `${era.id} should have at least two naval units`);
+  }
+  assert.equal(content.units.find(unit => unit.id === 'hittite_unique_unit').branch, 'cavalry');
+  assert.equal(content.units.find(unit => unit.id === 'hittite_unique_unit').domain, 'land');
+  assert.equal(content.units.find(unit => unit.id === 'japan_info_unique_unit').domain, 'naval');
 });
 
 test('training checks era, training building, civilization, population, resources and unlock state', () => {

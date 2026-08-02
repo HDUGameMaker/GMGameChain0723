@@ -90,6 +90,8 @@ test('ConfigRegistry merges historical additions without overriding main ids', a
   registry._applyHistoricalContent();
   assert.equal(registry.getBuilding('academy').name, '主版学院');
   assert.equal(registry.get('enemies').units.find(unit => unit.id === 'warrior').name, '主版战士');
+  assert.equal(registry.get('enemies').units.find(unit => unit.id === 'warrior').eraId, 'ancient');
+  assert.equal(registry.get('enemies').units.find(unit => unit.id === 'warrior').branch, 'infantry');
   assert.ok(registry.getBuilding('new_hall'));
   assert.ok(registry.get('enemies').units.some(unit => unit.id === 'new_guard'));
   assert.ok(registry.get('techs').some(node => node.id === 'new_tech'));

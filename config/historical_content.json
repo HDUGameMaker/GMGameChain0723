@@ -6715,7 +6715,7 @@
     },
     {
       "id": "exploration_anti_cavalry_3",
-      "name": "胸甲骑兵",
+      "name": "拒马枪兵",
       "eraId": "exploration",
       "domain": "land",
       "branch": "anti_cavalry",
@@ -6759,7 +6759,7 @@
     },
     {
       "id": "exploration_cavalry_4",
-      "name": "野战炮",
+      "name": "胸甲骑兵",
       "eraId": "exploration",
       "domain": "land",
       "branch": "cavalry",
@@ -6804,7 +6804,7 @@
     },
     {
       "id": "exploration_siege_5",
-      "name": "工兵队",
+      "name": "野战炮",
       "eraId": "exploration",
       "domain": "land",
       "branch": "siege",
@@ -7072,7 +7072,7 @@
     },
     {
       "id": "industrial_anti_cavalry_3",
-      "name": "枪骑兵",
+      "name": "反骑兵方阵",
       "eraId": "industrial",
       "domain": "land",
       "branch": "anti_cavalry",
@@ -7116,7 +7116,7 @@
     },
     {
       "id": "industrial_cavalry_4",
-      "name": "榴弹炮",
+      "name": "枪骑兵",
       "eraId": "industrial",
       "domain": "land",
       "branch": "cavalry",
@@ -7161,7 +7161,7 @@
     },
     {
       "id": "industrial_siege_5",
-      "name": "野战工程兵",
+      "name": "榴弹炮",
       "eraId": "industrial",
       "domain": "land",
       "branch": "siege",
@@ -7429,7 +7429,7 @@
     },
     {
       "id": "modern_anti_cavalry_3",
-      "name": "中型坦克",
+      "name": "反坦克分队",
       "eraId": "modern",
       "domain": "land",
       "branch": "anti_cavalry",
@@ -7473,7 +7473,7 @@
     },
     {
       "id": "modern_cavalry_4",
-      "name": "自行火炮",
+      "name": "中型坦克",
       "eraId": "modern",
       "domain": "land",
       "branch": "cavalry",
@@ -7518,7 +7518,7 @@
     },
     {
       "id": "modern_siege_5",
-      "name": "反坦克分队",
+      "name": "自行火炮",
       "eraId": "modern",
       "domain": "land",
       "branch": "siege",
@@ -7786,7 +7786,7 @@
     },
     {
       "id": "information_anti_cavalry_3",
-      "name": "主战坦克",
+      "name": "防空导弹队",
       "eraId": "information",
       "domain": "land",
       "branch": "anti_cavalry",
@@ -7830,7 +7830,7 @@
     },
     {
       "id": "information_cavalry_4",
-      "name": "远程火箭炮",
+      "name": "主战坦克",
       "eraId": "information",
       "domain": "land",
       "branch": "cavalry",
@@ -7875,7 +7875,7 @@
     },
     {
       "id": "information_siege_5",
-      "name": "防空导弹队",
+      "name": "远程火箭炮",
       "eraId": "information",
       "domain": "land",
       "branch": "siege",
@@ -8102,23 +8102,24 @@
       "civilizationId": "sumer",
       "unique": true,
       "domain": "land",
-      "branch": "ranged",
-      "lane": "rear",
-      "trainingBuildingId": "archery_range",
+      "branch": "cavalry",
+      "lane": "flank",
+      "trainingBuildingId": "stable",
       "populationRequired": 1,
       "combatPower": 6,
       "hp": 9,
       "attack": 3,
-      "attackRange": 3,
+      "attackRange": 1,
       "roleTags": [
+        "cavalry",
+        "shock"
+      ],
+      "strongAgainst": [
         "ranged",
         "light"
       ],
-      "strongAgainst": [
-        "infantry"
-      ],
       "weakAgainst": [
-        "cavalry"
+        "spear"
       ],
       "cost": [
         {
@@ -8148,23 +8149,23 @@
       "civilizationId": "old_egypt",
       "unique": true,
       "domain": "land",
-      "branch": "anti_cavalry",
-      "lane": "front",
-      "trainingBuildingId": "barracks_hall",
+      "branch": "ranged",
+      "lane": "rear",
+      "trainingBuildingId": "archery_range",
       "populationRequired": 1,
       "combatPower": 7,
       "hp": 10,
       "attack": 4,
-      "attackRange": 1,
+      "attackRange": 3,
       "roleTags": [
-        "spear",
-        "melee"
+        "ranged",
+        "light"
       ],
       "strongAgainst": [
-        "cavalry"
+        "infantry"
       ],
       "weakAgainst": [
-        "ranged"
+        "cavalry"
       ],
       "cost": [
         {
@@ -8194,24 +8195,23 @@
       "civilizationId": "indus",
       "unique": true,
       "domain": "land",
-      "branch": "cavalry",
-      "lane": "flank",
-      "trainingBuildingId": "stable",
+      "branch": "anti_cavalry",
+      "lane": "front",
+      "trainingBuildingId": "barracks_hall",
       "populationRequired": 1,
       "combatPower": 8,
       "hp": 11,
       "attack": 4,
       "attackRange": 1,
       "roleTags": [
-        "cavalry",
-        "shock"
+        "spear",
+        "melee"
       ],
       "strongAgainst": [
-        "ranged",
-        "light"
+        "cavalry"
       ],
       "weakAgainst": [
-        "spear"
+        "ranged"
       ],
       "cost": [
         {
@@ -8241,24 +8241,23 @@
       "civilizationId": "minoan",
       "unique": true,
       "domain": "land",
-      "branch": "siege",
-      "lane": "siege",
-      "trainingBuildingId": "siege_workshop",
-      "populationRequired": 2,
+      "branch": "infantry",
+      "lane": "front",
+      "trainingBuildingId": "barracks_hall",
+      "populationRequired": 1,
       "combatPower": 9,
       "hp": 12,
       "attack": 5,
-      "attackRange": 3,
+      "attackRange": 1,
       "roleTags": [
-        "siege",
-        "engine"
+        "melee",
+        "shield"
       ],
       "strongAgainst": [
-        "building"
+        "light"
       ],
       "weakAgainst": [
-        "light",
-        "cavalry"
+        "ranged"
       ],
       "cost": [
         {
@@ -8267,7 +8266,7 @@
         },
         {
           "resourceId": "stone",
-          "amount": 20
+          "amount": 5
         },
         {
           "resourceId": "food",
@@ -8288,24 +8287,23 @@
       "civilizationId": "akkad",
       "unique": true,
       "domain": "land",
-      "branch": "special",
-      "lane": "support",
-      "trainingBuildingId": "war_academy",
+      "branch": "infantry",
+      "lane": "front",
+      "trainingBuildingId": "barracks_hall",
       "populationRequired": 1,
       "combatPower": 10,
       "hp": 13,
       "attack": 5,
       "attackRange": 1,
       "roleTags": [
-        "light",
-        "support"
+        "melee",
+        "shield"
       ],
       "strongAgainst": [
-        "siege",
-        "support"
+        "light"
       ],
       "weakAgainst": [
-        "cavalry"
+        "ranged"
       ],
       "cost": [
         {
@@ -8334,25 +8332,25 @@
       "eraId": "ancient",
       "civilizationId": "hittite",
       "unique": true,
-      "domain": "naval",
-      "branch": "navy",
-      "lane": "naval",
-      "trainingBuildingId": "grand_shipyard",
-      "populationRequired": 3,
+      "domain": "land",
+      "branch": "cavalry",
+      "lane": "flank",
+      "trainingBuildingId": "stable",
+      "populationRequired": 1,
       "combatPower": 12,
       "hp": 14,
       "attack": 6,
       "attackRange": 1,
       "roleTags": [
-        "naval",
-        "vessel"
+        "cavalry",
+        "shock"
       ],
       "strongAgainst": [
-        "transport",
-        "vessel"
+        "ranged",
+        "light"
       ],
       "weakAgainst": [
-        "fire_ship"
+        "spear"
       ],
       "cost": [
         {
@@ -8381,25 +8379,24 @@
       "eraId": "ancient",
       "civilizationId": "olmec",
       "unique": true,
-      "domain": "naval",
-      "branch": "navy",
-      "lane": "naval",
-      "trainingBuildingId": "grand_shipyard",
-      "populationRequired": 3,
+      "domain": "land",
+      "branch": "infantry",
+      "lane": "front",
+      "trainingBuildingId": "barracks_hall",
+      "populationRequired": 1,
       "combatPower": 13,
       "hp": 15,
       "attack": 6,
       "attackRange": 1,
       "roleTags": [
-        "naval",
-        "vessel"
+        "melee",
+        "shield"
       ],
       "strongAgainst": [
-        "transport",
-        "vessel"
+        "light"
       ],
       "weakAgainst": [
-        "fire_ship"
+        "ranged"
       ],
       "cost": [
         {
@@ -8429,23 +8426,24 @@
       "civilizationId": "han",
       "unique": true,
       "domain": "land",
-      "branch": "infantry",
-      "lane": "front",
-      "trainingBuildingId": "barracks_hall",
+      "branch": "cavalry",
+      "lane": "flank",
+      "trainingBuildingId": "stable",
       "populationRequired": 1,
       "combatPower": 25,
       "hp": 15,
       "attack": 8,
       "attackRange": 1,
       "roleTags": [
-        "melee",
-        "shield"
+        "cavalry",
+        "shock"
       ],
       "strongAgainst": [
+        "ranged",
         "light"
       ],
       "weakAgainst": [
-        "ranged"
+        "spear"
       ],
       "cost": [
         {
@@ -8475,23 +8473,23 @@
       "civilizationId": "rome",
       "unique": true,
       "domain": "land",
-      "branch": "ranged",
-      "lane": "rear",
-      "trainingBuildingId": "archery_range",
+      "branch": "anti_cavalry",
+      "lane": "front",
+      "trainingBuildingId": "barracks_hall",
       "populationRequired": 1,
       "combatPower": 26,
       "hp": 16,
       "attack": 8,
-      "attackRange": 4,
+      "attackRange": 1,
       "roleTags": [
-        "ranged",
-        "light"
+        "spear",
+        "melee"
       ],
       "strongAgainst": [
-        "infantry"
+        "cavalry"
       ],
       "weakAgainst": [
-        "cavalry"
+        "ranged"
       ],
       "cost": [
         {
@@ -8614,24 +8612,23 @@
       "civilizationId": "athens",
       "unique": true,
       "domain": "land",
-      "branch": "siege",
-      "lane": "siege",
-      "trainingBuildingId": "siege_workshop",
-      "populationRequired": 2,
+      "branch": "anti_cavalry",
+      "lane": "front",
+      "trainingBuildingId": "barracks_hall",
+      "populationRequired": 1,
       "combatPower": 30,
       "hp": 19,
       "attack": 10,
-      "attackRange": 4,
+      "attackRange": 1,
       "roleTags": [
-        "siege",
-        "engine"
+        "spear",
+        "melee"
       ],
       "strongAgainst": [
-        "building"
+        "cavalry"
       ],
       "weakAgainst": [
-        "light",
-        "cavalry"
+        "ranged"
       ],
       "cost": [
         {
@@ -8640,7 +8637,7 @@
         },
         {
           "resourceId": "stone",
-          "amount": 27
+          "amount": 9
         },
         {
           "resourceId": "food",
@@ -8661,24 +8658,23 @@
       "civilizationId": "sparta",
       "unique": true,
       "domain": "land",
-      "branch": "special",
-      "lane": "support",
-      "trainingBuildingId": "war_academy",
+      "branch": "anti_cavalry",
+      "lane": "front",
+      "trainingBuildingId": "barracks_hall",
       "populationRequired": 1,
       "combatPower": 31,
       "hp": 20,
       "attack": 10,
       "attackRange": 1,
       "roleTags": [
-        "light",
-        "support"
+        "spear",
+        "melee"
       ],
       "strongAgainst": [
-        "siege",
-        "support"
+        "cavalry"
       ],
       "weakAgainst": [
-        "cavalry"
+        "ranged"
       ],
       "cost": [
         {
@@ -8707,25 +8703,24 @@
       "eraId": "classical",
       "civilizationId": "carthage",
       "unique": true,
-      "domain": "naval",
-      "branch": "navy",
-      "lane": "naval",
-      "trainingBuildingId": "grand_shipyard",
-      "populationRequired": 3,
+      "domain": "land",
+      "branch": "infantry",
+      "lane": "front",
+      "trainingBuildingId": "barracks_hall",
+      "populationRequired": 1,
       "combatPower": 32,
       "hp": 21,
       "attack": 11,
       "attackRange": 1,
       "roleTags": [
-        "naval",
-        "vessel"
+        "melee",
+        "shield"
       ],
       "strongAgainst": [
-        "transport",
-        "vessel"
+        "light"
       ],
       "weakAgainst": [
-        "fire_ship"
+        "ranged"
       ],
       "cost": [
         {
@@ -8754,25 +8749,24 @@
       "eraId": "classical",
       "civilizationId": "maya_classic",
       "unique": true,
-      "domain": "naval",
-      "branch": "navy",
-      "lane": "naval",
-      "trainingBuildingId": "grand_shipyard",
-      "populationRequired": 3,
+      "domain": "land",
+      "branch": "ranged",
+      "lane": "rear",
+      "trainingBuildingId": "archery_range",
+      "populationRequired": 1,
       "combatPower": 33,
       "hp": 22,
       "attack": 11,
-      "attackRange": 1,
+      "attackRange": 4,
       "roleTags": [
-        "naval",
-        "vessel"
+        "ranged",
+        "light"
       ],
       "strongAgainst": [
-        "transport",
-        "vessel"
+        "infantry"
       ],
       "weakAgainst": [
-        "fire_ship"
+        "cavalry"
       ],
       "cost": [
         {
@@ -8848,23 +8842,24 @@
       "civilizationId": "franks",
       "unique": true,
       "domain": "land",
-      "branch": "ranged",
-      "lane": "rear",
-      "trainingBuildingId": "archery_range",
+      "branch": "cavalry",
+      "lane": "flank",
+      "trainingBuildingId": "stable",
       "populationRequired": 1,
       "combatPower": 47,
       "hp": 23,
       "attack": 13,
-      "attackRange": 5,
+      "attackRange": 1,
       "roleTags": [
+        "cavalry",
+        "shock"
+      ],
+      "strongAgainst": [
         "ranged",
         "light"
       ],
-      "strongAgainst": [
-        "infantry"
-      ],
       "weakAgainst": [
-        "cavalry"
+        "spear"
       ],
       "cost": [
         {
@@ -8894,23 +8889,23 @@
       "civilizationId": "england",
       "unique": true,
       "domain": "land",
-      "branch": "anti_cavalry",
-      "lane": "front",
-      "trainingBuildingId": "barracks_hall",
+      "branch": "ranged",
+      "lane": "rear",
+      "trainingBuildingId": "archery_range",
       "populationRequired": 1,
       "combatPower": 48,
       "hp": 24,
       "attack": 14,
-      "attackRange": 1,
+      "attackRange": 5,
       "roleTags": [
-        "spear",
-        "melee"
+        "ranged",
+        "light"
       ],
       "strongAgainst": [
-        "cavalry"
+        "infantry"
       ],
       "weakAgainst": [
-        "ranged"
+        "cavalry"
       ],
       "cost": [
         {
@@ -8940,24 +8935,23 @@
       "civilizationId": "byzantium",
       "unique": true,
       "domain": "land",
-      "branch": "cavalry",
-      "lane": "flank",
-      "trainingBuildingId": "stable",
+      "branch": "infantry",
+      "lane": "front",
+      "trainingBuildingId": "barracks_hall",
       "populationRequired": 1,
       "combatPower": 49,
       "hp": 25,
       "attack": 14,
       "attackRange": 1,
       "roleTags": [
-        "cavalry",
-        "shock"
+        "melee",
+        "shield"
       ],
       "strongAgainst": [
-        "ranged",
         "light"
       ],
       "weakAgainst": [
-        "spear"
+        "ranged"
       ],
       "cost": [
         {
@@ -8987,24 +8981,24 @@
       "civilizationId": "abbasid",
       "unique": true,
       "domain": "land",
-      "branch": "siege",
-      "lane": "siege",
-      "trainingBuildingId": "siege_workshop",
-      "populationRequired": 2,
+      "branch": "cavalry",
+      "lane": "flank",
+      "trainingBuildingId": "stable",
+      "populationRequired": 1,
       "combatPower": 51,
       "hp": 26,
       "attack": 15,
-      "attackRange": 5,
+      "attackRange": 1,
       "roleTags": [
-        "siege",
-        "engine"
+        "cavalry",
+        "shock"
       ],
       "strongAgainst": [
-        "building"
+        "ranged",
+        "light"
       ],
       "weakAgainst": [
-        "light",
-        "cavalry"
+        "spear"
       ],
       "cost": [
         {
@@ -9013,7 +9007,7 @@
         },
         {
           "resourceId": "stone",
-          "amount": 34
+          "amount": 13
         },
         {
           "resourceId": "food",
@@ -9034,24 +9028,24 @@
       "civilizationId": "mongol",
       "unique": true,
       "domain": "land",
-      "branch": "special",
-      "lane": "support",
-      "trainingBuildingId": "war_academy",
+      "branch": "cavalry",
+      "lane": "flank",
+      "trainingBuildingId": "stable",
       "populationRequired": 1,
       "combatPower": 52,
       "hp": 27,
       "attack": 15,
       "attackRange": 1,
       "roleTags": [
-        "light",
-        "support"
+        "cavalry",
+        "shock"
       ],
       "strongAgainst": [
-        "siege",
-        "support"
+        "ranged",
+        "light"
       ],
       "weakAgainst": [
-        "cavalry"
+        "spear"
       ],
       "cost": [
         {
@@ -9080,25 +9074,25 @@
       "eraId": "medieval",
       "civilizationId": "delhi",
       "unique": true,
-      "domain": "naval",
-      "branch": "navy",
-      "lane": "naval",
-      "trainingBuildingId": "grand_shipyard",
-      "populationRequired": 3,
+      "domain": "land",
+      "branch": "cavalry",
+      "lane": "flank",
+      "trainingBuildingId": "stable",
+      "populationRequired": 1,
       "combatPower": 53,
       "hp": 28,
       "attack": 16,
       "attackRange": 1,
       "roleTags": [
-        "naval",
-        "vessel"
+        "cavalry",
+        "shock"
       ],
       "strongAgainst": [
-        "transport",
-        "vessel"
+        "ranged",
+        "light"
       ],
       "weakAgainst": [
-        "fire_ship"
+        "spear"
       ],
       "cost": [
         {
@@ -9127,25 +9121,24 @@
       "eraId": "medieval",
       "civilizationId": "aztec",
       "unique": true,
-      "domain": "naval",
-      "branch": "navy",
-      "lane": "naval",
-      "trainingBuildingId": "grand_shipyard",
-      "populationRequired": 3,
+      "domain": "land",
+      "branch": "infantry",
+      "lane": "front",
+      "trainingBuildingId": "barracks_hall",
+      "populationRequired": 1,
       "combatPower": 54,
       "hp": 29,
       "attack": 16,
       "attackRange": 1,
       "roleTags": [
-        "naval",
-        "vessel"
+        "melee",
+        "shield"
       ],
       "strongAgainst": [
-        "transport",
-        "vessel"
+        "light"
       ],
       "weakAgainst": [
-        "fire_ship"
+        "ranged"
       ],
       "cost": [
         {
@@ -9175,23 +9168,23 @@
       "civilizationId": "ming",
       "unique": true,
       "domain": "land",
-      "branch": "infantry",
-      "lane": "front",
-      "trainingBuildingId": "barracks_hall",
+      "branch": "ranged",
+      "lane": "rear",
+      "trainingBuildingId": "archery_range",
       "populationRequired": 1,
       "combatPower": 67,
       "hp": 29,
       "attack": 18,
-      "attackRange": 1,
+      "attackRange": 6,
       "roleTags": [
-        "melee",
-        "shield"
-      ],
-      "strongAgainst": [
+        "ranged",
         "light"
       ],
+      "strongAgainst": [
+        "infantry"
+      ],
       "weakAgainst": [
-        "ranged"
+        "cavalry"
       ],
       "cost": [
         {
@@ -9221,23 +9214,24 @@
       "civilizationId": "spain",
       "unique": true,
       "domain": "land",
-      "branch": "ranged",
-      "lane": "rear",
-      "trainingBuildingId": "archery_range",
+      "branch": "cavalry",
+      "lane": "flank",
+      "trainingBuildingId": "stable",
       "populationRequired": 1,
       "combatPower": 68,
       "hp": 30,
       "attack": 18,
-      "attackRange": 6,
+      "attackRange": 1,
       "roleTags": [
+        "cavalry",
+        "shock"
+      ],
+      "strongAgainst": [
         "ranged",
         "light"
       ],
-      "strongAgainst": [
-        "infantry"
-      ],
       "weakAgainst": [
-        "cavalry"
+        "spear"
       ],
       "cost": [
         {
@@ -9267,7 +9261,7 @@
       "civilizationId": "portugal",
       "unique": true,
       "domain": "land",
-      "branch": "anti_cavalry",
+      "branch": "infantry",
       "lane": "front",
       "trainingBuildingId": "barracks_hall",
       "populationRequired": 1,
@@ -9276,11 +9270,11 @@
       "attack": 19,
       "attackRange": 1,
       "roleTags": [
-        "spear",
-        "melee"
+        "melee",
+        "shield"
       ],
       "strongAgainst": [
-        "cavalry"
+        "light"
       ],
       "weakAgainst": [
         "ranged"
@@ -9313,24 +9307,23 @@
       "civilizationId": "ottoman",
       "unique": true,
       "domain": "land",
-      "branch": "cavalry",
-      "lane": "flank",
-      "trainingBuildingId": "stable",
+      "branch": "ranged",
+      "lane": "rear",
+      "trainingBuildingId": "archery_range",
       "populationRequired": 1,
       "combatPower": 70,
       "hp": 32,
       "attack": 19,
-      "attackRange": 1,
+      "attackRange": 6,
       "roleTags": [
-        "cavalry",
-        "shock"
-      ],
-      "strongAgainst": [
         "ranged",
         "light"
       ],
+      "strongAgainst": [
+        "infantry"
+      ],
       "weakAgainst": [
-        "spear"
+        "cavalry"
       ],
       "cost": [
         {
@@ -9360,24 +9353,23 @@
       "civilizationId": "venice",
       "unique": true,
       "domain": "land",
-      "branch": "siege",
-      "lane": "siege",
-      "trainingBuildingId": "siege_workshop",
-      "populationRequired": 2,
+      "branch": "infantry",
+      "lane": "front",
+      "trainingBuildingId": "barracks_hall",
+      "populationRequired": 1,
       "combatPower": 71,
       "hp": 33,
       "attack": 20,
-      "attackRange": 6,
+      "attackRange": 1,
       "roleTags": [
-        "siege",
-        "engine"
+        "melee",
+        "shield"
       ],
       "strongAgainst": [
-        "building"
+        "light"
       ],
       "weakAgainst": [
-        "light",
-        "cavalry"
+        "ranged"
       ],
       "cost": [
         {
@@ -9386,7 +9378,7 @@
         },
         {
           "resourceId": "stone",
-          "amount": 41
+          "amount": 17
         },
         {
           "resourceId": "food",
@@ -9406,25 +9398,25 @@
       "eraId": "exploration",
       "civilizationId": "dutch",
       "unique": true,
-      "domain": "land",
-      "branch": "special",
-      "lane": "support",
-      "trainingBuildingId": "war_academy",
-      "populationRequired": 1,
+      "domain": "naval",
+      "branch": "navy",
+      "lane": "naval",
+      "trainingBuildingId": "grand_shipyard",
+      "populationRequired": 3,
       "combatPower": 72,
       "hp": 34,
       "attack": 20,
       "attackRange": 1,
       "roleTags": [
-        "light",
-        "support"
+        "naval",
+        "vessel"
       ],
       "strongAgainst": [
-        "siege",
-        "support"
+        "transport",
+        "vessel"
       ],
       "weakAgainst": [
-        "cavalry"
+        "fire_ship"
       ],
       "cost": [
         {
@@ -9453,25 +9445,25 @@
       "eraId": "exploration",
       "civilizationId": "mughal",
       "unique": true,
-      "domain": "naval",
-      "branch": "navy",
-      "lane": "naval",
-      "trainingBuildingId": "grand_shipyard",
-      "populationRequired": 3,
+      "domain": "land",
+      "branch": "cavalry",
+      "lane": "flank",
+      "trainingBuildingId": "stable",
+      "populationRequired": 1,
       "combatPower": 74,
       "hp": 35,
       "attack": 21,
       "attackRange": 1,
       "roleTags": [
-        "naval",
-        "vessel"
+        "cavalry",
+        "shock"
       ],
       "strongAgainst": [
-        "transport",
-        "vessel"
+        "ranged",
+        "light"
       ],
       "weakAgainst": [
-        "fire_ship"
+        "spear"
       ],
       "cost": [
         {
@@ -9500,25 +9492,24 @@
       "eraId": "exploration",
       "civilizationId": "inca",
       "unique": true,
-      "domain": "naval",
-      "branch": "navy",
-      "lane": "naval",
-      "trainingBuildingId": "grand_shipyard",
-      "populationRequired": 3,
+      "domain": "land",
+      "branch": "ranged",
+      "lane": "rear",
+      "trainingBuildingId": "archery_range",
+      "populationRequired": 1,
       "combatPower": 75,
       "hp": 36,
       "attack": 21,
-      "attackRange": 1,
+      "attackRange": 6,
       "roleTags": [
-        "naval",
-        "vessel"
+        "ranged",
+        "light"
       ],
       "strongAgainst": [
-        "transport",
-        "vessel"
+        "infantry"
       ],
       "weakAgainst": [
-        "fire_ship"
+        "cavalry"
       ],
       "cost": [
         {
@@ -9548,23 +9539,23 @@
       "civilizationId": "qing",
       "unique": true,
       "domain": "land",
-      "branch": "infantry",
-      "lane": "front",
-      "trainingBuildingId": "barracks_hall",
+      "branch": "ranged",
+      "lane": "rear",
+      "trainingBuildingId": "archery_range",
       "populationRequired": 1,
       "combatPower": 87,
       "hp": 36,
       "attack": 23,
-      "attackRange": 1,
+      "attackRange": 7,
       "roleTags": [
-        "melee",
-        "shield"
-      ],
-      "strongAgainst": [
+        "ranged",
         "light"
       ],
+      "strongAgainst": [
+        "infantry"
+      ],
       "weakAgainst": [
-        "ranged"
+        "cavalry"
       ],
       "cost": [
         {
@@ -9594,23 +9585,23 @@
       "civilizationId": "french_empire",
       "unique": true,
       "domain": "land",
-      "branch": "ranged",
-      "lane": "rear",
-      "trainingBuildingId": "archery_range",
+      "branch": "infantry",
+      "lane": "front",
+      "trainingBuildingId": "barracks_hall",
       "populationRequired": 1,
       "combatPower": 89,
       "hp": 37,
       "attack": 23,
-      "attackRange": 7,
+      "attackRange": 1,
       "roleTags": [
-        "ranged",
-        "light"
+        "melee",
+        "shield"
       ],
       "strongAgainst": [
-        "infantry"
+        "light"
       ],
       "weakAgainst": [
-        "cavalry"
+        "ranged"
       ],
       "cost": [
         {
@@ -9640,7 +9631,7 @@
       "civilizationId": "british_empire",
       "unique": true,
       "domain": "land",
-      "branch": "anti_cavalry",
+      "branch": "infantry",
       "lane": "front",
       "trainingBuildingId": "barracks_hall",
       "populationRequired": 1,
@@ -9649,11 +9640,11 @@
       "attack": 24,
       "attackRange": 1,
       "roleTags": [
-        "spear",
-        "melee"
+        "melee",
+        "shield"
       ],
       "strongAgainst": [
-        "cavalry"
+        "light"
       ],
       "weakAgainst": [
         "ranged"
@@ -9686,24 +9677,23 @@
       "civilizationId": "prussia",
       "unique": true,
       "domain": "land",
-      "branch": "cavalry",
-      "lane": "flank",
-      "trainingBuildingId": "stable",
+      "branch": "infantry",
+      "lane": "front",
+      "trainingBuildingId": "barracks_hall",
       "populationRequired": 1,
       "combatPower": 91,
       "hp": 39,
       "attack": 24,
       "attackRange": 1,
       "roleTags": [
-        "cavalry",
-        "shock"
+        "melee",
+        "shield"
       ],
       "strongAgainst": [
-        "ranged",
         "light"
       ],
       "weakAgainst": [
-        "spear"
+        "ranged"
       ],
       "cost": [
         {
@@ -9733,24 +9723,24 @@
       "civilizationId": "russian_empire",
       "unique": true,
       "domain": "land",
-      "branch": "siege",
-      "lane": "siege",
-      "trainingBuildingId": "siege_workshop",
-      "populationRequired": 2,
+      "branch": "cavalry",
+      "lane": "flank",
+      "trainingBuildingId": "stable",
+      "populationRequired": 1,
       "combatPower": 92,
       "hp": 40,
       "attack": 25,
-      "attackRange": 7,
+      "attackRange": 1,
       "roleTags": [
-        "siege",
-        "engine"
+        "cavalry",
+        "shock"
       ],
       "strongAgainst": [
-        "building"
+        "ranged",
+        "light"
       ],
       "weakAgainst": [
-        "light",
-        "cavalry"
+        "spear"
       ],
       "cost": [
         {
@@ -9759,7 +9749,7 @@
         },
         {
           "resourceId": "stone",
-          "amount": 48
+          "amount": 21
         },
         {
           "resourceId": "food",
@@ -9780,21 +9770,20 @@
       "civilizationId": "usa_industrial",
       "unique": true,
       "domain": "land",
-      "branch": "special",
-      "lane": "support",
-      "trainingBuildingId": "war_academy",
+      "branch": "ranged",
+      "lane": "rear",
+      "trainingBuildingId": "archery_range",
       "populationRequired": 1,
       "combatPower": 93,
       "hp": 41,
       "attack": 25,
-      "attackRange": 1,
+      "attackRange": 7,
       "roleTags": [
-        "light",
-        "support"
+        "ranged",
+        "light"
       ],
       "strongAgainst": [
-        "siege",
-        "support"
+        "infantry"
       ],
       "weakAgainst": [
         "cavalry"
@@ -9826,25 +9815,24 @@
       "eraId": "industrial",
       "civilizationId": "meiji_japan",
       "unique": true,
-      "domain": "naval",
-      "branch": "navy",
-      "lane": "naval",
-      "trainingBuildingId": "grand_shipyard",
-      "populationRequired": 3,
+      "domain": "land",
+      "branch": "infantry",
+      "lane": "front",
+      "trainingBuildingId": "barracks_hall",
+      "populationRequired": 1,
       "combatPower": 94,
       "hp": 42,
       "attack": 26,
       "attackRange": 1,
       "roleTags": [
-        "naval",
-        "vessel"
+        "melee",
+        "shield"
       ],
       "strongAgainst": [
-        "transport",
-        "vessel"
+        "light"
       ],
       "weakAgainst": [
-        "fire_ship"
+        "ranged"
       ],
       "cost": [
         {
@@ -9873,25 +9861,25 @@
       "eraId": "industrial",
       "civilizationId": "mexico_industrial",
       "unique": true,
-      "domain": "naval",
-      "branch": "navy",
-      "lane": "naval",
-      "trainingBuildingId": "grand_shipyard",
-      "populationRequired": 3,
+      "domain": "land",
+      "branch": "cavalry",
+      "lane": "flank",
+      "trainingBuildingId": "stable",
+      "populationRequired": 1,
       "combatPower": 95,
       "hp": 43,
       "attack": 26,
       "attackRange": 1,
       "roleTags": [
-        "naval",
-        "vessel"
+        "cavalry",
+        "shock"
       ],
       "strongAgainst": [
-        "transport",
-        "vessel"
+        "ranged",
+        "light"
       ],
       "weakAgainst": [
-        "fire_ship"
+        "spear"
       ],
       "cost": [
         {
@@ -9921,23 +9909,24 @@
       "civilizationId": "china_modern",
       "unique": true,
       "domain": "land",
-      "branch": "infantry",
-      "lane": "front",
-      "trainingBuildingId": "barracks_hall",
+      "branch": "special",
+      "lane": "support",
+      "trainingBuildingId": "war_academy",
       "populationRequired": 1,
       "combatPower": 108,
       "hp": 43,
       "attack": 28,
       "attackRange": 1,
       "roleTags": [
-        "melee",
-        "shield"
+        "light",
+        "support"
       ],
       "strongAgainst": [
-        "light"
+        "siege",
+        "support"
       ],
       "weakAgainst": [
-        "ranged"
+        "cavalry"
       ],
       "cost": [
         {
@@ -9967,20 +9956,21 @@
       "civilizationId": "usa_modern",
       "unique": true,
       "domain": "land",
-      "branch": "ranged",
-      "lane": "rear",
-      "trainingBuildingId": "archery_range",
+      "branch": "special",
+      "lane": "support",
+      "trainingBuildingId": "war_academy",
       "populationRequired": 1,
       "combatPower": 109,
       "hp": 44,
       "attack": 28,
-      "attackRange": 8,
+      "attackRange": 1,
       "roleTags": [
-        "ranged",
-        "light"
+        "light",
+        "support"
       ],
       "strongAgainst": [
-        "infantry"
+        "siege",
+        "support"
       ],
       "weakAgainst": [
         "cavalry"
@@ -10013,23 +10003,24 @@
       "civilizationId": "ussr",
       "unique": true,
       "domain": "land",
-      "branch": "anti_cavalry",
-      "lane": "front",
-      "trainingBuildingId": "barracks_hall",
+      "branch": "special",
+      "lane": "support",
+      "trainingBuildingId": "war_academy",
       "populationRequired": 1,
       "combatPower": 110,
       "hp": 45,
       "attack": 29,
       "attackRange": 1,
       "roleTags": [
-        "spear",
-        "melee"
+        "light",
+        "support"
       ],
       "strongAgainst": [
-        "cavalry"
+        "siege",
+        "support"
       ],
       "weakAgainst": [
-        "ranged"
+        "cavalry"
       ],
       "cost": [
         {
@@ -10059,24 +10050,24 @@
       "civilizationId": "uk_modern",
       "unique": true,
       "domain": "land",
-      "branch": "cavalry",
-      "lane": "flank",
-      "trainingBuildingId": "stable",
+      "branch": "special",
+      "lane": "support",
+      "trainingBuildingId": "war_academy",
       "populationRequired": 1,
       "combatPower": 112,
       "hp": 46,
       "attack": 29,
       "attackRange": 1,
       "roleTags": [
-        "cavalry",
-        "shock"
+        "light",
+        "support"
       ],
       "strongAgainst": [
-        "ranged",
-        "light"
+        "siege",
+        "support"
       ],
       "weakAgainst": [
-        "spear"
+        "cavalry"
       ],
       "cost": [
         {
@@ -10106,24 +10097,23 @@
       "civilizationId": "france_modern",
       "unique": true,
       "domain": "land",
-      "branch": "siege",
-      "lane": "siege",
-      "trainingBuildingId": "siege_workshop",
-      "populationRequired": 2,
+      "branch": "infantry",
+      "lane": "front",
+      "trainingBuildingId": "barracks_hall",
+      "populationRequired": 1,
       "combatPower": 113,
       "hp": 47,
       "attack": 30,
-      "attackRange": 8,
+      "attackRange": 1,
       "roleTags": [
-        "siege",
-        "engine"
+        "melee",
+        "shield"
       ],
       "strongAgainst": [
-        "building"
+        "light"
       ],
       "weakAgainst": [
-        "light",
-        "cavalry"
+        "ranged"
       ],
       "cost": [
         {
@@ -10132,7 +10122,7 @@
         },
         {
           "resourceId": "stone",
-          "amount": 55
+          "amount": 25
         },
         {
           "resourceId": "food",
@@ -10199,25 +10189,24 @@
       "eraId": "modern",
       "civilizationId": "india_modern",
       "unique": true,
-      "domain": "naval",
-      "branch": "navy",
-      "lane": "naval",
-      "trainingBuildingId": "grand_shipyard",
-      "populationRequired": 3,
+      "domain": "land",
+      "branch": "infantry",
+      "lane": "front",
+      "trainingBuildingId": "barracks_hall",
+      "populationRequired": 1,
       "combatPower": 115,
       "hp": 49,
       "attack": 31,
       "attackRange": 1,
       "roleTags": [
-        "naval",
-        "vessel"
+        "melee",
+        "shield"
       ],
       "strongAgainst": [
-        "transport",
-        "vessel"
+        "light"
       ],
       "weakAgainst": [
-        "fire_ship"
+        "ranged"
       ],
       "cost": [
         {
@@ -10294,23 +10283,24 @@
       "civilizationId": "china_info",
       "unique": true,
       "domain": "land",
-      "branch": "infantry",
-      "lane": "front",
-      "trainingBuildingId": "barracks_hall",
+      "branch": "special",
+      "lane": "support",
+      "trainingBuildingId": "war_academy",
       "populationRequired": 1,
       "combatPower": 129,
       "hp": 50,
       "attack": 33,
       "attackRange": 1,
       "roleTags": [
-        "melee",
-        "shield"
+        "light",
+        "support"
       ],
       "strongAgainst": [
-        "light"
+        "siege",
+        "support"
       ],
       "weakAgainst": [
-        "ranged"
+        "cavalry"
       ],
       "cost": [
         {
@@ -10340,20 +10330,21 @@
       "civilizationId": "usa_info",
       "unique": true,
       "domain": "land",
-      "branch": "ranged",
-      "lane": "rear",
-      "trainingBuildingId": "archery_range",
+      "branch": "special",
+      "lane": "support",
+      "trainingBuildingId": "war_academy",
       "populationRequired": 1,
       "combatPower": 130,
       "hp": 51,
       "attack": 33,
-      "attackRange": 9,
+      "attackRange": 1,
       "roleTags": [
-        "ranged",
-        "light"
+        "light",
+        "support"
       ],
       "strongAgainst": [
-        "infantry"
+        "siege",
+        "support"
       ],
       "weakAgainst": [
         "cavalry"
@@ -10386,7 +10377,7 @@
       "civilizationId": "eu",
       "unique": true,
       "domain": "land",
-      "branch": "anti_cavalry",
+      "branch": "infantry",
       "lane": "front",
       "trainingBuildingId": "barracks_hall",
       "populationRequired": 1,
@@ -10395,11 +10386,11 @@
       "attack": 34,
       "attackRange": 1,
       "roleTags": [
-        "spear",
-        "melee"
+        "melee",
+        "shield"
       ],
       "strongAgainst": [
-        "cavalry"
+        "light"
       ],
       "weakAgainst": [
         "ranged"
@@ -10432,24 +10423,24 @@
       "civilizationId": "india_info",
       "unique": true,
       "domain": "land",
-      "branch": "cavalry",
-      "lane": "flank",
-      "trainingBuildingId": "stable",
+      "branch": "special",
+      "lane": "support",
+      "trainingBuildingId": "war_academy",
       "populationRequired": 1,
       "combatPower": 132,
       "hp": 53,
       "attack": 34,
       "attackRange": 1,
       "roleTags": [
-        "cavalry",
-        "shock"
+        "light",
+        "support"
       ],
       "strongAgainst": [
-        "ranged",
-        "light"
+        "siege",
+        "support"
       ],
       "weakAgainst": [
-        "spear"
+        "cavalry"
       ],
       "cost": [
         {
@@ -10478,25 +10469,25 @@
       "eraId": "information",
       "civilizationId": "japan_info",
       "unique": true,
-      "domain": "land",
-      "branch": "siege",
-      "lane": "siege",
-      "trainingBuildingId": "siege_workshop",
-      "populationRequired": 2,
+      "domain": "naval",
+      "branch": "navy",
+      "lane": "naval",
+      "trainingBuildingId": "grand_shipyard",
+      "populationRequired": 3,
       "combatPower": 133,
       "hp": 54,
       "attack": 35,
-      "attackRange": 9,
+      "attackRange": 1,
       "roleTags": [
-        "siege",
-        "engine"
+        "naval",
+        "vessel"
       ],
       "strongAgainst": [
-        "building"
+        "transport",
+        "vessel"
       ],
       "weakAgainst": [
-        "light",
-        "cavalry"
+        "fire_ship"
       ],
       "cost": [
         {
@@ -10505,7 +10496,7 @@
         },
         {
           "resourceId": "stone",
-          "amount": 62
+          "amount": 29
         },
         {
           "resourceId": "food",
@@ -10572,25 +10563,25 @@
       "eraId": "information",
       "civilizationId": "brazil_info",
       "unique": true,
-      "domain": "naval",
-      "branch": "navy",
-      "lane": "naval",
-      "trainingBuildingId": "grand_shipyard",
-      "populationRequired": 3,
+      "domain": "land",
+      "branch": "special",
+      "lane": "support",
+      "trainingBuildingId": "war_academy",
+      "populationRequired": 1,
       "combatPower": 136,
       "hp": 56,
       "attack": 36,
       "attackRange": 1,
       "roleTags": [
-        "naval",
-        "vessel"
+        "light",
+        "support"
       ],
       "strongAgainst": [
-        "transport",
-        "vessel"
+        "siege",
+        "support"
       ],
       "weakAgainst": [
-        "fire_ship"
+        "cavalry"
       ],
       "cost": [
         {
@@ -10619,25 +10610,25 @@
       "eraId": "information",
       "civilizationId": "african_union",
       "unique": true,
-      "domain": "naval",
-      "branch": "navy",
-      "lane": "naval",
-      "trainingBuildingId": "grand_shipyard",
-      "populationRequired": 3,
+      "domain": "land",
+      "branch": "special",
+      "lane": "support",
+      "trainingBuildingId": "war_academy",
+      "populationRequired": 1,
       "combatPower": 137,
       "hp": 57,
       "attack": 36,
       "attackRange": 1,
       "roleTags": [
-        "naval",
-        "vessel"
+        "light",
+        "support"
       ],
       "strongAgainst": [
-        "transport",
-        "vessel"
+        "siege",
+        "support"
       ],
       "weakAgainst": [
-        "fire_ship"
+        "cavalry"
       ],
       "cost": [
         {

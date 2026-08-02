@@ -122,10 +122,6 @@ class Game {
     this.systems.luxury = new LuxurySystem();
     this.systems.strategy = new StrategySystem();
 
-    // 炼金系统
-
-    // 炼金法术系统（消耗品法术 + 成长树，炼金重定位后的主玩法）
-
     // 建筑科技树（永久被动加成 + T2 建筑解锁）
     this.systems.buildingTech = new BuildingTechSystem();
 
@@ -136,10 +132,10 @@ class Game {
     // 殖民地系统
     this.systems.colony = new ColonySystem();
 
-    // 占领系统 / 占有术
+    // 领土占领与边境拓展系统
     this.systems.territory = new TerritorySystem();
 
-    // 敌人 x2 扩张系统
+    // 敌对势力扩张系统
     this.systems.enemyExpansion = new EnemyExpansionSystem();
 
     // 固定 NPC 据点外交（不参与玩家式发展）
@@ -152,7 +148,7 @@ class Game {
     // 任务系统
     this.systems.quest = new QuestSystem();
 
-    // 3.05 初始化弹窗管理器（需要先有 tech / culture / alchemy 系统）
+    // 3.05 初始化弹窗管理器（需要先有科技、人文与战斗系统）
     this.popupManager = new PopupManager(gameLoop, this.systems.tech, this.systems.culture, this.systems.combat);
     this.popupManager.setBuildingTechSystem(this.systems.buildingTech);
 
@@ -179,7 +175,7 @@ class Game {
     this.systems.enemyExpansion.setBuildingSystem(this.systems.building);
     this.systems.enemyExpansion.setHeroSystem(this.systems.hero);
     this.systems.enemyExpansion.init();
-    // 炼金法术系统接线：双向注入 building/enemyExpansion（产出效率乘法 + 敌人减益）
+    // 历史策略接线：影响资源、建筑产出与敌军状态
     this.systems.strategy.setSystems({ resource: this.systems.resource });
     this.systems.building.setStrategySystem(this.systems.strategy);
     this.systems.enemyExpansion.setStrategySystem(this.systems.strategy);
@@ -351,7 +347,7 @@ class Game {
     // 5. 尝试加载存档
     const rawSave = options.forceNew ? null : await SaveManager.load();
     // 重设计后存档结构不兼容，旧存档(version<5)强制开新局
-    const saveData = (rawSave && rawSave.version >= 5) ? rawSave : null;
+    const saveData = (rawSave && rawSave.version === 7) ? rawSave : null;
     if (rawSave && !saveData) console.log('[Game] 旧存档不兼容重设计，开始新游戏');
     if (saveData) {
       this.restoreFromSave(saveData);
@@ -486,13 +482,10 @@ class Game {
     // 初始化殖民地系统
     this.systems.colony.initNew();
 
-    // 初始化炼金系统
-
-    // 初始化占领系统（占有术 + 建筑上限；在初始建筑放置后重建覆盖）
+    // 初始化占领系统（边境拓土 + 建筑上限；在初始建筑放置后重建覆盖）
     this.systems.territory.initNew();
     // 初始化敌人扩张系统
     this.systems.enemyExpansion.initNew();
-    // 初始化炼金法术系统
     // 初始化建筑科技树
     this.systems.buildingTech.initNew();
     // 初始化固定 NPC 据点关系

@@ -32,8 +32,8 @@ test('event system supports inspiration and fixed-outpost relation effects', () 
   assert.equal(typeof system._effectHandlers.modify_outpost_relation, 'function');
 });
 
-test('save schema is v7, accepts v5-v6 migration input, and persists historical state', () => {
-  assert.match(mainSource, /rawSave\.version\s*>=\s*5/);
+test('save schema is v7 and persists historical state after SaveManager migration', () => {
+  assert.match(mainSource, /rawSave\.version\s*===\s*7/);
   assert.match(mainSource, /version:\s*7/);
   for (const key of ['territory', 'enemyExpansion', 'buildingTech', 'diplomacy', 'heroes', 'era', 'luxuries', 'strategies']) {
     assert.match(mainSource, new RegExp(`${key}:\\s*this\\.systems\\.`));

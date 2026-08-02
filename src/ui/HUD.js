@@ -449,7 +449,6 @@ export class HUD {
     this._refreshSpeedBtn();
     this._refreshPauseBtn();
     this._refreshWeather();
-    this._checkAdvancedUnlocks();
     this._refreshDeferredEvents(store.getState('deferredEvents') || []);
     this._refreshTechStatus(store.getState('techCurrent'));
   }

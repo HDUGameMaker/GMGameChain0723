@@ -25,6 +25,16 @@ function unitEraOrder(unit) {
   if (!unit?.eraId) return 0;
   return window.__game?.configRegistry?.getHistoricalContent?.().eras?.find(era => era.id === unit.eraId)?.order ?? 0;
 }
+const BRANCH_ORDER = ['infantry', 'anti_cavalry', 'ranged', 'archer', 'cavalry', 'siege', 'artillery', 'special', 'air', 'navy'];
+const COUNTER_NAMES = {
+  infantry: '步兵', light_infantry: '轻步兵', heavy_infantry: '重步兵', light: '轻装单位', melee: '近战单位',
+  ranged: '远程部队', archer: '弓弩兵', spear: '长兵器部队', cavalry: '骑兵', mounted: '骑乘单位', armored: '装甲单位',
+  armor_piercing: '穿甲部队', siege: '攻城器械', artillery: '炮兵', building: '建筑', fortification: '防御工事', clustered: '密集阵形',
+  fire: '火攻', mobile: '机动部队', air: '空中单位', anti_air: '防空单位', gunpowder: '火器部队', support: '支援单位',
+  transport: '运输单位', vessel: '舰艇', naval_light: '轻型舰艇', naval_medium: '中型舰艇', naval_heavy: '重型舰艇',
+  naval_transport: '运输舰', naval_raider: '袭扰舰', naval_swarm: '舰群', fire_ship: '火攻舰'
+};
+const formatCounterTags = tags => (tags || []).map(tag => COUNTER_NAMES[tag] || tag).join(' / ') || '无';
 function _hasNavalFacility() {
   return (_building()?.buildings || []).some(building => {
     if (building.status !== 'active') return false;
@@ -57,7 +67,7 @@ export function renderTrainingPanel(data, body, pm) {
   const selectedEraId = data?.eraId || currentEra?.id;
   const units = allUnits
     .filter(unit => !unit.eraId || unit.eraId === selectedEraId)
-    .sort((a, b) => String(a.branch || '').localeCompare(String(b.branch || '')) || (a.combatPower || 0) - (b.combatPower || 0));
+    .sort((a, b) => (BRANCH_ORDER.indexOf(a.branch) - BRANCH_ORDER.indexOf(b.branch)) || (a.combatPower || 0) - (b.combatPower || 0));
   const resourceSys = _resource();
   const soldier = _soldierStats();
 
@@ -101,7 +111,11 @@ export function renderTrainingPanel(data, body, pm) {
   }
 
   let currentBranch = null;
-  const branchNames = { infantry: '近战步兵', ranged: '远程部队', anti_cavalry: '反骑兵', cavalry: '骑兵', siege: '工程与攻城', special: '特殊部队', navy: '海军' };
+  const branchNames = {
+    infantry: '近战步兵', ranged: '远程部队', archer: '远程部队',
+    anti_cavalry: '反骑兵', cavalry: '骑兵', siege: '工程与攻城', artillery: '工程与攻城',
+    special: '特殊部队', air: '特殊部队', navy: '海军', other: '辅助部队'
+  };
   units.forEach(u => {
     if ((u.branch || 'other') !== currentBranch) {
       currentBranch = u.branch || 'other';
@@ -123,7 +137,7 @@ export function renderTrainingPanel(data, body, pm) {
 
     const counters = document.createElement('div');
     counters.style.cssText = 'font-size:10px;color:#8fa5c6;margin:-4px 0 9px;';
-    counters.textContent = `克制：${(u.strongAgainst || []).join(' / ') || '无'}　受制：${(u.weakAgainst || []).join(' / ') || '无'}`;
+    counters.textContent = `克制：${formatCounterTags(u.strongAgainst)}　受制：${formatCounterTags(u.weakAgainst)}`;
     card.appendChild(counters);
 
     /* 未解锁提示 */

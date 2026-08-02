@@ -18,6 +18,7 @@ export class EraSystem {
   _content() { return configRegistry.getHistoricalContent(); }
   getEras() { return this._content().eras || []; }
   getCivilizations() { return this._content().civilizations || []; }
+  getUnit(unitId) { return (this._content().units || []).find(unit => unit.id === unitId) || null; }
 
   initNew() {
     this._currentEraIndex = 0;
