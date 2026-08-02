@@ -22,7 +22,7 @@ export class ExpeditionSystem {
     eventBus.on('tick', (data) => this.onTick(data));
   }
 
-  setSystems({ resource, item, building, population, alchemy, culture, time }) {
+  setSystems({ resource, item, building, population, alchemy, culture, time, hero }) {
     this._resourceSystem = resource;
     this._itemSystem = item;
     this._buildingSystem = building;
@@ -30,6 +30,7 @@ export class ExpeditionSystem {
     this._alchemySystem = alchemy || null;
     this._cultureSystem = culture || null;
     this._timeSystem = time || null;
+    this._heroSystem = hero || null;
   }
 
   /**
@@ -300,7 +301,7 @@ export class ExpeditionSystem {
 
       const actualYield = Math.floor(applyFlatAndMultiplier(
         baseAmount, resourceId, regionBonuses.yieldMultipliers, regionBonuses.yieldFlatBonuses
-      ));
+      ) * (this._heroSystem?.getBonuses?.().expeditionYieldMul || 1));
       if (actualYield <= 0) continue;
 
       const remaining = exp.resourceCapacity - poolTotal;

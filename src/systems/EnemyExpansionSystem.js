@@ -31,6 +31,7 @@ export class EnemyExpansionSystem {
   setTerritorySystem(ts) { this._territorySystem = ts; }
   setBuildingSystem(bs) { this._buildingSystem = bs; }
   setSpellSystem(ss) { this._spellSystem = ss; }
+  setHeroSystem(hs) { this._heroSystem = hs; }
 
   init() {
     this._config = configRegistry.get('enemyExpansion') || {};
@@ -63,7 +64,8 @@ export class EnemyExpansionSystem {
     const units = configRegistry.get('enemies')?.units || [];
     const unitIds = Object.entries(avail)
       .flatMap(([id, count]) => Array(Math.max(0, count || 0)).fill(id));
-    return getCounterAdjustedArmyPower(unitIds, units, opponents).adjustedPower;
+    const base = getCounterAdjustedArmyPower(unitIds, units, opponents).adjustedPower;
+    return Math.round(base * (this._heroSystem?.getBonuses?.().combatPowerMul || 1));
   }
 
   /** 从 availableUnits 移除总价 >= amount 的单位（便宜优先） */

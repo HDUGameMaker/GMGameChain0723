@@ -39,6 +39,7 @@ export class CultureSystem {
   setPopulationSystem(ps) { this._populationSystem = ps; }
   setTimeSystem(ts) { this._timeSystem = ts; }
   setTechSystem(ts) { this._techSystem = ts; }
+  setHeroSystem(hs) { this._heroSystem = hs; }
 
   init() {
     // tier 0 自动完成
@@ -141,7 +142,7 @@ export class CultureSystem {
     const c = this.get(this._currentResearch.id);
     if (!c) { this._currentResearch = null; this._updateStore(); return; }
     // 研究速度受政体/政策效果影响
-    const speedMul = this.getEffects().researchSpeedMul || 1;
+    const speedMul = (this.getEffects().researchSpeedMul || 1) * (this._heroSystem?.getBonuses?.().researchSpeedMul || 1);
     this._currentResearch.progressTicks += speedMul;
     if (this._currentResearch.progressTicks >= c.researchTime) {
       this._completeResearch(this._currentResearch.id);

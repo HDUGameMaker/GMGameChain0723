@@ -41,6 +41,7 @@ export class CombatSystem {
   setResourceSystem(rs) { this._resourceSystem = rs; }
   setCultureSystem(cs) { this._cultureSystem = cs; }
   setAlchemySystem(as) { this._alchemySystem = as; }
+  setHeroSystem(hs) { this._heroSystem = hs; }
 
   /**
    * 友方单位被移除（阵亡/解散）时，归还其占用的建造工人池名额。
@@ -146,10 +147,13 @@ export class CombatSystem {
     const alchemyDmgMul = isRanged
       ? (aCombat.rangedDamageMul || aCombat.archerDamageMul || 1)
       : (aCombat.meleeDamageMul || aCombat.warriorDamageMul || 1);
-    const dmgMul = cultureDmgMul * alchemyDmgMul;
+    const heroBonuses = this._heroSystem?.getBonuses?.() || {};
+    const domainMul = unitConfig.domain === 'naval' ? (heroBonuses.navalPowerMul || 1) : 1;
+    const siegeMul = unitConfig.roleTags?.includes('siege') ? (heroBonuses.siegePowerMul || 1) : 1;
+    const dmgMul = cultureDmgMul * alchemyDmgMul * (heroBonuses.combatPowerMul || 1) * domainMul * siegeMul;
     // HP 乘性：unitHpMul 为生命加成（正面），unitDamageTakenMul 不应进 HP（它是"受到伤害放大"负面效果，
     // 应在敌人攻击单位时应用，见 _onTick 敌人攻击单位处）
-    const hpMul = (eff?.unitHpMul || 1) * (aCombat.unitHpMul || 1);
+    const hpMul = (eff?.unitHpMul || 1) * (aCombat.unitHpMul || 1) * (heroBonuses.unitHpMul || 1);
 
     // 在建筑附近找空地
     for (let dx = -1; dx <= 1; dx++) {

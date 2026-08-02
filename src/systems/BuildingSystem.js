@@ -51,6 +51,7 @@ export class BuildingSystem {
   setSpellSystem(ss) { this._spellSystem = ss; }
   setBuildingTechSystem(bts) { this._buildingTechSystem = bts; }
   setTerritorySystem(ts) { this._territorySystem = ts; }
+  setHeroSystem(hs) { this._heroSystem = hs; }
 
   init() {
     this._mapConfig = configRegistry.get('map');
@@ -194,7 +195,7 @@ export class BuildingSystem {
     if (!check.valid) return false;
 
     // 消耗资源（应用人文政策建造成本倍率）
-    const buildCostMul = (this._cultureSystem ? (this._cultureSystem.getEffects().buildCostMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).buildCostMul || 1) : 1);
+    const buildCostMul = (this._cultureSystem ? (this._cultureSystem.getEffects().buildCostMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).buildCostMul || 1) : 1) * (this._heroSystem?.getBonuses?.().buildCostMul || 1);
     if (config.buildCost && config.buildCost.length > 0) {
       const scaledCost = config.buildCost.map(c => ({ ...c, amount: Math.max(1, Math.round(c.amount * buildCostMul)) }));
       if (!this._resourceSystem.consumeAll(scaledCost)) return false;
@@ -276,7 +277,7 @@ export class BuildingSystem {
     const targetConfig = configRegistry.getBuilding(check.targetId);
 
     // 消耗资源（升级也应用人文政策建造成本倍率）
-    const buildCostMul = (this._cultureSystem ? (this._cultureSystem.getEffects().buildCostMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).buildCostMul || 1) : 1);
+    const buildCostMul = (this._cultureSystem ? (this._cultureSystem.getEffects().buildCostMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).buildCostMul || 1) : 1) * (this._heroSystem?.getBonuses?.().buildCostMul || 1);
     const scaledUpgradeCost = check.cost.map(c => ({ ...c, amount: Math.max(1, Math.round(c.amount * buildCostMul)) }));
     this._resourceSystem.consumeAll(scaledUpgradeCost);
 
@@ -1228,7 +1229,8 @@ export class BuildingSystem {
     const btEffects = this._buildingTechSystem ? this._buildingTechSystem.getEffects() : null;
     const btGlobal = btEffects?.productionMul || 1;
     const btScoped = (resourceId && btEffects) ? (btEffects.resourceProductionMul?.[resourceId] || 1) : 1;
-    return globalCultureMul * scopedCultureMul * alchemyMul * spellMul * btGlobal * btScoped;
+    const heroMul = this._heroSystem?.getBonuses?.().productionMul || 1;
+    return globalCultureMul * scopedCultureMul * alchemyMul * spellMul * btGlobal * btScoped * heroMul;
   }
 
   getBuildingCount(buildingId) {
@@ -1372,8 +1374,9 @@ export class BuildingSystem {
         case 'building_tech':
           return this._buildingTechSystem ? this._buildingTechSystem.isNodeUnlocked(cond.nodeId) : false;
         case 'culture':
+          return this._cultureSystem ? this._cultureSystem.isResearched(cond.cultureId) : false;
         case 'doctrine':
-          return this._cultureSystem ? this._cultureSystem.getDoctrineResearched().includes(cond.doctrineId || cond.cultureId) : false;
+          return this._cultureSystem ? this._cultureSystem.getDoctrineResearched().includes(cond.doctrineId) : false;
         default:
           return false;
       }
@@ -1412,10 +1415,15 @@ export class BuildingSystem {
           const met = this._buildingTechSystem ? this._buildingTechSystem.isNodeUnlocked(cond.nodeId) : false;
           return { type: 'building_tech', desc: `建筑科技: ${name}`, met };
         }
-        case 'culture':
+        case 'culture': {
+          const cultures = configRegistry.get('culture') || [];
+          const culture = cultures.find(x => x.id === cond.cultureId);
+          const met = this._cultureSystem ? this._cultureSystem.isResearched(cond.cultureId) : false;
+          return { type: 'culture', desc: `文化: ${culture ? culture.name : cond.cultureId}`, met };
+        }
         case 'doctrine': {
           const doctrines = configRegistry.get('doctrines') || [];
-          const id = cond.doctrineId || cond.cultureId;
+          const id = cond.doctrineId;
           const d = doctrines.find(x => x.id === id);
           const met = this._cultureSystem ? this._cultureSystem.getDoctrineResearched().includes(id) : false;
           return { type: 'culture', desc: `文化: ${d ? d.name : id}`, met };

@@ -360,6 +360,7 @@ export class PopupManager {
       'tamed_pool': '驯养管理',
       'unit_research': '兵种研发',
       'outpost_diplomacy': data?.outpostName || '据点外交',
+      'tavern_heroes': '历史英雄酒馆',
       'tutorial_prompt': '新手教程',
       'quest_panel': '任务'
     };
@@ -467,6 +468,9 @@ export class PopupManager {
     });
     import('./panels/outpost-diplomacy-panel.js').then(m => {
       this.register('outpost_diplomacy', m.renderOutpostDiplomacyPanel);
+    });
+    import('./panels/tavern-heroes-panel.js').then(m => {
+      this.register('tavern_heroes', m.renderTavernHeroesPanel);
     });
   }
 }

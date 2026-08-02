@@ -29,6 +29,7 @@ import { EnemyExpansionSystem } from './systems/EnemyExpansionSystem.js';
 import { SpellSystem } from './systems/SpellSystem.js';
 import { BuildingTechSystem } from './systems/BuildingTechSystem.js';
 import { DiplomacySystem } from './systems/DiplomacySystem.js';
+import { HeroSystem } from './systems/HeroSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
@@ -141,6 +142,7 @@ class Game {
 
     // 固定 NPC 据点外交（不参与玩家式发展）
     this.systems.diplomacy = new DiplomacySystem();
+    this.systems.hero = new HeroSystem();
 
     // 音效系统
     this.systems.audio = new AudioSystem();
@@ -168,12 +170,14 @@ class Game {
     this.systems.building.setCultureSystem(this.systems.culture);
     this.systems.building.setAlchemySystem(this.systems.alchemy);
     this.systems.building.setTerritorySystem(this.systems.territory);
+    this.systems.building.setHeroSystem(this.systems.hero);
     this.systems.building.init();
     this.systems.territory.setBuildingSystem(this.systems.building);
     this.systems.territory.setResourceSystem(this.systems.resource);
     this.systems.territory.init();
     this.systems.enemyExpansion.setTerritorySystem(this.systems.territory);
     this.systems.enemyExpansion.setBuildingSystem(this.systems.building);
+    this.systems.enemyExpansion.setHeroSystem(this.systems.hero);
     this.systems.enemyExpansion.init();
     // 炼金法术系统接线：双向注入 building/enemyExpansion（产出效率乘法 + 敌人减益）
     this.systems.spell.setResourceSystem(this.systems.resource);
@@ -201,14 +205,22 @@ class Game {
     this.systems.tech.setBuildingSystem(this.systems.building);
     this.systems.tech.setItemSystem(this.systems.item);
     this.systems.tech.setCultureSystem(this.systems.culture);
+    this.systems.tech.setHeroSystem(this.systems.hero);
     this.systems.tech.init();
     this.systems.culture.setResourceSystem(this.systems.resource);
     this.systems.culture.setBuildingSystem(this.systems.building);
     this.systems.culture.setPopulationSystem(this.systems.population);
     this.systems.culture.setTimeSystem(this.systems.time);
     this.systems.culture.setTechSystem(this.systems.tech);
+    this.systems.culture.setHeroSystem(this.systems.hero);
     this.systems.culture.init();
     this.systems.diplomacy.setSystems({
+      resource: this.systems.resource,
+      culture: this.systems.culture,
+      hero: this.systems.hero
+    });
+    this.systems.hero.setSystems({
+      building: this.systems.building,
       resource: this.systems.resource,
       culture: this.systems.culture
     });
@@ -222,6 +234,7 @@ class Game {
     this.systems.combat.setResourceSystem(this.systems.resource);
     this.systems.combat.setCultureSystem(this.systems.culture);
     this.systems.combat.setAlchemySystem(this.systems.alchemy);
+    this.systems.combat.setHeroSystem(this.systems.hero);
     this.systems.combat.init();
 
     // 天气系统引用
@@ -250,7 +263,8 @@ class Game {
       population: this.systems.population,
       alchemy: this.systems.alchemy,
       culture: this.systems.culture,
-      time: this.systems.time
+      time: this.systems.time,
+      hero: this.systems.hero
     });
     this.systems.colony.setSystems({
       popupManager: this.popupManager,
@@ -484,6 +498,8 @@ class Game {
     this.systems.buildingTech.initNew();
     // 初始化固定 NPC 据点关系
     this.systems.diplomacy.initNew();
+    // 初始化酒馆英雄轮换
+    this.systems.hero.initNew();
 
     // 初始化事件标记状态（新游戏 = 无已移除标记）
     store.setState({ removedEventMarkers: [] });
@@ -546,6 +562,11 @@ class Game {
       this.systems.diplomacy.restoreState(saveData.diplomacy);
     } else {
       this.systems.diplomacy.initNew();
+    }
+    if (saveData.heroes) {
+      this.systems.hero.restoreState(saveData.heroes);
+    } else {
+      this.systems.hero.initNew();
     }
     if (saveData.weather) {
       this.systems.weather.restoreState(saveData.weather);
@@ -621,6 +642,7 @@ class Game {
       spell: this.systems.spell.getState(),
       buildingTech: this.systems.buildingTech.getState(),
       diplomacy: this.systems.diplomacy.getState(),
+      heroes: this.systems.hero.getState(),
       audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
       armies: store.getState('armies'),
