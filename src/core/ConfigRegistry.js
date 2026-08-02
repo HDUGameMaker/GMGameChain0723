@@ -119,6 +119,10 @@ class ConfigRegistry {
     if (Array.isArray(this._configs['eventsMap'])) {
       events.push(...this._configs['eventsMap']);
     }
+    if (Array.isArray(this._configs.eaIntegration?.events)) {
+      const ids = new Set(events.map(event => event.id));
+      events.push(...this._configs.eaIntegration.events.filter(event => !ids.has(event.id)));
+    }
     return events;
   }
 

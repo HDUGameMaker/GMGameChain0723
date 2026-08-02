@@ -254,7 +254,8 @@ class Game {
       building: this.systems.building,
       time: this.systems.time,
       gameLoop: gameLoop,
-      alchemy: this.systems.alchemy
+      alchemy: this.systems.alchemy,
+      diplomacy: this.systems.diplomacy
     });
     this.systems.expedition.setSystems({
       resource: this.systems.resource,
@@ -618,7 +619,7 @@ class Game {
   async saveGame() {
     if (this._resetting || this._gameOver) return false;
     const state = {
-      version: 5,
+      version: 6,
       timestamp: Date.now(),
       time: this.systems.time.getState(),
       population: this.systems.population.getState(),

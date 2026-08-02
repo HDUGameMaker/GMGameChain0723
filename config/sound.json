@@ -28,7 +28,7 @@
     {
       "id": "sfx_complete",
       "name": "默认建筑完成音效",
-      "file": "assets/audio/sfx/build_complete.wav",
+      "file": "assets/audio/sfx/build.wav",
       "volume": 0.9
     },
     {
@@ -46,13 +46,13 @@
     {
       "id": "sfx_demolish",
       "name": "默认拆除音效",
-      "file": "assets/audio/sfx/demolish.wav",
+      "file": "assets/audio/sfx/build.wav",
       "volume": 0.6
     },
     {
       "id": "sfx_resource",
       "name": "资源变化音效",
-      "file": "assets/audio/sfx/resource.wav",
+      "file": "assets/audio/sfx/click.wav",
       "volume": 0.4
     },
     {
@@ -64,31 +64,31 @@
     {
       "id": "sfx_torch_out",
       "name": "火把熄灭音效",
-      "file": "assets/audio/sfx/torch_out.wav",
+      "file": "assets/audio/sfx/torch_lit.wav",
       "volume": 0.6
     },
     {
       "id": "sfx_expedition_start",
       "name": "探险出发音效",
-      "file": "assets/audio/sfx/expedition_start.wav",
+      "file": "assets/audio/sfx/build.wav",
       "volume": 0.8
     },
     {
       "id": "sfx_expedition_complete",
       "name": "探险归来音效",
-      "file": "assets/audio/sfx/expedition_complete.wav",
+      "file": "assets/audio/sfx/upgrade.wav",
       "volume": 0.8
     },
     {
       "id": "sfx_synthesis",
       "name": "合成完成音效",
-      "file": "assets/audio/sfx/synthesis.wav",
+      "file": "assets/audio/sfx/upgrade.wav",
       "volume": 0.7
     },
     {
       "id": "sfx_period_change",
       "name": "时段切换音效",
-      "file": "assets/audio/sfx/period_change.wav",
+      "file": "assets/audio/sfx/click.wav",
       "volume": 0.5
     },
     {

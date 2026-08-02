@@ -67,8 +67,9 @@ export class CultureSystem {
   getUnlockedDiplomacyActions() {
     const result = new Set(['talk', 'gift', 'aid']);
     const unlocks = configRegistry.get('eaIntegration')?.cultureDiplomacyUnlocks || {};
+    const doctrines = new Set(this.getDoctrineResearched());
     for (const [cultureId, actionIds] of Object.entries(unlocks)) {
-      if (!this._researched.has(cultureId) && !this._activatedPolicies.has(cultureId) && this._government !== cultureId) continue;
+      if (!this._researched.has(cultureId) && !this._activatedPolicies.has(cultureId) && this._government !== cultureId && !doctrines.has(cultureId)) continue;
       for (const actionId of actionIds || []) result.add(actionId);
     }
     return [...result];

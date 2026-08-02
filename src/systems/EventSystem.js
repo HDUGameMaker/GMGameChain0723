@@ -33,6 +33,7 @@ export class EventSystem {
     this._timeSystem = null;
     this._gameLoop = null;
     this._alchemySystem = null;
+    this._diplomacySystem = null;
 
     // === 全局概率参数 ===
     this._eventTriggerChance = 0.25;  // 每 tick 触发事件的全局概率
@@ -61,13 +62,14 @@ export class EventSystem {
     eventBus.on('popupClosed', () => this._onPopupClosed());
   }
 
-  setSystems({ resource, item, building, time, gameLoop, alchemy }) {
+  setSystems({ resource, item, building, time, gameLoop, alchemy, diplomacy }) {
     this._resourceSystem = resource;
     this._itemSystem = item;
     this._buildingSystem = building;
     this._timeSystem = time;
     this._gameLoop = gameLoop;
     this._alchemySystem = alchemy || null;
+    this._diplomacySystem = diplomacy || null;
 
     // 从全局配置读取事件参数
     const globalConfig = configRegistry.get('global');
@@ -122,6 +124,14 @@ export class EventSystem {
       if (this._alchemySystem) {
         this._alchemySystem.addMaterial(params.materialId, params.amount || 1);
       }
+    });
+
+    this.registerEffect('add_inspiration', (params) => {
+      store.setState({ inspiration: Math.max(0, (store.getState('inspiration') || 0) + (Number(params.amount) || 0)) });
+    });
+
+    this.registerEffect('modify_outpost_relation', (params) => {
+      this._diplomacySystem?.adjustRelation(params.outpostId, params.amount, '随机事件');
     });
 
     this.registerEffect('consume_item', (params) => {

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -52,5 +52,12 @@ test('unit prerequisite technologies reference existing tech ids', () => {
   const units = load('config/enemies.json').units || [];
   for (const unit of units) {
     for (const techId of unit.prerequisiteTechs || []) assert.ok(techIds.has(techId), `${unit.id} missing tech ${techId}`);
+  }
+});
+
+test('configured audio files exist in the project', () => {
+  const sound = load('config/sound.json');
+  for (const entry of [...(sound.bgm || []), ...(sound.sfx || [])]) {
+    assert.ok(existsSync(resolve(root, entry.file)), `missing audio ${entry.file}`);
   }
 });
