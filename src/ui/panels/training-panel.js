@@ -16,10 +16,20 @@ function _saveAvail(av) {
   eventBus.emit('armyChanged', { reason: 'training', version });
 }
 function _techSystem() { return window.__game?.systems?.tech; }
+function _eraSystem() { return window.__game?.systems?.era; }
+function _populationSystem() { return window.__game?.systems?.population; }
+function _activeBuildingIds() {
+  return (_building()?.buildings || []).filter(building => building.status === 'active').map(building => building.buildingId);
+}
+function unitEraOrder(unit) {
+  if (!unit?.eraId) return 0;
+  return window.__game?.configRegistry?.getHistoricalContent?.().eras?.find(era => era.id === unit.eraId)?.order ?? 0;
+}
 function _hasNavalFacility() {
   return (_building()?.buildings || []).some(building => {
     if (building.status !== 'active') return false;
-    return window.__game?.configRegistry?.getBuilding(building.buildingId)?.tags?.includes('naval_facility');
+    const config = window.__game?.configRegistry?.getBuilding(building.buildingId);
+    return config?.tags?.some(tag => ['naval_facility', 'naval'].includes(tag)) || config?.uniqueFunction?.trainsBranches?.includes('navy');
   });
 }
 
@@ -41,7 +51,13 @@ export function renderTrainingPanel(data, body, pm) {
   body.innerHTML = '';
   body.style.cssText = 'padding:20px 24px;max-height:70vh;overflow-y:auto;';
 
-  const units = _cfg();
+  const allUnits = _cfg();
+  const eraSystem = _eraSystem();
+  const currentEra = eraSystem?.getCurrentEra?.();
+  const selectedEraId = data?.eraId || currentEra?.id;
+  const units = allUnits
+    .filter(unit => !unit.eraId || unit.eraId === selectedEraId)
+    .sort((a, b) => String(a.branch || '').localeCompare(String(b.branch || '')) || (a.combatPower || 0) - (b.combatPower || 0));
   const resourceSys = _resource();
   const soldier = _soldierStats();
 
@@ -55,6 +71,18 @@ export function renderTrainingPanel(data, body, pm) {
   researchBtn.addEventListener('click', () => pm.open('unit_research', {}));
   header.appendChild(researchBtn);
   body.appendChild(header);
+
+  const eraTabs = document.createElement('div');
+  eraTabs.style.cssText = 'display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:3px;';
+  for (const era of window.__game?.configRegistry?.getHistoricalContent?.().eras || []) {
+    const tab = document.createElement('button');
+    const locked = currentEra && era.order > currentEra.order;
+    tab.textContent = `${locked ? '🔒 ' : ''}${era.name}`;
+    tab.style.cssText = `white-space:nowrap;padding:6px 10px;border:1px solid ${era.id === selectedEraId ? '#a8874d' : '#444'};border-radius:6px;background:${era.id === selectedEraId ? '#514021' : '#272a31'};color:${locked ? '#777' : '#ddd'};cursor:pointer;`;
+    tab.addEventListener('click', () => renderTrainingPanel({ ...data, eraId: era.id }, body, pm));
+    eraTabs.appendChild(tab);
+  }
+  body.appendChild(eraTabs);
 
   /* 士兵上限信息栏 */
   const soldierBar = document.createElement('div');
@@ -72,7 +100,16 @@ export function renderTrainingPanel(data, body, pm) {
     return;
   }
 
+  let currentBranch = null;
+  const branchNames = { infantry: '近战步兵', ranged: '远程部队', anti_cavalry: '反骑兵', cavalry: '骑兵', siege: '工程与攻城', special: '特殊部队', navy: '海军' };
   units.forEach(u => {
+    if ((u.branch || 'other') !== currentBranch) {
+      currentBranch = u.branch || 'other';
+      const branchTitle = document.createElement('div');
+      branchTitle.textContent = branchNames[currentBranch] || currentBranch;
+      branchTitle.style.cssText = 'margin:14px 0 8px;font-size:14px;color:#d3b56f;font-weight:700;border-bottom:1px solid rgba(211,181,111,.25);padding-bottom:5px;';
+      body.appendChild(branchTitle);
+    }
     const card = document.createElement('div');
     card.style.cssText = 'background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.08);margin-bottom:10px;padding:14px;';
     if (!_isUnitUnlocked(u)) { card.style.opacity = '0.5'; }
@@ -127,7 +164,12 @@ export function renderTrainingPanel(data, body, pm) {
       soldierCount: soldier.count,
       soldierCap: soldier.cap,
       isUnlocked: _isUnitUnlocked(u),
-      hasNavalFacility: _hasNavalFacility()
+      hasNavalFacility: _hasNavalFacility(),
+      currentEraOrder: currentEra?.order ?? 0,
+      unitEraOrder: unitEraOrder(u),
+      activeBuildingIds: _activeBuildingIds(),
+      selectedCivilizationId: eraSystem?.getSelectedCivilization?.()?.id || null,
+      availablePopulation: _populationSystem()?.getAvailableWorkers?.() ?? 0
     });
     const canTrain = eligibility.ok;
 
@@ -144,7 +186,12 @@ export function renderTrainingPanel(data, body, pm) {
         soldierCount: s.count,
         soldierCap: s.cap,
         isUnlocked: _isUnitUnlocked(u),
-        hasNavalFacility: _hasNavalFacility()
+        hasNavalFacility: _hasNavalFacility(),
+        currentEraOrder: currentEra?.order ?? 0,
+        unitEraOrder: unitEraOrder(u),
+        activeBuildingIds: _activeBuildingIds(),
+        selectedCivilizationId: eraSystem?.getSelectedCivilization?.()?.id || null,
+        availablePopulation: _populationSystem()?.getAvailableWorkers?.() ?? 0
       });
       if (!current.ok) {
         pm.alert('训练失败：' + current.reasons.join('，'));

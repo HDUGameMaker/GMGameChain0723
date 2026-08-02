@@ -157,6 +157,15 @@ export class TechSystem {
     this._ensureBaseUnitResearch();
     const unit = this._getAllUnits().find(u => u.id === unitId);
     if (!unit) return { valid: false, reason: '兵种不存在' };
+    if (unit.eraId) {
+      const currentEra = this._eraSystem?.getCurrentEra?.();
+      const unitEra = configRegistry.getHistoricalContent().eras.find(era => era.id === unit.eraId);
+      if (unitEra && currentEra && unitEra.order > currentEra.order) return { valid: false, reason: '尚未进入该兵种所属时代' };
+    }
+    if (unit.civilizationId) {
+      const selectedId = this._eraSystem?.getSelectedCivilization?.()?.id;
+      if (selectedId !== unit.civilizationId) return { valid: false, reason: '该特色兵种属于其他文明' };
+    }
     if (this._unitResearch.has(unitId)) return { valid: false, reason: '已研发完成' };
     // 兵种链前置（prerequisiteTechs 来自已休眠的科技树，不再检查）
     const unitPrereqs = Array.isArray(unit.prerequisiteUnits) ? unit.prerequisiteUnits : [];

@@ -6,7 +6,7 @@
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
-import { getMatchupMultiplier, isDomainCompatible } from './CombatResolver.js';
+import { getMatchupMultiplier, isDomainCompatible, resolveBattleLines } from './CombatResolver.js';
 
 export class CombatSystem {
   constructor() {
@@ -122,6 +122,11 @@ export class CombatSystem {
   getAllUnits() { return [...this.units]; }
   getEnemyAt(gridX, gridY) { return this.enemies.find(e => e.gridX === gridX && e.gridY === gridY) || null; }
   getUnitAt(gridX, gridY) { return this.units.find(u => u.gridX === gridX && u.gridY === gridY) || null; }
+
+  previewBattleLines(attackerIds, defenderIds, context = {}) {
+    const units = configRegistry.get('enemies')?.units || [];
+    return resolveBattleLines(attackerIds, defenderIds, units, context);
+  }
 
   /** 建筑生命值 = (长+1)*(宽+1) */
   _getBuildingHp(buildingId) {

@@ -162,7 +162,9 @@ export class PopulationSystem {
    * 获取可用工人池（扣除建筑分配 + 建造占用 + 探险占用）
    */
   getAvailableWorkers() {
-    return Math.max(0, this.current - this.getAssignedWorkers() - this._constructionWorkers - this._expeditionWorkers);
+    const combatSystem = typeof window !== 'undefined' ? window.__game?.systems?.combat : null;
+    const military = this.getMilitaryPopulation(combatSystem);
+    return Math.max(0, this.current - this.getAssignedWorkers() - this._constructionWorkers - this._expeditionWorkers - military);
   }
 
   /**
