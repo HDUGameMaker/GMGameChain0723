@@ -3635,6 +3635,13 @@
       "effects": {
         "productionMul": 1.01
       },
+      "description": "石器加工把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "石器加工代表远古时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "ancient_infantry_1"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_ancient_1.svg"
     },
     {
@@ -3651,6 +3658,13 @@
       ],
       "effects": {
         "productionMul": 1.02
+      },
+      "description": "定居农业把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "定居农业代表远古时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "ancient_ranged_2"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_ancient_2.svg"
     },
@@ -3669,6 +3683,13 @@
       "effects": {
         "productionMul": 1.03
       },
+      "description": "制陶工艺把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "制陶工艺代表远古时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "ancient_anti_cavalry_3"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_ancient_3.svg"
     },
     {
@@ -3685,6 +3706,13 @@
       ],
       "effects": {
         "productionMul": 1.04
+      },
+      "description": "早期冶金把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "早期冶金代表远古时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "ancient_cavalry_4"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_ancient_4.svg"
     },
@@ -3703,6 +3731,13 @@
       "effects": {
         "productionMul": 1.05
       },
+      "description": "轮轴运输把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "轮轴运输代表远古时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "ancient_siege_5"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_ancient_5.svg"
     },
     {
@@ -3719,6 +3754,13 @@
       ],
       "effects": {
         "productionMul": 1.06
+      },
+      "description": "航河木舟把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "航河木舟代表远古时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "ancient_special_6"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_ancient_6.svg"
     },
@@ -3737,6 +3779,13 @@
       "effects": {
         "productionMul": 1.07
       },
+      "description": "城墙营造把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "城墙营造代表远古时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "ancient_navy_7"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_ancient_7.svg"
     },
     {
@@ -3754,6 +3803,13 @@
       "effects": {
         "productionMul": 1.08
       },
+      "description": "文字记事把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "文字记事代表远古时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "ancient_navy_8"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_ancient_8.svg"
     },
     {
@@ -3768,6 +3824,13 @@
       "prerequisites": [],
       "effects": {
         "productionMul": 1.01
+      },
+      "description": "铁器锻造把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "铁器锻造代表古典时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "classical_infantry_1"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_classical_1.svg"
     },
@@ -3786,6 +3849,13 @@
       "effects": {
         "productionMul": 1.02
       },
+      "description": "道路工程把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "道路工程代表古典时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "classical_ranged_2"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_classical_2.svg"
     },
     {
@@ -3802,6 +3872,13 @@
       ],
       "effects": {
         "productionMul": 1.03
+      },
+      "description": "复合弓把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "复合弓代表古典时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "classical_anti_cavalry_3"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_classical_3.svg"
     },
@@ -3820,6 +3897,13 @@
       "effects": {
         "productionMul": 1.04
       },
+      "description": "水利机械把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "水利机械代表古典时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "classical_cavalry_4"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_classical_4.svg"
     },
     {
@@ -3836,6 +3920,13 @@
       ],
       "effects": {
         "productionMul": 1.05
+      },
+      "description": "攻城机械把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "攻城机械代表古典时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "classical_siege_5"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_classical_5.svg"
     },
@@ -3854,6 +3945,13 @@
       "effects": {
         "productionMul": 1.06
       },
+      "description": "远洋帆装把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "远洋帆装代表古典时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "classical_special_6"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_classical_6.svg"
     },
     {
@@ -3870,6 +3968,13 @@
       ],
       "effects": {
         "productionMul": 1.07
+      },
+      "description": "医学体系把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "医学体系代表古典时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "classical_navy_7"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_classical_7.svg"
     },
@@ -3888,6 +3993,13 @@
       "effects": {
         "productionMul": 1.08
       },
+      "description": "几何测量把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "几何测量代表古典时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "classical_navy_8"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_classical_8.svg"
     },
     {
@@ -3902,6 +4014,13 @@
       "prerequisites": [],
       "effects": {
         "productionMul": 1.01
+      },
+      "description": "重犁农业把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "重犁农业代表中世纪社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "medieval_infantry_1"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_medieval_1.svg"
     },
@@ -3920,6 +4039,13 @@
       "effects": {
         "productionMul": 1.02
       },
+      "description": "马镫技术把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "马镫技术代表中世纪社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "medieval_ranged_2"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_medieval_2.svg"
     },
     {
@@ -3936,6 +4062,13 @@
       ],
       "effects": {
         "productionMul": 1.03
+      },
+      "description": "堡垒工程把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "堡垒工程代表中世纪社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "medieval_anti_cavalry_3"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_medieval_3.svg"
     },
@@ -3954,6 +4087,13 @@
       "effects": {
         "productionMul": 1.04
       },
+      "description": "弩机改良把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "弩机改良代表中世纪社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "medieval_cavalry_4"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_medieval_4.svg"
     },
     {
@@ -3970,6 +4110,13 @@
       ],
       "effects": {
         "productionMul": 1.05
+      },
+      "description": "火药雏形把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "火药雏形代表中世纪社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "medieval_siege_5"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_medieval_5.svg"
     },
@@ -3988,6 +4135,13 @@
       "effects": {
         "productionMul": 1.06
       },
+      "description": "远洋罗盘把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "远洋罗盘代表中世纪社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "medieval_special_6"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_medieval_6.svg"
     },
     {
@@ -4004,6 +4158,13 @@
       ],
       "effects": {
         "productionMul": 1.07
+      },
+      "description": "造纸印刷把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "造纸印刷代表中世纪社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "medieval_navy_7"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_medieval_7.svg"
     },
@@ -4022,6 +4183,13 @@
       "effects": {
         "productionMul": 1.08
       },
+      "description": "大学制度把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "大学制度代表中世纪社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "medieval_navy_8"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_medieval_8.svg"
     },
     {
@@ -4036,6 +4204,13 @@
       "prerequisites": [],
       "effects": {
         "productionMul": 1.01
+      },
+      "description": "活字印刷把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "活字印刷代表探索时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "exploration_infantry_1"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_exploration_1.svg"
     },
@@ -4054,6 +4229,13 @@
       "effects": {
         "productionMul": 1.02
       },
+      "description": "海图测绘把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "海图测绘代表探索时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "exploration_ranged_2"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_exploration_2.svg"
     },
     {
@@ -4070,6 +4252,13 @@
       ],
       "effects": {
         "productionMul": 1.03
+      },
+      "description": "远洋船体把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "远洋船体代表探索时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "exploration_anti_cavalry_3"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_exploration_3.svg"
     },
@@ -4088,6 +4277,13 @@
       "effects": {
         "productionMul": 1.04
       },
+      "description": "火绳枪械把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "火绳枪械代表探索时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "exploration_cavalry_4"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_exploration_4.svg"
     },
     {
@@ -4104,6 +4300,13 @@
       ],
       "effects": {
         "productionMul": 1.05
+      },
+      "description": "铸造火炮把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "铸造火炮代表探索时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "exploration_siege_5"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_exploration_5.svg"
     },
@@ -4122,6 +4325,13 @@
       "effects": {
         "productionMul": 1.06
       },
+      "description": "金融会计把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "金融会计代表探索时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "exploration_special_6"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_exploration_6.svg"
     },
     {
@@ -4138,6 +4348,13 @@
       ],
       "effects": {
         "productionMul": 1.07
+      },
+      "description": "科学方法把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "科学方法代表探索时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "exploration_navy_7"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_exploration_7.svg"
     },
@@ -4156,6 +4373,13 @@
       "effects": {
         "productionMul": 1.08
       },
+      "description": "殖民补给把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "殖民补给代表探索时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "exploration_navy_8"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_exploration_8.svg"
     },
     {
@@ -4170,6 +4394,13 @@
       "prerequisites": [],
       "effects": {
         "productionMul": 1.01
+      },
+      "description": "蒸汽动力把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "蒸汽动力代表工业时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "industrial_infantry_1"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_industrial_1.svg"
     },
@@ -4188,6 +4419,13 @@
       "effects": {
         "productionMul": 1.02
       },
+      "description": "机械纺织把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "机械纺织代表工业时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "industrial_ranged_2"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_industrial_2.svg"
     },
     {
@@ -4204,6 +4442,13 @@
       ],
       "effects": {
         "productionMul": 1.03
+      },
+      "description": "铁路运输把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "铁路运输代表工业时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "industrial_anti_cavalry_3"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_industrial_3.svg"
     },
@@ -4222,6 +4467,13 @@
       "effects": {
         "productionMul": 1.04
       },
+      "description": "电报通信把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "电报通信代表工业时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "industrial_cavalry_4"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_industrial_4.svg"
     },
     {
@@ -4238,6 +4490,13 @@
       ],
       "effects": {
         "productionMul": 1.05
+      },
+      "description": "内燃机把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "内燃机代表工业时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "industrial_siege_5"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_industrial_5.svg"
     },
@@ -4256,6 +4515,13 @@
       "effects": {
         "productionMul": 1.06
       },
+      "description": "现代化学把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "现代化学代表工业时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "industrial_special_6"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_industrial_6.svg"
     },
     {
@@ -4272,6 +4538,13 @@
       ],
       "effects": {
         "productionMul": 1.07
+      },
+      "description": "钢铁工业把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "钢铁工业代表工业时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "industrial_navy_7"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_industrial_7.svg"
     },
@@ -4290,6 +4563,13 @@
       "effects": {
         "productionMul": 1.08
       },
+      "description": "流水生产把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "流水生产代表工业时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "industrial_navy_8"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_industrial_8.svg"
     },
     {
@@ -4304,6 +4584,13 @@
       "prerequisites": [],
       "effects": {
         "productionMul": 1.01
+      },
+      "description": "无线通信把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "无线通信代表现代时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "modern_infantry_1"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_modern_1.svg"
     },
@@ -4322,6 +4609,13 @@
       "effects": {
         "productionMul": 1.02
       },
+      "description": "装甲车辆把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "装甲车辆代表现代时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "modern_ranged_2"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_modern_2.svg"
     },
     {
@@ -4338,6 +4632,13 @@
       ],
       "effects": {
         "productionMul": 1.03
+      },
+      "description": "航空工程把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "航空工程代表现代时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "modern_anti_cavalry_3"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_modern_3.svg"
     },
@@ -4356,6 +4657,13 @@
       "effects": {
         "productionMul": 1.04
       },
+      "description": "雷达探测把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "雷达探测代表现代时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "modern_cavalry_4"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_modern_4.svg"
     },
     {
@@ -4372,6 +4680,13 @@
       ],
       "effects": {
         "productionMul": 1.05
+      },
+      "description": "抗生素把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "抗生素代表现代时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "modern_siege_5"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_modern_5.svg"
     },
@@ -4390,6 +4705,13 @@
       "effects": {
         "productionMul": 1.06
       },
+      "description": "喷气动力把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "喷气动力代表现代时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "modern_special_6"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_modern_6.svg"
     },
     {
@@ -4406,6 +4728,13 @@
       ],
       "effects": {
         "productionMul": 1.07
+      },
+      "description": "火箭技术把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "火箭技术代表现代时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "modern_navy_7"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_modern_7.svg"
     },
@@ -4424,6 +4753,13 @@
       "effects": {
         "productionMul": 1.08
       },
+      "description": "电子计算把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "电子计算代表现代时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "modern_navy_8"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_modern_8.svg"
     },
     {
@@ -4438,6 +4774,13 @@
       "prerequisites": [],
       "effects": {
         "productionMul": 1.01
+      },
+      "description": "卫星网络把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "卫星网络代表信息时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "information_infantry_1"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_information_1.svg"
     },
@@ -4456,6 +4799,13 @@
       "effects": {
         "productionMul": 1.02
       },
+      "description": "精密制导把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "精密制导代表信息时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "information_ranged_2"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_information_2.svg"
     },
     {
@@ -4472,6 +4822,13 @@
       ],
       "effects": {
         "productionMul": 1.03
+      },
+      "description": "数字通信把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "数字通信代表信息时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "information_anti_cavalry_3"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_information_3.svg"
     },
@@ -4490,6 +4847,13 @@
       "effects": {
         "productionMul": 1.04
       },
+      "description": "机器人生产把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "机器人生产代表信息时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "information_cavalry_4"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_information_4.svg"
     },
     {
@@ -4506,6 +4870,13 @@
       ],
       "effects": {
         "productionMul": 1.05
+      },
+      "description": "新能源电网把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "新能源电网代表信息时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "information_siege_5"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_information_5.svg"
     },
@@ -4524,6 +4895,13 @@
       "effects": {
         "productionMul": 1.06
       },
+      "description": "生物工程把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "生物工程代表信息时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "information_special_6"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_information_6.svg"
     },
     {
@@ -4541,6 +4919,13 @@
       "effects": {
         "productionMul": 1.07
       },
+      "description": "人工智能把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "人工智能代表信息时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "information_navy_7"
+        ]
+      },
       "icon": "assets/historical-icons/techs/tech_information_7.svg"
     },
     {
@@ -4557,6 +4942,13 @@
       ],
       "effects": {
         "productionMul": 1.08
+      },
+      "description": "太空工程把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
+      "history": "太空工程代表信息时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "units": [
+          "information_navy_8"
+        ]
       },
       "icon": "assets/historical-icons/techs/tech_information_8.svg"
     }
@@ -4576,6 +4968,13 @@
         "satisfactionBonus": 1,
         "diplomacyMul": 1
       },
+      "description": "氏族议事建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "氏族议事代表远古时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "negotiate"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_ancient_1.svg"
     },
     {
@@ -4593,6 +4992,13 @@
       "effects": {
         "satisfactionBonus": 0,
         "diplomacyMul": 1.005
+      },
+      "description": "祖先传统建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "祖先传统代表远古时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "trade"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_ancient_2.svg"
     },
@@ -4612,6 +5018,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.01
       },
+      "description": "公共祭仪建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "公共祭仪代表远古时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "ceasefire"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_ancient_3.svg"
     },
     {
@@ -4629,6 +5042,13 @@
       "effects": {
         "satisfactionBonus": 1,
         "diplomacyMul": 1.015
+      },
+      "description": "习惯法建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "习惯法代表远古时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "open_borders"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_ancient_4.svg"
     },
@@ -4648,6 +5068,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.02
       },
+      "description": "劳役组织建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "劳役组织代表远古时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "non_aggression"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_ancient_5.svg"
     },
     {
@@ -4665,6 +5092,13 @@
       "effects": {
         "satisfactionBonus": 0,
         "diplomacyMul": 1.025
+      },
+      "description": "物物交换建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "物物交换代表远古时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "joint_patrol"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_ancient_6.svg"
     },
@@ -4684,6 +5118,13 @@
         "satisfactionBonus": 1,
         "diplomacyMul": 1.03
       },
+      "description": "部落联盟建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "部落联盟代表远古时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "alliance"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_ancient_7.svg"
     },
     {
@@ -4702,6 +5143,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.035
       },
+      "description": "早期官僚建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "早期官僚代表远古时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "alliance"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_ancient_8.svg"
     },
     {
@@ -4717,6 +5165,13 @@
       "effects": {
         "satisfactionBonus": 1,
         "diplomacyMul": 1
+      },
+      "description": "成文法典建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "成文法典代表古典时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "negotiate"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_classical_1.svg"
     },
@@ -4736,6 +5191,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.005
       },
+      "description": "公民大会建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "公民大会代表古典时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "trade"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_classical_2.svg"
     },
     {
@@ -4753,6 +5215,13 @@
       "effects": {
         "satisfactionBonus": 0,
         "diplomacyMul": 1.01
+      },
+      "description": "郡县行政建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "郡县行政代表古典时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "ceasefire"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_classical_3.svg"
     },
@@ -4772,6 +5241,13 @@
         "satisfactionBonus": 1,
         "diplomacyMul": 1.015
       },
+      "description": "行省治理建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "行省治理代表古典时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "open_borders"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_classical_4.svg"
     },
     {
@@ -4789,6 +5265,13 @@
       "effects": {
         "satisfactionBonus": 0,
         "diplomacyMul": 1.02
+      },
+      "description": "职业军队建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "职业军队代表古典时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "non_aggression"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_classical_5.svg"
     },
@@ -4808,6 +5291,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.025
       },
+      "description": "古典教育建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "古典教育代表古典时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "joint_patrol"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_classical_6.svg"
     },
     {
@@ -4825,6 +5315,13 @@
       "effects": {
         "satisfactionBonus": 1,
         "diplomacyMul": 1.03
+      },
+      "description": "帝国驿传建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "帝国驿传代表古典时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "alliance"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_classical_7.svg"
     },
@@ -4844,6 +5341,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.035
       },
+      "description": "多神宽容建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "多神宽容代表古典时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "alliance"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_classical_8.svg"
     },
     {
@@ -4859,6 +5363,13 @@
       "effects": {
         "satisfactionBonus": 1,
         "diplomacyMul": 1
+      },
+      "description": "封建契约建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "封建契约代表中世纪社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "negotiate"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_medieval_1.svg"
     },
@@ -4878,6 +5389,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.005
       },
+      "description": "行会制度建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "行会制度代表中世纪社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "trade"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_medieval_2.svg"
     },
     {
@@ -4895,6 +5413,13 @@
       "effects": {
         "satisfactionBonus": 0,
         "diplomacyMul": 1.01
+      },
+      "description": "骑士精神建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "骑士精神代表中世纪社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "ceasefire"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_medieval_3.svg"
     },
@@ -4914,6 +5439,13 @@
         "satisfactionBonus": 1,
         "diplomacyMul": 1.015
       },
+      "description": "宗教法庭建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "宗教法庭代表中世纪社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "open_borders"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_medieval_4.svg"
     },
     {
@@ -4931,6 +5463,13 @@
       "effects": {
         "satisfactionBonus": 0,
         "diplomacyMul": 1.02
+      },
+      "description": "城市自治建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "城市自治代表中世纪社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "non_aggression"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_medieval_5.svg"
     },
@@ -4950,6 +5489,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.025
       },
+      "description": "科举官僚建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "科举官僚代表中世纪社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "joint_patrol"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_medieval_6.svg"
     },
     {
@@ -4967,6 +5513,13 @@
       "effects": {
         "satisfactionBonus": 1,
         "diplomacyMul": 1.03
+      },
+      "description": "驿站体系建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "驿站体系代表中世纪社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "alliance"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_medieval_7.svg"
     },
@@ -4986,6 +5539,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.035
       },
+      "description": "海贸特许建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "海贸特许代表中世纪社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "alliance"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_medieval_8.svg"
     },
     {
@@ -5001,6 +5561,13 @@
       "effects": {
         "satisfactionBonus": 1,
         "diplomacyMul": 1
+      },
+      "description": "中央集权建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "中央集权代表探索时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "negotiate"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_exploration_1.svg"
     },
@@ -5020,6 +5587,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.005
       },
+      "description": "常备军制建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "常备军制代表探索时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "trade"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_exploration_2.svg"
     },
     {
@@ -5037,6 +5611,13 @@
       "effects": {
         "satisfactionBonus": 0,
         "diplomacyMul": 1.01
+      },
+      "description": "重商主义建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "重商主义代表探索时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "ceasefire"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_exploration_3.svg"
     },
@@ -5056,6 +5637,13 @@
         "satisfactionBonus": 1,
         "diplomacyMul": 1.015
       },
+      "description": "海军法典建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "海军法典代表探索时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "open_borders"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_exploration_4.svg"
     },
     {
@@ -5073,6 +5661,13 @@
       "effects": {
         "satisfactionBonus": 0,
         "diplomacyMul": 1.02
+      },
+      "description": "殖民公司建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "殖民公司代表探索时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "non_aggression"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_exploration_5.svg"
     },
@@ -5092,6 +5687,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.025
       },
+      "description": "启蒙沙龙建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "启蒙沙龙代表探索时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "joint_patrol"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_exploration_6.svg"
     },
     {
@@ -5109,6 +5711,13 @@
       "effects": {
         "satisfactionBonus": 1,
         "diplomacyMul": 1.03
+      },
+      "description": "外交使团建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "外交使团代表探索时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "alliance"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_exploration_7.svg"
     },
@@ -5128,6 +5737,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.035
       },
+      "description": "测绘档案建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "测绘档案代表探索时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "alliance"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_exploration_8.svg"
     },
     {
@@ -5143,6 +5759,13 @@
       "effects": {
         "satisfactionBonus": 1,
         "diplomacyMul": 1
+      },
+      "description": "国民教育建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "国民教育代表工业时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "negotiate"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_industrial_1.svg"
     },
@@ -5162,6 +5785,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.005
       },
+      "description": "现代税制建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "现代税制代表工业时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "trade"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_industrial_2.svg"
     },
     {
@@ -5179,6 +5809,13 @@
       "effects": {
         "satisfactionBonus": 0,
         "diplomacyMul": 1.01
+      },
+      "description": "民族国家建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "民族国家代表工业时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "ceasefire"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_industrial_3.svg"
     },
@@ -5198,6 +5835,13 @@
         "satisfactionBonus": 1,
         "diplomacyMul": 1.015
       },
+      "description": "职业警察建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "职业警察代表工业时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "open_borders"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_industrial_4.svg"
     },
     {
@@ -5215,6 +5859,13 @@
       "effects": {
         "satisfactionBonus": 0,
         "diplomacyMul": 1.02
+      },
+      "description": "工厂法案建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "工厂法案代表工业时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "non_aggression"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_industrial_5.svg"
     },
@@ -5234,6 +5885,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.025
       },
+      "description": "普遍兵役建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "普遍兵役代表工业时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "joint_patrol"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_industrial_6.svg"
     },
     {
@@ -5251,6 +5909,13 @@
       "effects": {
         "satisfactionBonus": 1,
         "diplomacyMul": 1.03
+      },
+      "description": "公共卫生建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "公共卫生代表工业时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "alliance"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_industrial_7.svg"
     },
@@ -5270,6 +5935,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.035
       },
+      "description": "代议制度建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "代议制度代表工业时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "alliance"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_industrial_8.svg"
     },
     {
@@ -5285,6 +5957,13 @@
       "effects": {
         "satisfactionBonus": 1,
         "diplomacyMul": 1
+      },
+      "description": "社会保障建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "社会保障代表现代时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "negotiate"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_modern_1.svg"
     },
@@ -5304,6 +5983,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.005
       },
+      "description": "大众传媒建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "大众传媒代表现代时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "trade"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_modern_2.svg"
     },
     {
@@ -5321,6 +6007,13 @@
       "effects": {
         "satisfactionBonus": 0,
         "diplomacyMul": 1.01
+      },
+      "description": "国家动员建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "国家动员代表现代时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "ceasefire"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_modern_3.svg"
     },
@@ -5340,6 +6033,13 @@
         "satisfactionBonus": 1,
         "diplomacyMul": 1.015
       },
+      "description": "国际组织建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "国际组织代表现代时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "open_borders"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_modern_4.svg"
     },
     {
@@ -5357,6 +6057,13 @@
       "effects": {
         "satisfactionBonus": 0,
         "diplomacyMul": 1.02
+      },
+      "description": "现代大学建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "现代大学代表现代时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "non_aggression"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_modern_5.svg"
     },
@@ -5376,6 +6083,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.025
       },
+      "description": "职业外交建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "职业外交代表现代时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "joint_patrol"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_modern_6.svg"
     },
     {
@@ -5393,6 +6107,13 @@
       "effects": {
         "satisfactionBonus": 1,
         "diplomacyMul": 1.03
+      },
+      "description": "劳动权利建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "劳动权利代表现代时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "alliance"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_modern_7.svg"
     },
@@ -5412,6 +6133,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.035
       },
+      "description": "文化遗产建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "文化遗产代表现代时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "alliance"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_modern_8.svg"
     },
     {
@@ -5427,6 +6155,13 @@
       "effects": {
         "satisfactionBonus": 1,
         "diplomacyMul": 1
+      },
+      "description": "数字治理建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "数字治理代表信息时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "negotiate"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_information_1.svg"
     },
@@ -5446,6 +6181,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.005
       },
+      "description": "全球供应链建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "全球供应链代表信息时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "trade"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_information_2.svg"
     },
     {
@@ -5463,6 +6205,13 @@
       "effects": {
         "satisfactionBonus": 0,
         "diplomacyMul": 1.01
+      },
+      "description": "知识经济建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "知识经济代表信息时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "ceasefire"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_information_3.svg"
     },
@@ -5482,6 +6231,13 @@
         "satisfactionBonus": 1,
         "diplomacyMul": 1.015
       },
+      "description": "环境公约建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "环境公约代表信息时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "open_borders"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_information_4.svg"
     },
     {
@@ -5499,6 +6255,13 @@
       "effects": {
         "satisfactionBonus": 0,
         "diplomacyMul": 1.02
+      },
+      "description": "公共数据建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "公共数据代表信息时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "non_aggression"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_information_5.svg"
     },
@@ -5518,6 +6281,13 @@
         "satisfactionBonus": 0,
         "diplomacyMul": 1.025
       },
+      "description": "跨国科研建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "跨国科研代表信息时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "joint_patrol"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_information_6.svg"
     },
     {
@@ -5536,6 +6306,13 @@
         "satisfactionBonus": 1,
         "diplomacyMul": 1.03
       },
+      "description": "危机管理建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "危机管理代表信息时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "alliance"
+        ]
+      },
       "icon": "assets/historical-icons/civics/civic_information_7.svg"
     },
     {
@@ -5553,6 +6330,13 @@
       "effects": {
         "satisfactionBonus": 0,
         "diplomacyMul": 1.035
+      },
+      "description": "多边联盟建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
+      "history": "多边联盟代表信息时代社会在技术、组织与知识传承上的重要积累。",
+      "unlocks": {
+        "diplomacyActions": [
+          "alliance"
+        ]
       },
       "icon": "assets/historical-icons/civics/civic_information_8.svg"
     }

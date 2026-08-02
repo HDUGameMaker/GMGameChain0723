@@ -10,14 +10,17 @@ function renderTree({ body, pm, system, kind, eraId }) {
   const researched = new Set(kind === 'tech' ? system.getResearched() : system.getResearched());
   const current = system.getCurrentResearch();
   const points = kind === 'tech' ? system.getSciencePoints() : system.getCivicPoints();
+  const income = system.getPointIncomeBreakdown?.() || { passive: 0, workforce: 0, total: 0 };
   const pointName = kind === 'tech' ? '科技点' : '人文点';
   const currentOrder = currentEra?.order || 0;
+  const formatEffects = (effects = {}) => Object.entries(effects).map(([key, value]) => `${key} ${value}`).join(' · ');
+  const formatUnlocks = (unlocks = {}) => Object.values(unlocks).flat().join('、');
 
   const container = document.createElement('div');
   container.style.cssText = 'display:flex;flex-direction:column;gap:12px;color:#ece8dc;min-width:min(760px,85vw);';
   const top = document.createElement('div');
   top.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(151,120,59,.12);border:1px solid rgba(194,160,91,.35);border-radius:10px;';
-  top.innerHTML = `<div><b style="color:#e4c276">${kind === 'tech' ? '科技树' : '人文树'} · ${selectedEra.name}</b><div style="font-size:11px;color:#999">${selectedEra.timeline}</div></div><div style="font-size:16px">${pointName}：<b>${Math.floor(points)}</b></div>`;
+  top.innerHTML = `<div><b style="color:#e4c276">${kind === 'tech' ? '科技树' : '人文树'} · ${selectedEra.name}</b><div style="font-size:11px;color:#999">${selectedEra.timeline}</div></div><div style="text-align:right"><div style="font-size:16px">${pointName}：<b>${points.toFixed(1)}</b></div><div style="font-size:10px;color:#8fc59c">+${income.total.toFixed(1)}/tick · 聚落 ${income.passive.toFixed(1)} · 岗位 ${income.workforce.toFixed(1)}</div></div>`;
   container.appendChild(top);
 
   const tabs = document.createElement('div');
@@ -40,11 +43,15 @@ function renderTree({ body, pm, system, kind, eraId }) {
     const can = system.canStartResearch(node.id);
     const progress = active ? Math.floor(current.progressTicks || 0) : 0;
     const card = document.createElement('article');
-    card.style.cssText = `min-height:178px;padding:10px;border-radius:10px;border:1px solid ${done ? '#5ba66f' : active ? '#5f91d4' : '#474a54'};background:${done ? 'rgba(54,105,68,.18)' : 'rgba(18,21,29,.88)'};display:flex;flex-direction:column;gap:6px;`;
+    card.style.cssText = `min-height:244px;padding:10px;border-radius:10px;border:1px solid ${done ? '#5ba66f' : active ? '#5f91d4' : '#474a54'};background:${done ? 'rgba(54,105,68,.18)' : 'rgba(18,21,29,.88)'};display:flex;flex-direction:column;gap:6px;`;
     card.innerHTML = `
       <img src="${node.icon}" alt="${node.name}" style="width:42px;height:42px;object-fit:contain;align-self:center" onerror="this.style.visibility='hidden'">
       <b style="text-align:center;color:${done ? '#8ed39c' : '#ead8ae'}">${node.name}</b>
       <span style="font-size:10px;color:#8f93a0;text-align:center">${node.pointCost} ${pointName} · ${node.researchTime} tick</span>
+      <span style="font-size:11px;color:#c9c5b8">${node.description || ''}</span>
+      <span style="font-size:10px;color:#938d80">${node.history || ''}</span>
+      <span style="font-size:10px;color:#8fc59c">效果：${formatEffects(node.effects)}</span>
+      <span style="font-size:10px;color:#8db9db">解锁：${formatUnlocks(node.unlocks)}</span>
       <span style="font-size:10px;color:#aaa;flex:1">${done ? '已研究完成' : active ? `研究中 ${progress}/${node.researchTime}` : can.reason || '可以研究'}</span>`;
     if (!done && !active) {
       const button = document.createElement('button');

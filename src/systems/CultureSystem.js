@@ -9,6 +9,7 @@ import { store } from '../core/Store.js';
 import { mergeModifierValue } from '../utils/BonusUtils.js';
 
 const POLICY_COOLDOWN_DAYS = 3; // 政策卡切换冷却（游戏日）
+const PASSIVE_CIVICS_PER_TICK = 0.2;
 
 export class CultureSystem {
   constructor() {
@@ -74,6 +75,9 @@ export class CultureSystem {
       if (!this._researched.has(cultureId) && !this._activatedPolicies.has(cultureId) && this._government !== cultureId && !doctrines.has(cultureId)) continue;
       for (const actionId of actionIds || []) result.add(actionId);
     }
+    for (const civicId of this._researched) {
+      for (const actionId of this.get(civicId)?.unlocks?.diplomacyActions || []) result.add(actionId);
+    }
     return [...result];
   }
 
@@ -91,6 +95,16 @@ export class CultureSystem {
 
   getCurrentResearch() { return this._currentResearch ? { ...this._currentResearch } : null; }
   getCivicPoints() { return this._civicPoints; }
+  getPassiveRate() { return PASSIVE_CIVICS_PER_TICK; }
+
+  getPointIncomeBreakdown() {
+    const workforce = this._buildingSystem?.getWorkforceOutputs?.().civics || 0;
+    return {
+      passive: PASSIVE_CIVICS_PER_TICK,
+      workforce,
+      total: PASSIVE_CIVICS_PER_TICK + workforce
+    };
+  }
 
   getEraProgress(eraId) {
     const nodes = this._getAll().filter(node => node.eraId === eraId);
@@ -139,7 +153,7 @@ export class CultureSystem {
     const check = this.canStartResearch(id);
     if (!check.valid) return false;
     const c = this.get(id);
-    if (c.pointCost) this._civicPoints = Math.max(0, this._civicPoints - c.pointCost);
+    if (c.pointCost) this._civicPoints = Number(Math.max(0, this._civicPoints - c.pointCost).toFixed(4));
     if (c.cost && c.cost.length > 0 && this._resourceSystem) {
       this._resourceSystem.consumeAll(c.cost);
     }
@@ -155,10 +169,10 @@ export class CultureSystem {
   }
 
   _onTick(data) {
-    const civicOutput = this._buildingSystem?.getWorkforceOutputs?.().civics || 0;
-    if (civicOutput > 0) this._civicPoints += civicOutput;
+    const civicOutput = this.getPointIncomeBreakdown().total;
+    this._civicPoints = Number((this._civicPoints + civicOutput).toFixed(4));
     if (!this._currentResearch) {
-      if (civicOutput > 0) this._updateStore();
+      this._updateStore();
       return;
     }
     const c = this.get(this._currentResearch.id);
@@ -322,6 +336,8 @@ export class CultureSystem {
       maxPopBonus: 0,
       foodConsumeMul: 1,
       researchSpeedMul: 1,
+      satisfactionBonus: 0,
+      diplomacyMul: 1,
       commandPointsBonus: 0,
       expeditionQueueBonus: 0
     };
@@ -348,7 +364,13 @@ export class CultureSystem {
       if (pe.growthMul) mergeModifierValue(e, 'growthMul', pe.growthMul);
       if (pe.foodConsumeMul) mergeModifierValue(e, 'foodConsumeMul', pe.foodConsumeMul);
       if (pe.maxPopBonus) mergeModifierValue(e, 'maxPopBonus', pe.maxPopBonus, 'add');
+      if (Number.isFinite(cfg.effects.satisfactionBonus)) mergeModifierValue(e, 'satisfactionBonus', cfg.effects.satisfactionBonus, 'add');
+      if (Number.isFinite(cfg.effects.diplomacyMul)) mergeModifierValue(e, 'diplomacyMul', cfg.effects.diplomacyMul);
     };
+    for (const id of this._researched) {
+      const civic = this.get(id);
+      if (civic?.eraId && !civic.policyType) apply(civic);
+    }
     for (const id of this._activatedPolicies) apply(this.get(id));
     if (this._government) apply(this.get(this._government));
     /* 灵感研究的信条：直接加算到对应效果 */

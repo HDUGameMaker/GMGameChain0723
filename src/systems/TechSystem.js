@@ -5,6 +5,9 @@
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
+import { mergeModifierValue } from '../utils/BonusUtils.js';
+
+const PASSIVE_SCIENCE_PER_TICK = 0.2;
 
 export class TechSystem {
   constructor() {
@@ -73,6 +76,30 @@ export class TechSystem {
 
   getSciencePoints() { return this._sciencePoints; }
 
+  getPassiveRate() { return PASSIVE_SCIENCE_PER_TICK; }
+
+  getPointIncomeBreakdown() {
+    const workforce = this._buildingSystem?.getWorkforceOutputs?.().science || 0;
+    return {
+      passive: PASSIVE_SCIENCE_PER_TICK,
+      workforce,
+      total: PASSIVE_SCIENCE_PER_TICK + workforce
+    };
+  }
+
+  getEffects() {
+    const result = { productionMul: 1, researchSpeedMul: 1 };
+    for (const techId of this._researched) {
+      const effects = this.getTech(techId)?.effects || {};
+      for (const [key, value] of Object.entries(effects)) {
+        if (!Number.isFinite(value)) continue;
+        if (key.endsWith('Mul')) mergeModifierValue(result, key, value);
+        else mergeModifierValue(result, key, value, 'add');
+      }
+    }
+    return result;
+  }
+
   getEraProgress(eraId) {
     const nodes = this._getAllTechs().filter(tech => tech.eraId === eraId);
     if (nodes.length === 0) return 0;
@@ -140,7 +167,7 @@ export class TechSystem {
 
     const tech = this.getTech(techId);
 
-    if (tech.pointCost) this._sciencePoints = Math.max(0, this._sciencePoints - tech.pointCost);
+    if (tech.pointCost) this._sciencePoints = Number(Math.max(0, this._sciencePoints - tech.pointCost).toFixed(4));
 
     // 消耗资源
     if (tech.cost && tech.cost.length > 0 && this._resourceSystem) {
@@ -204,10 +231,10 @@ export class TechSystem {
 
   /** Tick推进 */
   _onTick(data) {
-    const scienceOutput = this._buildingSystem?.getWorkforceOutputs?.().science || 0;
-    if (scienceOutput > 0) this._sciencePoints += scienceOutput;
+    const scienceOutput = this.getPointIncomeBreakdown().total;
+    this._sciencePoints = Number((this._sciencePoints + scienceOutput).toFixed(4));
     if (!this._currentResearch) {
-      if (scienceOutput > 0) this._updateStore();
+      this._updateStore();
       return;
     }
 
@@ -253,6 +280,7 @@ export class TechSystem {
     // 解锁单位
     if (tech.unlocks.units) {
       for (const unitId of tech.unlocks.units) {
+        this._unitResearch.add(unitId);
         console.log('[Tech] Unlocked unit:', unitId);
       }
     }

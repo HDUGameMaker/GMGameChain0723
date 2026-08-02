@@ -175,7 +175,9 @@ export class DiplomacySystem {
     for (const reward of action.rewards || []) this._resourceSystem?.add(reward.resourceId, reward.amount);
     const heroBonus = Number(this._heroSystem?.getBonuses?.().diplomacyRelationBonus) || 0;
     const luxuryBonus = Number(this._luxurySystem?.getBonuses?.().outpostRelationGainBonus) || 0;
-    const relation = Math.max(-100, Math.min(100, state.relation + (action.relationDelta || 0) + heroBonus + luxuryBonus));
+    const diplomacyMul = this._cultureSystem?.getEffects?.().diplomacyMul || 1;
+    const culturalDelta = Math.round((action.relationDelta || 0) * diplomacyMul);
+    const relation = Math.max(-100, Math.min(100, state.relation + culturalDelta + heroBonus + luxuryBonus));
     const treaties = new Set(state.treaties || []);
     if (TREATY_ACTIONS.has(actionId)) treaties.add(actionId);
     this._states[outpostId] = {

@@ -32,11 +32,11 @@ function setup({ science = 0, civics = 0 } = {}) {
   return { tech, culture, era };
 }
 
-test('zero research workers unlock tree access but produce no science or civic points', () => {
+test('zero research workers keep both trees slowly advancing through settlement knowledge', () => {
   const { tech, culture } = setup();
   eventBus.emit('tick', {});
-  assert.equal(tech.getSciencePoints(), 0);
-  assert.equal(culture.getCivicPoints(), 0);
+  assert.equal(tech.getSciencePoints(), 0.2);
+  assert.equal(culture.getCivicPoints(), 0.2);
   assert.equal(tech.canStartResearch('tech_ancient_1').valid, false);
   assert.match(tech.canStartResearch('tech_ancient_1').reason, /科技点/);
   assert.equal(culture.canStartResearch('civic_ancient_1').valid, false);
@@ -46,12 +46,12 @@ test('zero research workers unlock tree access but produce no science or civic p
 test('staffed academy and civic hall generate points that pay for current-era research', () => {
   const { tech, culture } = setup({ science: 3, civics: 4 });
   for (let i = 0; i < 4; i++) eventBus.emit('tick', {});
-  assert.equal(tech.getSciencePoints(), 12);
-  assert.equal(culture.getCivicPoints(), 16);
+  assert.equal(tech.getSciencePoints(), 12.8);
+  assert.equal(culture.getCivicPoints(), 16.8);
   assert.equal(tech.startResearch('tech_ancient_1'), true);
   assert.equal(culture.startResearch('civic_ancient_1'), true);
-  assert.equal(tech.getSciencePoints(), 0);
-  assert.equal(culture.getCivicPoints(), 4);
+  assert.equal(tech.getSciencePoints(), 0.8);
+  assert.equal(culture.getCivicPoints(), 4.8);
   for (let i = 0; i < 4; i++) eventBus.emit('tick', {});
   assert.equal(tech.isResearched('tech_ancient_1'), true);
   assert.equal(culture.isResearched('civic_ancient_1'), true);

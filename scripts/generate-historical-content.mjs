@@ -172,11 +172,19 @@ const civicNames = {
   modern: ['社会保障', '大众传媒', '国家动员', '国际组织', '现代大学', '职业外交', '劳动权利', '文化遗产'],
   information: ['数字治理', '全球供应链', '知识经济', '环境公约', '公共数据', '跨国科研', '危机管理', '多边联盟']
 };
+const diplomacyUnlocks = ['negotiate', 'trade', 'ceasefire', 'open_borders', 'non_aggression', 'joint_patrol', 'alliance', 'alliance'];
 const makeTree = (kind, namesByEra) => eras.flatMap(era => namesByEra[era.id].map((name, index) => ({
   id: `${kind}_${era.id}_${index + 1}`, name, eraId: era.id, eraOrder: era.order, pageIndex: index,
   tier: era.order, researchTime: 4 + era.order * 2 + Math.floor(index / 2), pointCost: 12 + era.order * 14 + index * 3,
   prerequisites: index === 0 ? [] : [`${kind}_${era.id}_${index}`],
   effects: kind === 'tech' ? { productionMul: 1 + (index + 1) * 0.01 } : { satisfactionBonus: index % 3 === 0 ? 1 : 0, diplomacyMul: 1 + index * 0.005 },
+  description: kind === 'tech'
+    ? `${name}把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。`
+    : `${name}建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。`,
+  history: `${name}代表${era.name}社会在技术、组织与知识传承上的重要积累。`,
+  unlocks: kind === 'tech'
+    ? { units: [`${era.id}_${branchCycle[index]}_${index + 1}`] }
+    : { diplomacyActions: [diplomacyUnlocks[index]] },
   icon: icon(kind === 'tech' ? 'techs' : 'civics', `${kind}_${era.id}_${index + 1}`)
 })));
 const techs = makeTree('tech', techNames);

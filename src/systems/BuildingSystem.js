@@ -1268,6 +1268,7 @@ export class BuildingSystem {
   _getProductionMultiplier(resourceId, building = null) {
     const cultureEffects = this._cultureSystem ? this._cultureSystem.getEffects() : null;
     const globalCultureMul = cultureEffects?.productionMul || 1;
+    const techMul = this._techSystem?.getEffects?.().productionMul || 1;
     const scopedCultureMul = resourceId ? (cultureEffects?.resourceProductionMul?.[resourceId] || 1) : 1;
     const alchemyMul = this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).productionMul || 1) : 1;
     // 炼金法术：区域内生产建筑效率乘法（按建筑所在区域连乘），叠入产出链
@@ -1279,7 +1280,7 @@ export class BuildingSystem {
     const heroMul = this._heroSystem?.getBonuses?.().productionMul || 1;
     const luxuryEffects = this._luxurySystem?.getBonuses?.() || {};
     const luxuryMul = resourceId === 'gold' ? (luxuryEffects.goldProductionMul || 1) : 1;
-    return globalCultureMul * scopedCultureMul * alchemyMul * spellMul * btGlobal * btScoped * heroMul * luxuryMul;
+    return globalCultureMul * techMul * scopedCultureMul * alchemyMul * spellMul * btGlobal * btScoped * heroMul * luxuryMul;
   }
 
   getBuildingCount(buildingId) {

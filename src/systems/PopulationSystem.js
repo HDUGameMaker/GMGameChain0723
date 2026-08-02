@@ -157,7 +157,9 @@ export class PopulationSystem {
       construction,
       constructionTotal,
       jobs,
-      satisfaction: Math.min(100, this.satisfaction + (this._luxurySystem?.getBonuses?.().satisfactionBonus || 0))
+      satisfaction: Math.min(100, this.satisfaction
+        + (this._luxurySystem?.getBonuses?.().satisfactionBonus || 0)
+        + (this._cultureSystem?.getEffects?.().satisfactionBonus || 0))
     };
   }
 
