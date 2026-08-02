@@ -35,11 +35,8 @@ export class HUD {
     this.btnBuild = document.getElementById('btn-build');
     this.btnObjective = document.getElementById('btn-objective');
     this.btnBuildingTree = document.getElementById('btn-building-tree');
-    this.btnSpellTree = document.getElementById('btn-spell-tree');
     this.btnTech = document.getElementById('btn-tech');
     this.btnCulture = document.getElementById('btn-culture');
-    this.btnAlchemy = document.getElementById('btn-alchemy');
-    this.btnTame = document.getElementById('btn-tame');
     this.btnRoad = document.getElementById('btn-road');
     this.btnQuest = document.getElementById('btn-quest');
     this.btnCancelPlace = document.getElementById('btn-cancel-place');
@@ -56,6 +53,7 @@ export class HUD {
     this.techStatus = document.getElementById('tech-status');
     this.btnEra = document.getElementById('btn-era');
     this.btnLuxury = document.getElementById('btn-luxury');
+    this.btnStrategy = document.getElementById('btn-strategy');
     if (this.weatherDisplay) {
       this.weatherDisplay.style.display = 'none';
     }
@@ -69,6 +67,7 @@ export class HUD {
       this.popupManager.open('era_civilization', { eraSystem: this.systems.era });
     });
     this.btnLuxury?.addEventListener('click', () => this.popupManager.open('luxury_trade', {}));
+    this.btnStrategy?.addEventListener('click', () => this.popupManager.open('strategy_cards', {}));
     // 科技树
     this.btnTech.addEventListener('click', () => {
       this.popupManager.open('tech_tree', {});
@@ -79,15 +78,6 @@ export class HUD {
       this.popupManager.open('culture_tree', {});
     });
 
-    // 炼金
-    this.btnAlchemy.addEventListener('click', () => {
-      this.popupManager.open('alchemy_lab', {});
-    });
-
-    // 驯养
-    this.btnTame.addEventListener('click', () => {
-      this.popupManager.open('tamed_pool', {});
-    });
 
     // 道路编辑
     this.btnRoad.addEventListener('click', () => this._toggleRoadEditMode());
@@ -116,23 +106,18 @@ export class HUD {
       });
     }
 
-    // 建筑科技树 / 炼金法术树：与建设按钮平级的直达入口（免去先开子菜单再进树的二级跳转）
+    // 建筑科技树直达入口
     if (this.btnBuildingTree) {
       this.btnBuildingTree.addEventListener('click', () => {
         this.popupManager.open('building_tree', {});
       });
     }
-    if (this.btnSpellTree) {
-      this.btnSpellTree.addEventListener('click', () => {
-        this.popupManager.open('spell_tree', {});
-      });
-    }
 
-    // 占有术施法按钮（动态创建，避免改 index.html）
+    // 边境拓土按钮
     this.btnPossession = document.createElement('button');
     this.btnPossession.className = 'hud-btn';
-    this.btnPossession.innerHTML = '<span class="hud-btn-icon">✦</span><span class="hud-btn-label">占术</span>';
-    this.btnPossession.title = '占有术：消耗黄金标记格子，铺满地图通关';
+    this.btnPossession.innerHTML = '<span class="hud-btn-icon">🚩</span><span class="hud-btn-label">拓土</span>';
+    this.btnPossession.title = '边境拓土：消耗黄金建立领地控制，达到目标占领率获胜';
     if (this.btnBuild && this.btnBuild.parentNode) {
       this.btnBuild.parentNode.insertBefore(this.btnPossession, this.btnBuild);
     }
@@ -179,21 +164,10 @@ export class HUD {
     store.subscribe('availableUnits', () => this._updateEnemyStatus());
     this._updateEnemyStatus();
 
-    // 炼金法术施法状态条
-    this.spellStatus = document.createElement('div');
-    this.spellStatus.className = 'spell-status';
-    this.spellStatus.style.cssText = 'position:fixed;top:114px;left:50%;transform:translateX(-50%);z-index:50;background:rgba(20,16,40,0.78);padding:4px 14px;border-radius:8px;font-size:12px;color:#ccc;pointer-events:none;backdrop-filter:blur(4px);white-space:nowrap;display:none;border:1px solid rgba(51,224,255,0.4);';
-    document.body.appendChild(this.spellStatus);
-    eventBus.on('spellCastingModeChanged', () => this._updateSpellStatus());
-    eventBus.on('spellZonesChanged', () => this._updateSpellStatus());
-    store.subscribe('spellVersion', () => this._updateSpellStatus());
-    this._updateSpellStatus();
 
     // 取消放置
     this.btnCancelPlace.addEventListener('click', () => {
-      if (this.systems.combat?.isDeployTamedMode()) {
-        this.systems.combat.exitDeployTamedMode();
-      } else if (this.systems.combat?.isPlaceEnemyMode()) {
+      if (this.systems.combat?.isPlaceEnemyMode()) {
         this.systems.combat.exitPlaceEnemyMode();
       } else {
         this.systems.building.exitPlacingMode();
@@ -239,7 +213,7 @@ export class HUD {
     }
 
     // 重设计：隐藏已砍系统的入口按钮（代码保留，仅 UI 不可达）
-    ['btn-tech', 'btn-culture', 'btn-tame', 'btn-road', 'btn-quest'].forEach(id => {
+    [].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
@@ -267,8 +241,8 @@ export class HUD {
     this.btnPossession.style.background = active ? 'rgba(170,85,255,0.35)' : '';
     this.btnPossession.style.borderColor = active ? '#aa55ff' : '';
     this.btnPossession.innerHTML = active
-      ? '<span class="hud-btn-icon">✕</span><span class="hud-btn-label">退出占术</span>'
-      : '<span class="hud-btn-icon">✦</span><span class="hud-btn-label">占术</span>';
+      ? '<span class="hud-btn-icon">✕</span><span class="hud-btn-label">退出拓土</span>'
+      : '<span class="hud-btn-icon">🚩</span><span class="hud-btn-label">拓土</span>';
   }
 
   _updateEnemyStatus() {
@@ -289,19 +263,6 @@ export class HUD {
     this._updateGameProgress();
   }
 
-  _updateSpellStatus() {
-    if (!this.spellStatus) return;
-    const ss = this.systems.spell;
-    if (!ss || !ss.isCastingMode()) { this.spellStatus.style.display = 'none'; return; }
-    const active = ss.getActiveSpell();
-    this.spellStatus.style.display = 'block';
-    const name = active?.def?.name || '法术';
-    const radius = active?.def?.areaRadius || 0;
-    const rangeText = radius > 0 ? `${radius}格半径` : '全域';
-    this.spellStatus.innerHTML =
-      `🜂 <b style="color:#33e0ff">${name}</b> 施法中（${rangeText}）· 点击地图释放 · <b style="color:#aaa">Esc 取消</b>`;
-  }
-
   _updateTerritoryStatus() {
     if (!this.territoryStatus) return;
     const ts = this.systems.territory;
@@ -314,7 +275,7 @@ export class HUD {
     const cost = ts.getCastCost();
     this.territoryStatus.style.display = 'block';
     this.territoryStatus.innerHTML =
-      `🜂 占领 <b style="color:#cc88ff">${pct}%</b> (${owned}/${total}) · 目标50% &nbsp; 💰占术${cost} 🏠${bCount}/${cap}`;
+      `🚩 领地 <b style="color:#cc88ff">${pct}%</b> (${owned}/${total}) · 目标50% &nbsp; 💰拓土${cost} 🏠${bCount}/${cap}`;
     this._updateGameProgress();
   }
 
@@ -407,7 +368,6 @@ export class HUD {
     store.subscribe('armyVersion', () => this._refreshPopulation());
     store.subscribe('timeUserPaused', () => this._refreshPauseBtn());
     store.subscribe('placingState', (state) => this._refreshPlacingMode(state));
-    store.subscribe('deployTamedMode', (mode) => this._refreshDeployTamedMode(mode));
     store.subscribe('roadEditMode', (enabled) => this._refreshRoadEditMode(enabled));
     store.subscribe('expeditionState', (state) => this._refreshExpeditionStatus(state));
     store.subscribe('expeditionStates', (states) => this._refreshExpeditionStatus(states));
@@ -446,16 +406,6 @@ export class HUD {
       }
     });
     eventBus.on('questUpdated', ({ quest }) => this._updateQuestWidget(quest));
-    store.subscribe('buildingVersion', () => this._checkAdvancedUnlocks());
-  }
-
-  _checkAdvancedUnlocks() {
-    const hasAlchemyLab = this.systems.building?.hasBuilding('alchemy_lab');
-    this.btnAlchemy.style.display = hasAlchemyLab ? 'flex' : 'none';
-    // 炼金法术树入口随炼金实验室解锁出现（与炼金工坊按钮同步）
-    if (this.btnSpellTree) {
-      this.btnSpellTree.style.display = hasAlchemyLab ? 'flex' : 'none';
-    }
   }
 
   _updateQuestWidget(quest) {
@@ -857,22 +807,6 @@ export class HUD {
       this.btnSettings.classList.remove('disabled');
       this.btnSpeed.classList.remove('disabled');
       this.btnPause.classList.remove('disabled');
-    }
-  }
-
-  _refreshDeployTamedMode(mode) {
-    if (mode) {
-      this.btnCancelPlace.style.display = 'inline-block';
-      this.btnTame.classList.add('active');
-      this.btnBuild.classList.add('disabled');
-      this.btnFullscreen.classList.add('disabled');
-      this.btnSettings.classList.add('disabled');
-    } else {
-      this.btnCancelPlace.style.display = 'none';
-      this.btnTame.classList.remove('active');
-      this.btnBuild.classList.remove('disabled');
-      this.btnFullscreen.classList.remove('disabled');
-      this.btnSettings.classList.remove('disabled');
     }
   }
 

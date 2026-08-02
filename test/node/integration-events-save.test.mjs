@@ -16,7 +16,7 @@ test('integrated random events span at least eight gameplay categories', () => {
 test('event resource effects use four resources and building requirements exist after integration', () => {
   const allowed = new Set(['wood', 'stone', 'food', 'gold']);
   const buildingIds = new Set([...buildings, ...integration.buildings].map(building => building.id));
-  for (const event of integration.events) {
+  for (const event of integration.events.filter(item => item.category !== 'alchemy')) {
     for (const buildingId of event.triggerConditions?.requiredBuildings || []) assert.ok(buildingIds.has(buildingId), `${event.id}:${buildingId}`);
     for (const option of event.options || []) {
       for (const effect of option.effects || []) {
@@ -32,12 +32,13 @@ test('event system supports inspiration and fixed-outpost relation effects', () 
   assert.equal(typeof system._effectHandlers.modify_outpost_relation, 'function');
 });
 
-test('save schema is v6, accepts v5 migration input, and persists all main and integrated state', () => {
+test('save schema is v7, accepts v5-v6 migration input, and persists historical state', () => {
   assert.match(mainSource, /rawSave\.version\s*>=\s*5/);
-  assert.match(mainSource, /version:\s*6/);
-  for (const key of ['territory', 'enemyExpansion', 'spell', 'buildingTech', 'diplomacy', 'heroes']) {
+  assert.match(mainSource, /version:\s*7/);
+  for (const key of ['territory', 'enemyExpansion', 'buildingTech', 'diplomacy', 'heroes', 'era', 'luxuries', 'strategies']) {
     assert.match(mainSource, new RegExp(`${key}:\\s*this\\.systems\\.`));
   }
+  assert.doesNotMatch(mainSource, /\b(alchemy|spell):\s*this\.systems\./);
 });
 
 test('config registry appends compatible events without replacing main event files', async () => {

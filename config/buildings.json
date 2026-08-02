@@ -128,7 +128,7 @@
   {
     "id": "gold_mint",
     "name": "铸币所",
-    "description": "将基础资源熔铸为黄金的核心设施。消耗木/石/食，产出黄金——黄金是炼金与战斗的共同瓶颈。",
+    "description": "将基础资源转化为黄金的核心设施。消耗木材、石料与食物，支撑建设、贸易和军队维护。",
     "footprint": { "width": 2, "height": 2 },
     "maxCount": null,
     "initialBuilding": false,
@@ -205,9 +205,9 @@
     "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 }
   },
   {
-    "id": "alchemy_lab",
-    "name": "炼金实验室",
-    "description": "炼金工作台。黄金在此点燃炼金——产出乘法与占有术。解锁炼金系统。",
+    "id": "strategy_archive",
+    "name": "战略档案馆",
+    "description": "整理战报、地图与历史案例的研究设施，为城市提供战略卡获取线索。",
     "footprint": { "width": 2, "height": 2 },
     "maxCount": 1,
     "initialBuilding": false,
@@ -223,7 +223,7 @@
     "synthesisRecipes": [],
     "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
     "detailLayout": { "scale": 1, "offsetX": 0, "offsetY": 0 },
-    "tags": ["alchemy"]
+    "tags": ["strategy", "research"]
   },
   {
     "id": "logging_camp_t2",

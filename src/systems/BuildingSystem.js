@@ -23,6 +23,7 @@ export class BuildingSystem {
     this._buildingTechSystem = null; // 建筑科技树（常驻产出乘法 + T2 解锁）
 
     // 订阅 tick 事件处理建造和生产
+    this._strategySystem = null;
     eventBus.on('workTick', (data) => this._onWorkTick(data));
     eventBus.on('tick', (data) => this._onAnyTick(data));
     eventBus.on('dayProductionTick', (data) => this._onDayProductionTick(data));
@@ -49,6 +50,7 @@ export class BuildingSystem {
   setCultureSystem(cs) { this._cultureSystem = cs; }
   setAlchemySystem(as) { this._alchemySystem = as; }
   setSpellSystem(ss) { this._spellSystem = ss; }
+  setStrategySystem(ss) { this._strategySystem = ss; }
   setBuildingTechSystem(bts) { this._buildingTechSystem = bts; }
   setTerritorySystem(ts) { this._territorySystem = ts; }
   setHeroSystem(hs) { this._heroSystem = hs; }
@@ -1269,7 +1271,7 @@ export class BuildingSystem {
     const scopedCultureMul = resourceId ? (cultureEffects?.resourceProductionMul?.[resourceId] || 1) : 1;
     const alchemyMul = this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).productionMul || 1) : 1;
     // 炼金法术：区域内生产建筑效率乘法（按建筑所在区域连乘），叠入产出链
-    const spellMul = (this._spellSystem && building) ? this._spellSystem.getBuildingEfficiencyMul(building) : 1;
+    const spellMul = this._strategySystem?.getProductionMultiplier?.(resourceId) || 1;
     // 建筑科技树：永久常驻产出乘法（全局 + 按资源），叠入产出链
     const btEffects = this._buildingTechSystem ? this._buildingTechSystem.getEffects() : null;
     const btGlobal = btEffects?.productionMul || 1;

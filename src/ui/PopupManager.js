@@ -10,13 +10,11 @@ const SYSTEM_DIALOG_TYPE = '_system_dialog';
 const BLOCKING_TYPES = ['event', 'expedition_prep', 'game_over', 'tutorial_prompt', SYSTEM_DIALOG_TYPE];
 
 export class PopupManager {
-  constructor(gameLoop, techSystem, cultureSystem, alchemySystem, combatSystem) {
+  constructor(gameLoop, techSystem, cultureSystem, combatSystem) {
     this._gameLoop = gameLoop;
     this._techSystem = techSystem || null;
     this._cultureSystem = cultureSystem || null;
-    this._alchemySystem = alchemySystem || null;
     this._combatSystem = combatSystem || null;
-    this._spellSystem = null;
     this._buildingTechSystem = null;
     this._stack = [];
     this._panels = {}; // 注册的面板渲染函数
@@ -58,7 +56,6 @@ export class PopupManager {
     this._panels[type] = renderFn;
   }
 
-  setSpellSystem(ss) { this._spellSystem = ss || null; }
   setBuildingTechSystem(bts) { this._buildingTechSystem = bts || null; }
 
   /**
@@ -353,16 +350,13 @@ export class PopupManager {
       'tech_tree': '科技树',
       'culture_tree': '人文树',
       'military_tradition': '军事传统',
-      'alchemy_lab': '炼金实验室',
-      'spell_tree': '炼金法术树',
       'building_tree': '建筑科技树',
-      'potion_inventory': '药剂库存',
-      'tamed_pool': '驯养管理',
       'unit_research': '兵种研发',
       'outpost_diplomacy': data?.outpostName || '据点外交',
       'tavern_heroes': '历史英雄酒馆',
       'era_civilization': '时代与文明',
       'luxury_trade': '奢侈品与贸易',
+      'strategy_cards': '历史策略',
       'tutorial_prompt': '新手教程',
       'quest_panel': '任务'
     };
@@ -425,29 +419,9 @@ export class PopupManager {
     import('./panels/culture-tree-panel.js').then(m => {
       this.register('culture_tree', m.renderCultureTreePanel);
     });
-    import('./panels/alchemy-panel.js').then(m => {
-      this.register('alchemy_lab', (data, body, pm) => {
-        m.renderAlchemyPanel({ ...data, alchemySystem: this._alchemySystem, spellSystem: this._spellSystem }, body, pm);
-      });
-    });
-    import('./panels/spell-tree-panel.js').then(m => {
-      this.register('spell_tree', (data, body, pm) => {
-        m.renderSpellTreePanel({ ...data, spellSystem: this._spellSystem }, body, pm);
-      });
-    });
     import('./panels/building-tree-panel.js').then(m => {
       this.register('building_tree', (data, body, pm) => {
         m.renderBuildingTreePanel({ ...data, buildingTechSystem: this._buildingTechSystem }, body, pm);
-      });
-    });
-    import('./panels/potion-inventory-panel.js').then(m => {
-      this.register('potion_inventory', (data, body, pm) => {
-        m.renderPotionInventoryPanel({ ...data, alchemySystem: this._alchemySystem }, body, pm);
-      });
-    });
-    import('./panels/tamed-pool-panel.js').then(m => {
-      this.register('tamed_pool', (data, body, pm) => {
-        m.renderTamedPoolPanel({ ...data, combatSystem: this._combatSystem }, body, pm);
       });
     });
     import('./panels/quest-panel.js').then(m => {
@@ -479,6 +453,9 @@ export class PopupManager {
     });
     import('./panels/luxury-trade-panel.js').then(m => {
       this.register('luxury_trade', m.renderLuxuryTradePanel);
+    });
+    import('./panels/strategy-cards-panel.js').then(m => {
+      this.register('strategy_cards', m.renderStrategyCardsPanel);
     });
   }
 }

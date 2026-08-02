@@ -25,12 +25,14 @@ export class EnemyExpansionSystem {
     this._spellSystem = null; // 炼金法术系统（减益：强度削减 / 倒计时冻结）
     this._totalCleared = 0;   // 累计清敌数（gameover 统计用）
 
+    this._strategySystem = null;
     eventBus.on('dayStart', (data) => this._onDayStart(data));
   }
 
   setTerritorySystem(ts) { this._territorySystem = ts; }
   setBuildingSystem(bs) { this._buildingSystem = bs; }
   setSpellSystem(ss) { this._spellSystem = ss; }
+  setStrategySystem(ss) { this._strategySystem = ss; }
   setHeroSystem(hs) { this._heroSystem = hs; }
 
   init() {
@@ -164,11 +166,11 @@ export class EnemyExpansionSystem {
     const expanding = [];
     for (const [key, cell] of this._cells) {
       // 炼金凝滞法术：区域内敌人扩张倒计时冻结
-      if (this._spellSystem) {
+      if (this._strategySystem) {
         const parts = key.split(',');
         const cx = parseInt(parts[0], 10);
         const cy = parseInt(parts[1], 10);
-        if (this._spellSystem.isCountdownFrozen(cx, cy)) continue;
+        if (this._strategySystem.isCountdownFrozen(cx, cy)) continue;
       }
       cell.countdown -= 1;
       if (cell.countdown <= 0) expanding.push(key);
@@ -230,7 +232,7 @@ export class EnemyExpansionSystem {
     const cell = this._cells.get(this._key(x, y));
     if (!cell) return false;
     // 炼金减益法术：区域内敌人强度被削减
-    const penalty = this._spellSystem ? this._spellSystem.getStrengthPenaltyAt(x, y) : 0;
+    const penalty = this._strategySystem ? this._strategySystem.getStrengthPenaltyAt(x, y, cell.strength) : 0;
     const effStrength = Math.max(1, cell.strength - penalty);
     const opponents = cell.roleTags ? [{ domain: cell.domain || 'land', roleTags: cell.roleTags }] : [];
     const power = this.getArmyPower(opponents);

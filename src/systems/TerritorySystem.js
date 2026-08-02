@@ -266,7 +266,7 @@ export class TerritorySystem {
     this._updateStore();
   }
   isRemoteUnlocked() { return this._remoteUnlocked; }
-  getRemoteUnlockStage() { return this._config?.possession?.remoteUnlockAlchemyStage || null; }
+  getRemoteUnlockStage() { return this._config?.possession?.remoteUnlockStage || null; }
 
   // ===== 施法模式 =====
   enterCastingMode() {

@@ -4,7 +4,7 @@
   "possession": {
     "baseCost": { "gold": 5 },
     "inflationRate": 0.0,
-    "remoteUnlockAlchemyStage": "albedo"
+    "remoteUnlockStage": "frontier_administration"
   },
   "buildingCap": {
     "initial": 100,

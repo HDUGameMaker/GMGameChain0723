@@ -38,7 +38,7 @@ export function renderObjectivePanel(data, body, pm) {
   // 胜利条件卡
   container.appendChild(_card({
     icon: '🏆', title: '胜利条件', color: '#f0a040',
-    desc: '用建筑与占有术占领超过半数的土地，即达成征服。',
+      desc: '用建筑与边境拓土控制超过半数的土地，即达成征服。',
     barColor: 'linear-gradient(90deg,#7c3aed,#cc88ff)',
     pct: winPct, current: owned, total,
     threshold: winThreshold, thresholdLabel: `目标 ${Math.round(winThreshold * 100)}%`,
@@ -60,8 +60,8 @@ export function renderObjectivePanel(data, body, pm) {
   flow.style.cssText = 'padding:14px 16px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.06);font-size:13px;color:#a0a0ba;line-height:1.8;';
   flow.innerHTML = `
     <div style="color:#ececf0;font-weight:600;margin-bottom:6px;">玩法脉络</div>
-    基建产金 → <b style="color:#cc88ff">占术</b>占地 / <b style="color:#4ecb71">招兵</b>清敌 → 占领半数土地获胜<br>
-    <span style="color:#6a6a82;">成长双树：</span>🌳 建筑树（永久加成 + T2 建筑） · 🔮 炼金树（区域法术爆发）
+        基建产金 → <b style="color:#cc88ff">边境拓土</b> / <b style="color:#4ecb71">招兵</b>清敌 → 控制半数土地获胜<br>
+        <span style="color:#6a6a82;">核心成长：</span>🔬 科技树 · 🏛️ 人文树 · 🌳 建筑树 · 📜 历史策略
   `;
   container.appendChild(flow);
 

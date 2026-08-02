@@ -30,7 +30,6 @@ class ConfigRegistry {
       'techs': 'config/techs.json',
       'enemies': 'config/enemies.json',
       'culture': 'config/culture.json',
-      'alchemy': 'config/alchemy.json',
       'quests': 'config/quests.json',
       'colonies': 'config/colonies.json',
       'doctrines': 'config/doctrines.json',
@@ -150,7 +149,7 @@ class ConfigRegistry {
     }
     if (Array.isArray(this._configs.eaIntegration?.events)) {
       const ids = new Set(events.map(event => event.id));
-      events.push(...this._configs.eaIntegration.events.filter(event => !ids.has(event.id)));
+      events.push(...this._configs.eaIntegration.events.filter(event => !ids.has(event.id) && event.category !== 'alchemy'));
     }
     return events;
   }

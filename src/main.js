@@ -18,7 +18,6 @@ import { RoadSystem } from './systems/RoadSystem.js';
 import { AudioSystem } from './systems/AudioSystem.js';
 import { TechSystem } from './systems/TechSystem.js';
 import { CultureSystem } from './systems/CultureSystem.js';
-import { AlchemySystem } from './systems/AlchemySystem.js';
 import { CombatSystem } from './systems/CombatSystem.js';
 import { WeatherSystem } from './systems/WeatherSystem.js';
 import { QuestSystem } from './systems/QuestSystem.js';
@@ -26,12 +25,12 @@ import { InvasionSystem } from './systems/InvasionSystem.js';
 import { ColonySystem } from './systems/ColonySystem.js';
 import { TerritorySystem } from './systems/TerritorySystem.js';
 import { EnemyExpansionSystem } from './systems/EnemyExpansionSystem.js';
-import { SpellSystem } from './systems/SpellSystem.js';
 import { BuildingTechSystem } from './systems/BuildingTechSystem.js';
 import { DiplomacySystem } from './systems/DiplomacySystem.js';
 import { HeroSystem } from './systems/HeroSystem.js';
 import { EraSystem } from './systems/EraSystem.js';
 import { LuxurySystem } from './systems/LuxurySystem.js';
+import { StrategySystem } from './systems/StrategySystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
@@ -121,12 +120,11 @@ class Game {
     this.systems.culture = new CultureSystem();
     this.systems.era = new EraSystem();
     this.systems.luxury = new LuxurySystem();
+    this.systems.strategy = new StrategySystem();
 
     // 炼金系统
-    this.systems.alchemy = new AlchemySystem();
 
     // 炼金法术系统（消耗品法术 + 成长树，炼金重定位后的主玩法）
-    this.systems.spell = new SpellSystem();
 
     // 建筑科技树（永久被动加成 + T2 建筑解锁）
     this.systems.buildingTech = new BuildingTechSystem();
@@ -155,8 +153,7 @@ class Game {
     this.systems.quest = new QuestSystem();
 
     // 3.05 初始化弹窗管理器（需要先有 tech / culture / alchemy 系统）
-    this.popupManager = new PopupManager(gameLoop, this.systems.tech, this.systems.culture, this.systems.alchemy, this.systems.combat);
-    this.popupManager.setSpellSystem(this.systems.spell);
+    this.popupManager = new PopupManager(gameLoop, this.systems.tech, this.systems.culture, this.systems.combat);
     this.popupManager.setBuildingTechSystem(this.systems.buildingTech);
 
     // 3.1 事件系统需要 popupManager
@@ -172,7 +169,6 @@ class Game {
     this.systems.building.setTechSystem(this.systems.tech);
     this.systems.building.setWeatherSystem(this.systems.weather);
     this.systems.building.setCultureSystem(this.systems.culture);
-    this.systems.building.setAlchemySystem(this.systems.alchemy);
     this.systems.building.setTerritorySystem(this.systems.territory);
     this.systems.building.setHeroSystem(this.systems.hero);
     this.systems.building.init();
@@ -184,12 +180,9 @@ class Game {
     this.systems.enemyExpansion.setHeroSystem(this.systems.hero);
     this.systems.enemyExpansion.init();
     // 炼金法术系统接线：双向注入 building/enemyExpansion（产出效率乘法 + 敌人减益）
-    this.systems.spell.setResourceSystem(this.systems.resource);
-    this.systems.spell.setBuildingSystem(this.systems.building);
-    this.systems.spell.setEnemyExpansionSystem(this.systems.enemyExpansion);
-    this.systems.spell.init();
-    this.systems.building.setSpellSystem(this.systems.spell);
-    this.systems.enemyExpansion.setSpellSystem(this.systems.spell);
+    this.systems.strategy.setSystems({ resource: this.systems.resource });
+    this.systems.building.setStrategySystem(this.systems.strategy);
+    this.systems.enemyExpansion.setStrategySystem(this.systems.strategy);
     // 建筑科技树接线：注入 BuildingSystem（常驻产出乘法 + T2 解锁门禁）
     this.systems.buildingTech.setResourceSystem(this.systems.resource);
     this.systems.buildingTech.init();
@@ -229,23 +222,19 @@ class Game {
     this.systems.diplomacy.setSystems({
       resource: this.systems.resource,
       culture: this.systems.culture,
-      hero: this.systems.hero
+      hero: this.systems.hero,
+      strategy: this.systems.strategy
     });
     this.systems.hero.setSystems({
       building: this.systems.building,
       resource: this.systems.resource,
-      culture: this.systems.culture
+      culture: this.systems.culture,
+      era: this.systems.era
     });
-    this.systems.alchemy.setResourceSystem(this.systems.resource);
-    this.systems.alchemy.setItemSystem(this.systems.item);
-    this.systems.alchemy.setBuildingSystem(this.systems.building);
-    this.systems.alchemy.setTimeSystem(this.systems.time);
-    this.systems.alchemy.init();
     this.systems.combat.setBuildingSystem(this.systems.building);
     this.systems.combat.setPopulationSystem(this.systems.population);
     this.systems.combat.setResourceSystem(this.systems.resource);
     this.systems.combat.setCultureSystem(this.systems.culture);
-    this.systems.combat.setAlchemySystem(this.systems.alchemy);
     this.systems.combat.setHeroSystem(this.systems.hero);
     this.systems.combat.init();
 
@@ -259,14 +248,12 @@ class Game {
     this.systems.population.setResourceSystem(this.systems.resource);
     this.systems.population.setWeatherSystem(this.systems.weather);
     this.systems.population.setCultureSystem(this.systems.culture);
-    this.systems.population.setAlchemySystem(this.systems.alchemy);
     this.systems.event.setSystems({
       resource: this.systems.resource,
       item: this.systems.item,
       building: this.systems.building,
       time: this.systems.time,
       gameLoop: gameLoop,
-      alchemy: this.systems.alchemy,
       diplomacy: this.systems.diplomacy
     });
     this.systems.expedition.setSystems({
@@ -274,7 +261,6 @@ class Game {
       item: this.systems.item,
       building: this.systems.building,
       population: this.systems.population,
-      alchemy: this.systems.alchemy,
       culture: this.systems.culture,
       time: this.systems.time,
       hero: this.systems.hero
@@ -375,7 +361,6 @@ class Game {
     // 6. 初始化渲染器（先构造，再异步预加载纹理后绘制）
     this.mapRenderer = new MapRenderer(this.app, this.systems.building, this.systems.torch, this.systems.road, this.systems.combat, this.systems.territory);
     this.mapRenderer.setEnemyExpansion(this.systems.enemyExpansion);
-    this.mapRenderer.setSpellSystem(this.systems.spell);
     this.mapRenderer.setDiplomacySystem(this.systems.diplomacy);
     await this.mapRenderer.init();
 
@@ -499,14 +484,12 @@ class Game {
     this.systems.colony.initNew();
 
     // 初始化炼金系统
-    this.systems.alchemy.init();
 
     // 初始化占领系统（占有术 + 建筑上限；在初始建筑放置后重建覆盖）
     this.systems.territory.initNew();
     // 初始化敌人扩张系统
     this.systems.enemyExpansion.initNew();
     // 初始化炼金法术系统
-    this.systems.spell.initNew();
     // 初始化建筑科技树
     this.systems.buildingTech.initNew();
     // 初始化固定 NPC 据点关系
@@ -517,6 +500,7 @@ class Game {
     this.systems.era.initNew();
     // 初始化奢侈品库存与产地发现
     this.systems.luxury.initNew();
+    this.systems.strategy.initNew();
 
     // 初始化事件标记状态（新游戏 = 无已移除标记）
     store.setState({ removedEventMarkers: [] });
@@ -549,9 +533,6 @@ class Game {
     if (saveData.culture) {
       this.systems.culture.restoreState(saveData.culture);
     }
-    if (saveData.alchemy) {
-      this.systems.alchemy.restoreState(saveData.alchemy);
-    }
     if (saveData.combat) {
       this.systems.combat.restoreState(saveData.combat);
     }
@@ -564,11 +545,6 @@ class Game {
       this.systems.enemyExpansion.restoreState(saveData.enemyExpansion);
     } else {
       this.systems.enemyExpansion.initNew();
-    }
-    if (saveData.spell) {
-      this.systems.spell.restoreState(saveData.spell);
-    } else {
-      this.systems.spell.initNew();
     }
     if (saveData.buildingTech) {
       this.systems.buildingTech.restoreState(saveData.buildingTech);
@@ -589,6 +565,8 @@ class Game {
     else this.systems.era.initNew();
     if (saveData.luxuries) this.systems.luxury.restoreState(saveData.luxuries);
     else this.systems.luxury.initNew();
+    if (saveData.strategies) this.systems.strategy.restoreState(saveData.strategies);
+    else this.systems.strategy.initNew();
     if (saveData.weather) {
       this.systems.weather.restoreState(saveData.weather);
     }
@@ -639,7 +617,7 @@ class Game {
   async saveGame() {
     if (this._resetting || this._gameOver) return false;
     const state = {
-      version: 6,
+      version: 7,
       timestamp: Date.now(),
       time: this.systems.time.getState(),
       population: this.systems.population.getState(),
@@ -652,7 +630,6 @@ class Game {
       roads: this.systems.road.getAllStates(),
       tech: this.systems.tech.getState(),
       culture: this.systems.culture.getState(),
-      alchemy: this.systems.alchemy.getState(),
       combat: this.systems.combat.getState(),
       quest: this.systems.quest.getState(),
       weather: this.systems.weather.getState(),
@@ -660,12 +637,12 @@ class Game {
       colony: this.systems.colony.getState(),
       territory: this.systems.territory.getState(),
       enemyExpansion: this.systems.enemyExpansion.getState(),
-      spell: this.systems.spell.getState(),
       buildingTech: this.systems.buildingTech.getState(),
       diplomacy: this.systems.diplomacy.getState(),
       heroes: this.systems.hero.getState(),
       era: this.systems.era.getState(),
       luxuries: this.systems.luxury.getState(),
+      strategies: this.systems.strategy.getState(),
       audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
       armies: store.getState('armies'),
