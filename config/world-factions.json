@@ -1,0 +1,60 @@
+{
+  "cityStates": [
+    {
+      "id": "northern_timber_league", "name": "北境木业同盟", "icon": "🪵", "description": "由林场与猎户组成的自治同盟，擅长木材贸易与轻步兵。",
+      "gridX": 50, "gridY": 30, "domain": "land", "faction": "timber_league", "develops": "limited", "initialRelation": 5,
+      "militaryStrength": 28, "garrison": [{ "enemyId": "outpost_guard", "count": 3 }], "actions": ["talk", "gift", "aid", "trade", "open_borders", "non_aggression", "alliance"],
+      "specialty": "wood_trade", "developmentProfile": { "military": 0.8, "economy": 1.15, "diplomacy": 1.0 }, "eraUnitBranch": "infantry"
+    },
+    {
+      "id": "desert_caravan_council", "name": "沙海商旅议会", "icon": "🐪", "description": "掌握荒漠商路和水源的商旅议会，偏好贸易与互不侵犯。",
+      "gridX": 90, "gridY": 30, "domain": "land", "faction": "caravan_council", "develops": "limited", "initialRelation": 18,
+      "militaryStrength": 24, "garrison": [{ "enemyId": "outpost_guard", "count": 2 }], "actions": ["talk", "gift", "aid", "trade", "open_borders", "non_aggression", "alliance"],
+      "specialty": "gold_trade", "developmentProfile": { "military": 0.7, "economy": 1.25, "diplomacy": 1.15 }, "eraUnitBranch": "cavalry"
+    },
+    {
+      "id": "highland_republic", "name": "高地自由邦", "icon": "⛰️", "description": "依托矿山和隘口形成的自由邦，防御顽强但扩张缓慢。",
+      "gridX": 170, "gridY": 70, "domain": "land", "faction": "highlanders", "develops": "limited", "initialRelation": -8,
+      "militaryStrength": 38, "garrison": [{ "enemyId": "outpost_guard", "count": 4 }], "actions": ["talk", "gift", "aid", "negotiate", "ceasefire", "trade", "non_aggression", "alliance"],
+      "specialty": "stone_trade", "developmentProfile": { "military": 1.05, "economy": 0.9, "diplomacy": 0.9 }, "eraUnitBranch": "anti_cavalry"
+    },
+    {
+      "id": "steppe_khanate", "name": "草原汗庭", "icon": "🏇", "description": "逐水草而居的骑乘共同体，随时代更新骑兵但不建设完整城市。",
+      "gridX": 70, "gridY": 90, "domain": "land", "faction": "steppe", "develops": "limited", "initialRelation": -22,
+      "militaryStrength": 44, "garrison": [{ "enemyId": "outpost_guard", "count": 4 }], "actions": ["talk", "gift", "negotiate", "ceasefire", "trade", "non_aggression", "joint_patrol", "alliance"],
+      "specialty": "cavalry_contract", "developmentProfile": { "military": 1.15, "economy": 0.75, "diplomacy": 0.85 }, "eraUnitBranch": "cavalry"
+    },
+    {
+      "id": "scholarly_enclave", "name": "学者城社", "icon": "📚", "description": "由档案馆、书院与抄写工坊组成的小型城社，重视知识交流。",
+      "gridX": 150, "gridY": 70, "domain": "land", "faction": "scholars", "develops": "limited", "initialRelation": 22,
+      "militaryStrength": 20, "garrison": [{ "enemyId": "outpost_guard", "count": 2 }], "actions": ["talk", "gift", "aid", "trade", "open_borders", "non_aggression", "alliance"],
+      "specialty": "knowledge_exchange", "developmentProfile": { "military": 0.65, "economy": 1.0, "diplomacy": 1.2 }, "eraUnitBranch": "ranged"
+    },
+    {
+      "id": "sea_republic", "name": "群岛海贸共和国", "icon": "⛵", "description": "控制河海节点的海贸共和国，舰队和港口会随玩家时代升级。",
+      "gridX": 150, "gridY": 40, "domain": "naval", "faction": "sea_republic", "develops": "limited", "initialRelation": 10,
+      "militaryStrength": 40, "garrison": [{ "enemyId": "corsair_galley", "count": 3 }], "actions": ["talk", "gift", "aid", "trade", "open_borders", "non_aggression", "joint_patrol", "alliance"],
+      "specialty": "naval_trade", "developmentProfile": { "military": 1.0, "economy": 1.2, "diplomacy": 1.05 }, "eraUnitBranch": "navy"
+    }
+  ],
+  "wildSites": [
+    { "id": "wild_wood_1", "name": "盗木营地", "category": "barbarian_camp", "domain": "land", "gridX": 30, "gridY": 10, "baseStrength": 18, "respawnDays": 5, "rewards": [{ "resourceId": "wood", "amount": 35 }] },
+    { "id": "wild_food_1", "name": "荒野猎团", "category": "resource_guard", "domain": "land", "gridX": 70, "gridY": 10, "baseStrength": 16, "respawnDays": 4, "rewards": [{ "resourceId": "food", "amount": 32 }] },
+    { "id": "wild_gold_1", "name": "私铸窝点", "category": "barbarian_camp", "domain": "land", "gridX": 110, "gridY": 10, "baseStrength": 24, "respawnDays": 6, "rewards": [{ "resourceId": "gold", "amount": 20 }] },
+    { "id": "wild_bandit_1", "name": "林道匪寨", "category": "barbarian_camp", "domain": "land", "gridX": 30, "gridY": 30, "baseStrength": 22, "respawnDays": 5, "rewards": [{ "resourceId": "wood", "amount": 20 }, { "resourceId": "gold", "amount": 10 }] },
+    { "id": "wild_food_2", "name": "野牛群地", "category": "resource_guard", "domain": "land", "gridX": 130, "gridY": 30, "baseStrength": 20, "respawnDays": 4, "rewards": [{ "resourceId": "food", "amount": 40 }] },
+    { "id": "wild_stone_1", "name": "山贼石寨", "category": "barbarian_camp", "domain": "land", "gridX": 170, "gridY": 30, "baseStrength": 30, "respawnDays": 7, "rewards": [{ "resourceId": "stone", "amount": 38 }] },
+    { "id": "wild_nomad_1", "name": "流动掠骑", "category": "roaming_host", "domain": "land", "gridX": 70, "gridY": 50, "baseStrength": 34, "respawnDays": 6, "rewards": [{ "resourceId": "food", "amount": 24 }, { "resourceId": "gold", "amount": 14 }] },
+    { "id": "wild_mine_1", "name": "废弃矿坑守军", "category": "resource_guard", "domain": "land", "gridX": 170, "gridY": 50, "baseStrength": 28, "respawnDays": 6, "rewards": [{ "resourceId": "stone", "amount": 24 }, { "resourceId": "gold", "amount": 12 }] },
+    { "id": "wild_bandit_2", "name": "南道劫掠营", "category": "barbarian_camp", "domain": "land", "gridX": 30, "gridY": 70, "baseStrength": 26, "respawnDays": 5, "rewards": [{ "resourceId": "food", "amount": 20 }, { "resourceId": "gold", "amount": 12 }] },
+    { "id": "wild_ruin_1", "name": "古战场守卫", "category": "ruin_guard", "domain": "land", "gridX": 130, "gridY": 70, "baseStrength": 40, "respawnDays": 8, "rewards": [{ "resourceId": "stone", "amount": 30 }, { "resourceId": "gold", "amount": 18 }] },
+    { "id": "wild_wood_2", "name": "密林盗猎团", "category": "resource_guard", "domain": "land", "gridX": 30, "gridY": 90, "baseStrength": 20, "respawnDays": 4, "rewards": [{ "resourceId": "wood", "amount": 42 }] },
+    { "id": "wild_fort_1", "name": "旧边塞叛军", "category": "barbarian_camp", "domain": "land", "gridX": 170, "gridY": 90, "baseStrength": 46, "respawnDays": 8, "rewards": [{ "resourceId": "stone", "amount": 32 }, { "resourceId": "gold", "amount": 20 }] },
+    { "id": "wild_food_3", "name": "丰饶谷地守卫", "category": "resource_guard", "domain": "land", "gridX": 50, "gridY": 150, "baseStrength": 32, "respawnDays": 6, "rewards": [{ "resourceId": "food", "amount": 55 }] },
+    { "id": "wild_mine_2", "name": "高地矿团", "category": "resource_guard", "domain": "land", "gridX": 90, "gridY": 170, "baseStrength": 42, "respawnDays": 7, "rewards": [{ "resourceId": "stone", "amount": 35 }, { "resourceId": "gold", "amount": 15 }] },
+    { "id": "wild_pirate_1", "name": "浅湾海盗", "category": "pirate_fleet", "domain": "naval", "gridX": 20, "gridY": 150, "baseStrength": 28, "respawnDays": 5, "rewards": [{ "resourceId": "gold", "amount": 20 }] },
+    { "id": "wild_pirate_2", "name": "河口劫船团", "category": "pirate_fleet", "domain": "naval", "gridX": 100, "gridY": 150, "baseStrength": 38, "respawnDays": 6, "rewards": [{ "resourceId": "wood", "amount": 25 }, { "resourceId": "gold", "amount": 20 }] },
+    { "id": "wild_pirate_3", "name": "外海私掠队", "category": "pirate_fleet", "domain": "naval", "gridX": 150, "gridY": 150, "baseStrength": 50, "respawnDays": 8, "rewards": [{ "resourceId": "gold", "amount": 35 }] },
+    { "id": "wild_pirate_4", "name": "北水道封锁舰", "category": "pirate_fleet", "domain": "naval", "gridX": 20, "gridY": 180, "baseStrength": 44, "respawnDays": 7, "rewards": [{ "resourceId": "food", "amount": 25 }, { "resourceId": "gold", "amount": 28 }] }
+  ]
+}

@@ -34,6 +34,7 @@ import { StrategySystem } from './systems/StrategySystem.js';
 import { EconomyOrderSystem } from './systems/EconomyOrderSystem.js';
 import { CommerceSystem } from './systems/CommerceSystem.js';
 import { ArmySystem } from './systems/ArmySystem.js';
+import { WildSiteSystem } from './systems/WildSiteSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
@@ -127,6 +128,7 @@ class Game {
     this.systems.economyOrders = new EconomyOrderSystem();
     this.systems.commerce = new CommerceSystem();
     this.systems.army = new ArmySystem();
+    this.systems.wildSites = new WildSiteSystem();
 
     // 建筑科技树（永久被动加成 + T2 建筑解锁）
     this.systems.buildingTech = new BuildingTechSystem();
@@ -233,6 +235,7 @@ class Game {
       hero: this.systems.hero,
       culture: this.systems.culture
     });
+    this.systems.wildSites.setSystems({ resource: this.systems.resource, era: this.systems.era, army: this.systems.army });
     this.systems.building.setLuxurySystem(this.systems.luxury);
     this.systems.population.setLuxurySystem(this.systems.luxury);
     this.systems.diplomacy.setSystems({ luxury: this.systems.luxury });
@@ -240,7 +243,8 @@ class Game {
       resource: this.systems.resource,
       culture: this.systems.culture,
       hero: this.systems.hero,
-      strategy: this.systems.strategy
+      strategy: this.systems.strategy,
+      era: this.systems.era
     });
     this.systems.hero.setSystems({
       building: this.systems.building,
@@ -521,6 +525,7 @@ class Game {
     this.systems.economyOrders.initNew();
     this.systems.commerce.initNew();
     this.systems.army.initNew();
+    this.systems.wildSites.initNew();
 
     // 初始化事件标记状态（新游戏 = 无已移除标记）
     store.setState({ removedEventMarkers: [] });
@@ -614,6 +619,8 @@ class Game {
       availableUnits: saveData.availableUnits || {},
       nextId: (saveData.armies?.length || 0) + 1
     });
+    if (saveData.wildSites) this.systems.wildSites.restoreState(saveData.wildSites);
+    else this.systems.wildSites.initNew();
     store.setState({
       factions: saveData.factions || { states: {}, relations: {}, lastSyncDay: 0 },
       eraMusic: saveData.eraMusic || { currentEraId: saveData.era?.currentEraId || 'primitive', currentTrackId: null }
@@ -679,6 +686,7 @@ class Game {
       armyState: this.systems.army.getState(),
       armies: this.systems.army.getState().armies,
       availableUnits: this.systems.army.getAvailableUnits(),
+      wildSites: this.systems.wildSites.getState(),
       economicOrders: this.systems.economyOrders.getState(),
       tradeRoutes: this.systems.commerce.getState(),
       factions: store.getState('factions'),

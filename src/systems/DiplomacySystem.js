@@ -16,8 +16,11 @@ export class DiplomacySystem {
     this._cultureSystem = null;
     this._heroSystem = null;
     this._luxurySystem = null;
+    this._eraSystem = null;
+    this._factionRelations = {};
     this._lastProcessedDay = 0;
     eventBus.on('dayStart', ({ day } = {}) => this.advanceDay(day || 1));
+    eventBus.on('eraAdvanced', () => this._syncEraDevelopment());
   }
 
   setSystems(systems = {}) {
@@ -25,11 +28,13 @@ export class DiplomacySystem {
     if (systems.culture) this._cultureSystem = systems.culture;
     if (systems.hero) this._heroSystem = systems.hero;
     if (systems.luxury) this._luxurySystem = systems.luxury;
+    if (systems.era) this._eraSystem = systems.era;
   }
 
   get _config() {
     const integration = configRegistry.get('eaIntegration') || {};
-    return { actions: integration.outpostActions || {}, outposts: integration.outposts || [] };
+    const world = configRegistry.get('worldFactions') || {};
+    return { actions: integration.outpostActions || {}, outposts: [...(integration.outposts || []), ...(world.cityStates || [])] };
   }
 
   getAllOutposts() { return this._config.outposts; }
@@ -38,8 +43,11 @@ export class DiplomacySystem {
 
   initNew() {
     this._states = {};
+    this._factionRelations = {};
     this._lastProcessedDay = 0;
     for (const outpost of this.getAllOutposts()) this._states[outpost.id] = this._makeInitialState(outpost);
+    this._initializeFactionRelations();
+    this._syncEraDevelopment(false);
     this._notify();
   }
 
@@ -54,7 +62,10 @@ export class DiplomacySystem {
       activatedDay: null,
       lastExpansionDay: null,
       controlledCells: [],
-      treaties: []
+      treaties: [],
+      currentEraId: this._eraSystem?.getCurrentEra?.()?.id || 'primitive',
+      developmentLevel: (this._eraSystem?.getCurrentEra?.()?.order || 0) + 1,
+      garrisonTier: (this._eraSystem?.getCurrentEra?.()?.order || 0) + 1
     };
   }
 
@@ -91,6 +102,7 @@ export class DiplomacySystem {
   advanceDay(day) {
     if (!Number.isFinite(day) || day < 1 || day <= this._lastProcessedDay) return false;
     this._lastProcessedDay = day;
+    this._syncEraDevelopment(false);
     let changed = false;
     if (day >= 10) {
       for (const outpost of this.getAllOutposts()) {
@@ -109,6 +121,7 @@ export class DiplomacySystem {
     if (day >= 13 && (day - 10) % 3 === 0) {
       for (const outpost of this.getAllOutposts()) changed = this._expandOutpost(outpost, day) || changed;
     }
+    if (day % 5 === 0) changed = this._advanceInterFactionRelations(day) || changed;
     if (changed) {
       this._notify();
       eventBus.emit('cityStatesChanged', { day });
@@ -212,7 +225,53 @@ export class DiplomacySystem {
     const state = this.getOutpostState(outpostId);
     if (!outpost || !state) return 0;
     const day = store.getState('timeDay') || this._lastProcessedDay || 1;
-    return Math.round((Number(outpost.militaryStrength) || 0) + Math.max(0, state.controlledCells.length - 1) * 2 + Math.max(0, day - 10) * 0.2);
+    const profile = Number(outpost.developmentProfile?.military) || 1;
+    const eraOrder = Math.max(0, (state.developmentLevel || 1) - 1);
+    const eraMultiplier = 1 + eraOrder * 0.18 * profile;
+    return Math.round((Number(outpost.militaryStrength) || 0) * eraMultiplier + Math.max(0, state.controlledCells.length - 1) * 2 + Math.max(0, day - 10) * 0.2);
+  }
+
+  _initializeFactionRelations() {
+    const outposts = this.getAllOutposts();
+    for (let left = 0; left < outposts.length; left += 1) {
+      for (let right = left + 1; right < outposts.length; right += 1) {
+        const key = `${outposts[left].id}|${outposts[right].id}`;
+        const sameFaction = outposts[left].faction === outposts[right].faction;
+        this._factionRelations[key] = sameFaction ? 35 : ((left * 17 + right * 11) % 41) - 20;
+      }
+    }
+  }
+
+  _advanceInterFactionRelations(day) {
+    let changed = false;
+    for (const [key, value] of Object.entries(this._factionRelations)) {
+      const drift = ((key.length + day) % 3) - 1;
+      if (drift === 0) continue;
+      this._factionRelations[key] = Math.max(-100, Math.min(100, value + drift));
+      changed = true;
+    }
+    return changed;
+  }
+
+  getInterFactionRelations() { return { ...this._factionRelations }; }
+
+  _syncEraDevelopment(notify = true) {
+    const era = this._eraSystem?.getCurrentEra?.();
+    if (!era) return false;
+    let changed = false;
+    for (const outpost of this.getAllOutposts()) {
+      const state = this._states[outpost.id] || this._makeInitialState(outpost);
+      if (state.currentEraId === era.id && state.developmentLevel === era.order + 1) continue;
+      this._states[outpost.id] = {
+        ...state,
+        currentEraId: era.id,
+        developmentLevel: era.order + 1,
+        garrisonTier: era.order + 1
+      };
+      changed = true;
+    }
+    if (changed && notify) this._notify();
+    return changed;
   }
 
   attackOutpost(outpostId, force = {}) {
@@ -248,14 +307,16 @@ export class DiplomacySystem {
     store.setState({
       outpostStates: structuredClone(this._states),
       activeCityStateCount: this.getVisibleOutposts().length,
+      factions: { states: structuredClone(this._states), relations: { ...this._factionRelations }, lastSyncDay: this._lastProcessedDay },
       outpostVersion: (store.getState('outpostVersion') || 0) + 1
     });
   }
 
-  getState() { return { states: structuredClone(this._states), lastProcessedDay: this._lastProcessedDay }; }
+  getState() { return { states: structuredClone(this._states), factionRelations: { ...this._factionRelations }, lastProcessedDay: this._lastProcessedDay }; }
 
   restoreState(saved) {
     this._states = {};
+    this._factionRelations = { ...(saved?.factionRelations || {}) };
     this._lastProcessedDay = saved?.lastProcessedDay || 0;
     for (const outpost of this.getAllOutposts()) {
       const base = this._makeInitialState(outpost);
@@ -267,6 +328,8 @@ export class DiplomacySystem {
         treaties: [...(previous.treaties || [])]
       };
     }
+    if (Object.keys(this._factionRelations).length === 0) this._initializeFactionRelations();
+    this._syncEraDevelopment(false);
     this._notify();
   }
 }

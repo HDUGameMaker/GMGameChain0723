@@ -271,10 +271,13 @@ const buildingDefs = [
   ['engineers_guild', '工程师行会', 'industry', 5, { buildSpeedMul: 1.12, repairMul: 1.2 }],
   ['blacksmith', '铁匠铺', 'industry', 5, { meleePowerMul: 1.06 }],
   ['tavern_hall', '历史酒馆', 'hero', 3, { unlockSystem: 'heroes', heroOfferBonus: 1 }],
-  ['strategy_office', '谋略府', 'strategy', 4, { unlockSystem: 'strategies', strategyCooldownMul: 0.9, armyCapacityBonus: 1 }]
+  ['strategy_office', '谋略府', 'strategy', 4, { unlockSystem: 'strategies', strategyCooldownMul: 0.9, armyCapacityBonus: 1 }],
+  ['field_camp', '野战营寨', 'defense', 1, { garrisonCapacity: 1, garrisonDefenseMul: 1.12, garrisonSupplyRecovery: 0.08, garrisonMoraleRecovery: 3, visionRadius: 4 }, { width: 1, height: 1 }],
+  ['frontier_fort', '边境要塞', 'defense', 2, { garrisonCapacity: 2, garrisonDefenseMul: 1.3, garrisonSupplyRecovery: 0.15, garrisonMoraleRecovery: 6, visionRadius: 7, defensePower: 40 }, { width: 2, height: 2 }],
+  ['grand_fortress', '大型城垒', 'defense', 4, { garrisonCapacity: 4, garrisonDefenseMul: 1.55, garrisonSupplyRecovery: 0.25, garrisonMoraleRecovery: 10, visionRadius: 11, defensePower: 90, armyCapacityBonus: 1 }, { width: 3, height: 3 }]
 ];
-const buildings = buildingDefs.map(([id, name, category, maxWorkers, uniqueFunction], index) => ({
-  id, name, category, description: `${name}承担${category}体系中的独特职责。`, footprint: { width: index % 4 === 0 ? 2 : 1, height: index % 4 === 0 ? 2 : 1 },
+const buildings = buildingDefs.map(([id, name, category, maxWorkers, uniqueFunction, footprint], index) => ({
+  id, name, category, description: `${name}承担${category}体系中的独特职责。`, footprint: footprint || { width: index % 4 === 0 ? 2 : 1, height: index % 4 === 0 ? 2 : 1 },
   maxCount: null, initialBuilding: id === 'timber_house', maxWorkers, jobType: category,
   buildCost: cost(24 + index * 3, 12 + index * 2, index % 6 === 0 ? 10 : 0, Math.floor(index / 3) * 3),
   buildTime: 1 + Math.floor(index / 10), unlockConditions: [], production: uniqueFunction.resourceId ? { perWorker: true, output: [{ resourceId: uniqueFunction.resourceId, amount: uniqueFunction.amount }] } : null,

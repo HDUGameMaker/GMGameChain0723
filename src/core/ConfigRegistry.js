@@ -40,6 +40,7 @@ class ConfigRegistry {
       'economicOrders': 'config/economic-orders.json',
       'commerce': 'config/commerce.json',
       'militaryTactics': 'config/military-tactics.json',
+      'worldFactions': 'config/world-factions.json',
       'eaIntegration': 'config/ea_integration.json',
       'historicalContent': 'config/historical_content.json'
     };

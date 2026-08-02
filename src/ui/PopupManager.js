@@ -359,6 +359,7 @@ export class PopupManager {
       'strategy_cards': '历史策略',
       'economic_orders': '农业与采集作业',
       'commerce': '商业与贸易路线',
+      'world_factions': '世界势力与野外目标',
       'tutorial_prompt': '新手教程',
       'quest_panel': '任务'
     };
@@ -464,6 +465,9 @@ export class PopupManager {
     });
     import('./panels/commerce-panel.js').then(m => {
       this.register('commerce', m.renderCommercePanel);
+    });
+    import('./panels/world-factions-panel.js').then(m => {
+      this.register('world_factions', m.renderWorldFactionsPanel);
     });
   }
 }

@@ -18,6 +18,7 @@ export class ArmySystem {
     this._hero = null;
     this._culture = null;
     eventBus.on('tick', () => this._advanceMovement());
+    eventBus.on('dayStart', () => this._resupplyGarrisons());
   }
 
   setSystems({ building, hero, culture } = {}) {
@@ -384,6 +385,36 @@ export class ArmySystem {
     return config?.uniqueFunction?.garrisonDefenseMul || 1.25;
   }
 
+  getFortificationEffects(armyId) {
+    const army = this._findArmy(armyId);
+    if (!army || army.garrisonBuildingIndex == null) {
+      return { defenseMultiplier: 1, supplyRecovery: 0, moraleRecovery: 0, visionRadius: 0 };
+    }
+    const building = this._building?.buildings?.[army.garrisonBuildingIndex];
+    const config = building ? configRegistry.getBuilding?.(building.buildingId) : null;
+    const fn = config?.uniqueFunction || {};
+    return {
+      defenseMultiplier: fn.garrisonDefenseMul || 1.25,
+      supplyRecovery: fn.garrisonSupplyRecovery || 0,
+      moraleRecovery: fn.garrisonMoraleRecovery || 0,
+      visionRadius: fn.visionRadius || 0
+    };
+  }
+
+  _resupplyGarrisons() {
+    let changed = false;
+    for (const army of this._armies) {
+      if (army.garrisonBuildingIndex == null) continue;
+      const effects = this.getFortificationEffects(army.id);
+      const supply = Math.min(1, army.supply + effects.supplyRecovery);
+      const morale = Math.min(100, army.morale + effects.moraleRecovery);
+      if (supply !== army.supply || morale !== army.morale) changed = true;
+      army.supply = Math.round(supply * 1000) / 1000;
+      army.morale = Math.round(morale * 1000) / 1000;
+    }
+    if (changed) this._notify('garrison_resupply');
+  }
+
   resolveEngagement(attackerId, defenderId, context = {}) {
     const attacker = this._findArmy(attackerId);
     const defender = this._findArmy(defenderId);
@@ -433,6 +464,18 @@ export class ArmySystem {
   }
 
   getBattleHistory() { return structuredClone(this._battleHistory); }
+
+  applyAttrition(armyId, { casualtyRate = 0, moraleDelta = 0, supplyDelta = 0 } = {}) {
+    const army = this._findArmy(armyId);
+    if (!army) return { ok: false, reason: 'unknown_army' };
+    const casualties = army.unitIds.length ? Math.min(army.unitIds.length, Math.max(0, Math.round(army.unitIds.length * casualtyRate))) : 0;
+    this._applyCasualties(army, casualties);
+    army.morale = Math.max(0, Math.min(100, army.morale + moraleDelta));
+    army.supply = Math.max(0.25, Math.min(1.25, army.supply + supplyDelta));
+    if (!army.unitIds.length && army.heroId) this._hero?.injureHero?.(army.heroId);
+    this._notify('attrition');
+    return { ok: true, casualties };
+  }
 
   getArmyPower(armyId) {
     const army = this._findArmy(armyId);
