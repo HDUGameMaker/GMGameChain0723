@@ -124,7 +124,13 @@ test('v8 migration preserves era stars and marks abstract occupied colonies as l
         spice_island: { id: 'spice_island', defense: 7, occupiedDay: 12 }
       }
     },
-    armies: [{ id: 'army_2', unitIds: ['archer'], ownerId: 'ally' }],
+    buildingTech: { unlockedNodes: ['bt_logging_t2'] },
+    armies: [{
+      id: 'army_2', unitIds: ['archer'], ownerId: 'ally',
+      movePath: [{ x: 7, y: 8 }], order: { type: 'move', targetX: 7, targetY: 8 },
+      garrisonBuildingIndex: 3
+    }],
+    availableUnits: { spearman: 2 },
     factions: { states: { city_1: { status: 'friendly' } }, relations: {}, lastSyncDay: 8 }
   };
   const before = structuredClone(source);
@@ -135,6 +141,11 @@ test('v8 migration preserves era stars and marks abstract occupied colonies as l
   assert.deepEqual(migrated.era.eraStars, { primitive: 5, classical: 2, medieval: 1 });
   assert.equal(migrated.colony.occupied.spice_island.legacyOffmap, true);
   assert.equal(migrated.armyState.armies[0].ownerId, 'ally', 'an explicit owner is preserved');
+  assert.deepEqual(migrated.armyState.armies[0].movePath, source.armies[0].movePath);
+  assert.equal(migrated.armyState.armies[0].garrisonBuildingIndex, 3);
+  assert.deepEqual(migrated.armyState.availableUnits, source.availableUnits);
+  assert.ok(migrated.tech.researched.includes('tech_ancient_5'));
+  assert.deepEqual(migrated.buildingTech, source.buildingTech);
   assert.deepEqual(migrated.commerce.factions, source.factions);
 });
 

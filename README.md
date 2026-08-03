@@ -123,6 +123,14 @@ docs/                          设计、审计与交付文档
 
 完整改造说明、平衡基线与兼容说明见 [历史文明全面改造报告](docs/HISTORICAL_CIVILIZATION_OVERHAUL_2026-08-02.md)。
 
+## Military logistics and strategic-map interaction
+
+Military units are now trained from compatible building details into the reserve, assembled and deployed from domain-compatible headquarters/assembly buildings, and controlled directly on the strategic map. Deployment searches the eight neighboring tiles atomically; buildings block army occupation unless they are valid fortifications, whose garrison capacity and recovery effects are enforced. Army selection is transient UI state and is not saved.
+
+Legacy `buildingTech.unlockedNodes` remains readable in v9 saves and is merged into the current technology/civics research records without a schema-version bump. Reserves, deployed armies, movement paths, orders, and garrisons remain part of authoritative `armyState`.
+
+Acceptance scope, implementation details, and exact verification evidence are recorded in [Military Logistics and Map Interaction — 2026-08-03](docs/MILITARY_LOGISTICS_AND_MAP_INTERACTION_2026-08-03.md).
+
 ## 兼容说明
 
 - `v5`、`v6` 存档会按迁移链升级到 `v7`。

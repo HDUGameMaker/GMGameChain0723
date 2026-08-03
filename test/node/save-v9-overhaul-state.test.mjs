@@ -24,6 +24,40 @@ test('legacy v9 buildings gain stable operation defaults', () => {
   assert.deepEqual(migrated.fogOfWar, { width: 384, height: 384, exploredRle: [384 * 384] });
 });
 
+test('legacy building research migrates without losing army logistics or persisting selection UI', () => {
+  const legacyV9 = makeLegacyV9({
+    buildingTech: { unlockedNodes: ['bt_logging_t2', 'bt_farming_t2'] },
+    tech: { researched: ['tech_primitive_1'], points: 12 },
+    culture: { researched: [], points: 8 },
+    selectedArmyId: 'army_4',
+    armyState: {
+      nextId: 5,
+      availableUnits: { spearman: 3, archer: 1 },
+      battleHistory: [],
+      selectedArmyId: 'army_4',
+      armies: [{
+        id: 'army_4', ownerId: 'player', unitIds: ['spearman'], gridX: 12, gridY: 10,
+        movePath: [{ x: 12, y: 9 }, { x: 13, y: 9 }],
+        order: { type: 'move', targetX: 13, targetY: 9 },
+        garrisonBuildingIndex: 2
+      }]
+    }
+  });
+
+  const migrated = SaveManager.migrate(legacyV9);
+
+  assert.equal(migrated.version, 9, 'compatibility normalization does not bump the schema');
+  assert.ok(migrated.tech.researched.includes('tech_ancient_5'));
+  assert.ok(migrated.culture.researched.includes('civic_ancient_4'));
+  assert.deepEqual(migrated.buildingTech, legacyV9.buildingTech, 'legacy state remains readable');
+  assert.deepEqual(migrated.armyState.availableUnits, legacyV9.armyState.availableUnits);
+  assert.deepEqual(migrated.armyState.armies[0].movePath, legacyV9.armyState.armies[0].movePath);
+  assert.deepEqual(migrated.armyState.armies[0].order, legacyV9.armyState.armies[0].order);
+  assert.equal(migrated.armyState.armies[0].garrisonBuildingIndex, 2);
+  assert.equal(Object.hasOwn(migrated, 'selectedArmyId'), false);
+  assert.equal(Object.hasOwn(migrated.armyState, 'selectedArmyId'), false);
+});
+
 test('overhaul state remains canonical through an envelope round trip', async () => {
   const payload = SaveManager.migrate(makeLegacyV9({
     resourceNodes: { nodes: [{

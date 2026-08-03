@@ -3,6 +3,7 @@ import {
   createEnvelopeRecord,
   verifyEnvelopeRecord
 } from './SaveEnvelope.js';
+import { migrateLegacyBuildingResearch } from '../domain/BuildingResearchMigration.js';
 
 const DB_NAME = 'GMGameChainDB';
 const DB_VERSION = 1;
@@ -89,7 +90,7 @@ export class SaveManager {
       if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
       canonicalizePayload(raw);
       if (!Number.isInteger(raw.version) || raw.version < 5 || raw.version > SaveManager.CURRENT_VERSION) return null;
-      const state = structuredClone(raw);
+      let state = structuredClone(raw);
       const history = Array.isArray(state.migrationHistory) && state.migrationHistory.length > 0
         ? [...state.migrationHistory]
         : [state.version];
@@ -165,7 +166,7 @@ export class SaveManager {
         history.push(9);
       }
 
-      if (state.version === 9) SaveManager._normalizeV9OverhaulState(state);
+      if (state.version === 9) state = SaveManager._normalizeV9OverhaulState(state);
 
       state.migrationHistory = [...new Set(history)];
       if (canonicalV9Violation(state)) return null;
@@ -298,6 +299,7 @@ export class SaveManager {
   }
 
   static _normalizeV9OverhaulState(state) {
+    state = migrateLegacyBuildingResearch(state);
     const farmIds = new Set(['farm', 'farm_t2', 'grain_farm']);
     state.buildings = (Array.isArray(state.buildings) ? state.buildings : []).map((building, index) => ({
       ...building,
@@ -323,6 +325,11 @@ export class SaveManager {
     state.fogOfWar = isRecord(state.fogOfWar)
       ? state.fogOfWar
       : { width: 384, height: 384, exploredRle: [384 * 384] };
+    delete state.selectedArmy;
+    delete state.selectedArmyId;
+    delete state.armyState?.selectedArmy;
+    delete state.armyState?.selectedArmyId;
+    return state;
   }
 
   static _assertCanonicalV9(payload) {

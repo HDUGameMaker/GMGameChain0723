@@ -90,16 +90,69 @@ test('new game opens economy panels without browser errors', async ({ page }) =>
   await closeVisiblePopup(page);
 
   await page.setViewportSize({ width: 1024, height: 700 });
-  await page.locator('#btn-training').click();
+  await page.evaluate(() => {
+    const game = window.__game;
+    const buildingIndex = game.systems.building.buildings.findIndex(building => building.buildingId === 'work_shed');
+    game.popupManager.open('building_detail', { buildingIndex });
+  });
+  await page.getByTestId('open-building-training').click();
   const unitArt = page.locator('[data-testid="unit-card-art"]').first();
   await expect(unitArt).toBeVisible();
   await expect.poll(() => unitArt.evaluate(image => image.complete && image.naturalWidth >= 200)).toBe(true);
+  const train = page.locator('[data-testid^="train-unit-"]:not([disabled])').first();
+  await expect(train).toBeVisible();
+  await train.click();
   const trainingBox = await page.locator('#popup-container').boundingBox();
   expect(trainingBox.x).toBeGreaterThanOrEqual(0);
   expect(trainingBox.y).toBeGreaterThanOrEqual(0);
   expect(trainingBox.x + trainingBox.width).toBeLessThanOrEqual(1024);
   expect(trainingBox.y + trainingBox.height).toBeLessThanOrEqual(700);
   await closeVisiblePopup(page);
+
+  await page.evaluate(() => {
+    const game = window.__game;
+    const buildingIndex = game.systems.building.buildings.findIndex(building => building.buildingId === 'warehouse');
+    game.popupManager.open('building_detail', { buildingIndex });
+  });
+  await expect(page.getByTestId('building-assembly-map-icon')).toBeVisible();
+  await page.getByTestId('open-building-assembly').click();
+  const reserveArt = page.locator('[data-testid^="reserve-unit-art-"]').first();
+  await expect(reserveArt).toBeVisible();
+  await expect.poll(() => reserveArt.evaluate(image => image.complete && image.naturalWidth > 0)).toBe(true);
+  await page.locator('[data-testid^="reserve-add-"]').first().click();
+  await page.getByTestId('deploy-army').click();
+  await closeVisiblePopup(page);
+
+  const points = await page.evaluate(() => {
+    const game = window.__game;
+    const renderer = game.mapRenderer;
+    const army = game.systems.army.getArmies()[0];
+    const toClient = (x, y) => ({
+      x: (x * renderer.tileSize + renderer.tileSize / 2 - renderer.camX) * renderer.zoom,
+      y: (y * renderer.tileSize + renderer.tileSize / 2 - renderer.camY) * renderer.zoom
+    });
+    return { army: toClient(army.gridX, army.gridY), target: toClient(army.gridX, army.gridY - 1) };
+  });
+  await page.mouse.click(points.army.x, points.army.y);
+  await page.mouse.click(points.target.x, points.target.y);
+  await expect.poll(() => page.evaluate(() => window.__game.systems.army.getArmies()[0].order.type)).toBe('move');
+
+  await page.evaluate(() => {
+    const game = window.__game;
+    const army = game.systems.army.getArmies()[0];
+    void game.systems.armyInteraction.request({
+      armyId: army.id,
+      target: {
+        kind: 'enemy', source: 'combat', gridX: army.gridX, gridY: army.gridY,
+        enemy: { name: 'Browser QA target' }
+      }
+    });
+  });
+  await expect(page.locator('#popup-overlay')).toHaveClass(/active/);
+  await expect(page.locator('#popup-body')).toContainText('Browser QA target');
+  await expect(page.locator('#popup-body button')).toHaveCount(2);
+  await page.locator('#popup-body button').first().click();
+  await expect(page.locator('#popup-overlay')).not.toHaveClass(/active/);
 
   await page.evaluate(() => {
     const game = window.__game;
