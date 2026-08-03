@@ -22,6 +22,7 @@ export class EnemyExpansionSystem {
     this._mapConfig = null;
     this._territorySystem = null;
     this._buildingSystem = null;
+    this._armySystem = null;
     this._spellSystem = null; // 炼金法术系统（减益：强度削减 / 倒计时冻结）
     this._totalCleared = 0;   // 累计清敌数（gameover 统计用）
 
@@ -31,6 +32,7 @@ export class EnemyExpansionSystem {
 
   setTerritorySystem(ts) { this._territorySystem = ts; }
   setBuildingSystem(bs) { this._buildingSystem = bs; }
+  setArmySystem(as) { this._armySystem = as; }
   setSpellSystem(ss) { this._spellSystem = ss; }
   setStrategySystem(ss) { this._strategySystem = ss; }
   setHeroSystem(hs) { this._heroSystem = hs; }
@@ -62,7 +64,7 @@ export class EnemyExpansionSystem {
 
   // ===== 军队战力（来自 availableUnits，可按敌方标签应用兵种克制） =====
   getArmyPower(opponents = []) {
-    const avail = store.getState('availableUnits') || {};
+    const avail = this._armySystem?.getAvailableUnits?.() || {};
     const units = configRegistry.get('enemies')?.units || [];
     const unitIds = Object.entries(avail)
       .flatMap(([id, count]) => Array(Math.max(0, count || 0)).fill(id));
@@ -73,23 +75,23 @@ export class EnemyExpansionSystem {
   /** 从 availableUnits 移除总价 >= amount 的单位（便宜优先） */
   _consumeArmyPower(amount) {
     if (amount <= 0) return true;
-    const avail = { ...(store.getState('availableUnits') || {}) };
+    if (!this._armySystem) return false;
+    const avail = this._armySystem.getAvailableUnits();
     const units = configRegistry.get('enemies')?.units || [];
     const unitMap = {};
     for (const u of units) unitMap[u.id] = u;
     const ids = Object.keys(avail).filter(id => avail[id] > 0)
       .sort((a, b) => (unitMap[a]?.combatPower || 1) - (unitMap[b]?.combatPower || 1));
     let remaining = amount;
+    const consumed = {};
     for (const id of ids) {
       if (remaining <= 0) break;
       const cp = unitMap[id]?.combatPower || 1;
       const remove = Math.min(Math.ceil(remaining / cp), avail[id]);
-      avail[id] -= remove;
+      consumed[id] = remove;
       remaining -= remove * cp;
-      if (avail[id] <= 0) delete avail[id];
     }
-    store.setState({ availableUnits: avail, armyVersion: Date.now() });
-    eventBus.emit('armyChanged', { reason: 'clearEnemy' });
+    if (Object.keys(consumed).length > 0 && !this._armySystem.consumeReserveUnits(consumed, 'clearEnemy')) return false;
     return remaining <= 0;
   }
 

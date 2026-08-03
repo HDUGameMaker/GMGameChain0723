@@ -268,6 +268,8 @@ class Game {
       population: this.systems.population,
       tech: this.systems.tech
     });
+    this.systems.invasion.setArmySystem(this.systems.army);
+    this.systems.enemyExpansion.setArmySystem(this.systems.army);
     this.systems.wildSites.setSystems({ resource: this.systems.resource, era: this.systems.era, army: this.systems.army });
     this.systems.building.setLuxurySystem(this.systems.luxury);
     this.systems.population.setLuxurySystem(this.systems.luxury);

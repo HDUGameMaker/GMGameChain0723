@@ -125,9 +125,34 @@ export class ArmySystem {
   }
 
   addReserveUnit(unitId, count = 1) {
-    if (!this._unitConfig(unitId) || !Number.isInteger(count) || count <= 0) return false;
-    this._availableUnits[unitId] = (this._availableUnits[unitId] || 0) + count;
-    this._notify('reserve');
+    return this.addReserveUnits({ [unitId]: count });
+  }
+
+  addReserveUnits(units = {}, reason = 'reserve') {
+    const entries = Object.entries(units || {});
+    if (entries.length === 0 || entries.some(([unitId, count]) => (
+      !this._unitConfig(unitId) || !Number.isInteger(count) || count <= 0
+    ))) return false;
+    for (const [unitId, count] of entries) {
+      this._availableUnits[unitId] = (this._availableUnits[unitId] || 0) + count;
+    }
+    this._notify(reason);
+    return true;
+  }
+
+  consumeReserveUnits(units = {}, reason = 'reserve') {
+    const entries = Object.entries(units || {});
+    if (entries.length === 0 || entries.some(([unitId, count]) => (
+      !this._unitConfig(unitId)
+      || !Number.isInteger(count)
+      || count <= 0
+      || (this._availableUnits[unitId] || 0) < count
+    ))) return false;
+    for (const [unitId, count] of entries) {
+      this._availableUnits[unitId] -= count;
+      if (this._availableUnits[unitId] <= 0) delete this._availableUnits[unitId];
+    }
+    this._notify(reason);
     return true;
   }
 

@@ -14,6 +14,7 @@ export class InvasionSystem {
     this._nextDay = 0;             // 下次入侵在哪天
     this._invasionHistory = [];    // 历史记录
     this._pendingRevives = [];     // { unitIds, reviveDay }
+    this._armySystem = null;
 
     eventBus.on('dayStart', (data) => this._onDayStart(data));
   }
@@ -26,6 +27,8 @@ export class InvasionSystem {
 
   get _unitConfigs() { return configRegistry.get('enemies')?.units || []; }
 
+  setArmySystem(armySystem) { this._armySystem = armySystem; }
+
   _notifyArmyChanged(reason) {
     const version = (store.getState('armyVersion') || 0) + 1;
     store.setState({ armyVersion: version });
@@ -34,11 +37,6 @@ export class InvasionSystem {
 
   _commitArmies(armies, reason) {
     store.setState({ armies: [...armies] });
-    this._notifyArmyChanged(reason);
-  }
-
-  _commitAvailableUnits(avail, reason) {
-    store.setState({ availableUnits: { ...avail } });
     this._notifyArmyChanged(reason);
   }
 
@@ -284,8 +282,6 @@ export class InvasionSystem {
     const popSys = window.__game?.systems?.population;
     if (!popSys) return;
     const loss = unitIds.reduce((s, uid) => s + this._getUnitPopulationRequired(uid), 0);
-    popSys.releaseFromConstruction(loss);
-    popSys.current = Math.max(0, popSys.current - loss);
     popSys.refresh();
     eventBus.emit('populationChanged', { current: popSys.current, direction: 'combat_loss', lost: loss });
   }
@@ -304,7 +300,7 @@ export class InvasionSystem {
   }
 
   _processPendingRevives(day) {
-    if (this._pendingRevives.length === 0) return;
+    if (this._pendingRevives.length === 0 || !this._armySystem) return;
     const due = [];
     this._pendingRevives = this._pendingRevives.filter(item => {
       if (day >= item.reviveDay) {
@@ -315,21 +311,22 @@ export class InvasionSystem {
     });
     if (due.length === 0) return;
 
-    const avail = { ...(store.getState('availableUnits') || {}) };
     const popSys = window.__game?.systems?.population;
+    const revivedReserves = {};
     let revivedPeople = 0;
     let revivedUnits = 0;
     for (const item of due) {
       for (const uid of item.unitIds || []) {
-        avail[uid] = (avail[uid] || 0) + 1;
+        revivedReserves[uid] = (revivedReserves[uid] || 0) + 1;
         revivedPeople += this._getUnitPopulationRequired(uid);
         revivedUnits++;
       }
     }
-    this._commitAvailableUnits(avail, 'unitRevive');
+    if (revivedUnits > 0 && !this._armySystem.addReserveUnits(revivedReserves, 'unitRevive')) {
+      this._pendingRevives.push(...due);
+      return;
+    }
     if (popSys && revivedPeople > 0) {
-      popSys.current += revivedPeople;
-      popSys.occupyForConstruction(revivedPeople);
       popSys.refresh();
       eventBus.emit('populationChanged', { current: popSys.current, direction: 'combat_revive', revived: revivedPeople });
     }
