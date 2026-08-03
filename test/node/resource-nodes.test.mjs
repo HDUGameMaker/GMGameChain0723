@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import test from 'node:test';
 
 import { configRegistry } from '../../src/core/ConfigRegistry.js';
@@ -6,11 +7,46 @@ import { eventBus } from '../../src/core/EventBus.js';
 import { BuildingSystem } from '../../src/systems/BuildingSystem.js';
 import { ResourceNodeSystem } from '../../src/systems/ResourceNodeSystem.js';
 
+const runtimeOverrides = JSON.parse(fs.readFileSync(new URL('../../config/building-runtime-overrides.json', import.meta.url), 'utf8'));
+
 function makeNodeSystem(nodes) {
   const system = new ResourceNodeSystem();
   system.initFromManifest(nodes);
   return system;
 }
+
+test('both stone gathering buildings use a one-cell runtime footprint', () => {
+  assert.deepEqual(runtimeOverrides.buildings.stope?.footprint, { width: 1, height: 1 });
+  assert.deepEqual(runtimeOverrides.buildings.stone_quarry?.footprint, { width: 1, height: 1 });
+});
+
+test('a one-cell quarry places exactly on a stone node and nowhere beside it', () => {
+  eventBus.clear();
+  configRegistry._configs = {
+    map: {
+      gridWidth: 4,
+      gridHeight: 4,
+      grid: Array.from({ length: 4 }, () => 'RRRR'),
+      groundTypes: { R: { name: '裸露岩石', buildable: 'restricted' } }
+    },
+    buildings: [{
+      id: 'stope', name: '采石场', footprint: { width: 1, height: 1 },
+      allowedGrounds: ['R'], requiredResourceNode: 'stone', unlockConditions: [],
+      buildCost: [], maxCount: null, maxWorkers: 5
+    }],
+    historicalContent: { eras: [], civilizations: [] }
+  };
+  const nodes = makeNodeSystem([{ id: 'stone_1', type: 'stone', gridX: 2, gridY: 2, rarity: 'common' }]);
+  const buildings = new BuildingSystem();
+  buildings.setResourceSystem({ consumeAll: () => true, setStorageMultiplier() {} });
+  buildings.setResourceNodeSystem(nodes);
+  buildings.init();
+
+  assert.equal(buildings.canPlaceAt(1, 2, 'stope').valid, false);
+  assert.equal(buildings.canPlaceAt(2, 2, 'stope').valid, true);
+  assert.equal(buildings.placeBuilding(2, 2, 'stope'), true);
+  assert.equal(nodes.getNodeAt(2, 2).developedByBuildingId, 'building_1');
+});
 
 test('a gathering building claims a matching node and demolition releases it', () => {
   eventBus.clear();

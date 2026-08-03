@@ -45,6 +45,8 @@ export class HUD {
     this.btnPause = document.getElementById('btn-pause');
     this.btnMoveMode = document.getElementById('btn-move-mode');
     this.btnArmy = document.getElementById('btn-army');
+    this.btnUnitResearch = document.getElementById('btn-unit-research');
+    this.btnHeroes = document.getElementById('btn-heroes');
     this.weatherDisplay = document.getElementById('weather-display');
     this.expeditionStatus = document.getElementById('expedition-status');
     this.deferredEventTray = document.getElementById('deferred-event-tray');
@@ -96,6 +98,12 @@ export class HUD {
     });
     this.btnArmy.addEventListener('click', () => {
       this.popupManager.open('army_panel', {});
+    });
+    this.btnUnitResearch?.addEventListener('click', () => {
+      this.popupManager.open('unit_research', {});
+    });
+    this.btnHeroes?.addEventListener('click', () => {
+      this.popupManager.open('tavern_heroes', {});
     });
     this.btnBuild.addEventListener('click', () => {
       this.systems.territory?.exitCastingMode();

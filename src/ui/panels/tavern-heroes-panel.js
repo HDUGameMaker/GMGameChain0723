@@ -28,8 +28,13 @@ export function renderTavernHeroesPanel(data, body, pm) {
   const inspiration = store.getState('inspiration') || 0;
   const recruited = system.getRecruitedHeroes();
   const assigned = recruited.filter(hero => hero.assignment).length;
+  const hasTavern = system.hasActiveTavern?.() === true;
   const refreshDays = configRegistry.get('eaIntegration')?.heroSettings?.refreshDays || 3;
   body.innerHTML = `<div style="display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:16px"><div><b style="font-size:19px;color:#ececf0">🍺 历史人物酒馆</b><div style="font-size:11px;color:#808098;margin-top:3px">访客每 ${refreshDays} 天轮换；人物受伤后会休养并自动回归</div></div><div style="font-size:12px;color:#d6a84b">人文影响力 ${inspiration}　任命 ${assigned}/${system.getAssignmentLimit()}</div></div>`;
+
+  if (!hasTavern) {
+    body.insertAdjacentHTML('beforeend', '<div data-testid="tavern-required-guidance" style="margin-bottom:16px;padding:13px 15px;border:1px solid rgba(214,168,75,.62);border-radius:9px;background:linear-gradient(135deg,rgba(214,168,75,.16),rgba(73,50,28,.18));color:#f3dc9a;font-size:13px;line-height:1.55"><b>🍺 建设酒馆后即可招募英雄</b><br><span style="color:#c8b98e">请从底部“建设”中建造并启用酒馆；已招募英雄仍可在下方名册查看和任命。</span></div>');
+  }
 
   const offers = document.createElement('div');
   offers.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:9px;margin-bottom:20px;';
@@ -39,8 +44,9 @@ export function renderTavernHeroesPanel(data, body, pm) {
     const costs = (hero.cost || []).map(cost => `${configRegistry.getResource(cost.resourceId)?.name || cost.resourceId} ${cost.amount}`).join(' · ');
     card.innerHTML = `<div style="display:flex;gap:10px;align-items:center">${portrait(hero)}<div><b style="font-size:16px;color:#ececf0">${hero.name}</b><div style="font-size:10px;color:#d6a84b">${hero.era || '历史人物'} · ${ROLE_NAMES[hero.role] || hero.role}</div></div></div><div style="font-size:11px;color:#a0a0ba;line-height:1.45;margin-top:8px">${hero.description}</div><div style="font-size:10px;color:#64c987;margin-top:6px">${bonusText(hero.bonuses)}</div><div style="font-size:10px;color:#d6a84b;margin-top:5px">${hero.inspirationCost ? `人文影响力 ${hero.inspirationCost} · ` : ''}${costs}</div>`;
     const button = document.createElement('button');
-    button.textContent = '招募';
-    button.style.cssText = 'width:100%;margin-top:9px;padding:7px;border:none;border-radius:6px;background:rgba(214,168,75,.2);color:#f1cf7a;cursor:pointer;font-weight:700;';
+    button.textContent = hasTavern ? '招募' : '需要酒馆';
+    button.disabled = !hasTavern;
+    button.style.cssText = `width:100%;margin-top:9px;padding:7px;border:none;border-radius:6px;background:rgba(214,168,75,.2);color:#f1cf7a;cursor:${hasTavern ? 'pointer' : 'default'};font-weight:700;opacity:${hasTavern ? 1 : 0.55};`;
     button.addEventListener('click', () => {
       const result = system.recruitHero(hero.id);
       if (!result.ok) pm.alert(result.reason);
@@ -53,6 +59,7 @@ export function renderTavernHeroesPanel(data, body, pm) {
   body.appendChild(offers);
 
   const title = document.createElement('div');
+  title.dataset.testid = 'recruited-hero-roster';
   title.style.cssText = 'font-size:13px;font-weight:700;color:#c8c8d6;margin:10px 0;';
   title.textContent = '已招募人物';
   body.appendChild(title);

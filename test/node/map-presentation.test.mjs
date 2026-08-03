@@ -6,6 +6,7 @@ import {
   createMapTokenModels,
   getMountainRubbleSpriteModels,
   getMountainRockSpriteModel,
+  getResourceNodeArtPath,
   getResourceNodeGroundStyle,
   getTerrainPropDepth,
   getTerrainFillColor,
@@ -171,6 +172,8 @@ test('adjacent mountain cells receive stable small-rubble fillers across their s
   const fillers = getMountainRubbleSpriteModels(map, 1, 1, 60);
   assert.deepEqual(fillers, getMountainRubbleSpriteModels(map, 1, 1, 60));
   assert.deepEqual(new Set(fillers.map(filler => filler.edge)), new Set(['right', 'bottom']));
+  assert.equal(fillers.filter(filler => filler.edge === 'right').length, 3, 'vertical seams need upper, middle and lower rubble');
+  assert.equal(fillers.filter(filler => filler.edge === 'bottom').length, 2, 'horizontal seams need left and right rubble');
   for (const filler of fillers) {
     assert.match(filler.texture, /^assets\/map\/mountains\/stone_cluster_0[1-3]\.png$/);
     assert.ok(filler.width > 0 && filler.height > 0);
@@ -182,10 +185,28 @@ test('adjacent mountain cells receive stable small-rubble fillers across their s
   }
 });
 
-test('mineable stone nodes sit on opaque yellow dirt rather than a gray resource badge', () => {
+test('mineable stone nodes use a clear square marker and the stone resource art', () => {
+  assert.equal(
+    getResourceNodeArtPath({ type: 'stone' }, { mapArt: 'assets/resource-nodes/stone.png' }),
+    'assets/resource-nodes/stone.png'
+  );
   assert.deepEqual(
     getResourceNodeGroundStyle({ type: 'stone', developedByBuildingId: null }, { color: '#8d929d' }, 'visible'),
-    { color: 0xc9ad7c, fillAlpha: 0.96, strokeColor: 0x6b542b, strokeAlpha: 0.9, shape: 'dirt' }
+    { color: 0xc9ad7c, fillAlpha: 0.96, strokeColor: 0xe8d4aa, strokeAlpha: 0.95, shape: 'square' }
+  );
+});
+
+test('each luxury deposit resolves to its own square PNG map marker', () => {
+  const ids = ['silk', 'jade', 'tea', 'spices', 'ivory', 'wine', 'incense', 'gems', 'pearls', 'amber', 'fur', 'dyes', 'cocoa', 'coffee', 'porcelain', 'perfume', 'silverware', 'horses', 'salt', 'cotton'];
+  for (const id of ids) {
+    assert.equal(
+      getResourceNodeArtPath({ type: 'luxury', luxuryId: id }, { mapArt: 'assets/resource-nodes/luxury.png' }, { id, icon: `legacy/${id}.svg` }),
+      `assets/resource-nodes/luxuries/${id}.png`
+    );
+  }
+  assert.deepEqual(
+    getResourceNodeGroundStyle({ type: 'luxury' }, { color: '#b36bd4' }, 'visible'),
+    { color: 0x3e294b, fillAlpha: 0.94, strokeColor: 0xd6a84b, strokeAlpha: 1, shape: 'square' }
   );
 });
 

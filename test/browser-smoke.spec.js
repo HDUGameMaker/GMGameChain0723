@@ -64,6 +64,8 @@ test('new game opens economy panels without browser errors', async ({ page }) =>
       legacyRockTexturesLoaded: ['assets/map/rock.png', 'assets/map/rock1.png', 'assets/map/stone.png', 'assets/map/stone1.png']
         .filter(path => renderer._textureCache.get(path)?.width > 0).length,
       stoneArtLoaded: renderer._textureCache.get('assets/resource-nodes/stone.png')?.width > 0,
+      stopeFootprint: game.configRegistry.getBuilding('stope')?.footprint,
+      historicalQuarryFootprint: game.configRegistry.getBuilding('stone_quarry')?.footprint,
       bestMountainCount
     };
   });
@@ -73,11 +75,47 @@ test('new game opens economy panels without browser errors', async ({ page }) =>
   expect(mountainPreview.mountainTexturesLoaded).toBe(6);
   expect(mountainPreview.legacyRockTexturesLoaded).toBe(4);
   expect(mountainPreview.stoneArtLoaded).toBe(true);
+  expect(mountainPreview.stopeFootprint).toEqual({ width: 1, height: 1 });
+  expect(mountainPreview.historicalQuarryFootprint).toEqual({ width: 1, height: 1 });
   expect(mountainPreview.bestMountainCount).toBeGreaterThan(0);
   await page.screenshot({ path: 'test-results/qa-mountain-rock-piles.png' });
   await page.evaluate(() => {
     const renderer = window.__game.mapRenderer;
     const camera = window.__qaCameraState;
+    renderer.fogContainer.visible = true;
+    renderer.setCameraState(camera.camX, camera.camY, camera.zoom);
+  });
+
+  const luxuryPreview = await page.evaluate(() => {
+    const game = window.__game;
+    const renderer = game.mapRenderer;
+    const target = game.systems.resourceNodes.getNodes().find(node => node.type === 'luxury');
+    if (!target) return null;
+    target.discovered = true;
+    window.__qaLuxuryCameraState = renderer.getCameraState();
+    renderer.fogContainer.visible = false;
+    renderer.setCameraState(
+      target.gridX * renderer.tileSize - renderer.screenW / 3,
+      target.gridY * renderer.tileSize - renderer.screenH / 3,
+      1.5
+    );
+    renderer._fogOfWar?.recalculate([{ gridX: target.gridX, gridY: target.gridY }], 'morning');
+    renderer._drawResourceNodes();
+    const luxuryTextures = [...renderer._textureCache.entries()]
+      .filter(([path, texture]) => /^assets\/resource-nodes\/luxuries\/[^/]+\.png$/.test(path) && texture?.width > 0);
+    return {
+      luxuryId: target.luxuryId,
+      textureCount: luxuryTextures.length,
+      visibleNodeCount: renderer.resourceNodeLayer.children.length
+    };
+  });
+  expect(luxuryPreview.luxuryId).toBeTruthy();
+  expect(luxuryPreview.textureCount).toBe(20);
+  expect(luxuryPreview.visibleNodeCount).toBeGreaterThan(0);
+  await page.screenshot({ path: 'test-results/qa-luxury-resource-marker.png' });
+  await page.evaluate(() => {
+    const renderer = window.__game.mapRenderer;
+    const camera = window.__qaLuxuryCameraState;
     renderer.fogContainer.visible = true;
     renderer.setCameraState(camera.camX, camera.camY, camera.zoom);
   });
@@ -171,6 +209,16 @@ test('new game opens economy panels without browser errors', async ({ page }) =>
   await closeVisiblePopup(page);
   await page.getByRole('button', { name: /军队/ }).click();
   await expect(page.getByText('军队管理')).toBeVisible();
+  await closeVisiblePopup(page);
+  await page.locator('#btn-unit-research').click();
+  await expect(page.locator('#popup-title')).toHaveText('兵种研发');
+  await page.screenshot({ path: 'test-results/qa-unit-research-entry.png' });
+  await closeVisiblePopup(page);
+  await page.locator('#btn-heroes').click();
+  await expect(page.locator('#popup-title')).toHaveText('历史英雄酒馆');
+  await expect(page.getByTestId('tavern-required-guidance')).toContainText('建设酒馆后即可招募英雄');
+  await expect(page.getByTestId('recruited-hero-roster')).toBeVisible();
+  await page.screenshot({ path: 'test-results/qa-hero-entry-and-tavern-guidance.png' });
   await closeVisiblePopup(page);
   await page.getByRole('button', { name: /世界/ }).click();
   await expect(page.getByText(/城邦势力（24）/)).toBeVisible();

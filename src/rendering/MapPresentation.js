@@ -35,9 +35,18 @@ export function getResourceNodeGroundStyle(node, definition = {}, fogState = 'vi
     return {
       color: ROCKY_DIRT_BASE_COLOR,
       fillAlpha: (node.developedByBuildingId ? 0.5 : 0.96) * memoryAlpha,
-      strokeColor: 0x6b542b,
-      strokeAlpha: 0.9 * memoryAlpha,
-      shape: 'dirt'
+      strokeColor: 0xe8d4aa,
+      strokeAlpha: 0.95 * memoryAlpha,
+      shape: 'square'
+    };
+  }
+  if (node?.type === 'luxury') {
+    return {
+      color: 0x3e294b,
+      fillAlpha: (node.developedByBuildingId ? 0.52 : 0.94) * memoryAlpha,
+      strokeColor: 0xd6a84b,
+      strokeAlpha: 1 * memoryAlpha,
+      shape: 'square'
     };
   }
   return {
@@ -47,6 +56,14 @@ export function getResourceNodeGroundStyle(node, definition = {}, fogState = 'vi
     strokeAlpha: 0.9 * memoryAlpha,
     shape: 'badge'
   };
+}
+
+export function getResourceNodeArtPath(node, definition = {}, luxury = null) {
+  const luxuryId = String(node?.luxuryId || luxury?.id || '');
+  if (node?.type === 'luxury' && /^[a-z0-9_]+$/i.test(luxuryId)) {
+    return `assets/resource-nodes/luxuries/${luxuryId}.png`;
+  }
+  return definition.mapArt || luxury?.icon || '';
 }
 
 export function getTerrainPropDepth(row, kind = 'terrain') {
@@ -79,26 +96,30 @@ export function getMountainRubbleSpriteModels(mapConfig, col, row, tileSize = 60
   const isMountain = (x, y) => grid[y]?.[x] === 'M' || grid[y]?.[x] === 'B';
   const models = [];
   if (isMountain(col + 1, row)) {
-    const size = Math.max(8, Math.round(tileSize * 0.62));
-    models.push({
-      edge: 'right',
-      texture: MOUNTAIN_RUBBLE_TEXTURES[coordinateHash(col, row, 17) % MOUNTAIN_RUBBLE_TEXTURES.length],
-      x: Math.round(tileSize - size / 2),
-      y: Math.round(tileSize - size * 0.62),
-      width: size,
-      height: size
-    });
+    const size = Math.max(8, Math.round(tileSize * 0.44));
+    for (const [index, yRatio] of [0.12, 0.4, 0.68].entries()) {
+      models.push({
+        edge: 'right',
+        texture: MOUNTAIN_RUBBLE_TEXTURES[coordinateHash(col, row, 17 + index * 11) % MOUNTAIN_RUBBLE_TEXTURES.length],
+        x: Math.round(tileSize - size / 2),
+        y: Math.round(tileSize * yRatio),
+        width: size,
+        height: size
+      });
+    }
   }
   if (isMountain(col, row + 1)) {
-    const size = Math.max(8, Math.round(tileSize * 0.68));
-    models.push({
-      edge: 'bottom',
-      texture: MOUNTAIN_RUBBLE_TEXTURES[coordinateHash(col, row, 29) % MOUNTAIN_RUBBLE_TEXTURES.length],
-      x: Math.round((tileSize - size) / 2),
-      y: Math.round(tileSize - size / 2),
-      width: size,
-      height: size
-    });
+    const size = Math.max(8, Math.round(tileSize * 0.5));
+    for (const [index, xRatio] of [0.12, 0.58].entries()) {
+      models.push({
+        edge: 'bottom',
+        texture: MOUNTAIN_RUBBLE_TEXTURES[coordinateHash(col, row, 53 + index * 13) % MOUNTAIN_RUBBLE_TEXTURES.length],
+        x: Math.round(tileSize * xRatio),
+        y: Math.round(tileSize - size / 2),
+        width: size,
+        height: size
+      });
+    }
   }
   return models;
 }

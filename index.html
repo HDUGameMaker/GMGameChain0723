@@ -502,6 +502,12 @@
     .hud-btn-icon { font-size: 18px; line-height: 1; }
     .hud-btn-label { font-size: 10px; font-weight: 500; line-height: 1; color: var(--text-muted); }
     .hud-btn-speed { min-width: 48px; padding: 4px 6px; }
+    .hud-btn-feature {
+      border-color: rgba(214, 168, 75, 0.6);
+      background: linear-gradient(180deg, rgba(214,168,75,0.14), var(--bg-card));
+      box-shadow: inset 0 0 0 1px rgba(214,168,75,0.08);
+    }
+    .hud-btn-feature .hud-btn-label { color: #efd58c; font-weight: 700; }
 
     /* ===== 挪动模式切换按钮（右下角）===== */
     #move-mode-toggle {
@@ -1481,6 +1487,8 @@
       <button class="hud-btn" id="btn-objective" title="战役目标"><span class="hud-btn-icon">🎯</span><span class="hud-btn-label">目标</span></button>
       <button class="hud-btn" id="btn-build" title="建设"><span class="hud-btn-icon">🏗️</span><span class="hud-btn-label">建设</span></button>
       <button class="hud-btn" id="btn-army" title="军队"><span class="hud-btn-icon">⚔️</span><span class="hud-btn-label">军队</span></button>
+      <button class="hud-btn hud-btn-feature" id="btn-unit-research" title="兵种研发：解锁新的士兵种类"><span class="hud-btn-icon">🛡️</span><span class="hud-btn-label">兵种研发</span></button>
+      <button class="hud-btn hud-btn-feature" id="btn-heroes" title="英雄名册：建设酒馆后可招募英雄"><span class="hud-btn-icon">🍺</span><span class="hud-btn-label">英雄</span></button>
       <button class="hud-btn" id="btn-cancel-place" title="取消放置" style="display:none">✕</button>
       <div class="hud-spacer"></div>
       <button class="hud-btn hud-btn-speed" id="btn-speed" title="加速">⏩</button>

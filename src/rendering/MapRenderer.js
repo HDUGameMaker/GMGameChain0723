@@ -10,7 +10,7 @@ import { gridToScreenTopLeft, screenToGrid } from '../utils/gridUtils.js';
 import { AnimatedSpriteHelper } from './AnimatedSpriteHelper.js';
 import { classifyArmyInteractionTarget } from '../domain/ArmyInteractionTarget.js';
 import { getStrategicFogStyle } from './FogPresentation.js';
-import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels, getMountainRockSpriteModel, getMountainRubbleSpriteModels, getResourceNodeGroundStyle, getTerrainFillColor, getTerrainPropDepth, getTopDownShoreEdges, getVisibleTileBounds, MOUNTAIN_ROCK_TEXTURES, MOUNTAIN_RUBBLE_TEXTURES } from './MapPresentation.js';
+import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels, getMountainRockSpriteModel, getMountainRubbleSpriteModels, getResourceNodeArtPath, getResourceNodeGroundStyle, getTerrainFillColor, getTerrainPropDepth, getTopDownShoreEdges, getVisibleTileBounds, MOUNTAIN_ROCK_TEXTURES, MOUNTAIN_RUBBLE_TEXTURES } from './MapPresentation.js';
 
 export class MapRenderer {
   constructor(app, buildingSystem, torchSystem, roadSystem, combatSystem, territorySystem) {
@@ -232,6 +232,7 @@ export class MapRenderer {
       if (definition.mapArt) tasks.push(loadOne(definition.mapArt));
     }
     for (const luxury of configRegistry.getHistoricalContent?.().luxuries || []) {
+      tasks.push(loadOne(getResourceNodeArtPath({ type: 'luxury', luxuryId: luxury.id }, {}, luxury)));
       if (luxury.icon) tasks.push(loadOne(luxury.icon));
     }
     for (const building of configRegistry.get('buildings') || []) {
@@ -554,20 +555,21 @@ export class MapRenderer {
       const bg = new PIXI.Graphics();
       const memoryAlpha = fogState === 'remembered' ? 0.42 : 1;
       const groundStyle = getResourceNodeGroundStyle(node, definition, fogState);
-      if (groundStyle.shape === 'dirt') {
-        bg.ellipse(x + ts / 2, y + ts * 0.6, ts * 0.42, ts * 0.28);
+      if (groundStyle.shape === 'square') {
+        bg.roundRect(x + ts * 0.06, y + ts * 0.06, ts * 0.88, ts * 0.88, ts * 0.08);
       } else {
         bg.circle(x + ts / 2, y + ts / 2, ts * 0.28);
       }
       bg.fill({ color: groundStyle.color, alpha: groundStyle.fillAlpha });
-      if (groundStyle.shape === 'dirt') {
-        bg.ellipse(x + ts / 2, y + ts * 0.6, ts * 0.42, ts * 0.28);
+      if (groundStyle.shape === 'square') {
+        bg.roundRect(x + ts * 0.06, y + ts * 0.06, ts * 0.88, ts * 0.88, ts * 0.08);
       } else {
         bg.circle(x + ts / 2, y + ts / 2, ts * 0.28);
       }
       bg.stroke({ color: groundStyle.strokeColor, alpha: groundStyle.strokeAlpha, width: 2 });
       container.addChild(bg);
-      const texture = definition.mapArt ? this._getTexture(definition.mapArt) : null;
+      const artPath = getResourceNodeArtPath(node, definition, luxury);
+      const texture = artPath ? this._getTexture(artPath) : null;
       if (texture?.width > 0 && texture?.height > 0) {
         const sprite = new PIXI.Sprite(texture);
         sprite.anchor.set(0.5);
