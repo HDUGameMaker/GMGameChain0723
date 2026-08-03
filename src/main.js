@@ -39,6 +39,7 @@ import { ArmySystem } from './systems/ArmySystem.js';
 import { WildSiteSystem } from './systems/WildSiteSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { createNewWorldState } from './world/WorldMapState.js';
+import { FogOfWarState } from './world/FogOfWarState.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
 import { InvasionUI } from './ui/InvasionUI.js';
@@ -125,6 +126,8 @@ class Game {
     this.systems.time = new TimeSystem();
     this.systems.resource = new ResourceSystem();
     this.systems.resourceNodes = new ResourceNodeSystem();
+    const selectedMap = configRegistry.get('map');
+    this.systems.fogOfWar = new FogOfWarState(selectedMap.gridWidth, selectedMap.gridHeight);
     this.systems.building = new BuildingSystem();
     // 天气需要先于人口注册 dayStart，人口日结会读取当天粮食修正。
     this.systems.weather = new WeatherSystem();
@@ -419,6 +422,7 @@ class Game {
     this.mapRenderer.setArmySystem(this.systems.army);
     this.mapRenderer.setWildSiteSystem(this.systems.wildSites);
     this.mapRenderer.setResourceNodeSystem(this.systems.resourceNodes);
+    this.mapRenderer.setFogOfWarState(this.systems.fogOfWar, { hero: this.systems.hero });
     await this.mapRenderer.init();
 
     // 6.05 加载存档后恢复相机位置（覆盖 _centerView 的默认/配置位置）
@@ -587,6 +591,7 @@ class Game {
     this.systems.resource.restoreState(saveData.resources);
     if (saveData.resourceNodes) this.systems.resourceNodes.restoreState(saveData.resourceNodes);
     else this.systems.resourceNodes.initNew();
+    if (saveData.fogOfWar) this.systems.fogOfWar.restoreState(saveData.fogOfWar);
     this.systems.building.restoreState(saveData.buildings);
     this.systems.population.restoreState(saveData.population);
     this.systems.item.restoreState(saveData.items);
@@ -709,6 +714,7 @@ class Game {
       population: this.systems.population.getState(),
       resources: this.systems.resource.getSaveState(),
       resourceNodes: this.systems.resourceNodes.getState(),
+      fogOfWar: this.systems.fogOfWar.getState(),
       items: this.systems.item.getAllStates(),
       buildings: this.systems.building.getAllStates(),
       expedition: this.systems.expedition.getState(),

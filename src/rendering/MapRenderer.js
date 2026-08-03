@@ -161,11 +161,16 @@ export class MapRenderer {
   setArmySystem(system) { this._armySystem = system || null; }
   setWildSiteSystem(system) { this._wildSiteSystem = system || null; }
   setResourceNodeSystem(system) { this._resourceNodeSystem = system || null; }
+  setFogOfWarState(state, systems = {}) {
+    this._fogOfWar = state || null;
+    this._heroSystem = systems.hero || null;
+  }
 
   async init() {
     await this._preloadTerrainTextures();
     this._centerView();
     this._drawTerrainChunk();
+    this._recalculateFogState();
     // this._drawExpeditionEntrances(); // 重设计：隐藏探险入口（探险系统已移出核心循环）
     this._drawEventMarkers();
     this._drawOutposts();
@@ -519,6 +524,8 @@ export class MapRenderer {
     });
     for (const node of nodes) {
       if (node.discovered === false) continue;
+      const fogState = this._fogOfWar?.getTileState(node.gridX, node.gridY) || 'visible';
+      if (fogState === 'unexplored') continue;
       if (node.gridX < bounds.startCol || node.gridX > bounds.endCol || node.gridY < bounds.startRow || node.gridY > bounds.endRow) continue;
       const definition = definitions[node.type] || {};
       const colorText = String(definition.color || '#d8c787').replace('#', '');
@@ -528,7 +535,8 @@ export class MapRenderer {
       const y = node.gridY * ts;
       const bg = new PIXI.Graphics();
       bg.circle(x + ts / 2, y + ts / 2, ts * 0.28);
-      bg.fill({ color, alpha: node.developedByBuildingId ? 0.35 : 0.76 });
+      const memoryAlpha = fogState === 'remembered' ? 0.42 : 1;
+      bg.fill({ color, alpha: (node.developedByBuildingId ? 0.35 : 0.76) * memoryAlpha });
       bg.circle(x + ts / 2, y + ts / 2, ts * 0.28);
       bg.stroke({ color: 0xf6e7b0, alpha: 0.9, width: 2 });
       container.addChild(bg);
@@ -561,7 +569,9 @@ export class MapRenderer {
       ...site,
       strength: this._wildSiteSystem.getSiteStrength(site.id)
     }));
-    return createMapTokenModels({ armies, wildSites });
+    return createMapTokenModels({ armies, wildSites }).filter(token => (
+      !this._fogOfWar || this._fogOfWar.getTileState(token.gridX, token.gridY) === 'visible'
+    ));
   }
 
   _drawStrategicTokens() {
@@ -829,12 +839,95 @@ export class MapRenderer {
     return rects;
   }
 
+  _collectFogSources() {
+    const heroBonuses = this._heroSystem?.getBonuses?.() || {};
+    const globalBonus = Math.max(0, Math.floor(Number(heroBonuses.visionRadius || heroBonuses.mapVisionBonus) || 0));
+    const sources = [];
+    for (const building of this.buildingSystem?.buildings || []) {
+      if (building.status !== 'active') continue;
+      const config = configRegistry.getBuilding(building.buildingId);
+      if (!config) continue;
+      const localBonus = Math.max(0, Math.floor((Number(config.uniqueFunction?.visionRadius) || 0) / 4));
+      sources.push({
+        gridX: building.gridX,
+        gridY: building.gridY,
+        width: config.footprint.width,
+        height: config.footprint.height,
+        bonus: globalBonus + localBonus
+      });
+    }
+    for (const army of this._armySystem?.getArmies?.() || []) {
+      if (army.ownerId && army.ownerId !== 'player') continue;
+      const fortificationVision = this._armySystem?.getFortificationEffects?.(army.id)?.visionRadius || 0;
+      sources.push({
+        gridX: army.gridX,
+        gridY: army.gridY,
+        bonus: globalBonus + Math.max(0, Math.floor(fortificationVision / 4))
+      });
+    }
+    return sources;
+  }
+
+  _recalculateFogState() {
+    if (!this._fogOfWar) return;
+    this._fogOfWar.recalculate(this._collectFogSources(), store.getState('timePeriod') || 'morning');
+  }
+
+  _updateStrategicFogTexture() {
+    this._recalculateFogState();
+    const ctx = this._fogCanvas.getContext('2d');
+    const ts = this.tileSize;
+    const period = store.getState('timePeriod') || 'morning';
+    const night = period === 'night' || period === 'midnight';
+    ctx.clearRect(0, 0, this._fogCanvas.width, this._fogCanvas.height);
+    const bounds = getVisibleTileBounds({
+      gridWidth: this.mapConfig.gridWidth,
+      gridHeight: this.mapConfig.gridHeight,
+      tileSize: ts,
+      camX: this.camX,
+      camY: this.camY,
+      screenWidth: this.screenW,
+      screenHeight: this.screenH,
+      zoom: this.zoom,
+      overscanTiles: 1
+    });
+    for (let row = bounds.startRow; row <= bounds.endRow; row += 1) {
+      let runState = null;
+      let runStart = bounds.startCol;
+      const flush = endCol => {
+        if (!runState || runState === 'visible' || endCol < runStart) return;
+        const alpha = runState === 'unexplored' ? (night ? 0.97 : 0.94) : (night ? 0.66 : 0.58);
+        ctx.fillStyle = `rgba(${night ? '4, 6, 16' : '10, 14, 26'}, ${alpha})`;
+        ctx.fillRect(runStart * ts - this.camX, row * ts - this.camY, (endCol - runStart + 1) * ts, ts);
+      };
+      for (let col = bounds.startCol; col <= bounds.endCol; col += 1) {
+        const state = this._fogOfWar.getTileState(col, row);
+        if (runState === null) {
+          runState = state;
+          runStart = col;
+        } else if (state !== runState) {
+          flush(col - 1);
+          runState = state;
+          runStart = col;
+        }
+      }
+      flush(bounds.endCol);
+    }
+    this._drawResourceNodes();
+    this._drawStrategicTokens();
+  }
+
   /**
    * 在 Canvas 2D 上重新绘制迷雾纹理
    * 建筑+道路提供矩形光照，其余区域按时段暗化
    */
   _updateFogTexture() {
     if (!this._fogCanvas) return;
+    if (this._fogOfWar) {
+      this._updateStrategicFogTexture();
+      if (this._fogTexture.source) this._fogTexture.source.update();
+      return;
+    }
 
     const ctx = this._fogCanvas.getContext('2d');
     const ts = this.tileSize;
@@ -910,7 +1003,7 @@ export class MapRenderer {
   }
 
   _isTileRevealed(col, row) {
-    return true;
+    return !this._fogOfWar || this._fogOfWar.getTileState(col, row) !== 'unexplored';
   }
 
   /**
@@ -3374,8 +3467,10 @@ export class MapRenderer {
     });
     store.subscribe('outpostVersion', () => this._drawOutposts());
     eventBus.on('armyChanged', () => this._drawStrategicTokens());
+    eventBus.on('armyChanged', () => this._updateFogTexture());
     eventBus.on('wildSitesChanged', () => this._drawStrategicTokens());
     eventBus.on('resourceNodesChanged', () => this._drawResourceNodes());
+    eventBus.on('heroChanged', () => this._updateFogTexture());
   }
 
   /**
