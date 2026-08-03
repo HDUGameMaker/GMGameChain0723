@@ -16,7 +16,7 @@ const campaign = {
       {
         id: 'settle_city', name: '城邦新秩序', event: 'colonyEstablished', count: 1,
         outcomes: [
-          { id: 'stewardship', name: '守护自治', effects: { colonyCompliancePerDay: 1, tradeValueMul: 1.05 } },
+          { id: 'stewardship', name: '守护自治', effects: { colonyCompliancePerDay: 1, tradeValueMul: 1.05 }, delayed: { days: 10, name: '自治议会成熟', effects: { heroAssignmentSlots: 1 } } },
           { id: 'dominion', name: '强势统治', effects: { colonyIncomeMul: 1.15, colonyUnrestPerDay: 1 } }
         ]
       }
@@ -31,6 +31,9 @@ test('shipped strategic campaign contains four complete three-stage chapters wit
   for (const chapter of shipped.chapters) {
     assert.equal(chapter.stages.length, 3, chapter.id);
     assert.ok(chapter.stages.at(-1).outcomes.length >= 2, chapter.id);
+    for (const outcome of chapter.stages.at(-1).outcomes) {
+      assert.ok(outcome.delayed?.days >= 10 && outcome.delayed.days <= 30, `${chapter.id}/${outcome.id} delayed consequence`);
+    }
   }
 });
 
@@ -73,12 +76,21 @@ test('chapter outcome creates persistent cumulative world consequences', () => {
     name: '守护自治', effects: { colonyCompliancePerDay: 1, tradeValueMul: 1.05 }
   }]);
   assert.deepEqual(store.getState('worldConsequenceModifiers'), { colonyCompliancePerDay: 1, tradeValueMul: 1.05 });
+  assert.equal(quests.getPendingConsequences().length, 1);
 
   const saved = quests.getState();
   const restored = createQuestSystem();
   restored.restoreState(saved);
   assert.deepEqual(restored.getWorldConsequences(), quests.getWorldConsequences());
   assert.deepEqual(store.getState('worldConsequenceModifiers'), { colonyCompliancePerDay: 1, tradeValueMul: 1.05 });
+  eventBus.emit('dayStart', { day: 10 });
+  assert.equal(restored.getPendingConsequences().length, 1);
+  eventBus.emit('dayStart', { day: 11 });
+  assert.equal(restored.getPendingConsequences().length, 0);
+  assert.equal(restored.getConsequenceHistory().length, 1);
+  assert.equal(store.getState('worldConsequenceModifiers').heroAssignmentSlots, 1);
+  eventBus.emit('dayStart', { day: 12 });
+  assert.equal(restored.getConsequenceHistory().length, 1, 'delayed consequence fires exactly once');
 });
 
 test('heroic legacy adds real assignment capacity and assignments emit quest progress', () => {

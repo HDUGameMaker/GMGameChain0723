@@ -61,6 +61,8 @@ export function renderTavernHeroesPanel(data, body, pm) {
     const row = document.createElement('div');
     row.style.cssText = `display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;margin-bottom:7px;border-radius:8px;background:${injured ? 'rgba(140,52,52,.10)' : 'rgba(255,255,255,.035)'};border:1px solid ${injured ? 'rgba(220,95,95,.25)' : 'rgba(255,255,255,.07)'};`;
     row.innerHTML = `<div style="display:flex;gap:9px;align-items:center">${portrait(hero, true)}<div><b style="color:#ececf0">${hero.name}</b>${injured ? `<span style="font-size:10px;color:#ef8b8b;margin-left:7px">休养至第 ${hero.injuredUntilDay} 天</span>` : ''}<div style="font-size:10px;color:#64c987;margin-top:3px">${bonusText(hero.bonuses)}</div></div></div>`;
+    const detail = row.firstElementChild?.lastElementChild;
+    detail?.insertAdjacentHTML('beforeend', `<div style="font-size:10px;color:#d5bd7d;margin-top:4px">等级 ${hero.level || 1} · 经验 ${hero.experience || 0}/100 · 已解锁技能 ${(hero.unlockedSkills || []).length}/${(hero.skills || []).length}</div>`);
     const select = document.createElement('select');
     select.disabled = injured;
     select.style.cssText = 'padding:6px 8px;border-radius:6px;background:#25253a;color:#dfe8ff;border:1px solid #4a4a66;';
@@ -72,6 +74,10 @@ export function renderTavernHeroesPanel(data, body, pm) {
     });
     row.appendChild(select);
     body.appendChild(row);
+  }
+  const combinations = system.getActiveCombinations?.() || [];
+  if (combinations.length) {
+    body.insertAdjacentHTML('beforeend', `<div style="margin-top:12px;padding:11px;border:1px solid rgba(213,189,125,.24);border-radius:9px;background:rgba(213,189,125,.06)"><b style="font-size:12px;color:#f0d797">已激活英雄组合</b>${combinations.map(combo => `<div style="font-size:11px;color:#bfc5ce;margin-top:5px">◆ ${combo.name} · ${bonusText(combo.effects)}</div>`).join('')}</div>`);
   }
   if (!recruited.length) body.insertAdjacentHTML('beforeend', '<div style="color:#808098;font-size:12px">尚未招募历史人物。</div>');
 }

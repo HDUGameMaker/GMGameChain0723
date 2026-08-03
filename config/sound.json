@@ -246,7 +246,8 @@
   "eventBindings": [
     {
       "event": "buildingPlaced",
-      "sound": "sfx_build"
+      "sound": "sfx_build",
+      "category": "build"
     },
     {
       "event": "buildingComplete",
@@ -258,12 +259,25 @@
     },
     {
       "event": "buildingClicked",
-      "sound": "sfx_click"
+      "sound": "sfx_click",
+      "category": "ui"
     },
     {
       "event": "buildingDemolished",
       "sound": "sfx_demolish"
     },
+    { "event": "unitTrained", "sound": "sfx_complete", "category": "train" },
+    { "event": "techResearched", "sound": "sfx_synthesis", "category": "research" },
+    { "event": "cultureResearched", "sound": "sfx_synthesis", "category": "research" },
+    { "event": "eraAdvanced", "sound": "sfx_period_change", "category": "era" },
+    { "event": "diplomacyAction", "sound": "sfx_click", "category": "diplomacy" },
+    { "event": "luxuryTraded", "sound": "sfx_resource", "category": "trade" },
+    { "event": "commerceChanged", "sound": "sfx_resource", "category": "trade" },
+    { "event": "colonyEstablished", "sound": "sfx_complete", "category": "colony" },
+    { "event": "wildSiteBattleResolved", "sound": "sfx_expedition_complete", "category": "wild" },
+    { "event": "armyBattleResolved", "sound": "sfx_complete", "category": "combat" },
+    { "event": "heroRecruited", "sound": "sfx_complete", "category": "hero" },
+    { "event": "questConsequenceFired", "sound": "sfx_period_change", "category": "quest" },
     {
       "event": "resourceChanged",
       "sound": null

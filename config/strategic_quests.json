@@ -10,8 +10,8 @@
         {
           "id": "frontier_settle", "name": "新边疆秩序", "description": "将一座结盟或被征服的真实城邦转为殖民地，并决定边疆制度。", "icon": "🏛️", "event": "colonyEstablished", "count": 1,
           "outcomes": [
-            { "id": "stewardship", "name": "守护自治", "description": "尊重城邦传统，殖民地顺从度增长更快，贸易略有提升。", "effects": { "colonyCompliancePerDay": 1, "tradeValueMul": 1.05 } },
-            { "id": "dominion", "name": "强势统治", "description": "扩大贡赋，殖民地产出提高，但长期动荡增加。", "effects": { "colonyIncomeMul": 1.15, "colonyUnrestPerDay": 1 } }
+            { "id": "stewardship", "name": "守护自治", "description": "尊重城邦传统，殖民地顺从度增长更快，贸易略有提升。", "effects": { "colonyCompliancePerDay": 1, "tradeValueMul": 1.05 }, "delayed": { "days": 12, "name": "自治议会成熟", "effects": { "tradeValueMul": 1.03 } } },
+            { "id": "dominion", "name": "强势统治", "description": "扩大贡赋，殖民地产出提高，但长期动荡增加。", "effects": { "colonyIncomeMul": 1.15, "colonyUnrestPerDay": 1 }, "delayed": { "days": 10, "name": "贡赋体系成形", "effects": { "colonyIncomeMul": 1.05 } } }
           ]
         }
       ]
@@ -26,8 +26,8 @@
         {
           "id": "league_constitution", "name": "联盟宪章", "description": "再建立一处城邦殖民地，并决定大陆外交制度。", "icon": "📜", "event": "colonyEstablished", "count": 1,
           "outcomes": [
-            { "id": "federation", "name": "平等联邦", "description": "城邦保留议会席位，外交与贸易长期受益。", "effects": { "diplomacyRelationMul": 1.1, "tradeValueMul": 1.1 } },
-            { "id": "hegemony", "name": "霸权体系", "description": "军团威慑更强，但外交关系增长放缓。", "effects": { "combatPowerMul": 1.08, "diplomacyRelationMul": 0.9 } }
+            { "id": "federation", "name": "平等联邦", "description": "城邦保留议会席位，外交与贸易长期受益。", "effects": { "diplomacyRelationMul": 1.1, "tradeValueMul": 1.1 }, "delayed": { "days": 15, "name": "联邦人才流动", "effects": { "heroAssignmentSlots": 1 } } },
+            { "id": "hegemony", "name": "霸权体系", "description": "军团威慑更强，但外交关系增长放缓。", "effects": { "combatPowerMul": 1.08, "diplomacyRelationMul": 0.9 }, "delayed": { "days": 12, "name": "霸权贡税网络", "effects": { "colonyIncomeMul": 1.08 } } }
           ]
         }
       ]
@@ -42,8 +42,8 @@
         {
           "id": "legends_future", "name": "英雄之后", "description": "再招募一位英雄，并决定文明如何保存英雄遗产。", "icon": "🏺", "event": "heroRecruited", "count": 1,
           "outcomes": [
-            { "id": "heroic_tradition", "name": "英雄传统", "description": "扩大个人任命空间，额外获得一个英雄任命席位。", "effects": { "heroAssignmentSlots": 1, "combatPowerMul": 1.04 } },
-            { "id": "civic_institutions", "name": "公共制度", "description": "把英雄经验写入学院和官署，科研与文化效率提高。", "effects": { "researchMul": 1.08, "cultureMul": 1.08 } }
+            { "id": "heroic_tradition", "name": "英雄传统", "description": "扩大个人任命空间，额外获得一个英雄任命席位。", "effects": { "heroAssignmentSlots": 1, "combatPowerMul": 1.04 }, "delayed": { "days": 10, "name": "英雄学派兴起", "effects": { "heroAssignmentSlots": 1 } } },
+            { "id": "civic_institutions", "name": "公共制度", "description": "把英雄经验写入学院和官署，科研与文化效率提高。", "effects": { "researchMul": 1.08, "cultureMul": 1.08 }, "delayed": { "days": 18, "name": "学院网络成形", "effects": { "tradeValueMul": 1.05 } } }
           ]
         }
       ]
@@ -58,8 +58,8 @@
         {
           "id": "modernity_choice", "name": "时代宣言", "description": "推进到下一个时代，并决定文明最终追求。", "icon": "🌍", "event": "eraAdvanced", "count": 1,
           "outcomes": [
-            { "id": "green_commonwealth", "name": "绿色共同体", "description": "资源利用和殖民稳定优先，长期治理更平稳。", "effects": { "resourceEfficiencyMul": 1.08, "colonyCompliancePerDay": 1 } },
-            { "id": "industrial_colossus", "name": "工业巨像", "description": "全面提高生产与军力，但殖民地动荡略有增加。", "effects": { "productionMul": 1.12, "combatPowerMul": 1.05, "colonyUnrestPerDay": 1 } }
+            { "id": "green_commonwealth", "name": "绿色共同体", "description": "资源利用和殖民稳定优先，长期治理更平稳。", "effects": { "resourceEfficiencyMul": 1.08, "colonyCompliancePerDay": 1 }, "delayed": { "days": 20, "name": "生态治理普及", "effects": { "colonyCompliancePerDay": 1 } } },
+            { "id": "industrial_colossus", "name": "工业巨像", "description": "全面提高生产与军力，但殖民地动荡略有增加。", "effects": { "productionMul": 1.12, "combatPowerMul": 1.05, "colonyUnrestPerDay": 1 }, "delayed": { "days": 10, "name": "工业供应链贯通", "effects": { "colonyIncomeMul": 1.08 } } }
           ]
         }
       ]

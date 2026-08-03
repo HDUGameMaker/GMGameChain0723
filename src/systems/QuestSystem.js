@@ -26,6 +26,8 @@ export class QuestSystem {
     this._strategicProgress = 0;
     this._awaitingOutcome = false;
     this._worldConsequences = [];
+    this._pendingConsequences = [];
+    this._consequenceHistory = [];
     this._snapshot = {}; // 任务激活时的基线数据
 
     eventBus.on('roadBuilt', ({ constructing }) => {
@@ -42,6 +44,7 @@ export class QuestSystem {
     for (const eventName of STRATEGIC_EVENTS) {
       eventBus.on(eventName, payload => this._onStrategicEvent(eventName, payload));
     }
+    eventBus.on('dayStart', ({ day } = {}) => this._processConsequences(day || store.getState('timeDay') || 1));
   }
 
   setBuildingSystem(bs) { this._buildingSystem = bs; }
@@ -81,11 +84,26 @@ export class QuestSystem {
       progress: { current: this._strategicProgress, target: stage.count || 1 },
       awaitingOutcome: this._awaitingOutcome,
       outcomes: this._awaitingOutcome ? (stage.outcomes || []) : [],
-      consequences: this.getWorldConsequences()
+      consequences: this.getWorldConsequences(),
+      pendingConsequences: this.getPendingConsequences(),
+      consequenceHistory: this.getConsequenceHistory()
     };
   }
 
   getWorldConsequences() { return structuredClone(this._worldConsequences); }
+  getPendingConsequences() { return structuredClone(this._pendingConsequences); }
+  getConsequenceHistory() { return structuredClone(this._consequenceHistory); }
+
+  enqueueConsequence(consequence) {
+    if (!consequence?.id || !Number.isFinite(consequence.dueDay)) return { ok: false, reason: 'invalid_consequence' };
+    if (this._pendingConsequences.some(item => item.id === consequence.id) || this._consequenceHistory.some(item => item.id === consequence.id)) {
+      return { ok: false, reason: 'duplicate_consequence' };
+    }
+    this._pendingConsequences.push(structuredClone(consequence));
+    this._pendingConsequences.sort((left, right) => left.dueDay - right.dueDay || left.id.localeCompare(right.id));
+    this._notify();
+    return { ok: true };
+  }
 
   chooseStrategicOutcome(outcomeId) {
     const cursor = this._getStrategicCursor();
@@ -99,6 +117,15 @@ export class QuestSystem {
       name: outcome.name,
       effects: structuredClone(outcome.effects || {})
     });
+    if (outcome.delayed) {
+      this.enqueueConsequence({
+        id: `${cursor.chapter.id}:${cursor.stage.id}:${outcome.id}`,
+        dueDay: (store.getState('timeDay') || 1) + outcome.delayed.days,
+        sourceId: cursor.stage.id,
+        name: outcome.delayed.name,
+        effects: structuredClone(outcome.delayed.effects || {})
+      });
+    }
     this._publishConsequences();
     eventBus.emit('strategicOutcomeChosen', {
       chapterId: cursor.chapter.id, stageId: cursor.stage.id, outcomeId: outcome.id,
@@ -239,6 +266,24 @@ export class QuestSystem {
     });
   }
 
+  _processConsequences(day) {
+    if (!Number.isFinite(day)) return;
+    const due = this._pendingConsequences.filter(item => item.dueDay <= day);
+    if (!due.length) return;
+    const dueIds = new Set(due.map(item => item.id));
+    this._pendingConsequences = this._pendingConsequences.filter(item => !dueIds.has(item.id));
+    for (const item of due) {
+      this._worldConsequences.push({
+        chapterId: 'delayed', stageId: item.sourceId, outcomeId: item.id,
+        name: item.name, effects: structuredClone(item.effects || {})
+      });
+      this._consequenceHistory.push({ ...structuredClone(item), firedDay: day });
+      eventBus.emit('questConsequenceFired', { ...structuredClone(item), firedDay: day });
+    }
+    this._publishConsequences();
+    this._notify();
+  }
+
   _getProgress(q) {
     if (!this._snapshot) return { current: 0, target: 1 };
     const s = this._snapshot;
@@ -346,7 +391,9 @@ export class QuestSystem {
         stageIndex: this._strategicStageIndex,
         progress: this._strategicProgress,
         awaitingOutcome: this._awaitingOutcome,
-        consequences: this.getWorldConsequences()
+        consequences: this.getWorldConsequences(),
+        pendingConsequences: this.getPendingConsequences(),
+        consequenceHistory: this.getConsequenceHistory()
       }
     };
   }
@@ -362,6 +409,8 @@ export class QuestSystem {
     this._strategicProgress = Math.max(0, state.strategic?.progress || 0);
     this._awaitingOutcome = Boolean(state.strategic?.awaitingOutcome);
     this._worldConsequences = structuredClone(state.strategic?.consequences || []);
+    this._pendingConsequences = structuredClone(state.strategic?.pendingConsequences || []);
+    this._consequenceHistory = structuredClone(state.strategic?.consequenceHistory || []);
     this._publishConsequences();
     store.setState({ questExpeditionCount: state.expeditionCount || 0 });
     const active = this._quests[this._activeIndex];

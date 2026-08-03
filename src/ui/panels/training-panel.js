@@ -216,6 +216,7 @@ export function renderTrainingPanel(data, body, pm) {
       const av = { ..._avail() };
       av[u.id] = (av[u.id] || 0) + 1;
       _saveAvail(av);
+      eventBus.emit('unitTrained', { unitId: u.id, amount: 1 });
       /* 刷新面板让士兵数实时更新 */
       renderTrainingPanel(data, body, pm);
     });

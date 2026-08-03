@@ -49,7 +49,7 @@ export class HeroSystem {
         skills: hero.skills?.length ? hero.skills : [{
           id: `${hero.id}_signature`, name: hero.skillName || this._roleName(hero.role),
           description: hero.skillDescription || `${this._roleName(hero.role)}专长会在任命期间持续生效。`,
-          trigger: heroClass === 'military' ? 'battle_phase' : 'assignment_tick', effects: hero.bonuses || {}
+          trigger: heroClass === 'military' ? 'battle_phase' : 'assignment_tick', unlockLevel: 1, effects: {}
         }],
         icon: hero.iconAsset || (String(hero.icon || '').includes('/') ? hero.icon : `assets/historical-icons/heroes/${hero.id}.svg`),
         portrait: hero.portrait || `assets/hero-portraits/${hero.id}.png`,
@@ -65,7 +65,36 @@ export class HeroSystem {
       inspirationCost: hero.inspirationCost || 0,
       cost: hero.cost || hero.recruitCost || []
     }));
-    return [...base, ...additions];
+    const roster = [...base, ...additions];
+    return roster.map((hero, index) => {
+      const partner = roster[index % 2 === 0 ? index + 1 : index - 1] || roster[(index + 1) % roster.length];
+      const skills = [...(hero.skills || [])].map((skill, skillIndex) => ({
+        ...skill,
+        unlockLevel: skill.unlockLevel || (skillIndex === 0 ? 1 : 2)
+      }));
+      if (skills.length < 2) {
+        skills.push({
+          id: `${hero.id}_mastery`, name: '文明传承',
+          description: `${hero.name}在长期任命中将经验传给继任者。`,
+          trigger: 'assignment_tick', unlockLevel: 2,
+          effects: hero.heroClass === 'military' ? { combatPowerMul: 1.02 } : { productionMul: 1.02 }
+        });
+      }
+      return {
+        ...hero,
+        skills,
+        relationshipTags: hero.relationshipTags?.length >= 2 ? hero.relationshipTags : [`era:${hero.eraId}`, `role:${hero.role}`],
+        combinations: hero.combinations?.length ? hero.combinations : [{
+          id: `pair_${[hero.id, partner.id].sort().join('_')}`,
+          heroIds: [hero.id, partner.id],
+          name: `${hero.name}与${partner.name}`,
+          description: '两位历史人物同时任命时激活协同。',
+          effects: hero.heroClass === 'military' || partner.heroClass === 'military'
+            ? { combatPowerMul: 1.03 }
+            : { productionMul: 1.03 }
+        }]
+      };
+    });
   }
 
   _civilTargets(role) {
@@ -131,11 +160,18 @@ export class HeroSystem {
   getCivilHeroes() { return this.getAllHeroes().filter(hero => hero.heroClass === 'civil'); }
   getRecruitedHeroes() {
     const day = store.getState('timeDay') || 1;
-    return Object.values(this._recruited).map(entry => ({
-      ...this.getHero(entry.heroId),
-      ...entry,
-      status: entry.injuredUntilDay && day < entry.injuredUntilDay ? 'injured' : 'active'
-    }));
+    return Object.values(this._recruited).map(entry => {
+      const hero = this.getHero(entry.heroId);
+      const level = entry.level || 1;
+      return {
+        ...hero,
+        ...entry,
+        level,
+        experience: entry.experience || 0,
+        unlockedSkills: (hero?.skills || []).filter(skill => (skill.unlockLevel || 1) <= level),
+        status: entry.injuredUntilDay && day < entry.injuredUntilDay ? 'injured' : 'active'
+      };
+    });
   }
 
   recruitHero(id) {
@@ -146,7 +182,7 @@ export class HeroSystem {
     if (hero.cost?.length && (!this._resourceSystem || !this._resourceSystem.canAfford(hero.cost))) return { ok: false, reason: '招募资源不足' };
     if (hero.cost?.length) this._resourceSystem.consumeAll(hero.cost);
     store.setState({ inspiration: Math.max(0, (store.getState('inspiration') || 0) - (hero.inspirationCost || 0)) });
-    this._recruited[id] = { heroId: id, recruitedDay: store.getState('timeDay') || 1, assignment: null, injuredUntilDay: null };
+    this._recruited[id] = { heroId: id, recruitedDay: store.getState('timeDay') || 1, assignment: null, injuredUntilDay: null, level: 1, experience: 0 };
     this._availableIds = this._availableIds.filter(heroId => heroId !== id);
     this._notify();
     eventBus.emit('heroRecruited', { heroId: id, name: hero.name });
@@ -173,6 +209,22 @@ export class HeroSystem {
     this._notify();
     if (assignment) eventBus.emit('heroAssigned', { heroId: id, assignment: structuredClone(assignment) });
     return { ok: true };
+  }
+
+  grantExperience(id, amount) {
+    const entry = this._recruited[id];
+    if (!entry) return { ok: false, reason: 'hero_not_recruited' };
+    let experience = (entry.experience || 0) + Math.max(0, Math.floor(amount || 0));
+    let level = entry.level || 1;
+    while (experience >= 100 && level < 10) {
+      experience -= 100;
+      level += 1;
+      eventBus.emit('heroLeveled', { heroId: id, level });
+    }
+    entry.level = level;
+    entry.experience = experience;
+    this._notify();
+    return { ok: true, level, experience };
   }
 
   injureHero(id, currentDay = store.getState('timeDay') || 1) {
@@ -203,13 +255,35 @@ export class HeroSystem {
     const day = store.getState('timeDay') || 1;
     for (const entry of Object.values(this._recruited)) {
       if (!entry.assignment || (entry.injuredUntilDay && day < entry.injuredUntilDay)) continue;
-      const bonuses = this.getHero(entry.heroId)?.bonuses || {};
-      for (const [key, value] of Object.entries(bonuses)) {
-        if (key.endsWith('Mul')) result[key] = (result[key] || 1) * value;
-        else result[key] = (result[key] || 0) + value;
+      const hero = this.getHero(entry.heroId);
+      this._mergeEffects(result, hero?.bonuses || {});
+      for (const skill of hero?.skills || []) {
+        if ((skill.unlockLevel || 1) <= (entry.level || 1)) this._mergeEffects(result, skill.effects || {});
       }
     }
+    for (const combination of this.getActiveCombinations()) this._mergeEffects(result, combination.effects || {});
     return result;
+  }
+
+  getActiveCombinations() {
+    const day = store.getState('timeDay') || 1;
+    const activeIds = new Set(Object.values(this._recruited)
+      .filter(entry => entry.assignment && (!entry.injuredUntilDay || day >= entry.injuredUntilDay))
+      .map(entry => entry.heroId));
+    const combinations = new Map();
+    for (const heroId of activeIds) {
+      for (const combination of this.getHero(heroId)?.combinations || []) {
+        if ((combination.heroIds || []).every(id => activeIds.has(id))) combinations.set(combination.id, combination);
+      }
+    }
+    return [...combinations.values()].map(combination => structuredClone(combination));
+  }
+
+  _mergeEffects(target, effects) {
+    for (const [key, value] of Object.entries(effects || {})) {
+      if (key.endsWith('Mul')) target[key] = (target[key] || 1) * value;
+      else target[key] = (target[key] || 0) + value;
+    }
   }
 
   _notify() {
@@ -226,7 +300,12 @@ export class HeroSystem {
 
   restoreState(state) {
     this._availableIds = (state?.availableIds || []).filter(id => this.getHero(id));
-    this._recruited = structuredClone(state?.recruited || {});
+    this._recruited = Object.fromEntries(Object.entries(state?.recruited || {}).map(([id, entry]) => [id, {
+      ...structuredClone(entry),
+      heroId: entry.heroId || id,
+      level: Math.max(1, Math.min(10, Math.floor(entry.level || 1))),
+      experience: Math.max(0, Math.floor(entry.experience || 0))
+    }]));
     this._lastRefreshDay = state?.lastRefreshDay || 0;
     if (this._availableIds.length === 0) this._refreshOffers(store.getState('timeDay') || 1);
     this.recoverInjuredHeroes(store.getState('timeDay') || 1);
