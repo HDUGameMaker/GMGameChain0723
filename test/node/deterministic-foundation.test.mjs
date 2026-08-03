@@ -43,6 +43,36 @@ test('random state can be persisted without calling Math.random', () => {
   }
 });
 
+test('random APIs reject invalid integer ranges, key fields, restoration states, and weights', () => {
+  const rng = createDeterministicRng({ worldSeed: 'validation', namespace: 'rng' });
+  assert.throws(() => rng.nextInt(1.5, 3), RangeError);
+  assert.throws(() => rng.nextInt(4, 3), RangeError);
+  assert.throws(() => rng.nextInt(-Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER), RangeError);
+  assert.throws(() => createDeterministicRng({ worldSeed: 7, namespace: 'rng' }), TypeError);
+  assert.throws(() => createDeterministicRng({ worldSeed: 'validation', namespace: 'rng', stableEntityId: 7 }), TypeError);
+  assert.throws(() => createDeterministicRng({ worldSeed: 'validation', namespace: 'rng', ordinal: -1 }), RangeError);
+  assert.throws(() => createDeterministicRng({ worldSeed: 'validation', namespace: 'rng', ordinal: 1.5 }), RangeError);
+  assert.throws(() => createDeterministicRng({ worldSeed: 'validation', namespace: 'rng', ordinal: Number.MAX_SAFE_INTEGER + 1 }), RangeError);
+  assert.throws(() => createDeterministicRng({ worldSeed: 'validation', namespace: 'rng', state: 0 }), RangeError);
+  assert.throws(() => createDeterministicRng({ worldSeed: 'validation', namespace: 'rng', state: 0x1_0000_0000 }), RangeError);
+  assert.throws(() => RandomService.float({ worldSeed: 'validation', namespace: 'rng', state: 123 }), TypeError);
+  assert.throws(() => RandomService.int({ worldSeed: 'validation', namespace: 'rng', unexpected: true }, 0, 1), TypeError);
+  assert.throws(() => RandomService.pickWeighted({ worldSeed: 'validation', namespace: 'rng' }, []), RangeError);
+  assert.throws(() => RandomService.pickWeighted({ worldSeed: 'validation', namespace: 'rng' }, [{ value: 'food', weight: 0 }]), RangeError);
+  assert.throws(() => RandomService.pickWeighted({ worldSeed: 'validation', namespace: 'rng' }, [{ value: 'food', weight: Infinity }]), RangeError);
+});
+
+test('stream pick and shuffle return deterministic choices without mutating inputs', () => {
+  const rng = createDeterministicRng({ worldSeed: 'selection', namespace: 'stream' });
+  const values = ['food', 'gold', 'wood', 'stone'];
+  assert.ok(values.includes(rng.pick(values)));
+  assert.throws(() => rng.pick([]), RangeError);
+  const shuffled = rng.shuffle(values);
+  assert.deepEqual(values, ['food', 'gold', 'wood', 'stone']);
+  assert.deepEqual([...shuffled].sort(), ['food', 'gold', 'stone', 'wood']);
+  assert.notStrictEqual(shuffled, values);
+});
+
 test('domain events use coordinator sequence and preserve the approved envelope', () => {
   assert.deepEqual(createDomainEvent({
     sequence: 7,
@@ -64,4 +94,24 @@ test('domain events use coordinator sequence and preserve the approved envelope'
     correlationId: 'cmd_move_9',
     payload: { orderType: 'move' }
   });
+});
+
+test('domain event payloads are isolated and invalid envelopes are rejected', () => {
+  const payload = { order: { destination: 'tile_9' } };
+  const event = createDomainEvent({
+    sequence: 8,
+    type: 'army.orderAccepted',
+    day: 12,
+    tick: 5,
+    payload
+  });
+  payload.order.destination = 'tile_10';
+  event.payload.order.destination = 'tile_11';
+  assert.equal(payload.order.destination, 'tile_10');
+  assert.equal(event.payload.order.destination, 'tile_11');
+  assert.throws(() => createDomainEvent({ sequence: 0, type: 'event', day: 1, tick: 1 }), RangeError);
+  assert.throws(() => createDomainEvent({ sequence: 1, type: '', day: 1, tick: 1 }), TypeError);
+  assert.throws(() => createDomainEvent({ sequence: 1, type: 'event', day: 1.5, tick: 1 }), RangeError);
+  assert.throws(() => createDomainEvent({ sequence: 1, type: 'event', day: 1, tick: NaN }), RangeError);
+  assert.throws(() => createDomainEvent({ sequence: 1_000_000_000_000, type: 'event', day: 1, tick: 1 }), RangeError);
 });

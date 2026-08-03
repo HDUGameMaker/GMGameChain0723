@@ -1,4 +1,7 @@
 const encoder = new TextEncoder();
+const UINT32_MAX = 0xffff_ffff;
+const RANDOM_KEY_FIELDS = new Set(['worldSeed', 'namespace', 'stableEntityId', 'ordinal']);
+const RNG_KEY_FIELDS = new Set([...RANDOM_KEY_FIELDS, 'state']);
 
 export function hashSeedParts(parts) {
   let hash = 0x811c9dc5;
@@ -11,9 +14,49 @@ export function hashSeedParts(parts) {
   return hash || 0x6d2b79f5;
 }
 
+function validateKey(key, allowedFields) {
+  if (key === null || typeof key !== 'object' || Array.isArray(key)) throw new TypeError('invalid_random_key');
+  for (const field of Reflect.ownKeys(key)) {
+    if (typeof field !== 'string' || !allowedFields.has(field)) throw new TypeError('invalid_random_key_field');
+  }
+  if (typeof key.worldSeed !== 'string' || typeof key.namespace !== 'string') {
+    throw new TypeError('invalid_random_key');
+  }
+  if (key.stableEntityId !== undefined && typeof key.stableEntityId !== 'string') {
+    throw new TypeError('invalid_stable_entity_id');
+  }
+  if (key.ordinal !== undefined && (!Number.isSafeInteger(key.ordinal) || key.ordinal < 0)) {
+    throw new RangeError('invalid_random_ordinal');
+  }
+  return {
+    worldSeed: key.worldSeed,
+    namespace: key.namespace,
+    stableEntityId: key.stableEntityId ?? '',
+    ordinal: key.ordinal ?? 0
+  };
+}
+
+function validateRestorationState(state) {
+  if (!Number.isInteger(state) || state <= 0 || state > UINT32_MAX) {
+    throw new RangeError('invalid_rng_state');
+  }
+  return state;
+}
+
+function validateIntegerRange(min, maxInclusive) {
+  if (
+    !Number.isSafeInteger(min)
+    || !Number.isSafeInteger(maxInclusive)
+    || maxInclusive < min
+    || maxInclusive - min >= Number.MAX_SAFE_INTEGER
+  ) {
+    throw new RangeError('invalid_integer_range');
+  }
+}
+
 export class DeterministicRandom {
   constructor(state) {
-    this._state = (state >>> 0) || 0x6d2b79f5;
+    this._state = validateRestorationState(state);
   }
 
   nextUint32() {
@@ -30,9 +73,7 @@ export class DeterministicRandom {
   }
 
   nextInt(min, maxInclusive) {
-    if (!Number.isInteger(min) || !Number.isInteger(maxInclusive) || maxInclusive < min) {
-      throw new RangeError('invalid_integer_range');
-    }
+    validateIntegerRange(min, maxInclusive);
     return min + Math.floor(this.nextFloat() * (maxInclusive - min + 1));
   }
 
@@ -42,6 +83,7 @@ export class DeterministicRandom {
   }
 
   shuffle(values) {
+    if (!Array.isArray(values)) throw new TypeError('invalid_shuffle_values');
     const result = [...values];
     for (let index = result.length - 1; index > 0; index -= 1) {
       const swap = this.nextInt(0, index);
@@ -55,18 +97,25 @@ export class DeterministicRandom {
   }
 }
 
-export function createDeterministicRng({ worldSeed, namespace, stableEntityId = '', ordinal = 0, state }) {
-  const seed = state === undefined ? hashSeedParts([worldSeed, namespace, stableEntityId, ordinal]) : state;
+export function createDeterministicRng(key) {
+  const randomKey = validateKey(key, RNG_KEY_FIELDS);
+  const seed = key.state === undefined
+    ? hashSeedParts([randomKey.worldSeed, randomKey.namespace, randomKey.stableEntityId, randomKey.ordinal])
+    : validateRestorationState(key.state);
   return new DeterministicRandom(seed);
+}
+
+function keyedRng(key) {
+  return createDeterministicRng(validateKey(key, RANDOM_KEY_FIELDS));
 }
 
 export const RandomService = Object.freeze({
   float(key) {
-    return createDeterministicRng(key).nextFloat();
+    return keyedRng(key).nextFloat();
   },
 
   int(key, min, maxInclusive) {
-    return createDeterministicRng(key).nextInt(min, maxInclusive);
+    return keyedRng(key).nextInt(min, maxInclusive);
   },
 
   pickWeighted(key, entries) {
@@ -76,7 +125,8 @@ export const RandomService = Object.freeze({
       return { value, weight };
     });
     const total = normalized.reduce((sum, entry) => sum + entry.weight, 0);
-    let cursor = createDeterministicRng(key).nextFloat() * total;
+    if (!Number.isFinite(total)) throw new RangeError('invalid_weight');
+    let cursor = keyedRng(key).nextFloat() * total;
     for (const entry of normalized) {
       cursor -= entry.weight;
       if (cursor < 0) return entry.value;
