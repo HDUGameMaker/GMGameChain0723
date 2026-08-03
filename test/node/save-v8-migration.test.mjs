@@ -23,7 +23,14 @@ test('v7 saves migrate to v8 without losing developed historical state', () => {
       legacyCivilizationIds: ['river_tribe'],
       eraStars: { ancient: 5, industrial: 2 }
     },
-    armies: [{ id: 'army_1', name: '第一军团', units: [{ unitId: 'spearman', count: 8 }] }]
+    armies: [{
+      id: 'army_1',
+      name: '第一军团',
+      units: [{ unitId: 'spearman', count: 2 }, { unitId: 'archer', count: 1 }],
+      morale: 73,
+      supply: 0.8
+    }],
+    availableUnits: { spearman: 4, archer: 0 }
   };
 
   const migrated = SaveManager.migrate(source);
@@ -41,6 +48,12 @@ test('v7 saves migrate to v8 without losing developed historical state', () => {
   assert.equal(migrated.era.selectedCivilizations.primitive, 'river_tribe');
   assert.equal(migrated.era.selectedCivilizations.early_modern, 'britain_industrial');
   assert.equal(migrated.armies[0].id, 'army_1');
+  assert.deepEqual(migrated.armyState.armies[0].unitIds, ['spearman', 'spearman', 'archer']);
+  assert.deepEqual(migrated.armyState.availableUnits, { spearman: 4, archer: 0 });
+  assert.equal(migrated.armyState.armies[0].morale, 73);
+  assert.equal(migrated.armyState.armies[0].supply, 0.8);
+  assert.deepEqual(migrated.armies, migrated.armyState.armies);
+  assert.deepEqual(migrated.availableUnits, migrated.armyState.availableUnits);
   assert.deepEqual(migrated.economicOrders, { nextId: 1, orders: [] });
   assert.deepEqual(migrated.tradeRoutes, { nextId: 1, routes: [], conversionCounters: {} });
   assert.deepEqual(migrated.factions, { states: {}, relations: {}, lastSyncDay: 0 });
@@ -72,4 +85,15 @@ test('fresh v8 saves receive missing collection defaults but preserve valid coll
   assert.deepEqual(migrated.tradeRoutes, source.tradeRoutes);
   assert.deepEqual(migrated.armies, []);
   assert.deepEqual(migrated.factions, { states: {}, relations: {}, lastSyncDay: 0 });
+});
+
+test('v8 saves normalize array reserves and derive the next army id', () => {
+  const migrated = SaveManager.migrate({
+    version: 8,
+    armies: [{ id: 'army_3', unitIds: ['spearman'] }],
+    availableUnits: [{ unitId: 'spearman', count: 2 }, { id: 'archer', count: 1 }]
+  });
+
+  assert.deepEqual(migrated.armyState.availableUnits, { spearman: 2, archer: 1 });
+  assert.equal(migrated.armyState.nextId, 4);
 });

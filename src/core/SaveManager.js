@@ -121,10 +121,67 @@ export class SaveManager {
     };
   }
 
+  static _normalizeAvailableUnits(value) {
+    const result = {};
+    const entries = Array.isArray(value)
+      ? value.map(item => [item?.unitId || item?.id, item?.count])
+      : Object.entries(value && typeof value === 'object' ? value : {});
+    for (const [unitId, rawCount] of entries) {
+      if (!unitId) continue;
+      const count = Math.max(0, Math.floor(Number(rawCount) || 0));
+      result[unitId] = (result[unitId] || 0) + count;
+    }
+    return result;
+  }
+
+  static _normalizeArmyRecord(army, index) {
+    const legacyIds = Array.isArray(army?.units)
+      ? army.units.flatMap(item => {
+          if (typeof item === 'string') return [item];
+          const unitId = item?.unitId || item?.id;
+          const count = Math.max(0, Math.floor(Number(item?.count) || 0));
+          return unitId ? Array(count).fill(unitId) : [];
+        })
+      : [];
+    return {
+      ...army,
+      id: String(army?.id || `army_${index + 1}`),
+      unitIds: Array.isArray(army?.unitIds) ? [...army.unitIds] : legacyIds
+    };
+  }
+
+  static _normalizeArmyState(state) {
+    const armyState = state.armyState && typeof state.armyState === 'object' ? state.armyState : {};
+    const armies = (Array.isArray(armyState.armies) ? armyState.armies : state.armies || [])
+      .map((army, index) => SaveManager._normalizeArmyRecord(army, index));
+    const availableUnits = SaveManager._normalizeAvailableUnits(
+      armyState.availableUnits === undefined ? state.availableUnits : armyState.availableUnits
+    );
+    const derivedNextId = armies.reduce((highest, army) => {
+      const match = /^army_(\d+)$/.exec(army.id);
+      return match ? Math.max(highest, Number(match[1])) : highest;
+    }, 0) + 1;
+
+    return {
+      nextId: Number.isFinite(armyState.nextId) ? armyState.nextId : derivedNextId,
+      armies,
+      availableUnits,
+      battleHistory: Array.isArray(armyState.battleHistory)
+        ? [...armyState.battleHistory]
+        : Array.isArray(state.battleHistory)
+          ? [...state.battleHistory]
+          : []
+    };
+  }
+
   static _applyV8Defaults(state) {
     const eraId = state.era?.currentEraId || 'primitive';
-    state.armies = Array.isArray(state.armies) ? state.armies : [];
-    state.availableUnits = Array.isArray(state.availableUnits) ? state.availableUnits : [];
+    state.armyState = SaveManager._normalizeArmyState(state);
+    state.armies = state.armyState.armies.map(army => ({
+      ...army,
+      unitIds: [...army.unitIds]
+    }));
+    state.availableUnits = { ...state.armyState.availableUnits };
     state.economicOrders = state.economicOrders && Array.isArray(state.economicOrders.orders)
       ? state.economicOrders
       : { nextId: 1, orders: [] };
