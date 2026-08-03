@@ -8,6 +8,7 @@ import { store } from './core/Store.js';
 import { gameLoop } from './GameLoop.js';
 import { TimeSystem } from './systems/TimeSystem.js';
 import { ResourceSystem } from './systems/ResourceSystem.js';
+import { ResourceNodeSystem } from './systems/ResourceNodeSystem.js';
 import { PopulationSystem } from './systems/PopulationSystem.js';
 import { BuildingSystem } from './systems/BuildingSystem.js';
 import { ItemSystem } from './systems/ItemSystem.js';
@@ -117,6 +118,7 @@ class Game {
     // 3. 初始化各系统
     this.systems.time = new TimeSystem();
     this.systems.resource = new ResourceSystem();
+    this.systems.resourceNodes = new ResourceNodeSystem();
     this.systems.building = new BuildingSystem();
     // 天气需要先于人口注册 dayStart，人口日结会读取当天粮食修正。
     this.systems.weather = new WeatherSystem();
@@ -180,6 +182,7 @@ class Game {
 
     // 连接系统间交叉引用
     this.systems.building.setResourceSystem(this.systems.resource);
+    this.systems.building.setResourceNodeSystem(this.systems.resourceNodes);
     this.systems.building.setPopulationSystem(this.systems.population);
     this.systems.building.setItemSystem(this.systems.item);
     this.systems.building.setTorchSystem(this.systems.torch);
@@ -414,6 +417,7 @@ class Game {
     this.mapRenderer.setDiplomacySystem(this.systems.diplomacy);
     this.mapRenderer.setArmySystem(this.systems.army);
     this.mapRenderer.setWildSiteSystem(this.systems.wildSites);
+    this.mapRenderer.setResourceNodeSystem(this.systems.resourceNodes);
     await this.mapRenderer.init();
 
     // 6.05 加载存档后恢复相机位置（覆盖 _centerView 的默认/配置位置）
@@ -512,6 +516,7 @@ class Game {
     this._worldState = createNewWorldState(configRegistry.get('map'));
     // 初始化资源为配置初始值
     this.systems.resource.initFromConfig();
+    this.systems.resourceNodes.initNew();
 
     // 初始化时间
     this.systems.time.initNew();
@@ -579,6 +584,8 @@ class Game {
     this._worldState = structuredClone(saveData.world);
     this.systems.time.restoreState(saveData.time);
     this.systems.resource.restoreState(saveData.resources);
+    if (saveData.resourceNodes) this.systems.resourceNodes.restoreState(saveData.resourceNodes);
+    else this.systems.resourceNodes.initNew();
     this.systems.building.restoreState(saveData.buildings);
     this.systems.population.restoreState(saveData.population);
     this.systems.item.restoreState(saveData.items);
@@ -700,6 +707,7 @@ class Game {
       time: this.systems.time.getState(),
       population: this.systems.population.getState(),
       resources: this.systems.resource.getSaveState(),
+      resourceNodes: this.systems.resourceNodes.getState(),
       items: this.systems.item.getAllStates(),
       buildings: this.systems.building.getAllStates(),
       expedition: this.systems.expedition.getState(),

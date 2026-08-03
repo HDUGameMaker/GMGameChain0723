@@ -28,6 +28,15 @@ test('new campaigns load the committed 384 square grand map', () => {
   const waterCells = [...map.grid.join('')].filter(code => WATER_CODES.has(code)).length;
   const waterRatio = waterCells / (384 * 384);
   assert.ok(waterRatio >= 0.15 && waterRatio <= 0.20, `water ratio ${waterRatio}`);
+
+  const nodes = map.spawnManifest.resourceNodes;
+  assert.ok(Array.isArray(nodes) && nodes.length >= 1200, `resource nodes ${nodes?.length || 0}`);
+  for (const type of ['wood', 'stone', 'food', 'gold']) {
+    const typed = nodes.filter(node => node.type === type);
+    assert.ok(typed.length >= 250, `${type} nodes ${typed.length}`);
+    assert.ok(new Set(typed.map(node => `${Math.floor(node.gridX / 96)}:${Math.floor(node.gridY / 96)}`)).size >= 8,
+      `${type} nodes should cover the fixed world's macro regions`);
+  }
 });
 
 test('offline builder reproduces the committed map without rewriting it', () => {

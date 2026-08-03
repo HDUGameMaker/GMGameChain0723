@@ -41,7 +41,7 @@ test('new game opens economy panels without browser errors', async ({ page }) =>
   await page.locator('#btn-training').click();
   const unitArt = page.locator('[data-testid="unit-card-art"]').first();
   await expect(unitArt).toBeVisible();
-  expect(await unitArt.evaluate(image => image.complete && image.naturalWidth >= 200)).toBe(true);
+  await expect.poll(() => unitArt.evaluate(image => image.complete && image.naturalWidth >= 200)).toBe(true);
   const trainingBox = await page.locator('#popup-container').boundingBox();
   expect(trainingBox.x).toBeGreaterThanOrEqual(0);
   expect(trainingBox.y).toBeGreaterThanOrEqual(0);
@@ -58,7 +58,7 @@ test('new game opens economy panels without browser errors', async ({ page }) =>
   });
   const heroPortrait = page.locator('[data-testid="hero-portrait"]').first();
   await expect(heroPortrait).toBeVisible();
-  expect(await heroPortrait.evaluate(image => image.complete && image.naturalWidth >= 200)).toBe(true);
+  await expect.poll(() => heroPortrait.evaluate(image => image.complete && image.naturalWidth >= 200)).toBe(true);
   await closeVisiblePopup(page);
   await page.setViewportSize({ width: 1280, height: 720 });
 

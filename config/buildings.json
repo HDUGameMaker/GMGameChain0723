@@ -61,6 +61,7 @@
     "maxCount": null,
     "initialBuilding": false,
     "allowedGrounds": ["F"],
+    "requiredResourceNode": "wood",
     "unlockConditions": [],
     "maxWorkers": 5,
     "buildCost": [
@@ -89,6 +90,7 @@
     "maxCount": null,
     "initialBuilding": false,
     "allowedGrounds": ["R"],
+    "requiredResourceNode": "stone",
     "unlockConditions": [],
     "maxWorkers": 5,
     "buildCost": [
@@ -253,6 +255,7 @@
     "maxCount": null,
     "initialBuilding": false,
     "allowedGrounds": ["F"],
+    "requiredResourceNode": "wood",
     "unlockConditions": [{ "type": "building_tech", "nodeId": "bt_logging_t2" }],
     "maxWorkers": 8,
     "upgradesFrom": "logging_camp",
@@ -283,6 +286,7 @@
     "maxCount": null,
     "initialBuilding": false,
     "allowedGrounds": ["R"],
+    "requiredResourceNode": "stone",
     "unlockConditions": [{ "type": "building_tech", "nodeId": "bt_mining_t2" }],
     "maxWorkers": 8,
     "upgradesFrom": "stope",

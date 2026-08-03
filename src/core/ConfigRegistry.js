@@ -17,6 +17,7 @@ class ConfigRegistry {
       'ui_main_menu': 'config/ui_main_menu.json',
       'buildings': 'config/buildings.json',
       'resources': 'config/resources.json',
+      'resourceNodes': 'config/resource-nodes.json',
       'items': 'config/items.json',
       'map': 'config/maps/base_map.json',
       'regions': 'config/expeditions/regions.json',

@@ -16,6 +16,8 @@ export class BuildingSystem {
     this._roadSystem = null;
     this._resourceSystem = null;
     this._populationSystem = null;
+    this._resourceNodeSystem = null;
+    this._nextInstanceId = 1;
     this._mapConfig = null;
     this._newlyUnlocked = new Set(); // 本轮新解锁的建筑ID
     this._adjacencyConfig = []; // 相邻加成配置
@@ -42,6 +44,7 @@ export class BuildingSystem {
   }
 
   setResourceSystem(rs) { this._resourceSystem = rs; }
+  setResourceNodeSystem(system) { this._resourceNodeSystem = system; }
   setPopulationSystem(ps) { this._populationSystem = ps; }
   setItemSystem(is) { this._itemSystem = is; }
   setTorchSystem(ts) { this._torchSystem = ts; }
@@ -140,6 +143,11 @@ export class BuildingSystem {
     }
 
     // 道路上不可修建建筑
+    if (config.requiredResourceNode && this._resourceNodeSystem) {
+      const node = this._resourceNodeSystem.findNodeForArea(gridX, gridY, w, h, config.requiredResourceNode);
+      if (!node) return { valid: false, reason: `必须覆盖空闲的${config.requiredResourceNode}资源点` };
+    }
+
     if (this._roadSystem) {
       for (const road of this._roadSystem.roads) {
         if (isAreaOverlap(gridX, gridY, w, h, road.gridX, road.gridY, 1, 1)) {
@@ -212,7 +220,16 @@ export class BuildingSystem {
     }
 
     // 取消建造时间机制：放下即落成可用（status 直接 active，不再走 constructing 倒计时）
+    const instanceId = `building_${this._nextInstanceId++}`;
+    const requiredNode = config.requiredResourceNode && this._resourceNodeSystem
+      ? this._resourceNodeSystem.findNodeForArea(
+        gridX, gridY, config.footprint.width, config.footprint.height, config.requiredResourceNode
+      )
+      : null;
+    if (requiredNode && !this._resourceNodeSystem.claimNode(requiredNode.id, instanceId, config.requiredResourceNode).ok) return false;
     const building = {
+      instanceId,
+      resourceNodeId: requiredNode?.id || null,
       buildingId,
       gridX,
       gridY,
@@ -242,6 +259,8 @@ export class BuildingSystem {
   placeInitialBuilding(buildingId, gridX, gridY) {
     const config = configRegistry.getBuilding(buildingId);
     const building = {
+      instanceId: `building_${this._nextInstanceId++}`,
+      resourceNodeId: null,
       buildingId,
       gridX,
       gridY,
@@ -663,6 +682,7 @@ export class BuildingSystem {
       }
     }
 
+    this._resourceNodeSystem?.releaseNodeByBuilding(building.instanceId);
     this.buildings.splice(buildingIndex, 1);
     // 拆除仓库类建筑后需重算存储倍率（否则上限保持旧虚高值）
     this._updateStorageMultiplier();
@@ -733,6 +753,13 @@ export class BuildingSystem {
     }
 
     // 道路上不可修建建筑
+    if (config.requiredResourceNode && this._resourceNodeSystem) {
+      const node = this._resourceNodeSystem.findNodeForArea(
+        newGridX, newGridY, w, h, config.requiredResourceNode, building.instanceId
+      );
+      if (!node) return { valid: false, reason: `必须覆盖空闲的${config.requiredResourceNode}资源点` };
+    }
+
     if (this._roadSystem) {
       for (const road of this._roadSystem.roads) {
         if (isAreaOverlap(newGridX, newGridY, w, h, road.gridX, road.gridY, 1, 1)) {
@@ -782,6 +809,18 @@ export class BuildingSystem {
     if (!check.valid) return false;
 
     const building = this.buildings[buildingIndex];
+    const config = configRegistry.getBuilding(building.buildingId);
+    const nextNode = config?.requiredResourceNode && this._resourceNodeSystem
+      ? this._resourceNodeSystem.findNodeForArea(
+        newGridX, newGridY, config.footprint.width, config.footprint.height,
+        config.requiredResourceNode, building.instanceId
+      )
+      : null;
+    if (nextNode?.id !== building.resourceNodeId) {
+      this._resourceNodeSystem?.releaseNodeByBuilding(building.instanceId);
+      if (nextNode && !this._resourceNodeSystem.claimNode(nextNode.id, building.instanceId, config.requiredResourceNode).ok) return false;
+      building.resourceNodeId = nextNode?.id || null;
+    }
     building.gridX = newGridX;
     building.gridY = newGridY;
 
@@ -1956,6 +1995,8 @@ export class BuildingSystem {
 
   getAllStates() {
     return this.buildings.map(b => ({
+      instanceId: b.instanceId,
+      resourceNodeId: b.resourceNodeId || null,
       buildingId: b.buildingId,
       gridX: b.gridX,
       gridY: b.gridY,
@@ -1975,12 +2016,18 @@ export class BuildingSystem {
 
   restoreState(states) {
     if (!states) return;
-    this.buildings = states.map(s => {
+    let maximumInstance = 0;
+    this.buildings = states.map((s, index) => {
       const config = configRegistry.getBuilding(s.buildingId);
       const isFarm = this._isFarmConfig(config);
       const cropId = isFarm && this._getCropDefinition(s.cropId || 'grain') ? (s.cropId || 'grain') : null;
       const pendingCropId = isFarm && this._getCropDefinition(s.pendingCropId) ? s.pendingCropId : null;
+      const instanceId = s.instanceId || `building_${index + 1}`;
+      const instanceNumber = Number.parseInt(instanceId.replace('building_', ''), 10);
+      if (Number.isFinite(instanceNumber)) maximumInstance = Math.max(maximumInstance, instanceNumber);
       return {
+        instanceId,
+        resourceNodeId: s.resourceNodeId || null,
         buildingId: s.buildingId,
         gridX: s.gridX,
         gridY: s.gridY,
@@ -1997,6 +2044,19 @@ export class BuildingSystem {
         cropLuxuryProgress: Math.max(0, Number(s.cropLuxuryProgress) || 0)
       };
     });
+    this._nextInstanceId = maximumInstance + 1;
+    for (const building of this.buildings) {
+      const config = configRegistry.getBuilding(building.buildingId);
+      if (!config?.requiredResourceNode || !this._resourceNodeSystem) continue;
+      const node = (building.resourceNodeId && this._resourceNodeSystem.getNode(building.resourceNodeId))
+        || this._resourceNodeSystem.findNodeForArea(
+          building.gridX, building.gridY, config.footprint.width, config.footprint.height,
+          config.requiredResourceNode, building.instanceId
+        );
+      if (!node) continue;
+      this._resourceNodeSystem.claimNode(node.id, building.instanceId, config.requiredResourceNode);
+      building.resourceNodeId = node.id;
+    }
     this._updateStorageMultiplier();
     this._updateStore();
   }

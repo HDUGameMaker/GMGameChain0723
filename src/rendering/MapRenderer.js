@@ -47,12 +47,14 @@ export class MapRenderer {
 
     // 2. 移动世界层（建筑/虚影，世界坐标，容器位移 = -cam）
     this.worldContainer = new PIXI.Container();
+    this.resourceNodeLayer = new PIXI.Container();
     this.buildingLayer = new PIXI.Container();
     this.ghostLayer = new PIXI.Container();
     // Alt 光源边界描边层
     this.lightOverlay = new PIXI.Container();
     this.lightOverlay.visible = false;
     this.gameView.addChild(this.worldContainer);
+    this.worldContainer.addChild(this.resourceNodeLayer);
     this.worldContainer.addChild(this.buildingLayer);
     this.roadLayer = new PIXI.Container();
     this.worldContainer.addChild(this.roadLayer);
@@ -158,6 +160,7 @@ export class MapRenderer {
   setDiplomacySystem(ds) { this._diplomacySystem = ds || null; }
   setArmySystem(system) { this._armySystem = system || null; }
   setWildSiteSystem(system) { this._wildSiteSystem = system || null; }
+  setResourceNodeSystem(system) { this._resourceNodeSystem = system || null; }
 
   async init() {
     await this._preloadTerrainTextures();
@@ -171,6 +174,7 @@ export class MapRenderer {
     this._drawEnemyExpansion();
     this._drawSpellZones();
     this._drawRoads();
+    this._drawResourceNodes();
     this._drawStrategicTokens();
     this._createFogCanvas();
     this.refreshBuildings();
@@ -495,6 +499,56 @@ export class MapRenderer {
 
   _isClickOnOutpost(col, row) {
     return (this._outpostData || []).find(outpost => outpost.gridX === col && outpost.gridY === row) || null;
+  }
+
+  _drawResourceNodes() {
+    this.resourceNodeLayer.removeChildren().forEach(child => child.destroy({ children: true }));
+    const nodes = this._resourceNodeSystem?.getNodes?.() || [];
+    const definitions = configRegistry.get('resourceNodes')?.types || {};
+    const ts = this.tileSize;
+    const bounds = getVisibleTileBounds({
+      gridWidth: this.mapConfig.gridWidth,
+      gridHeight: this.mapConfig.gridHeight,
+      tileSize: ts,
+      camX: this.camX,
+      camY: this.camY,
+      screenWidth: this.screenW,
+      screenHeight: this.screenH,
+      zoom: this.zoom,
+      overscanTiles: 2
+    });
+    for (const node of nodes) {
+      if (node.discovered === false) continue;
+      if (node.gridX < bounds.startCol || node.gridX > bounds.endCol || node.gridY < bounds.startRow || node.gridY > bounds.endRow) continue;
+      const definition = definitions[node.type] || {};
+      const colorText = String(definition.color || '#d8c787').replace('#', '');
+      const color = Number.parseInt(colorText, 16) || 0xd8c787;
+      const container = new PIXI.Container();
+      const x = node.gridX * ts;
+      const y = node.gridY * ts;
+      const bg = new PIXI.Graphics();
+      bg.circle(x + ts / 2, y + ts / 2, ts * 0.28);
+      bg.fill({ color, alpha: node.developedByBuildingId ? 0.35 : 0.76 });
+      bg.circle(x + ts / 2, y + ts / 2, ts * 0.28);
+      bg.stroke({ color: 0xf6e7b0, alpha: 0.9, width: 2 });
+      container.addChild(bg);
+      const icon = new PIXI.Text({
+        text: definition.icon || '◆',
+        style: { fontSize: Math.max(16, ts * 0.38), fill: 0xffffff, align: 'center' }
+      });
+      icon.anchor.set(0.5);
+      icon.x = x + ts / 2;
+      icon.y = y + ts / 2;
+      container.addChild(icon);
+      if (node.developedByBuildingId) {
+        const marker = new PIXI.Text({ text: '⚒', style: { fontSize: Math.max(10, ts * 0.2), fill: 0xffef9d } });
+        marker.anchor.set(0.5);
+        marker.x = x + ts * 0.76;
+        marker.y = y + ts * 0.24;
+        container.addChild(marker);
+      }
+      this.resourceNodeLayer.addChild(container);
+    }
   }
 
   _getStrategicTokenModels() {
@@ -1136,6 +1190,7 @@ export class MapRenderer {
     if (this._terrainLabelLayer.visible) {
       this._drawTerrainLabels();
     }
+    this._drawResourceNodes();
   }
 
   _clearTerrainSprites() {
@@ -3320,6 +3375,7 @@ export class MapRenderer {
     store.subscribe('outpostVersion', () => this._drawOutposts());
     eventBus.on('armyChanged', () => this._drawStrategicTokens());
     eventBus.on('wildSitesChanged', () => this._drawStrategicTokens());
+    eventBus.on('resourceNodesChanged', () => this._drawResourceNodes());
   }
 
   /**

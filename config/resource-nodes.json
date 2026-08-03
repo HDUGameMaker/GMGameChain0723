@@ -1,0 +1,10 @@
+{
+  "types": {
+    "wood": { "name": "木材点", "resourceId": "wood", "allowedGrounds": ["F", "G", "D"], "color": "#3f8f4f", "icon": "🌲" },
+    "stone": { "name": "石料点", "resourceId": "stone", "allowedGrounds": ["R", "M", "D", "G"], "color": "#8d929d", "icon": "🪨" },
+    "food": { "name": "食物点", "resourceId": "food", "allowedGrounds": ["G", "D", "F", "B"], "color": "#d5a83f", "icon": "🌾" },
+    "gold": { "name": "黄金点", "resourceId": "gold", "allowedGrounds": ["M", "R", "D", "G"], "color": "#e2bd36", "icon": "◆" }
+  },
+  "commonNodeCountPerType": 320,
+  "macroRegionSize": 96
+}

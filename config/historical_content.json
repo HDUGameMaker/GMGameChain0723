@@ -3100,6 +3100,7 @@
     },
     {
       "id": "forestry_camp",
+      "requiredResourceNode": "wood",
       "name": "林业营地",
       "category": "gathering",
       "description": "林业营地承担gathering体系中的独特职责。",
@@ -3159,6 +3160,7 @@
     },
     {
       "id": "stone_quarry",
+      "requiredResourceNode": "stone",
       "name": "石料采掘场",
       "category": "gathering",
       "description": "石料采掘场承担gathering体系中的独特职责。",
@@ -3278,6 +3280,7 @@
     },
     {
       "id": "gold_mine",
+      "requiredResourceNode": "gold",
       "name": "金矿",
       "category": "gathering",
       "description": "金矿承担gathering体系中的独特职责。",
