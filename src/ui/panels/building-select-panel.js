@@ -4,6 +4,7 @@
  */
 import { configRegistry } from '../../core/ConfigRegistry.js';
 import { eventBus } from '../../core/EventBus.js';
+import { BUILDING_CATEGORIES } from '../../domain/BuildingPresentation.js';
 
 export function renderBuildingSelectPanel(data, body, pm) {
   const game = window.__game;
@@ -18,22 +19,21 @@ export function renderBuildingSelectPanel(data, body, pm) {
 
   const newlyUnlocked = buildingSystem.getNewlyUnlocked();
 
-  // 过滤可建造的建筑（排除 upgradesFrom、maxCount 已满、未解锁的）
+  // 升级目标与地图专用建筑不进入建造菜单；未解锁建筑保留并显示原因。
   const buildable = buildings.filter(b => {
     if (b.upgradesFrom) return false; // 升级目标不直接建造
     if (!b.buildCost || b.buildCost.length === 0) return false; // 无建造成本 = 地图专用
-    if (b.maxCount !== null && b.maxCount !== undefined) {
-      if (buildingSystem.getBuildingCount(b.id) >= b.maxCount) return false;
-    }
-    if (!buildingSystem.isUnlocked(b.id)) return false;
     return true;
   });
 
-  // 排序：新解锁的排最上面
+  const categoryOrder = Object.keys(BUILDING_CATEGORIES);
   buildable.sort((a, b) => {
+    const categoryDelta = categoryOrder.indexOf(a.category || 'administration')
+      - categoryOrder.indexOf(b.category || 'administration');
+    if (categoryDelta !== 0) return categoryDelta;
     const aNew = newlyUnlocked.includes(a.id) ? 1 : 0;
     const bNew = newlyUnlocked.includes(b.id) ? 1 : 0;
-    return bNew - aNew;
+    return (bNew - aNew) || String(a.name).localeCompare(String(b.name), 'zh-CN');
   });
 
   if (buildable.length === 0) {
@@ -89,17 +89,30 @@ export function renderBuildingSelectPanel(data, body, pm) {
   const list = document.createElement('div');
   list.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
 
+  let currentCategory = null;
   for (const b of buildable) {
+    const categoryId = b.category || 'administration';
+    if (categoryId !== currentCategory) {
+      currentCategory = categoryId;
+      const categoryTitle = document.createElement('div');
+      categoryTitle.style.cssText = 'font-size:13px;font-weight:700;color:#d7c486;margin:12px 2px 2px;padding-bottom:6px;border-bottom:1px solid rgba(215,196,134,0.2);';
+      categoryTitle.textContent = BUILDING_CATEGORIES[categoryId] || BUILDING_CATEGORIES.administration;
+      list.appendChild(categoryTitle);
+    }
     const isNew = newlyUnlocked.includes(b.id);
+    const unlockStatus = buildingSystem.getUnlockStatus(b.id);
+    const atCountLimit = b.maxCount !== null && b.maxCount !== undefined
+      && buildingSystem.getBuildingCount(b.id) >= b.maxCount;
     const canAfford = resourceSystem.canAfford(b.buildCost || []);
+    const canBuild = unlockStatus.unlocked && !atCountLimit && canAfford;
     const card = document.createElement('div');
     card.style.cssText = `
       padding: 14px;
       border-radius: 12px;
-      cursor: ${canAfford ? 'pointer' : 'default'};
-      background: ${canAfford ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)'};
-      border: 1px solid ${isNew ? 'rgba(255,200,60,0.5)' : (canAfford ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)')};
-      opacity: ${canAfford ? '1' : '0.45'};
+      cursor: ${canBuild ? 'pointer' : 'default'};
+      background: ${canBuild ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.025)'};
+      border: 1px solid ${isNew ? 'rgba(255,200,60,0.5)' : (canBuild ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)')};
+      opacity: ${canBuild ? '1' : '0.68'};
       transition: background 0.2s, border-color 0.2s, transform 0.1s;
       display: flex;
       align-items: center;
@@ -126,7 +139,7 @@ export function renderBuildingSelectPanel(data, body, pm) {
     iconEl.style.cssText = `
       width: 44px; height: 44px;
       border-radius: 10px;
-      background: ${canAfford ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'};
+      background: ${canBuild ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'};
       display: flex; align-items: center; justify-content: center;
       font-size: 20px; flex-shrink: 0;
     `;
@@ -156,6 +169,8 @@ export function renderBuildingSelectPanel(data, body, pm) {
     if (b.soldierCapacity) tags.push(`⚔️ +${b.soldierCapacity} 士兵`);
     if (b.foodCapacity) tags.push(`🍞 +${b.foodCapacity}/天/工人`);
     if (b.roadRequired) tags.push('🛤️ 道路依赖');
+    const lockReasons = unlockStatus.conditions.filter(condition => !condition.met).map(condition => condition.desc);
+    if (atCountLimit) lockReasons.push(`已达数量上限 ${b.maxCount}`);
 
     infoEl.innerHTML = `
       <div style="font-weight:600;color:#ececf0;font-size:14px;margin-bottom:3px;">
@@ -164,13 +179,14 @@ export function renderBuildingSelectPanel(data, body, pm) {
       </div>
       <div style="font-size:12px;color:#888;margin-bottom:4px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${b.description || ''}</div>
       <div style="font-size:12px;color:${canAfford ? '#4ecb71' : '#ff6b6b'};font-weight:500;">${costText || '免费'}</div>
+      ${lockReasons.length ? `<div style="font-size:11px;color:#e79a9a;margin-top:5px;">🔒 ${lockReasons.join('；')}</div>` : ''}
       ${tags.length > 0 ? `<div style="font-size:11px;color:#a0a0ba;margin-top:3px;display:flex;gap:8px;">${tags.map(t => `<span>${t}</span>`).join('')}</div>` : ''}
     `;
 
     card.appendChild(iconEl);
     card.appendChild(infoEl);
 
-    if (canAfford) {
+    if (canBuild) {
       card.addEventListener('click', () => {
         buildingSystem.clearNewlyUnlocked();
         pm.close();

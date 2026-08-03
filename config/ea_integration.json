@@ -230,6 +230,8 @@
   "buildings": [
     {
       "id": "dock",
+      "category": "naval",
+      "eraId": "primitive",
       "name": "码头",
       "description": "建在水面并连接陆路，是训练和部署早期海军的基础设施。",
       "icon": "",
@@ -279,6 +281,8 @@
     },
     {
       "id": "shipyard",
+      "category": "naval",
+      "eraId": "classical",
       "name": "造船厂",
       "description": "大型港口工场，提供更高海军容量和重型舰艇训练能力。",
       "icon": "",
@@ -329,6 +333,8 @@
     },
     {
       "id": "coastal_watch",
+      "category": "defense",
+      "eraId": "primitive",
       "name": "海防哨塔",
       "description": "监视近岸水域，提前发现海盗与海兽。",
       "icon": "",
@@ -373,6 +379,8 @@
     },
     {
       "id": "tavern",
+      "category": "civic",
+      "eraId": "primitive",
       "name": "酒馆",
       "description": "汇聚传闻、使者和传奇人物；建成后可招募并任命历史英雄。",
       "icon": "",

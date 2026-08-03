@@ -1,6 +1,8 @@
 [
   {
     "id": "work_shed",
+    "category": "military",
+    "eraId": "primitive",
     "name": "军营",
     "description": "士兵的驻训营地。提升可容纳的士兵上限--训练菜单产出的士兵都受此上限约束。",
     "footprint": { "width": 1, "height": 1 },
@@ -26,6 +28,8 @@
   },
   {
     "id": "plank_house",
+    "category": "military",
+    "eraId": "primitive",
     "name": "营房",
     "description": "加固的大型营房，显著提升士兵容纳上限。由军营升级而来。",
     "footprint": { "width": 1, "height": 1 },
@@ -49,6 +53,8 @@
   },
   {
     "id": "logging_camp",
+    "category": "gathering",
+    "eraId": "primitive",
     "name": "伐木集散点",
     "description": "林地边缘的伐木前哨，自动产出原木。仅能建造在林地边缘。",
     "footprint": { "width": 1, "height": 1 },
@@ -75,6 +81,8 @@
   },
   {
     "id": "stope",
+    "category": "gathering",
+    "eraId": "primitive",
     "name": "采石场",
     "description": "裸露岩石上的露天采石场，自动产出石头。仅能建造在裸露石头地形上。",
     "footprint": { "width": 2, "height": 2 },
@@ -101,6 +109,8 @@
   },
   {
     "id": "farm",
+    "category": "agriculture",
+    "eraId": "primitive",
     "name": "农田",
     "description": "平原上的耕地，自动产出食物。仅能建造在草地或普通土地上。大建筑，被敌人触及会整栋摧毁。",
     "footprint": { "width": 3, "height": 3 },
@@ -127,6 +137,8 @@
   },
   {
     "id": "gold_mint",
+    "category": "industry",
+    "eraId": "primitive",
     "name": "铸币所",
     "description": "将基础资源转化为黄金的核心设施。消耗木材、石料与食物，支撑建设、贸易和军队维护。",
     "footprint": { "width": 2, "height": 2 },
@@ -158,6 +170,8 @@
   },
   {
     "id": "warehouse",
+    "category": "administration",
+    "eraId": "primitive",
     "name": "大本营",
     "description": "阵营的核心指挥建筑，提升全局资源存储上限。不可拆除；一旦被敌人占领即告失败。",
     "isHeadquarters": true,
@@ -181,6 +195,8 @@
   },
   {
     "id": "supply_post",
+    "category": "administration",
+    "eraId": "primitive",
     "name": "补给站",
     "description": "物资调度点，为邻近的基础采集建筑提供产出加成。",
     "icon": "",
@@ -206,6 +222,8 @@
   },
   {
     "id": "strategy_archive",
+    "category": "research",
+    "eraId": "primitive",
     "name": "战略档案馆",
     "description": "整理战报、地图与历史案例的研究设施，为城市提供战略卡获取线索。",
     "footprint": { "width": 2, "height": 2 },
@@ -227,6 +245,8 @@
   },
   {
     "id": "logging_camp_t2",
+    "category": "gathering",
+    "eraId": "primitive",
     "name": "伐木场",
     "description": "升级版伐木前哨，产出翻倍。由伐木集散点升级而来；需建筑科技树「伐木进阶」解锁。",
     "footprint": { "width": 1, "height": 1 },
@@ -255,6 +275,8 @@
   },
   {
     "id": "stope_t2",
+    "category": "gathering",
+    "eraId": "primitive",
     "name": "深矿",
     "description": "升级版采石场，产出翻倍。由采石场升级而来；需建筑科技树「深矿技术」解锁。",
     "footprint": { "width": 2, "height": 2 },
@@ -283,6 +305,8 @@
   },
   {
     "id": "farm_t2",
+    "category": "agriculture",
+    "eraId": "primitive",
     "name": "灌溉农田",
     "description": "升级版农田，产出翻倍。由农田升级而来；需建筑科技树「灌溉技术」解锁。",
     "footprint": { "width": 3, "height": 3 },
@@ -311,6 +335,8 @@
   },
   {
     "id": "gold_mint_t2",
+    "category": "industry",
+    "eraId": "primitive",
     "name": "精炼铸币所",
     "description": "升级版铸币所，黄金产出翻倍（同等原料）。由铸币所升级而来；需建筑科技树「精炼技术」解锁。",
     "footprint": { "width": 2, "height": 2 },

@@ -5,6 +5,7 @@
 import { configRegistry } from '../../core/ConfigRegistry.js';
 import { eventBus } from '../../core/EventBus.js';
 import { progressManager } from '../../utils/ProgressManager.js';
+import { getBuildingPresentation } from '../../domain/BuildingPresentation.js';
 
 /* 通用区块容器 */
 function section(label, icon) {
@@ -65,6 +66,8 @@ export function renderBuildingDetailPanel(data, body, pm) {
 
   const config = configRegistry.getBuilding(building.buildingId);
   if (!config) return;
+  const unlockStatus = buildingSystem.getUnlockStatus(config.id);
+  const presentation = getBuildingPresentation(config, unlockStatus.conditions);
 
   const container = document.createElement('div');
   container.style.cssText = 'display:flex;flex-direction:column;';
@@ -154,6 +157,9 @@ export function renderBuildingDetailPanel(data, body, pm) {
   header.style.textAlign = 'center';
   header.innerHTML = `
     <div style="font-size:18px;font-weight:700;color:#ececf0;letter-spacing:-0.01em;">${config.name}</div>
+    <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:7px;font-size:11px;color:#c9b57a;">
+      <span>${presentation.categoryName}</span><span>·</span><span>${presentation.eraName}</span><span>·</span><span>${statusText}</span>
+    </div>
     <div style="font-size:13px;color:#a0a0ba;margin-top:4px;">${config.description || ''}${config.roadRequired ? '<br><span style="color:#f0a040;">🛤️ 道路依赖：必须紧邻道路</span>' : ''}</div>
     <div class="status-label" style="font-size:12px;color:${statusColor};margin-top:6px;font-weight:500;">${statusText}</div>
     ${building.status === 'constructing' ? `
@@ -163,6 +169,26 @@ export function renderBuildingDetailPanel(data, body, pm) {
     ` : ''}
   `;
   container.appendChild(header);
+
+  const unlockSection = section('解锁来源', '🔓');
+  for (const condition of presentation.unlockRows) {
+    const row = document.createElement('div');
+    row.style.cssText = `font-size:12px;color:${condition.met ? '#79d89b' : '#e8a0a0'};padding:3px 0;`;
+    row.textContent = `${condition.met ? '✓' : '✗'} ${condition.desc}`;
+    unlockSection.appendChild(row);
+  }
+  container.appendChild(unlockSection);
+
+  if (presentation.effectRows.length > 0) {
+    const effectSection = section('当前效果', '◆');
+    for (const effect of presentation.effectRows) {
+      const row = document.createElement('div');
+      row.style.cssText = 'font-size:12px;color:#d7deea;padding:3px 0;';
+      row.textContent = effect;
+      effectSection.appendChild(row);
+    }
+    container.appendChild(effectSection);
+  }
 
   // 建造进度注册到统一进度管理器
   if (building.status === 'constructing') {
@@ -235,6 +261,13 @@ export function renderBuildingDetailPanel(data, body, pm) {
     }
 
     container.appendChild(workerSection);
+  } else {
+    const staffingSection = section('人口配置', '👷');
+    const staffing = document.createElement('div');
+    staffing.style.cssText = 'font-size:12px;color:#b8c7e0;text-align:center;';
+    staffing.textContent = building.status === 'active' ? presentation.staffingText : '建成后开放岗位配置';
+    staffingSection.appendChild(staffing);
+    container.appendChild(staffingSection);
   }
 
   // ===== 水力/风力装置（工厂类建筑） =====

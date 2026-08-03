@@ -94,7 +94,11 @@ export class BuildingSystem {
   canPlaceAt(gridX, gridY, buildingId) {
     const config = configRegistry.getBuilding(buildingId);
     if (!config) return { valid: false, reason: '建筑不存在' };
-    if (!this.isUnlocked(buildingId)) return { valid: false, reason: '建筑尚未解锁' };
+    const unlockStatus = this.getUnlockStatus(buildingId);
+    if (!unlockStatus.unlocked) {
+      const reason = unlockStatus.conditions.find(condition => !condition.met)?.desc || '建筑尚未解锁';
+      return { valid: false, reason: `尚未解锁：${reason}` };
+    }
 
     const w = config.footprint.width;
     const h = config.footprint.height;
@@ -1411,30 +1415,14 @@ export class BuildingSystem {
    * 检查建筑是否已解锁（前置建筑已建造或科技已研究）
    */
   isUnlocked(buildingId) {
+    return this.getUnlockStatus(buildingId).unlocked;
+  }
+
+  getUnlockStatus(buildingId) {
     const config = configRegistry.getBuilding(buildingId);
-    if (!config) return false;
-
-    const conditions = config.unlockConditions;
-    if (!conditions || conditions.length === 0) return true;
-
-    return conditions.every(cond => {
-      switch (cond.type) {
-        case 'building':
-          return this.hasBuilding(cond.buildingId);
-        case 'tech':
-          return this._techSystem ? this._techSystem.isResearched(cond.techId) : false;
-        case 'building_tech':
-          return this._buildingTechSystem ? this._buildingTechSystem.isNodeUnlocked(cond.nodeId) : false;
-        case 'culture':
-          return this._cultureSystem ? this._cultureSystem.isResearched(cond.cultureId) : false;
-        case 'doctrine':
-          return this._cultureSystem ? this._cultureSystem.getDoctrineResearched().includes(cond.doctrineId) : false;
-        case 'civilization':
-          return this._eraSystem?.getCivilizationForEra?.(config.eraId)?.id === cond.civilizationId;
-        default:
-          return false;
-      }
-    });
+    if (!config) return { unlocked: false, conditions: [] };
+    const conditions = this.getUnlockConditions(buildingId);
+    return { unlocked: conditions.every(condition => condition.met), conditions };
   }
 
   /**
@@ -1446,9 +1434,22 @@ export class BuildingSystem {
     const config = configRegistry.getBuilding(buildingId);
     if (!config) return [];
     const conditions = config.unlockConditions;
-    if (!conditions || conditions.length === 0) return [{ type: 'always', desc: '初始可用', met: true }];
+    const result = [];
+    if (config.eraId && this._eraSystem) {
+      const eras = this._eraSystem.getEras?.() || configRegistry.getHistoricalContent().eras || [];
+      const currentEra = this._eraSystem.getCurrentEra?.();
+      const currentIndex = eras.findIndex(era => era.id === currentEra?.id);
+      const requiredIndex = eras.findIndex(era => era.id === config.eraId);
+      const requiredEra = eras[requiredIndex];
+      result.push({
+        type: 'era',
+        desc: `时代: ${requiredEra?.name || config.eraId}`,
+        met: requiredIndex < 0 || (currentIndex >= 0 && currentIndex >= requiredIndex)
+      });
+    }
 
-    return conditions.map(cond => {
+    for (const cond of conditions || []) {
+      result.push((() => {
       switch (cond.type) {
         case 'building': {
           const bCfg = configRegistry.getBuilding(cond.buildingId);
@@ -1491,7 +1492,10 @@ export class BuildingSystem {
         default:
           return { type: 'unknown', desc: `条件: ${cond.type}`, met: false };
       }
-    });
+      })());
+    }
+    if (result.length === 0) result.push({ type: 'always', desc: '初始可用', met: true });
+    return result;
   }
 
   /**
