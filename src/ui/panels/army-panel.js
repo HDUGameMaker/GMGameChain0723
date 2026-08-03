@@ -74,14 +74,6 @@ function dismissFromArmy(armies, ai, uid) {
 export function renderArmyPanel(data, body, pm) {
   /* 清空 body —— 修复重复渲染 Bug */
   body.innerHTML = '';
-  /* 初始化可用兵种数量（首次打开时给默认值） */
-  const av = _avail();
-  if (Object.keys(av).length === 0) {
-    _cfg().filter(u => _isUnitUnlocked(u.id)).forEach(u => {
-      av[u.id] = 1;
-    });
-    _armySystem()?.setAvailableUnits?.(av);
-  }
   body.style.cssText = 'padding:20px 24px;max-height:70vh;overflow-y:auto;';
 
   const armies = _armies();

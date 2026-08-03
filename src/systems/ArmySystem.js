@@ -7,6 +7,7 @@ import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
 import { getArmyCombatPower } from '../utils/FormationUtils.js';
 import { previewStrategicBattle, resolveStrategicBattle } from './CombatResolver.js';
+import { evaluateTrainingEligibility } from './TrainingRules.js';
 
 export class ArmySystem {
   constructor() {
@@ -20,15 +21,21 @@ export class ArmySystem {
     this._hero = null;
     this._culture = null;
     this._era = null;
+    this._resource = null;
+    this._population = null;
+    this._tech = null;
     eventBus.on('tick', () => this._advanceMovement());
     eventBus.on('dayStart', () => this._resupplyGarrisons());
   }
 
-  setSystems({ building, hero, culture, era } = {}) {
+  setSystems({ building, hero, culture, era, resource, population, tech } = {}) {
     this._building = building || null;
     this._hero = hero || null;
     this._culture = culture || null;
     this._era = era || null;
+    this._resource = resource || null;
+    this._population = population || null;
+    this._tech = tech || null;
   }
 
   initNew() {
@@ -128,6 +135,77 @@ export class ArmySystem {
 
   _unitConfig(unitId) {
     return (configRegistry.get('enemies')?.units || []).find(unit => unit.id === unitId) || null;
+  }
+
+  _trainingBuildingAt(buildingIndex) {
+    if (!Number.isInteger(buildingIndex)) return null;
+    const building = this._building?.buildings?.[buildingIndex];
+    if (!building || building.status !== 'active' || building._invalid) return null;
+    const config = configRegistry.getBuilding?.(building.buildingId);
+    const branches = config?.uniqueFunction?.trainsBranches;
+    if (!config || !Array.isArray(branches) || branches.length === 0) return null;
+    return { building, config, branches };
+  }
+
+  getTrainableUnitsAt(buildingIndex) {
+    const trainingBuilding = this._trainingBuildingAt(buildingIndex);
+    if (!trainingBuilding) return [];
+    return (configRegistry.get('enemies')?.units || []).filter(unit => trainingBuilding.branches.includes(unit.branch));
+  }
+
+  _hasActiveNavalTrainingFacility() {
+    return this._activeBuildings().some(building => {
+      const config = configRegistry.getBuilding?.(building.buildingId);
+      return config?.uniqueFunction?.trainsBranches?.includes('navy')
+        || config?.tags?.some(tag => ['naval_facility', 'naval'].includes(tag));
+    });
+  }
+
+  canTrainUnitAt(buildingIndex, unitId) {
+    const trainingBuilding = this._trainingBuildingAt(buildingIndex);
+    if (!trainingBuilding) return { ok: false, reason: 'invalid_training_building' };
+    const unit = this._unitConfig(unitId);
+    if (!unit) return { ok: false, reason: 'unknown_unit' };
+    if (!trainingBuilding.branches.includes(unit.branch)) {
+      return { ok: false, reason: 'branch_not_supported', unit };
+    }
+
+    const eras = configRegistry.getHistoricalContent?.().eras || [];
+    const currentEra = this._era?.getCurrentEra?.() || null;
+    const unitEra = unit.eraId ? eras.find(era => era.id === unit.eraId) : null;
+    const costs = unit.cost || [];
+    const eligibility = evaluateTrainingEligibility({
+      unit,
+      canAfford: costs.length === 0 || this._resource?.canAfford?.(costs) === true,
+      soldierCount: this._building?.getTotalSoldierCount?.() || 0,
+      soldierCap: this._building?.getTotalSoldierCapacity?.() || 0,
+      isUnlocked: unit.unlocked !== false || this._tech?.isUnitUnlockedByTech?.(unit.id) === true,
+      hasNavalFacility: this._hasActiveNavalTrainingFacility(),
+      currentEraOrder: currentEra?.order ?? null,
+      unitEraOrder: unitEra?.order ?? null,
+      selectedCivilizationId: this._era?.getSelectedCivilization?.()?.id || null,
+      availablePopulation: this._population?.getAvailableWorkers?.() ?? null
+    });
+    if (!eligibility.ok) {
+      return {
+        ok: false,
+        reason: eligibility.reasonCodes[0] || 'training_requirements_not_met',
+        reasons: eligibility.reasons,
+        unit
+      };
+    }
+    return { ok: true, unit };
+  }
+
+  trainUnitAt(buildingIndex, unitId) {
+    const check = this.canTrainUnitAt(buildingIndex, unitId);
+    if (!check.ok) return check;
+    if (!this._resource?.consumeAll?.(check.unit.cost || [])) {
+      return { ok: false, reason: 'insufficient_resources', unit: check.unit };
+    }
+    this.addReserveUnit(unitId, 1);
+    eventBus.emit('unitTrained', { unitId, amount: 1, buildingIndex });
+    return { ok: true, reserve: this._availableUnits[unitId] };
   }
 
   _unitCommandPoints(unitId) { return this._unitConfig(unitId)?.commandPoints || 1; }

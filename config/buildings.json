@@ -17,6 +17,9 @@
     "upgradesTo": "plank_house",
     "unlockConditions": [],
     "production": null,
+    "uniqueFunction": {
+      "trainsBranches": ["infantry", "anti_cavalry"]
+    },
     "synthesisRecipes": [],
     "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
     "mapIconLayout": { "scaleX": 1, "scaleY": 1, "offsetX": 0, "offsetY": 0 },
@@ -45,6 +48,9 @@
     "buildTime": 2,
     "upgradesTo": null,
     "production": null,
+    "uniqueFunction": {
+      "trainsBranches": ["infantry", "anti_cavalry"]
+    },
     "synthesisRecipes": [],
     "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
     "imageDetail": "assets/buildings/anim_plank_house.png",

@@ -263,7 +263,10 @@ class Game {
       building: this.systems.building,
       hero: this.systems.hero,
       culture: this.systems.culture,
-      era: this.systems.era
+      era: this.systems.era,
+      resource: this.systems.resource,
+      population: this.systems.population,
+      tech: this.systems.tech
     });
     this.systems.wildSites.setSystems({ resource: this.systems.resource, era: this.systems.era, army: this.systems.army });
     this.systems.building.setLuxurySystem(this.systems.luxury);

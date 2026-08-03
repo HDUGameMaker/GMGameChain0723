@@ -4022,7 +4022,8 @@
       "soldierCapacity": 0,
       "uniqueFunction": {
         "trainsBranches": [
-          "ranged"
+          "ranged",
+          "archer"
         ],
         "rangedTrainingMul": 1.15
       },
@@ -4122,7 +4123,8 @@
       "soldierCapacity": 0,
       "uniqueFunction": {
         "trainsBranches": [
-          "siege"
+          "siege",
+          "artillery"
         ],
         "siegePowerMul": 1.08
       },
@@ -4172,7 +4174,8 @@
       "soldierCapacity": 0,
       "uniqueFunction": {
         "trainsBranches": [
-          "special"
+          "special",
+          "air"
         ],
         "commandPointsBonus": 5,
         "armyCapacityBonus": 1

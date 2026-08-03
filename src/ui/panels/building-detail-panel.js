@@ -636,10 +636,19 @@ export function renderBuildingDetailPanel(data, body, pm) {
     container.appendChild(upgradeSection);
   }
 
-  // ===== 军事设施：统一进入士兵容量/科技/海军设施训练面板，不占用工人 =====
-  if ((config.tags?.includes('barracks') || config.tags?.includes('military') || config.tags?.includes('naval_facility')) && building.status === 'active') {
+  // ===== 训练设施：只从声明兵种分支的有效建筑进入 =====
+  if (Array.isArray(config.uniqueFunction?.trainsBranches)
+    && config.uniqueFunction.trainsBranches.length > 0
+    && building.status === 'active'
+    && !building._invalid) {
     const trainSection = section('训练', '⚔️');
-    trainSection.appendChild(actionButton('打开军事训练', 'rgba(78, 203, 113, 0.25)', () => pm.push('training_panel', {})));
+    const trainingButton = actionButton(
+      '打开军事训练',
+      'rgba(78, 203, 113, 0.25)',
+      () => pm.push('training_panel', { buildingIndex })
+    );
+    trainingButton.dataset.testid = 'open-building-training';
+    trainSection.appendChild(trainingButton);
     container.appendChild(trainSection);
   }
 
