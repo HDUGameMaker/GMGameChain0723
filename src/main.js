@@ -307,7 +307,8 @@ class Game {
     this.systems.colony.setSystems({
       popupManager: this.popupManager,
       population: this.systems.population,
-      resource: this.systems.resource
+      resource: this.systems.resource,
+      diplomacy: this.systems.diplomacy
     });
 
     // 游戏结束事件

@@ -12,6 +12,7 @@ export class ColonySystem {
     this._popupManager = null;
     this._populationSystem = null;
     this._resourceSystem = null;
+    this._diplomacySystem = null;
     this._lastOfferDay = 0;
     this._lastInvasionDay = 0;
     this._nextOfferDay = 0;
@@ -22,10 +23,11 @@ export class ColonySystem {
     eventBus.on('dayStart', (data) => this._onDayStart(data));
   }
 
-  setSystems({ popupManager, population, resource }) {
+  setSystems({ popupManager, population, resource, diplomacy }) {
     this._popupManager = popupManager || null;
     this._populationSystem = population || null;
     this._resourceSystem = resource || null;
+    this._diplomacySystem = diplomacy || null;
   }
 
   get _config() {
@@ -37,7 +39,70 @@ export class ColonySystem {
   }
 
   get _colonies() {
-    return this._config.colonies || [];
+    return this.getColonyTargets();
+  }
+
+  getColonyTargets() {
+    const configured = this._diplomacySystem?.getAllOutposts?.()
+      || [
+        ...(configRegistry.get('eaIntegration')?.outposts || []),
+        ...(configRegistry.get('worldFactions')?.cityStates || [])
+      ];
+    return configured.map(target => ({
+      id: target.id,
+      targetId: target.id,
+      name: target.name,
+      description: target.description || `${target.name}是一座固定在战略地图上的城邦。`,
+      gridX: target.gridX,
+      gridY: target.gridY,
+      domain: target.domain || 'land',
+      specialty: target.specialty || 'mixed_trade',
+      dailyIncome: this._incomeForTarget(target),
+      legacyOffmap: false
+    }));
+  }
+
+  _incomeForTarget(target) {
+    const resourceBySpecialty = {
+      wood_trade: 'wood', stone_trade: 'stone', food_trade: 'food', gold_trade: 'gold',
+      naval_trade: 'gold', knowledge_exchange: 'gold', cavalry_contract: 'food'
+    };
+    const resourceId = resourceBySpecialty[target.specialty] || ['wood', 'stone', 'food', 'gold'][target.id.length % 4];
+    return { population: 0, resources: [{ resourceId, amount: 6 + (target.id.length % 5) * 2 }] };
+  }
+
+  _targetEligible(targetId) {
+    const state = this._diplomacySystem?.getOutpostState?.(targetId);
+    return state?.status === 'allied' || state?.status === 'defeated' || state?.treaties?.includes('alliance');
+  }
+
+  establishColony(targetId, { policy = 'autonomy' } = {}) {
+    const target = this.getColonyTargets().find(item => item.id === targetId);
+    if (!target) return { ok: false, reason: 'unknown_city_state' };
+    if (this._occupied[targetId]) return { ok: false, reason: 'already_colonized' };
+    if (!this._targetEligible(targetId)) return { ok: false, reason: 'target_not_eligible' };
+    const allowedPolicies = new Set(['autonomy', 'tribute', 'integration']);
+    if (!allowedPolicies.has(policy)) return { ok: false, reason: 'unknown_policy' };
+    const diplomacyState = this._diplomacySystem?.getOutpostState?.(targetId);
+    const compliance = diplomacyState?.status === 'allied' ? 72 : 48;
+    this._occupied[targetId] = {
+      id: target.id,
+      targetId: target.id,
+      name: target.name,
+      gridX: target.gridX,
+      gridY: target.gridY,
+      domain: target.domain,
+      dailyIncome: this._normalizeIncome(target.dailyIncome),
+      defense: 0,
+      occupiedDay: store.getState('timeDay') || 1,
+      compliance,
+      unrest: 100 - compliance,
+      policy,
+      legacyOffmap: false
+    };
+    this._updateStore();
+    eventBus.emit('colonyEstablished', { targetId, policy, compliance });
+    return { ok: true, colony: structuredClone(this._occupied[targetId]) };
   }
 
   get _unitConfigs() {
@@ -57,6 +122,7 @@ export class ColonySystem {
 
   _onDayStart(data) {
     const day = data?.day || store.getState('timeDay') || 1;
+    this._advanceGovernance();
     this._grantDailyIncome(day);
 
     if (!this._popupManager || this._activeEvent) return;
@@ -84,6 +150,25 @@ export class ColonySystem {
     if ((this._populationSystem?.current || 0) < (this._global.minPopulation ?? 12)) return false;
     if (this._getTotalArmyPower() < (this._global.minTotalArmyPower ?? 18)) return false;
     return this._colonies.some(c => !this._occupied[c.id]);
+  }
+
+  _advanceGovernance() {
+    let changed = false;
+    const deltas = {
+      autonomy: { compliance: 1, unrest: -1 },
+      tribute: { compliance: -1, unrest: 2 },
+      integration: { compliance: 2, unrest: -1 }
+    };
+    for (const colony of Object.values(this._occupied)) {
+      if (colony.legacyOffmap) continue;
+      const delta = deltas[colony.policy] || deltas.autonomy;
+      const compliance = Math.max(0, Math.min(100, (colony.compliance ?? 50) + delta.compliance));
+      const unrest = Math.max(0, Math.min(100, (colony.unrest ?? 50) + delta.unrest));
+      if (compliance !== colony.compliance || unrest !== colony.unrest) changed = true;
+      colony.compliance = compliance;
+      colony.unrest = unrest;
+    }
+    if (changed) this._updateStore();
   }
 
   _canInvadeColony() {
@@ -212,10 +297,18 @@ export class ColonySystem {
     const loss = this._applyOccupationLosses(army);
     this._occupied[colonyId] = {
       id: colony.id,
+      targetId: colony.id,
       name: colony.name,
+      gridX: colony.gridX,
+      gridY: colony.gridY,
+      domain: colony.domain,
       dailyIncome: this._normalizeIncome(colony.dailyIncome),
       defense: loss.defenseGain,
-      occupiedDay: store.getState('timeDay') || 1
+      occupiedDay: store.getState('timeDay') || 1,
+      compliance: 40,
+      unrest: 60,
+      policy: 'tribute',
+      legacyOffmap: false
     };
     this._activeEvent = null;
     this._updateStore();
