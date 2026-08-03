@@ -201,6 +201,12 @@
     "buildTime": 4,
     "upgradesTo": null,
     "production": null,
+    "uniqueFunction": {
+      "workerRecruitment": {
+        "amount": 1,
+        "cost": [{ "resourceId": "food", "amount": 20 }]
+      }
+    },
     "synthesisRecipes": [],
     "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
     "tags": ["warehouse"]

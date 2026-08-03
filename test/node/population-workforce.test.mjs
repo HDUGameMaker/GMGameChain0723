@@ -22,7 +22,17 @@ function createScenario() {
       { id: 'house', housingCapacity: 20, maxWorkers: 0 },
       { id: 'farm', maxWorkers: 4, jobType: 'gathering', productionCycle: 'day', production: { perWorker: true, output: [{ resourceId: 'food', amount: 3 }] } },
       { id: 'academy', maxWorkers: 4, jobType: 'research', uniqueFunction: { unlockSystem: 'tech', sciencePerWorker: 1.5 } },
-      { id: 'civic_hall', maxWorkers: 4, jobType: 'civic', uniqueFunction: { unlockSystem: 'civics', civicPerWorker: 1.25 } }
+      { id: 'civic_hall', maxWorkers: 4, jobType: 'civic', uniqueFunction: { unlockSystem: 'civics', civicPerWorker: 1.25 } },
+      {
+        id: 'warehouse',
+        maxWorkers: 0,
+        uniqueFunction: {
+          workerRecruitment: {
+            amount: 1,
+            cost: [{ resourceId: 'food', amount: 20 }]
+          }
+        }
+      }
     ],
     adjacency_bonuses: [],
     enemies: { units: [] }
@@ -39,10 +49,11 @@ function createScenario() {
     { buildingId: 'house', status: 'active', currentWorkers: 0 },
     { buildingId: 'farm', status: 'active', currentWorkers: 0 },
     { buildingId: 'academy', status: 'active', currentWorkers: 0 },
-    { buildingId: 'civic_hall', status: 'active', currentWorkers: 0 }
+    { buildingId: 'civic_hall', status: 'active', currentWorkers: 0 },
+    { buildingId: 'warehouse', status: 'active', currentWorkers: 0 }
   ];
   population.initNew();
-  return { resources, population, buildings };
+  return { resources, population, buildings, warehouseIndex: 4 };
 }
 
 test('new settlements restore population, housing and assignable building jobs', () => {
@@ -85,4 +96,47 @@ test('completed job buildings no longer auto-fill every available worker', () =>
   const building = buildings.buildings[2];
   buildings._completeConstruction(building, configRegistry.getBuilding('academy'));
   assert.equal(building.currentWorkers, 0);
+});
+
+test('active headquarters recruits one idle worker for configured food', () => {
+  const { resources, population, buildings, warehouseIndex } = createScenario();
+  const result = buildings.recruitWorker(warehouseIndex);
+  assert.deepEqual(result, { ok: true, population: 13 });
+  assert.equal(resources.getAmount('food'), 80);
+  assert.equal(population.getAvailableWorkers(), 13);
+});
+
+test('headquarters recruitment fails atomically without food or housing room', () => {
+  const { resources, population, buildings, warehouseIndex } = createScenario();
+  resources._resources.food.current = 19;
+  assert.deepEqual(buildings.recruitWorker(warehouseIndex), { ok: false, reason: 'insufficient_resources' });
+  assert.equal(resources.getAmount('food'), 19);
+  assert.equal(population.current, 12);
+
+  resources._resources.food.current = 100;
+  population.current = population.getHousingCapacity();
+  assert.deepEqual(buildings.recruitWorker(warehouseIndex), { ok: false, reason: 'housing_full' });
+  assert.equal(resources.getAmount('food'), 100);
+  assert.equal(population.current, 20);
+});
+
+test('worker recruitment rejects missing, incompatible, and inactive buildings', () => {
+  const { resources, population, buildings, warehouseIndex } = createScenario();
+  assert.deepEqual(buildings.recruitWorker(-1), { ok: false, reason: 'invalid_recruitment_building' });
+  assert.deepEqual(buildings.recruitWorker(1), { ok: false, reason: 'invalid_recruitment_building' });
+  buildings.buildings[warehouseIndex].status = 'constructing';
+  assert.deepEqual(buildings.recruitWorker(warehouseIndex), { ok: false, reason: 'invalid_recruitment_building' });
+  assert.equal(resources.getAmount('food'), 100);
+  assert.equal(population.current, 12);
+});
+
+test('population additions require a positive integer and available housing', () => {
+  const { population } = createScenario();
+  assert.equal(population.addPopulation(1.5), false);
+  assert.equal(population.addPopulation(0), false);
+  assert.equal(population.current, 12);
+  assert.equal(population.addPopulation(8), true);
+  assert.equal(population.current, 20);
+  assert.equal(population.addPopulation(1), false);
+  assert.equal(population.current, 20);
 });

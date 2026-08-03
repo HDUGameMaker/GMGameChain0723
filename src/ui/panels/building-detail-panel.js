@@ -319,6 +319,64 @@ export function renderBuildingDetailPanel(data, body, pm) {
     container.appendChild(staffingSection);
   }
 
+  const workerRecruitment = config.uniqueFunction?.workerRecruitment;
+  if (workerRecruitment) {
+    const recruitSection = section('招募工人', '👷');
+    const amount = workerRecruitment.amount;
+    const cost = workerRecruitment.cost || [];
+    const population = populationSystem.current;
+    const housing = populationSystem.getHousingCapacity();
+    const availableWorkers = populationSystem.getAvailableWorkers();
+
+    const summary = document.createElement('div');
+    summary.style.cssText = 'display:grid;grid-template-columns:1fr auto;gap:7px;font-size:12px;color:#aeb8c5;margin-bottom:10px;';
+    summary.innerHTML = `
+      <span>招募数量</span><b style="color:#ececf0">${amount}</b>
+      <span>招募成本</span><b style="color:#e3bd73">${formatResourceList(cost)}</b>
+      <span>当前人口 / 住房</span><b style="color:#ececf0">${population} / ${housing}</b>
+      <span>可用工人</span><b style="color:#79d89b">${availableWorkers}</b>
+    `;
+    recruitSection.appendChild(summary);
+
+    let disabledReason = '';
+    if (building.status !== 'active') disabledReason = '建筑尚未投入使用';
+    else if (!Number.isInteger(amount) || amount <= 0) disabledReason = '招募配置无效';
+    else if (population + amount > housing) disabledReason = '住房已满';
+    else if (!resourceSystem.canAfford(cost)) disabledReason = '资源不足';
+
+    const recruitButton = actionButton(
+      `招募 ${amount} 名工人`,
+      disabledReason ? 'rgba(255,255,255,0.05)' : 'rgba(78, 203, 113, 0.25)',
+      () => {
+        const result = buildingSystem.recruitWorker(buildingIndex);
+        if (!result.ok) {
+          pm.alert({
+            invalid_recruitment_building: '该建筑无法招募工人',
+            invalid_recruitment_config: '招募配置无效',
+            insufficient_resources: '资源不足',
+            housing_full: '住房已满'
+          }[result.reason] || '无法招募工人');
+          return;
+        }
+        pm.refresh({ buildingIndex });
+      }
+    );
+    recruitButton.disabled = Boolean(disabledReason);
+    if (disabledReason) {
+      recruitButton.style.cursor = 'default';
+      recruitButton.style.color = '#777';
+      recruitButton.title = disabledReason;
+      const reason = document.createElement('div');
+      reason.style.cssText = 'font-size:11px;color:#e79a9a;text-align:center;margin-top:7px;';
+      reason.textContent = disabledReason;
+      recruitSection.appendChild(recruitButton);
+      recruitSection.appendChild(reason);
+    } else {
+      recruitSection.appendChild(recruitButton);
+    }
+    container.appendChild(recruitSection);
+  }
+
   // ===== 水力/风力装置（工厂类建筑） =====
   if (building.status === 'active' && config.maxWorkers && config.maxWorkers > 0 && config.production) {
     const attachmentType = buildingSystem.getAttachmentType(buildingIndex);

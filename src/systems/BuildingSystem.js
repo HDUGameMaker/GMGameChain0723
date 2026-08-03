@@ -341,6 +341,45 @@ export class BuildingSystem {
 
   // ===== 工人分配 =====
 
+  recruitWorker(buildingIndex) {
+    const building = this.buildings[buildingIndex];
+    const config = building ? configRegistry.getBuilding(building.buildingId) : null;
+    const recruitment = config?.uniqueFunction?.workerRecruitment;
+    if (!building || building.status !== 'active' || !recruitment) {
+      return { ok: false, reason: 'invalid_recruitment_building' };
+    }
+
+    const amount = recruitment.amount;
+    const configuredCosts = recruitment.cost;
+    if (!Number.isInteger(amount) || amount <= 0 || !Array.isArray(configuredCosts)
+      || configuredCosts.some(cost => !cost?.resourceId || !Number.isFinite(cost.amount) || cost.amount <= 0)) {
+      return { ok: false, reason: 'invalid_recruitment_config' };
+    }
+
+    const costsByResource = new Map();
+    for (const cost of configuredCosts) {
+      costsByResource.set(cost.resourceId, (costsByResource.get(cost.resourceId) || 0) + cost.amount);
+    }
+    const costs = [...costsByResource].map(([resourceId, costAmount]) => ({ resourceId, amount: costAmount }));
+
+    if (!this._populationSystem
+      || this._populationSystem.current + amount > this._populationSystem.getHousingCapacity()) {
+      return { ok: false, reason: 'housing_full' };
+    }
+    if (!this._resourceSystem?.canAfford(costs)) {
+      return { ok: false, reason: 'insufficient_resources' };
+    }
+    if (!this._resourceSystem.consumeAll(costs)) {
+      return { ok: false, reason: 'insufficient_resources' };
+    }
+    if (!this._populationSystem.addPopulation(amount)) {
+      for (const cost of costs) this._resourceSystem.addClamped(cost.resourceId, cost.amount);
+      return { ok: false, reason: 'housing_full' };
+    }
+
+    return { ok: true, population: this._populationSystem.current };
+  }
+
   assignWorker(buildingIndex) {
     const building = this.buildings[buildingIndex];
     if (!building || building.status !== 'active') return false;

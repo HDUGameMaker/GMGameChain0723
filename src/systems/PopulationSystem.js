@@ -116,6 +116,15 @@ export class PopulationSystem {
     return this.getHousingCapacity();
   }
 
+  addPopulation(amount) {
+    if (!Number.isInteger(amount) || amount <= 0) return false;
+    if (this.current + amount > this.getHousingCapacity()) return false;
+    this.current += amount;
+    this._updateStore();
+    eventBus.emit('populationChanged', { current: this.current, direction: 'added', gained: amount });
+    return true;
+  }
+
   /**
    * 获取已分配工人总数
    */
