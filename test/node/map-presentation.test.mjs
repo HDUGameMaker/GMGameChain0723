@@ -4,7 +4,10 @@ import {
   createArmySelectionModel,
   createBuildingHoverDetails,
   createMapTokenModels,
+  getMountainRubbleSpriteModels,
   getMountainRockSpriteModel,
+  getResourceNodeGroundStyle,
+  getTerrainPropDepth,
   getTerrainFillColor,
   getTopDownShoreEdges
 } from '../../src/rendering/MapPresentation.js';
@@ -83,7 +86,7 @@ test('selected army presentation exposes its name, unit count and remaining rout
   });
 });
 
-test('mountain terrain keeps a readable square foundation without contour bands', () => {
+test('mountains and exposed mining rock share the yellow dirt foundation used beneath forest art', () => {
   const map = {
     groundTypes: {
       G: { colorHint: '#7BA05B' },
@@ -105,20 +108,20 @@ test('mountain terrain keeps a readable square foundation without contour bands'
   const foothill = getTerrainFillColor(map, 1, 1);
   const edge = getTerrainFillColor(map, 2, 2);
   const center = getTerrainFillColor(map, 4, 4);
-  assert.notEqual(foothill, center);
+  assert.equal(foothill, 0xc9ad7c);
   assert.equal(edge, center);
-  for (const color of [foothill, edge, center]) assert.ok(color > 0x202020, `terrain color ${color.toString(16)} is too dark`);
+  assert.equal(center, 0xc9ad7c);
 });
 
-test('exposed mining rock uses a warm reference-style foundation instead of white', () => {
+test('exposed mining rock uses the same yellow dirt foundation instead of gray', () => {
   const map = {
     groundTypes: { R: { colorHint: '#dedede' } },
     grid: ['R']
   };
-  assert.equal(getTerrainFillColor(map, 0, 0), 0x756b5e);
+  assert.equal(getTerrainFillColor(map, 0, 0), 0xc9ad7c);
 });
 
-test('mountains use stable reference-style sprites contained inside their grid cells', () => {
+test('mountain pillars overlap cell edges so adjacent rocks read as one stacked mass', () => {
   const map = {
     grid: ['GBMG', 'GMMG', 'GGGG'],
     groundTypes: {
@@ -135,11 +138,13 @@ test('mountains use stable reference-style sprites contained inside their grid c
 
   for (const rock of [foothill, ridge]) {
     assert.match(rock.texture, /^assets\/map\/mountains\/mountain_0[1-6]\.png$/);
-    assert.ok(rock.x >= 0 && rock.y >= 0);
-    assert.ok(rock.x + rock.width <= 60);
-    assert.ok(rock.y + rock.height <= 60);
+    assert.ok(rock.x < 0, 'pillar canvas should extend left of its cell');
+    assert.ok(rock.x + rock.width > 60, 'pillar canvas should extend right of its cell');
+    assert.ok(rock.y < 0, 'pillar should rise above its dirt cell');
     assert.equal(rock.anchor, 'bottom');
   }
+  assert.ok(foothill.width >= 72, 'foothill rocks must cover at least 1.2 cells to close wide dirt seams');
+  assert.ok(ridge.width >= 84, 'ridge rocks must cover at least 1.4 cells to read as a stacked mass');
   assert.ok(ridge.height > foothill.height, 'ridge pillars should read taller than foothill rocks');
 
   const textures = new Set();
@@ -150,6 +155,46 @@ test('mountains use stable reference-style sprites contained inside their grid c
     }
   }
   assert.equal(textures.size, 6, 'a mountain group should use all six visual variants');
+});
+
+test('adjacent mountain cells receive stable small-rubble fillers across their shared gaps', () => {
+  const map = {
+    grid: [
+      'GGGG',
+      'GMMG',
+      'GMBG',
+      'GGGG'
+    ]
+  };
+
+  assert.deepEqual(getMountainRubbleSpriteModels(map, 0, 0, 60), []);
+  const fillers = getMountainRubbleSpriteModels(map, 1, 1, 60);
+  assert.deepEqual(fillers, getMountainRubbleSpriteModels(map, 1, 1, 60));
+  assert.deepEqual(new Set(fillers.map(filler => filler.edge)), new Set(['right', 'bottom']));
+  for (const filler of fillers) {
+    assert.match(filler.texture, /^assets\/map\/mountains\/stone_cluster_0[1-3]\.png$/);
+    assert.ok(filler.width > 0 && filler.height > 0);
+    if (filler.edge === 'right') {
+      assert.ok(filler.x < 60 && filler.x + filler.width > 60, 'right filler must bridge the shared edge');
+    } else {
+      assert.ok(filler.y < 60 && filler.y + filler.height > 60, 'bottom filler must bridge the shared edge');
+    }
+  }
+});
+
+test('mineable stone nodes sit on opaque yellow dirt rather than a gray resource badge', () => {
+  assert.deepEqual(
+    getResourceNodeGroundStyle({ type: 'stone', developedByBuildingId: null }, { color: '#8d929d' }, 'visible'),
+    { color: 0xc9ad7c, fillAlpha: 0.96, strokeColor: 0x6b542b, strokeAlpha: 0.9, shape: 'dirt' }
+  );
+});
+
+test('terrain props nearer the camera sort above mountain props behind them', () => {
+  const mountainBehind = getTerrainPropDepth(12, 'mountain');
+  const treeInFront = getTerrainPropDepth(13, 'terrain');
+  assert.ok(treeInFront > mountainBehind, 'a tree on the lower row must cover the mountain behind it');
+  assert.ok(getTerrainPropDepth(12, 'terrain') > mountainBehind, 'a same-row forest prop must not be hidden by mountain overflow');
+  assert.ok(mountainBehind > getTerrainPropDepth(12, 'rubble'), 'large rocks must cover their own rubble fillers');
 });
 
 test('top-down shoreline edges follow adjacent land without using side-view terrain sections', () => {

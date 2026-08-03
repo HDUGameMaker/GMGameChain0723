@@ -10,7 +10,7 @@ import { gridToScreenTopLeft, screenToGrid } from '../utils/gridUtils.js';
 import { AnimatedSpriteHelper } from './AnimatedSpriteHelper.js';
 import { classifyArmyInteractionTarget } from '../domain/ArmyInteractionTarget.js';
 import { getStrategicFogStyle } from './FogPresentation.js';
-import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels, getMountainRockSpriteModel, getTerrainFillColor, getTopDownShoreEdges, getVisibleTileBounds, MOUNTAIN_ROCK_TEXTURES } from './MapPresentation.js';
+import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels, getMountainRockSpriteModel, getMountainRubbleSpriteModels, getResourceNodeGroundStyle, getTerrainFillColor, getTerrainPropDepth, getTopDownShoreEdges, getVisibleTileBounds, MOUNTAIN_ROCK_TEXTURES, MOUNTAIN_RUBBLE_TEXTURES } from './MapPresentation.js';
 
 export class MapRenderer {
   constructor(app, buildingSystem, torchSystem, roadSystem, combatSystem, territorySystem) {
@@ -46,6 +46,7 @@ export class MapRenderer {
     // 容器层级（三层分离，参考 planner-config.html 的固定视口方案）
     // 1. 固定地形层（永远在 0,0，地形以视口本地坐标绘制 → 始终铺满屏幕）
     this.terrainContainer = new PIXI.Container();
+    this.terrainContainer.sortableChildren = true;
     this.gameView.addChild(this.terrainContainer);
 
     // 2. 移动世界层（建筑/虚影，世界坐标，容器位移 = -cam）
@@ -226,6 +227,7 @@ export class MapRenderer {
       }
     }
     for (const path of MOUNTAIN_ROCK_TEXTURES) tasks.push(loadOne(path));
+    for (const path of MOUNTAIN_RUBBLE_TEXTURES) tasks.push(loadOne(path));
     for (const definition of Object.values(configRegistry.get('resourceNodes')?.types || {})) {
       if (definition.mapArt) tasks.push(loadOne(definition.mapArt));
     }
@@ -546,17 +548,24 @@ export class MapRenderer {
       const definition = luxury
         ? { ...(definitions[node.type] || {}), name: luxury.name, mapArt: luxury.icon, icon: '◆' }
         : (definitions[node.type] || {});
-      const colorText = String(definition.color || '#d8c787').replace('#', '');
-      const color = Number.parseInt(colorText, 16) || 0xd8c787;
       const container = new PIXI.Container();
       const x = node.gridX * ts;
       const y = node.gridY * ts;
       const bg = new PIXI.Graphics();
-      bg.circle(x + ts / 2, y + ts / 2, ts * 0.28);
       const memoryAlpha = fogState === 'remembered' ? 0.42 : 1;
-      bg.fill({ color, alpha: (node.developedByBuildingId ? 0.35 : 0.76) * memoryAlpha });
-      bg.circle(x + ts / 2, y + ts / 2, ts * 0.28);
-      bg.stroke({ color: 0xf6e7b0, alpha: 0.9, width: 2 });
+      const groundStyle = getResourceNodeGroundStyle(node, definition, fogState);
+      if (groundStyle.shape === 'dirt') {
+        bg.ellipse(x + ts / 2, y + ts * 0.6, ts * 0.42, ts * 0.28);
+      } else {
+        bg.circle(x + ts / 2, y + ts / 2, ts * 0.28);
+      }
+      bg.fill({ color: groundStyle.color, alpha: groundStyle.fillAlpha });
+      if (groundStyle.shape === 'dirt') {
+        bg.ellipse(x + ts / 2, y + ts * 0.6, ts * 0.42, ts * 0.28);
+      } else {
+        bg.circle(x + ts / 2, y + ts / 2, ts * 0.28);
+      }
+      bg.stroke({ color: groundStyle.strokeColor, alpha: groundStyle.strokeAlpha, width: 2 });
       container.addChild(bg);
       const texture = definition.mapArt ? this._getTexture(definition.mapArt) : null;
       if (texture?.width > 0 && texture?.height > 0) {
@@ -1439,6 +1448,9 @@ export class MapRenderer {
         sprite.y = row * ts - this.camY;
         sprite.width = ts;
         sprite.height = ts;
+        sprite.zIndex = getTerrainPropDepth(row, 'terrain');
+        sprite.terrainCol = col;
+        sprite.terrainRow = row;
         if (gt.textureTint && /^#[0-9a-f]{6}$/i.test(gt.textureTint)) {
           sprite.tint = Number.parseInt(gt.textureTint.slice(1), 16);
         }
@@ -1449,6 +1461,7 @@ export class MapRenderer {
 
     // --- 2. 纯色底 + 网格线（Graphics，insert at index 0 = 最底层） ---
     const graphics = new PIXI.Graphics();
+    graphics.zIndex = -1000000;
 
     graphics.rect(-this.camX, -this.camY, mapW, mapH);
     graphics.fill({ color: 0x0a0a18, alpha: 1 });
@@ -1481,6 +1494,7 @@ export class MapRenderer {
 
     // 俯视岸线：只在水格内侧绘制细线，不再使用带土层横截面的方向贴图。
     const shoreline = new PIXI.Graphics();
+    shoreline.zIndex = 10;
     const shoreWidth = Math.max(2, Math.round(ts * 0.045));
     for (let row = startRow; row <= endRow; row++) {
       for (let col = startCol; col <= endCol; col++) {
@@ -1517,11 +1531,16 @@ export class MapRenderer {
   }
 
   _clearTerrainGraphics() {
-    if (this._mountainRockLayer) {
-      this.terrainContainer.removeChild(this._mountainRockLayer);
-      this._mountainRockLayer.destroy({ children: true });
-      this._mountainRockLayer = null;
+    for (const sprite of this._mountainRubbleSprites || []) {
+      this.terrainContainer.removeChild(sprite);
+      sprite.destroy();
     }
+    for (const sprite of this._mountainPillarSprites || []) {
+      this.terrainContainer.removeChild(sprite);
+      sprite.destroy();
+    }
+    this._mountainRubbleSprites = [];
+    this._mountainPillarSprites = [];
     if (this._shorelineGraphics) {
       this.terrainContainer.removeChild(this._shorelineGraphics);
       this._shorelineGraphics.destroy();
@@ -1536,7 +1555,27 @@ export class MapRenderer {
 
   _drawMountainRockLayer({ startCol, endCol, startRow, endRow }) {
     const ts = this.tileSize;
-    const layer = new PIXI.Container();
+    this._mountainRubbleSprites = [];
+    this._mountainPillarSprites = [];
+
+    for (let row = startRow; row <= endRow; row += 1) {
+      for (let col = startCol; col <= endCol; col += 1) {
+        for (const model of getMountainRubbleSpriteModels(this.mapConfig, col, row, ts)) {
+          const texture = this._getTexture(model.texture);
+          if (!texture || texture.width <= 0 || texture.height <= 0) continue;
+          const sprite = new PIXI.Sprite(texture);
+          sprite.x = col * ts - this.camX + model.x;
+          sprite.y = row * ts - this.camY + model.y;
+          sprite.width = model.width;
+          sprite.height = model.height;
+          sprite.zIndex = getTerrainPropDepth(row, 'rubble');
+          sprite.terrainCol = col;
+          sprite.terrainRow = row;
+          this.terrainContainer.addChild(sprite);
+          this._mountainRubbleSprites.push(sprite);
+        }
+      }
+    }
 
     for (let row = startRow; row <= endRow; row += 1) {
       for (let col = startCol; col <= endCol; col += 1) {
@@ -1549,12 +1588,13 @@ export class MapRenderer {
         sprite.y = row * ts - this.camY + model.y;
         sprite.width = model.width;
         sprite.height = model.height;
-        layer.addChild(sprite);
+        sprite.zIndex = getTerrainPropDepth(row, 'mountain');
+        sprite.terrainCol = col;
+        sprite.terrainRow = row;
+        this.terrainContainer.addChild(sprite);
+        this._mountainPillarSprites.push(sprite);
       }
     }
-
-    this.terrainContainer.addChild(layer);
-    this._mountainRockLayer = layer;
   }
 
   /**

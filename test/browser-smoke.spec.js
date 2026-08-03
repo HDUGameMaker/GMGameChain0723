@@ -57,7 +57,9 @@ test('new game opens economy panels without browser errors', async ({ page }) =>
     renderer.fogContainer.visible = false;
     const texturePaths = [...renderer._textureCache.keys()];
     return {
-      mountainSprites: renderer._mountainRockLayer?.children?.length || 0,
+      mountainSprites: renderer._mountainPillarSprites?.length || 0,
+      mountainRubbleSprites: renderer._mountainRubbleSprites?.length || 0,
+      terrainDepthSorted: renderer.terrainContainer.sortableChildren === true,
       mountainTexturesLoaded: texturePaths.filter(path => /^assets\/map\/mountains\/mountain_0[1-6]\.png$/.test(path)).length,
       legacyRockTexturesLoaded: ['assets/map/rock.png', 'assets/map/rock1.png', 'assets/map/stone.png', 'assets/map/stone1.png']
         .filter(path => renderer._textureCache.get(path)?.width > 0).length,
@@ -66,6 +68,8 @@ test('new game opens economy panels without browser errors', async ({ page }) =>
     };
   });
   expect(mountainPreview.mountainSprites).toBeGreaterThan(0);
+  expect(mountainPreview.mountainRubbleSprites).toBeGreaterThan(0);
+  expect(mountainPreview.terrainDepthSorted).toBe(true);
   expect(mountainPreview.mountainTexturesLoaded).toBe(6);
   expect(mountainPreview.legacyRockTexturesLoaded).toBe(4);
   expect(mountainPreview.stoneArtLoaded).toBe(true);

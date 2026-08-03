@@ -1,10 +1,13 @@
 const RESOURCE_NAMES = { wood: '木材', stone: '石料', food: '食物', gold: '黄金' };
 const STATUS_NAMES = { active: '运行中', constructing: '建造中', disabled: '停用', damaged: '受损' };
-const MOUNTAIN_BASE_COLORS = { B: 0x89847a, M: 0x625f5b };
-const EXPOSED_ROCK_BASE_COLOR = 0x756b5e;
+export const ROCKY_DIRT_BASE_COLOR = 0xc9ad7c;
 export const MOUNTAIN_ROCK_TEXTURES = Array.from(
   { length: 6 },
   (_, index) => `assets/map/mountains/mountain_${String(index + 1).padStart(2, '0')}.png`
+);
+export const MOUNTAIN_RUBBLE_TEXTURES = Array.from(
+  { length: 3 },
+  (_, index) => `assets/map/mountains/stone_cluster_${String(index + 1).padStart(2, '0')}.png`
 );
 
 function coordinateHash(col, row, salt = 0) {
@@ -22,9 +25,34 @@ export function getTerrainFillColor(mapConfig, col, row) {
   const grid = mapConfig?.grid || [];
   const code = grid[row]?.[col];
   const groundType = mapConfig?.groundTypes?.[code];
-  if (code === 'R') return EXPOSED_ROCK_BASE_COLOR;
-  if (code !== 'M' && code !== 'B') return parseHexColor(groundType?.colorHint);
-  return parseHexColor(groundType?.colorHint, MOUNTAIN_BASE_COLORS[code]);
+  if (code === 'R' || code === 'M' || code === 'B') return ROCKY_DIRT_BASE_COLOR;
+  return parseHexColor(groundType?.colorHint);
+}
+
+export function getResourceNodeGroundStyle(node, definition = {}, fogState = 'visible') {
+  const memoryAlpha = fogState === 'remembered' ? 0.42 : 1;
+  if (node?.type === 'stone') {
+    return {
+      color: ROCKY_DIRT_BASE_COLOR,
+      fillAlpha: (node.developedByBuildingId ? 0.5 : 0.96) * memoryAlpha,
+      strokeColor: 0x6b542b,
+      strokeAlpha: 0.9 * memoryAlpha,
+      shape: 'dirt'
+    };
+  }
+  return {
+    color: parseHexColor(definition.color, 0xd8c787),
+    fillAlpha: (node?.developedByBuildingId ? 0.35 : 0.76) * memoryAlpha,
+    strokeColor: 0xf6e7b0,
+    strokeAlpha: 0.9 * memoryAlpha,
+    shape: 'badge'
+  };
+}
+
+export function getTerrainPropDepth(row, kind = 'terrain') {
+  const safeRow = Number.isFinite(row) ? Math.max(0, Math.trunc(row)) : 0;
+  const offset = kind === 'rubble' ? 20 : kind === 'mountain' ? 40 : 60;
+  return safeRow * 100 + offset;
 }
 
 export function getMountainRockSpriteModel(mapConfig, col, row, tileSize = 60) {
@@ -32,15 +60,47 @@ export function getMountainRockSpriteModel(mapConfig, col, row, tileSize = 60) {
   if ((code !== 'M' && code !== 'B') || !Number.isFinite(tileSize) || tileSize <= 0) return null;
 
   const ridge = code === 'M';
-  const size = Math.max(8, Math.round(tileSize * (ridge ? 1 : 0.84)));
+  const size = Math.max(8, Math.round(tileSize * (ridge ? 1.48 : 1.26)));
   return {
     texture: MOUNTAIN_ROCK_TEXTURES[coordinateHash(col, row, 0) % MOUNTAIN_ROCK_TEXTURES.length],
     x: Math.round((tileSize - size) / 2),
-    y: tileSize - size,
+    y: Math.round(tileSize - size * 0.94),
     width: size,
     height: size,
     anchor: 'bottom'
   };
+}
+
+export function getMountainRubbleSpriteModels(mapConfig, col, row, tileSize = 60) {
+  const grid = mapConfig?.grid || [];
+  const code = grid[row]?.[col];
+  if ((code !== 'M' && code !== 'B') || !Number.isFinite(tileSize) || tileSize <= 0) return [];
+
+  const isMountain = (x, y) => grid[y]?.[x] === 'M' || grid[y]?.[x] === 'B';
+  const models = [];
+  if (isMountain(col + 1, row)) {
+    const size = Math.max(8, Math.round(tileSize * 0.62));
+    models.push({
+      edge: 'right',
+      texture: MOUNTAIN_RUBBLE_TEXTURES[coordinateHash(col, row, 17) % MOUNTAIN_RUBBLE_TEXTURES.length],
+      x: Math.round(tileSize - size / 2),
+      y: Math.round(tileSize - size * 0.62),
+      width: size,
+      height: size
+    });
+  }
+  if (isMountain(col, row + 1)) {
+    const size = Math.max(8, Math.round(tileSize * 0.68));
+    models.push({
+      edge: 'bottom',
+      texture: MOUNTAIN_RUBBLE_TEXTURES[coordinateHash(col, row, 29) % MOUNTAIN_RUBBLE_TEXTURES.length],
+      x: Math.round((tileSize - size) / 2),
+      y: Math.round(tileSize - size / 2),
+      width: size,
+      height: size
+    });
+  }
+  return models;
 }
 
 export function getTopDownShoreEdges(mapConfig, col, row) {
