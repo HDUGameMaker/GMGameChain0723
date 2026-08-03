@@ -1,6 +1,31 @@
 const RESOURCE_NAMES = { wood: '木材', stone: '石料', food: '食物', gold: '黄金' };
 const STATUS_NAMES = { active: '运行中', constructing: '建造中', disabled: '停用', damaged: '受损' };
 
+export function getVisibleTileBounds({
+  gridWidth,
+  gridHeight,
+  tileSize,
+  camX,
+  camY,
+  screenWidth,
+  screenHeight,
+  zoom,
+  overscanTiles = 1
+}) {
+  const values = [gridWidth, gridHeight, tileSize, camX, camY, screenWidth, screenHeight, zoom, overscanTiles];
+  if (!values.every(Number.isFinite) || gridWidth <= 0 || gridHeight <= 0 || tileSize <= 0 || zoom <= 0 || overscanTiles < 0) {
+    throw new TypeError('invalid_viewport_projection');
+  }
+  const viewWidth = screenWidth / zoom;
+  const viewHeight = screenHeight / zoom;
+  return {
+    startCol: Math.max(0, Math.floor(camX / tileSize) - overscanTiles),
+    endCol: Math.min(gridWidth - 1, Math.ceil((camX + viewWidth) / tileSize) + overscanTiles),
+    startRow: Math.max(0, Math.floor(camY / tileSize) - overscanTiles),
+    endRow: Math.min(gridHeight - 1, Math.ceil((camY + viewHeight) / tileSize) + overscanTiles)
+  };
+}
+
 function describeFunction(uniqueFunction = {}) {
   const labels = [];
   if (uniqueFunction.sciencePerWorker) labels.push(`每名工人 +${uniqueFunction.sciencePerWorker} 科技值`);

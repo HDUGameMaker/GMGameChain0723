@@ -8,7 +8,7 @@ import { store } from '../core/Store.js';
 import { progressManager } from '../utils/ProgressManager.js';
 import { gridToScreenTopLeft, screenToGrid } from '../utils/gridUtils.js';
 import { AnimatedSpriteHelper } from './AnimatedSpriteHelper.js';
-import { createBuildingHoverDetails, createMapTokenModels } from './MapPresentation.js';
+import { createBuildingHoverDetails, createMapTokenModels, getVisibleTileBounds } from './MapPresentation.js';
 
 export class MapRenderer {
   constructor(app, buildingSystem, torchSystem, roadSystem, combatSystem, territorySystem) {
@@ -973,13 +973,17 @@ export class MapRenderer {
 
     const { gridWidth, gridHeight, tileSize, grid, groundTypes } = this.mapConfig;
     const ts = tileSize;
-    const viewW = this.screenW / this.zoom;
-    const viewH = this.screenH / this.zoom;
-
-    const startCol = Math.max(0, Math.floor(this.camX / ts));
-    const endCol = Math.min(gridWidth - 1, Math.ceil((this.camX + viewW) / ts));
-    const startRow = Math.max(0, Math.floor(this.camY / ts));
-    const endRow = Math.min(gridHeight - 1, Math.ceil((this.camY + viewH) / ts));
+    const { startCol, endCol, startRow, endRow } = getVisibleTileBounds({
+      gridWidth,
+      gridHeight,
+      tileSize,
+      camX: this.camX,
+      camY: this.camY,
+      screenWidth: this.screenW,
+      screenHeight: this.screenH,
+      zoom: this.zoom,
+      overscanTiles: 1
+    });
 
     const mapW = gridWidth * ts;
     const mapH = gridHeight * ts;

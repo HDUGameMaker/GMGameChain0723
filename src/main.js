@@ -36,6 +36,7 @@ import { CommerceSystem } from './systems/CommerceSystem.js';
 import { ArmySystem } from './systems/ArmySystem.js';
 import { WildSiteSystem } from './systems/WildSiteSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
+import { createNewWorldState } from './world/WorldMapState.js';
 import { HUD } from './ui/HUD.js';
 import { PopupManager } from './ui/PopupManager.js';
 import { InvasionUI } from './ui/InvasionUI.js';
@@ -63,7 +64,7 @@ class Game {
     this._started = false;
     this._resetting = false;
     this._gameOver = false;
-    this._worldState = { schemaVersion: 1, source: 'legacy_static', mapId: 'base_map_v1' };
+    this._worldState = null;
   }
 
   async boot() {
@@ -500,6 +501,7 @@ class Game {
   }
 
   initNewGame() {
+    this._worldState = createNewWorldState(configRegistry.get('map'));
     // 初始化资源为配置初始值
     this.systems.resource.initFromConfig();
 
