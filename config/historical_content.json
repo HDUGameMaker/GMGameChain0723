@@ -2705,7 +2705,8 @@
     {
       "id": "silk",
       "name": "丝绸",
-      "description": "首份丝绸提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份丝绸提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "building", "targetName": "市场与商栈", "useDescription": "作为高价值商货提高城邦交往与贸易议价能力。" },
       "groundType": "F",
       "developmentBuildingId": "trade_depot",
       "baseTradeValue": 24,
@@ -2718,7 +2719,8 @@
     {
       "id": "jade",
       "name": "玉石",
-      "description": "首份玉石提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份玉石提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "building", "targetName": "文化学院与纪念建筑", "useDescription": "用于礼制器物与公共纪念工程，提高人文值产出。" },
       "groundType": "R",
       "developmentBuildingId": "trade_depot",
       "baseTradeValue": 27,
@@ -2731,7 +2733,8 @@
     {
       "id": "tea",
       "name": "茶叶",
-      "description": "首份茶叶提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份茶叶提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "building", "targetName": "学院与书院", "useDescription": "供给学者与记录官，稳定提高科技值产出。" },
       "groundType": "G",
       "developmentBuildingId": "trade_depot",
       "baseTradeValue": 30,
@@ -2744,7 +2747,8 @@
     {
       "id": "spices",
       "name": "香料",
-      "description": "首份香料提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份香料提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "unit", "targetName": "远征军后勤", "useDescription": "改善军粮保存与口味，降低全体人口和远征后勤的食物压力。" },
       "groundType": "F",
       "developmentBuildingId": "luxury_workshop",
       "baseTradeValue": 33,
@@ -2757,7 +2761,8 @@
     {
       "id": "ivory",
       "name": "象牙",
-      "description": "首份象牙提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份象牙提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "unit", "targetName": "重骑兵与仪仗队", "useDescription": "用于高等级鞍具和军团仪仗，强化骑兵作战威慑。" },
       "groundType": "G",
       "developmentBuildingId": "trade_depot",
       "baseTradeValue": 36,
@@ -2770,7 +2775,8 @@
     {
       "id": "wine",
       "name": "葡萄酒",
-      "description": "首份葡萄酒提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份葡萄酒提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "building", "targetName": "酒馆与宴会厅", "useDescription": "用于公共宴饮和庆典，直接提高城市满意度。" },
       "groundType": "G",
       "developmentBuildingId": "trade_depot",
       "baseTradeValue": 39,
@@ -2783,7 +2789,8 @@
     {
       "id": "incense",
       "name": "熏香",
-      "description": "首份熏香提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份熏香提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "building", "targetName": "神庙与议政厅", "useDescription": "用于礼仪与公共议事，加快人文制度传播。" },
       "groundType": "D",
       "developmentBuildingId": "trade_depot",
       "baseTradeValue": 42,
@@ -2796,7 +2803,8 @@
     {
       "id": "gems",
       "name": "宝石",
-      "description": "首份宝石提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份宝石提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "building", "targetName": "金库与珠宝工坊", "useDescription": "加工为高价值制品，提高黄金产业产出。" },
       "groundType": "R",
       "developmentBuildingId": "trade_depot",
       "baseTradeValue": 45,
@@ -2809,7 +2817,8 @@
     {
       "id": "pearls",
       "name": "珍珠",
-      "description": "首份珍珠提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份珍珠提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "unit", "targetName": "舰队与海军军官", "useDescription": "用于海军奖赏与远洋贸易凭信，提高海上军团战力。" },
       "groundType": "S",
       "developmentBuildingId": "luxury_workshop",
       "baseTradeValue": 48,
@@ -2822,7 +2831,8 @@
     {
       "id": "amber",
       "name": "琥珀",
-      "description": "首份琥珀提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份琥珀提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "building", "targetName": "商会与远途商站", "useDescription": "作为跨区域硬通货，提高所有商路成交价值。" },
       "groundType": "S",
       "developmentBuildingId": "trade_depot",
       "baseTradeValue": 51,
@@ -2835,7 +2845,8 @@
     {
       "id": "fur",
       "name": "毛皮",
-      "description": "首份毛皮提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份毛皮提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "unit", "targetName": "寒区驻防军", "useDescription": "制作冬装与毡毯，降低军团和城市受到的恶劣天气影响。" },
       "groundType": "F",
       "developmentBuildingId": "trade_depot",
       "baseTradeValue": 54,
@@ -2848,7 +2859,8 @@
     {
       "id": "dyes",
       "name": "染料",
-      "description": "首份染料提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份染料提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "building", "targetName": "剧院与文化工坊", "useDescription": "用于旗帜、织物和公共艺术，提高文化胜利积累。" },
       "groundType": "F",
       "developmentBuildingId": "trade_depot",
       "baseTradeValue": 57,
@@ -2861,7 +2873,8 @@
     {
       "id": "cocoa",
       "name": "可可",
-      "description": "首份可可提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份可可提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "building", "targetName": "食品作坊与住宅区", "useDescription": "作为高热量消费品改善民生，促进人口增长。" },
       "groundType": "F",
       "developmentBuildingId": "trade_depot",
       "baseTradeValue": 60,
@@ -2874,7 +2887,8 @@
     {
       "id": "coffee",
       "name": "咖啡",
-      "description": "首份咖啡提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份咖啡提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "hero", "targetName": "学者型文臣", "useDescription": "供给学者和行政官，缩短研究项目完成时间。" },
       "groundType": "G",
       "developmentBuildingId": "luxury_workshop",
       "baseTradeValue": 63,
@@ -2887,7 +2901,8 @@
     {
       "id": "porcelain",
       "name": "瓷器",
-      "description": "首份瓷器提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份瓷器提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "hero", "targetName": "外交型文臣", "useDescription": "作为国礼赠予城邦使节，额外提高外交关系收益。" },
       "groundType": "D",
       "developmentBuildingId": "trade_depot",
       "baseTradeValue": 66,
@@ -2900,7 +2915,8 @@
     {
       "id": "perfume",
       "name": "香水",
-      "description": "首份香水提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份香水提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "hero", "targetName": "酒馆英雄招募", "useDescription": "提升酒馆声望和待客规格，使英雄候选刷新更频繁。" },
       "groundType": "G",
       "developmentBuildingId": "trade_depot",
       "baseTradeValue": 69,
@@ -2913,7 +2929,8 @@
     {
       "id": "silverware",
       "name": "银器",
-      "description": "首份银器提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份银器提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "hero", "targetName": "行政型文臣", "useDescription": "用于官署礼器和标准度量，提高行政效率。" },
       "groundType": "R",
       "developmentBuildingId": "trade_depot",
       "baseTradeValue": 72,
@@ -2926,7 +2943,8 @@
     {
       "id": "horses",
       "name": "良马",
-      "description": "首份良马提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份良马提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "unit", "targetName": "侦察骑兵与重骑兵", "useDescription": "提供优质坐骑，直接提高骑兵军团战略移动速度。" },
       "groundType": "G",
       "developmentBuildingId": "trade_depot",
       "baseTradeValue": 75,
@@ -2939,7 +2957,8 @@
     {
       "id": "salt",
       "name": "盐",
-      "description": "首份盐提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份盐提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "building", "targetName": "粮仓与腌制工坊", "useDescription": "用于食品保存，扩大粮食长期储备能力。" },
       "groundType": "R",
       "developmentBuildingId": "luxury_workshop",
       "baseTradeValue": 78,
@@ -2952,7 +2971,8 @@
     {
       "id": "cotton",
       "name": "棉花",
-      "description": "首份棉花提供帝国加成，重复份可在市场与城邦贸易。",
+    "description": "首份棉花提供帝国加成，重复份可在市场与城邦贸易。",
+    "application": { "targetType": "building", "targetName": "纺织工坊与住宅", "useDescription": "供应日常衣物和寝具，提高住宅人口承载能力。" },
       "groundType": "G",
       "developmentBuildingId": "trade_depot",
       "baseTradeValue": 81,
@@ -3262,6 +3282,7 @@
         "G",
         "D"
       ],
+      "requiredResourceNode": "food",
       "uniqueFunction": {
         "resourceId": "food",
         "amount": 3

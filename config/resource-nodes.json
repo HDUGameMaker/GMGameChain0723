@@ -6,5 +6,5 @@
     "gold": { "name": "黄金点", "resourceId": "gold", "allowedGrounds": ["M", "R", "D", "G"], "color": "#e2bd36", "icon": "◆", "mapArt": "assets/resource-nodes/gold.png" }
   },
   "commonNodeCountPerType": 320,
-  "macroRegionSize": 96
+  "macroRegionSize": 25
 }

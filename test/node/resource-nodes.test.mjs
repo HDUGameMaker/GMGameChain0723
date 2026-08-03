@@ -73,3 +73,48 @@ test('node claims reject mismatches and duplicate development', () => {
   assert.deepEqual(nodes.claimNode('gold_1', 'building_1', 'gold'), { ok: true });
   assert.deepEqual(nodes.claimNode('gold_1', 'building_2', 'gold'), { ok: false, reason: 'already_developed' });
 });
+
+test('all four gathering buildings place on and claim their matching resource nodes', () => {
+  eventBus.clear();
+  configRegistry._configs = {
+    map: {
+      gridWidth: 8,
+      gridHeight: 4,
+      grid: ['FFGGRRRR', 'FFGGRRRR', 'GGDDRRRR', 'GGDDRRRR'],
+      groundTypes: {
+        F: { name: '林地', buildable: true },
+        G: { name: '草地', buildable: true },
+        D: { name: '土地', buildable: true },
+        R: { name: '矿脉', buildable: 'restricted' }
+      }
+    },
+    buildings: [
+      { id: 'logging_camp', name: '伐木集散点', footprint: { width: 1, height: 1 }, allowedGrounds: ['F'], requiredResourceNode: 'wood', unlockConditions: [], buildCost: [], maxCount: null, maxWorkers: 3 },
+      { id: 'grain_farm', name: '粮食农场', footprint: { width: 1, height: 1 }, allowedGrounds: ['G', 'D'], requiredResourceNode: 'food', unlockConditions: [], buildCost: [], maxCount: null, maxWorkers: 3 },
+      { id: 'stope', name: '采石场', footprint: { width: 2, height: 2 }, allowedGrounds: ['R'], requiredResourceNode: 'stone', unlockConditions: [], buildCost: [], maxCount: null, maxWorkers: 3 },
+      { id: 'gold_mine', name: '金矿', footprint: { width: 1, height: 1 }, allowedGrounds: ['R'], requiredResourceNode: 'gold', unlockConditions: [], buildCost: [], maxCount: null, maxWorkers: 3 }
+    ],
+    historicalContent: { eras: [], civilizations: [] }
+  };
+  const nodes = makeNodeSystem([
+    { id: 'wood_1', type: 'wood', gridX: 0, gridY: 0, rarity: 'common', capacity: null },
+    { id: 'food_1', type: 'food', gridX: 2, gridY: 0, rarity: 'common', capacity: null },
+    { id: 'stone_1', type: 'stone', gridX: 4, gridY: 0, rarity: 'common', capacity: null },
+    { id: 'gold_1', type: 'gold', gridX: 7, gridY: 2, rarity: 'common', capacity: null }
+  ]);
+  const buildings = new BuildingSystem();
+  buildings.setResourceSystem({ consumeAll: () => true, setStorageMultiplier() {} });
+  buildings.setResourceNodeSystem(nodes);
+  buildings.init();
+
+  for (const [buildingId, gridX, gridY, nodeId] of [
+    ['logging_camp', 0, 0, 'wood_1'],
+    ['grain_farm', 2, 0, 'food_1'],
+    ['stope', 4, 0, 'stone_1'],
+    ['gold_mine', 7, 2, 'gold_1']
+  ]) {
+    assert.equal(buildings.canPlaceAt(gridX, gridY, buildingId).valid, true, buildingId);
+    assert.equal(buildings.placeBuilding(gridX, gridY, buildingId), true, buildingId);
+    assert.ok(nodes.getNode(nodeId).developedByBuildingId, `${nodeId} claimed`);
+  }
+});

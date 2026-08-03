@@ -76,16 +76,21 @@ function buildResourceNodes(map, config, seed) {
   const compatible = (type, x, y) => {
     const ground = map.grid[y][x];
     if (type === 'wood') return ground === 'F';
-    if (type === 'stone') return ground === 'R'
-      && map.grid[y]?.[x + 1] === 'R'
-      && map.grid[y + 1]?.[x] === 'R'
-      && map.grid[y + 1]?.[x + 1] === 'R';
-    if (type === 'gold') return ground === 'R' || ground === 'M';
-    if (type === 'food') return ground === 'G' || ground === 'D' || ground === 'F';
+    if (type === 'stone') {
+      for (let top = y - 1; top <= y; top += 1) for (let left = x - 1; left <= x; left += 1) {
+        if (left < 0 || top < 0 || left + 1 >= map.gridWidth || top + 1 >= map.gridHeight) continue;
+        if (map.grid[top][left] === 'R' && map.grid[top][left + 1] === 'R'
+          && map.grid[top + 1][left] === 'R' && map.grid[top + 1][left + 1] === 'R') return true;
+      }
+      return false;
+    }
+    if (type === 'gold') return ground === 'R';
+    if (type === 'food') return ground === 'G' || ground === 'D';
     return (config.types[type]?.allowedGrounds || []).includes(ground);
   };
-  const nodes = [];
-  for (const type of Object.keys(config.types || {})) {
+  const types = Object.keys(config.types || {});
+  const candidatesByType = new Map();
+  for (const type of types) {
     const buckets = new Map();
     for (let y = 1; y < map.gridHeight - 1; y += 1) {
       for (let x = 1; x < map.gridWidth - 1; x += 1) {
@@ -97,31 +102,47 @@ function buildResourceNodes(map, config, seed) {
       }
     }
     for (const list of buckets.values()) list.sort((left, right) => left.score - right.score || left.y - right.y || left.x - right.x);
-    const bucketKeys = [...buckets.keys()].sort();
-    const quota = Math.floor(targetPerType / Math.max(1, bucketKeys.length));
-    const selected = [];
-    const trySelect = candidate => {
-      const key = `${candidate.x}:${candidate.y}`;
-      if (used.has(key)) return false;
-      used.add(key);
-      selected.push(candidate);
-      return true;
-    };
-    for (const key of bucketKeys) {
-      let added = 0;
+    candidatesByType.set(type, buckets);
+  }
+
+  const selectedByType = Object.fromEntries(types.map(type => [type, []]));
+  const trySelect = (type, candidate) => {
+    const key = `${candidate.x}:${candidate.y}`;
+    if (used.has(key)) return false;
+    used.add(key);
+    selectedByType[type].push(candidate);
+    return true;
+  };
+
+  // Coverage pass first: every resource type claims one point in every compatible
+  // 25x25 micro-region before any type may spend its remaining quota. This prevents
+  // stone nodes from consuming all of a small ore patch before gold is placed.
+  for (const type of types) {
+    const buckets = candidatesByType.get(type);
+    for (const key of [...buckets.keys()].sort()) {
       for (const candidate of buckets.get(key)) {
-        if (added >= quota || selected.length >= targetPerType) break;
-        if (trySelect(candidate)) added += 1;
+        if (trySelect(type, candidate)) break;
       }
     }
-    const remainder = [...buckets.values()].flat().sort((left, right) => left.score - right.score || left.y - right.y || left.x - right.x);
+  }
+
+  // Density pass: fill the global 320-per-type budget after access is guaranteed.
+  for (const type of types) {
+    const buckets = candidatesByType.get(type);
+    const selected = selectedByType[type];
+    const remainder = [...buckets.values()].flat()
+      .sort((left, right) => left.score - right.score || left.y - right.y || left.x - right.x);
     for (const candidate of remainder) {
       if (selected.length >= targetPerType) break;
-      trySelect(candidate);
+      trySelect(type, candidate);
     }
     if (selected.length !== targetPerType) throw new RangeError(`insufficient_${type}_resource_nodes`);
-    selected.sort((left, right) => left.y - right.y || left.x - right.x);
-    selected.forEach((candidate, index) => nodes.push({
+  }
+
+  const nodes = [];
+  for (const type of types) {
+    selectedByType[type].sort((left, right) => left.y - right.y || left.x - right.x);
+    selectedByType[type].forEach((candidate, index) => nodes.push({
       id: `${type}_node_${String(index + 1).padStart(3, '0')}`,
       type,
       gridX: candidate.x,

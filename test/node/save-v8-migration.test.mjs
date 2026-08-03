@@ -164,6 +164,8 @@ test('already-v9 payloads gain overhaul defaults without mutating the input', ()
   assert.deepEqual(source, before);
   assert.deepEqual(migrated, {
     ...source,
+    tech: { researched: [] },
+    culture: { researched: [] },
     buildings: [],
     resourceNodes: { nodes: [] },
     fogOfWar: { width: 384, height: 384, exploredRle: [384 * 384] }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels } from '../../src/rendering/MapPresentation.js';
+import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels, getTerrainFillColor, getTopDownShoreEdges } from '../../src/rendering/MapPresentation.js';
 
 test('building hover details expose status, jobs, output, aura and upgrade information', () => {
   const details = createBuildingHoverDetails(
@@ -74,4 +74,38 @@ test('selected army presentation exposes its name, unit count and remaining rout
     gridY: 3,
     route: [{ x: 3, y: 3 }, { x: 4, y: 3 }]
   });
+});
+
+test('mountain terrain uses readable contour bands instead of pure black tiles', () => {
+  const map = {
+    groundTypes: {
+      G: { colorHint: '#7BA05B' },
+      B: { colorHint: '#89847a' },
+      M: { colorHint: '#5e6268' }
+    },
+    grid: [
+      'GGGGGGGGG',
+      'GBBBBBBBG',
+      'GBMMMMMBG',
+      'GBMMMMMBG',
+      'GBMMMMMBG',
+      'GBMMMMMBG',
+      'GBMMMMMBG',
+      'GBBBBBBBG',
+      'GGGGGGGGG'
+    ]
+  };
+  const foothill = getTerrainFillColor(map, 1, 1);
+  const slope = getTerrainFillColor(map, 2, 2);
+  const ridge = getTerrainFillColor(map, 4, 4);
+  assert.notEqual(foothill, slope);
+  assert.notEqual(slope, ridge);
+  for (const color of [foothill, slope, ridge]) assert.ok(color > 0x202020, `terrain color ${color.toString(16)} is too dark`);
+});
+
+test('top-down shoreline edges follow adjacent land without using side-view terrain sections', () => {
+  const map = { grid: ['GGG', 'GSG', 'WWW'] };
+  assert.deepEqual(getTopDownShoreEdges(map, 1, 1), ['top', 'right', 'left']);
+  assert.deepEqual(getTopDownShoreEdges(map, 1, 2), []);
+  assert.deepEqual(getTopDownShoreEdges(map, 0, 0), []);
 });

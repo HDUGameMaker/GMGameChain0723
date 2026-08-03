@@ -10,7 +10,7 @@ import { gridToScreenTopLeft, screenToGrid } from '../utils/gridUtils.js';
 import { AnimatedSpriteHelper } from './AnimatedSpriteHelper.js';
 import { classifyArmyInteractionTarget } from '../domain/ArmyInteractionTarget.js';
 import { getStrategicFogStyle } from './FogPresentation.js';
-import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels, getVisibleTileBounds } from './MapPresentation.js';
+import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels, getTerrainFillColor, getTopDownShoreEdges, getVisibleTileBounds } from './MapPresentation.js';
 
 export class MapRenderer {
   constructor(app, buildingSystem, torchSystem, roadSystem, combatSystem, territorySystem) {
@@ -1420,6 +1420,9 @@ export class MapRenderer {
         sprite.y = row * ts - this.camY;
         sprite.width = ts;
         sprite.height = ts;
+        if (gt.textureTint && /^#[0-9a-f]{6}$/i.test(gt.textureTint)) {
+          sprite.tint = Number.parseInt(gt.textureTint.slice(1), 16);
+        }
         this.terrainContainer.addChild(sprite);
         this._terrainSprites.push(sprite);
       }
@@ -1434,8 +1437,7 @@ export class MapRenderer {
     for (let row = startRow; row <= endRow; row++) {
       for (let col = startCol; col <= endCol; col++) {
         const char = grid[row][col];
-        const groundType = groundTypes[char];
-        const color = groundType ? parseInt(groundType.colorHint.replace('#', ''), 16) : 0x333333;
+        const color = getTerrainFillColor(this.mapConfig, col, row);
         const lx = col * ts - this.camX;
         const ly = row * ts - this.camY;
 
@@ -1456,6 +1458,27 @@ export class MapRenderer {
     this.terrainContainer.addChildAt(graphics, 0);
     this._terrainGraphics = graphics;
 
+    // 俯视岸线：只在水格内侧绘制细线，不再使用带土层横截面的方向贴图。
+    const shoreline = new PIXI.Graphics();
+    const shoreWidth = Math.max(2, Math.round(ts * 0.045));
+    for (let row = startRow; row <= endRow; row++) {
+      for (let col = startCol; col <= endCol; col++) {
+        const edges = getTopDownShoreEdges(this.mapConfig, col, row);
+        if (edges.length === 0) continue;
+        const lx = col * ts - this.camX;
+        const ly = row * ts - this.camY;
+        for (const edge of edges) {
+          if (edge === 'top') shoreline.rect(lx, ly, ts, shoreWidth);
+          else if (edge === 'right') shoreline.rect(lx + ts - shoreWidth, ly, shoreWidth, ts);
+          else if (edge === 'bottom') shoreline.rect(lx, ly + ts - shoreWidth, ts, shoreWidth);
+          else shoreline.rect(lx, ly, shoreWidth, ts);
+          shoreline.fill({ color: 0xd6c58f, alpha: 0.58 });
+        }
+      }
+    }
+    this.terrainContainer.addChild(shoreline);
+    this._shorelineGraphics = shoreline;
+
     // 调试地块标注
     if (this._terrainLabelLayer.visible) {
       this._drawTerrainLabels();
@@ -1473,6 +1496,11 @@ export class MapRenderer {
   }
 
   _clearTerrainGraphics() {
+    if (this._shorelineGraphics) {
+      this.terrainContainer.removeChild(this._shorelineGraphics);
+      this._shorelineGraphics.destroy();
+      this._shorelineGraphics = null;
+    }
     if (this._terrainGraphics) {
       this.terrainContainer.removeChild(this._terrainGraphics);
       this._terrainGraphics.destroy();

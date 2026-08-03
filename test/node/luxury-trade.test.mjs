@@ -57,3 +57,14 @@ test('luxury deposits, inventories and discoveries survive save restore', () => 
   assert.equal(restored.getDiscoveredDeposits()[0].id, 'deposit-1');
   assert.equal(restored.addLuxury('unknown_luxury', 1), false);
 });
+
+test('all twenty luxuries explain a concrete building, unit or hero application', () => {
+  assert.equal(historicalContent.luxuries.length, 20);
+  const allowedTargets = new Set(['building', 'unit', 'hero']);
+  for (const luxury of historicalContent.luxuries) {
+    assert.ok(allowedTargets.has(luxury.application?.targetType), `${luxury.id} target type`);
+    assert.ok(luxury.application?.targetName, `${luxury.id} target name`);
+    assert.ok(luxury.application?.useDescription, `${luxury.id} use description`);
+    assert.ok(Object.values(luxury.effects || {}).some(Number.isFinite), `${luxury.id} active effect`);
+  }
+});

@@ -897,6 +897,141 @@ function isWaterCode(code) {
   return code === 'W' || code === 'S';
 }
 
+const MICRO_REGION_SIZE = 25;
+
+function deterministicCellOrder(cells, seed, namespace) {
+  return [...cells].sort((left, right) => (
+    hashSeedParts([seed, namespace, left.x, left.y]) - hashSeedParts([seed, namespace, right.x, right.y])
+    || left.y - right.y
+    || left.x - right.x
+  ));
+}
+
+function cellsNearestTo(cells, targetX, targetY, seed, namespace) {
+  return [...cells].sort((left, right) => {
+    const leftDistance = Math.hypot(left.x - targetX, left.y - targetY);
+    const rightDistance = Math.hypot(right.x - targetX, right.y - targetY);
+    const leftJitter = hashSeedParts([seed, namespace, left.x, left.y]) / 0x1_0000_0000;
+    const rightJitter = hashSeedParts([seed, namespace, right.x, right.y]) / 0x1_0000_0000;
+    return (leftDistance + leftJitter * 2.5) - (rightDistance + rightJitter * 2.5)
+      || left.y - right.y
+      || left.x - right.x;
+  });
+}
+
+function paintMicroEllipse(rows, waterMask, center, radiusX, radiusY, terrain, bounds, predicate = () => true) {
+  for (let y = Math.max(bounds.startY, center.y - radiusY); y <= Math.min(bounds.endY - 1, center.y + radiusY); y += 1) {
+    for (let x = Math.max(bounds.startX, center.x - radiusX); x <= Math.min(bounds.endX - 1, center.x + radiusX); x += 1) {
+      const normalizedX = (x - center.x) / Math.max(1, radiusX);
+      const normalizedY = (y - center.y) / Math.max(1, radiusY);
+      if (normalizedX * normalizedX + normalizedY * normalizedY > 1) continue;
+      if (!waterMask[y][x] && predicate(rows[y][x], x, y)) rows[y][x] = terrain;
+    }
+  }
+}
+
+function hasLandRectangle(waterMask, center, radiusX, radiusY, bounds) {
+  if (center.x - radiusX < bounds.startX || center.x + radiusX >= bounds.endX
+    || center.y - radiusY < bounds.startY || center.y + radiusY >= bounds.endY) return false;
+  for (let y = center.y - radiusY; y <= center.y + radiusY; y += 1) {
+    for (let x = center.x - radiusX; x <= center.x + radiusX; x += 1) {
+      if (waterMask[y][x]) return false;
+    }
+  }
+  return true;
+}
+
+function scatterLandMicroBiomes(rows, seed, protectedArea = null) {
+  const height = rows.length;
+  const width = rows[0].length;
+  const original = rows.map(row => [...row]);
+  const waterMask = original.map(row => row.map(isWaterCode));
+  const result = original.map((row, y) => row.map((code, x) => {
+    if (waterMask[y][x]) return code;
+    return 'G';
+  }));
+  const isProtected = (x, y) => protectedArea
+    && Math.abs(x - protectedArea.gridX) <= protectedArea.radius
+    && Math.abs(y - protectedArea.gridY) <= protectedArea.radius;
+
+  for (let startY = 0; startY < height; startY += MICRO_REGION_SIZE) {
+    for (let startX = 0; startX < width; startX += MICRO_REGION_SIZE) {
+      const bounds = {
+        startX,
+        startY,
+        endX: Math.min(width, startX + MICRO_REGION_SIZE),
+        endY: Math.min(height, startY + MICRO_REGION_SIZE)
+      };
+      const landCells = [];
+      let mountainBias = 0;
+      for (let y = bounds.startY; y < bounds.endY; y += 1) {
+        for (let x = bounds.startX; x < bounds.endX; x += 1) {
+          if (waterMask[y][x]) continue;
+          landCells.push({ x, y });
+          if (original[y][x] === 'M' || original[y][x] === 'B') mountainBias += 1;
+        }
+      }
+      if (landCells.length === 0) continue;
+      const namespace = `${startX}:${startY}`;
+      const paintable = landCells.filter(cell => !isProtected(cell.x, cell.y));
+      const safeCells = paintable.length >= 8 ? paintable : landCells;
+      const regionWidth = bounds.endX - bounds.startX;
+      const regionHeight = bounds.endY - bounds.startY;
+      const anchor = (ratioX, ratioY) => ({
+        x: bounds.startX + (regionWidth - 1) * ratioX,
+        y: bounds.startY + (regionHeight - 1) * ratioY
+      });
+
+      const mountainRoll = hashSeedParts([seed, 'micro-mountain-sector', namespace]) / 0x1_0000_0000;
+      if (mountainBias >= 12 || mountainRoll < 0.24) {
+        const target = anchor(0.5, 0.5);
+        const centers = cellsNearestTo(safeCells, target.x, target.y, seed, `micro-mountain:${namespace}`);
+        const center = centers.find(cell => hasLandRectangle(waterMask, cell, 4, 3, bounds) && !isProtected(cell.x, cell.y));
+        if (center) {
+          paintMicroEllipse(result, waterMask, center, 4, 3, 'B', bounds, (_code, x, y) => !isProtected(x, y));
+          paintMicroEllipse(result, waterMask, center, 3, 2, 'M', bounds, (_code, x, y) => !isProtected(x, y));
+        }
+      }
+
+      const ordinaryGround = code => code !== 'M' && code !== 'B';
+      const soilTarget = anchor(0.73, 0.28);
+      const soilCenter = cellsNearestTo(safeCells, soilTarget.x, soilTarget.y, seed, `micro-soil:${namespace}`)
+        .find(cell => ordinaryGround(result[cell.y][cell.x]) && !isProtected(cell.x, cell.y));
+      if (soilCenter) paintMicroEllipse(result, waterMask, soilCenter, 3, 2, 'D', bounds, (code, x, y) => ordinaryGround(code) && !isProtected(x, y));
+
+      const forestTarget = anchor(0.4, 0.62);
+      const forestCenter = cellsNearestTo(safeCells, forestTarget.x, forestTarget.y, seed, `micro-forest:${namespace}`)
+        .find(cell => ordinaryGround(result[cell.y][cell.x]) && !isProtected(cell.x, cell.y));
+      if (forestCenter) paintMicroEllipse(result, waterMask, forestCenter, 3, 2, 'F', bounds, (code, x, y) => ordinaryGround(code) && !isProtected(x, y));
+
+      const forestCount = () => landCells.filter(cell => result[cell.y][cell.x] === 'F').length;
+      for (const cell of deterministicCellOrder(safeCells, seed, `micro-forest-fill:${namespace}`)) {
+        if (forestCount() >= Math.min(4, landCells.length)) break;
+        if (ordinaryGround(result[cell.y][cell.x]) && !isProtected(cell.x, cell.y)) result[cell.y][cell.x] = 'F';
+      }
+
+      const rockTarget = anchor(0.66, 0.62);
+      const rockCandidates = cellsNearestTo(safeCells, rockTarget.x, rockTarget.y, seed, `micro-rock:${namespace}`)
+        .filter(cell => ordinaryGround(result[cell.y][cell.x]) && result[cell.y][cell.x] !== 'F' && !isProtected(cell.x, cell.y));
+      const rockAnchor = rockCandidates.find(cell => (
+        cell.x + 1 < bounds.endX && cell.y + 1 < bounds.endY
+        && !waterMask[cell.y][cell.x + 1] && !waterMask[cell.y + 1][cell.x] && !waterMask[cell.y + 1][cell.x + 1]
+        && !isProtected(cell.x + 1, cell.y) && !isProtected(cell.x, cell.y + 1) && !isProtected(cell.x + 1, cell.y + 1)
+        && ordinaryGround(result[cell.y][cell.x + 1]) && ordinaryGround(result[cell.y + 1][cell.x]) && ordinaryGround(result[cell.y + 1][cell.x + 1])
+        && result[cell.y][cell.x + 1] !== 'F' && result[cell.y + 1][cell.x] !== 'F' && result[cell.y + 1][cell.x + 1] !== 'F'
+      ));
+      if (rockAnchor) {
+        for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) result[rockAnchor.y + dy][rockAnchor.x + dx] = 'R';
+      }
+      for (const cell of rockCandidates) {
+        if (landCells.filter(candidate => result[candidate.y][candidate.x] === 'R').length >= Math.min(4, landCells.length)) break;
+        if (ordinaryGround(result[cell.y][cell.x]) && result[cell.y][cell.x] !== 'F') result[cell.y][cell.x] = 'R';
+      }
+    }
+  }
+  return result;
+}
+
 function hasNeighbor(rows, x, y, predicate) {
   const height = rows.length;
   const width = rows[0].length;
@@ -1046,18 +1181,17 @@ function buildMacroRows(width, height, macroTemplate, seed, patches) {
     for (let x = 1; x < width - 1; x += 1) {
       if (isWaterCode(beforeCoast[y][x])) {
         if (hasNeighbor(beforeCoast, x, y, code => !isWaterCode(code))) rows[y][x] = 'S';
-      } else if (hasNeighbor(beforeCoast, x, y, isWaterCode) && (rows[y][x] === 'G' || rows[y][x] === 'D')) {
-        rows[y][x] = 'B';
       }
     }
   }
-  const patched = applyTerrainPatches(rows.map(row => row.join('')), patches.terrainPatches || []).map(row => [...row]);
   const spawn = patches.playerSpawn;
   for (let y = spawn.gridY - 5; y <= spawn.gridY + 5; y += 1) {
     for (let x = spawn.gridX - 5; x <= spawn.gridX + 5; x += 1) {
-      if (y >= 0 && x >= 0 && y < height && x < width) patched[y][x] = 'G';
+      if (y >= 0 && x >= 0 && y < height && x < width && !isWaterCode(rows[y][x])) rows[y][x] = 'G';
     }
   }
+  const microRows = scatterLandMicroBiomes(rows, seed, { ...spawn, radius: 5 });
+  const patched = applyTerrainPatches(microRows.map(row => row.join('')), patches.terrainPatches || []).map(row => [...row]);
   return patched.map(row => row.join(''));
 }
 
@@ -1073,9 +1207,17 @@ export function buildTemplateDrivenWorld({ width = 384, height = 384, macroTempl
     mapId: patches.mapId,
     source: patches.source,
     schemaVersion: 1,
-    generationVersion: 2,
+    generationVersion: patches.generatorVersion,
     generationChecksum: checksum,
-    generation: { templateId: macroTemplate.templateId, metrics: { waterRatio } },
+    generation: {
+      templateId: macroTemplate.templateId,
+      metrics: { waterRatio },
+      microDistribution: {
+        regionSize: MICRO_REGION_SIZE,
+        guaranteedTerrain: ['F', 'R'],
+        description: '陆地按25×25微区打散为小型森林、土壤、矿脉与等高线山体；宏观水系掩码保持不变。'
+      }
+    },
     gridWidth: width,
     gridHeight: height,
     tileSize: patches.tileSize,
