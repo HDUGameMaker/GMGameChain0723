@@ -1,0 +1,178 @@
+[
+  {
+    "slug": "aksum_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-04.png",
+    "output": "assets/buildings/historical-details/aksum_unique_building.png",
+    "box": {
+      "x": 0,
+      "y": 0,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "teotihuacan_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-04.png",
+    "output": "assets/buildings/historical-details/teotihuacan_unique_building.png",
+    "box": {
+      "x": 314,
+      "y": 0,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "maya_classic_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-04.png",
+    "output": "assets/buildings/historical-details/maya_classic_unique_building.png",
+    "box": {
+      "x": 627,
+      "y": 0,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "yamatai_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-04.png",
+    "output": "assets/buildings/historical-details/yamatai_unique_building.png",
+    "box": {
+      "x": 940,
+      "y": 0,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "tang_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-04.png",
+    "output": "assets/buildings/historical-details/tang_unique_building.png",
+    "box": {
+      "x": 0,
+      "y": 314,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "abbasid_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-04.png",
+    "output": "assets/buildings/historical-details/abbasid_unique_building.png",
+    "box": {
+      "x": 314,
+      "y": 314,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "byzantium_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-04.png",
+    "output": "assets/buildings/historical-details/byzantium_unique_building.png",
+    "box": {
+      "x": 627,
+      "y": 314,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "franks_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-04.png",
+    "output": "assets/buildings/historical-details/franks_unique_building.png",
+    "box": {
+      "x": 940,
+      "y": 314,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "anglo_saxon_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-04.png",
+    "output": "assets/buildings/historical-details/anglo_saxon_unique_building.png",
+    "box": {
+      "x": 0,
+      "y": 627,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "srivijaya_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-04.png",
+    "output": "assets/buildings/historical-details/srivijaya_unique_building.png",
+    "box": {
+      "x": 314,
+      "y": 627,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "ghana_empire_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-04.png",
+    "output": "assets/buildings/historical-details/ghana_empire_unique_building.png",
+    "box": {
+      "x": 627,
+      "y": 627,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "heian_japan_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-04.png",
+    "output": "assets/buildings/historical-details/heian_japan_unique_building.png",
+    "box": {
+      "x": 940,
+      "y": 627,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "chola_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-04.png",
+    "output": "assets/buildings/historical-details/chola_unique_building.png",
+    "box": {
+      "x": 0,
+      "y": 940,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "toltec_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-04.png",
+    "output": "assets/buildings/historical-details/toltec_unique_building.png",
+    "box": {
+      "x": 314,
+      "y": 940,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "ming_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-04.png",
+    "output": "assets/buildings/historical-details/ming_unique_building.png",
+    "box": {
+      "x": 627,
+      "y": 940,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "ottoman_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-04.png",
+    "output": "assets/buildings/historical-details/ottoman_unique_building.png",
+    "box": {
+      "x": 940,
+      "y": 940,
+      "width": 314,
+      "height": 314
+    }
+  }
+]

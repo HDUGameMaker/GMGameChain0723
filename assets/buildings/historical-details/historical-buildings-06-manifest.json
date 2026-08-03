@@ -1,0 +1,156 @@
+[
+  {
+    "slug": "mexico_industrial_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-06.png",
+    "output": "assets/buildings/historical-details/mexico_industrial_unique_building.png",
+    "box": {
+      "x": 0,
+      "y": 0,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "brazil_empire_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-06.png",
+    "output": "assets/buildings/historical-details/brazil_empire_unique_building.png",
+    "box": {
+      "x": 314,
+      "y": 0,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "china_modern_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-06.png",
+    "output": "assets/buildings/historical-details/china_modern_unique_building.png",
+    "box": {
+      "x": 627,
+      "y": 0,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "usa_modern_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-06.png",
+    "output": "assets/buildings/historical-details/usa_modern_unique_building.png",
+    "box": {
+      "x": 940,
+      "y": 0,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "russia_modern_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-06.png",
+    "output": "assets/buildings/historical-details/russia_modern_unique_building.png",
+    "box": {
+      "x": 0,
+      "y": 314,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "uk_modern_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-06.png",
+    "output": "assets/buildings/historical-details/uk_modern_unique_building.png",
+    "box": {
+      "x": 314,
+      "y": 314,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "france_modern_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-06.png",
+    "output": "assets/buildings/historical-details/france_modern_unique_building.png",
+    "box": {
+      "x": 627,
+      "y": 314,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "germany_modern_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-06.png",
+    "output": "assets/buildings/historical-details/germany_modern_unique_building.png",
+    "box": {
+      "x": 940,
+      "y": 314,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "india_modern_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-06.png",
+    "output": "assets/buildings/historical-details/india_modern_unique_building.png",
+    "box": {
+      "x": 0,
+      "y": 627,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "japan_modern_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-06.png",
+    "output": "assets/buildings/historical-details/japan_modern_unique_building.png",
+    "box": {
+      "x": 314,
+      "y": 627,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "korea_modern_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-06.png",
+    "output": "assets/buildings/historical-details/korea_modern_unique_building.png",
+    "box": {
+      "x": 627,
+      "y": 627,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "brazil_modern_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-06.png",
+    "output": "assets/buildings/historical-details/brazil_modern_unique_building.png",
+    "box": {
+      "x": 940,
+      "y": 627,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "nigeria_modern_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-06.png",
+    "output": "assets/buildings/historical-details/nigeria_modern_unique_building.png",
+    "box": {
+      "x": 0,
+      "y": 940,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "indonesia_modern_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-06.png",
+    "output": "assets/buildings/historical-details/indonesia_modern_unique_building.png",
+    "box": {
+      "x": 314,
+      "y": 940,
+      "width": 313,
+      "height": 314
+    }
+  }
+]

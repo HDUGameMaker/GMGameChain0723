@@ -1,0 +1,178 @@
+[
+  {
+    "slug": "luxury_workshop",
+    "source": "assets/source-boards/historical/historical-buildings-02.png",
+    "output": "assets/buildings/historical-details/luxury_workshop.png",
+    "box": {
+      "x": 0,
+      "y": 0,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "embassy",
+    "source": "assets/source-boards/historical/historical-buildings-02.png",
+    "output": "assets/buildings/historical-details/embassy.png",
+    "box": {
+      "x": 314,
+      "y": 0,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "courthouse",
+    "source": "assets/source-boards/historical/historical-buildings-02.png",
+    "output": "assets/buildings/historical-details/courthouse.png",
+    "box": {
+      "x": 627,
+      "y": 0,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "barracks_hall",
+    "source": "assets/source-boards/historical/historical-buildings-02.png",
+    "output": "assets/buildings/historical-details/barracks_hall.png",
+    "box": {
+      "x": 940,
+      "y": 0,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "archery_range",
+    "source": "assets/source-boards/historical/historical-buildings-02.png",
+    "output": "assets/buildings/historical-details/archery_range.png",
+    "box": {
+      "x": 0,
+      "y": 314,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "stable",
+    "source": "assets/source-boards/historical/historical-buildings-02.png",
+    "output": "assets/buildings/historical-details/stable.png",
+    "box": {
+      "x": 314,
+      "y": 314,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "siege_workshop",
+    "source": "assets/source-boards/historical/historical-buildings-02.png",
+    "output": "assets/buildings/historical-details/siege_workshop.png",
+    "box": {
+      "x": 627,
+      "y": 314,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "war_academy",
+    "source": "assets/source-boards/historical/historical-buildings-02.png",
+    "output": "assets/buildings/historical-details/war_academy.png",
+    "box": {
+      "x": 940,
+      "y": 314,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "castle",
+    "source": "assets/source-boards/historical/historical-buildings-02.png",
+    "output": "assets/buildings/historical-details/castle.png",
+    "box": {
+      "x": 0,
+      "y": 627,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "city_wall",
+    "source": "assets/source-boards/historical/historical-buildings-02.png",
+    "output": "assets/buildings/historical-details/city_wall.png",
+    "box": {
+      "x": 314,
+      "y": 627,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "watch_tower",
+    "source": "assets/source-boards/historical/historical-buildings-02.png",
+    "output": "assets/buildings/historical-details/watch_tower.png",
+    "box": {
+      "x": 627,
+      "y": 627,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "harbor",
+    "source": "assets/source-boards/historical/historical-buildings-02.png",
+    "output": "assets/buildings/historical-details/harbor.png",
+    "box": {
+      "x": 940,
+      "y": 627,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "grand_shipyard",
+    "source": "assets/source-boards/historical/historical-buildings-02.png",
+    "output": "assets/buildings/historical-details/grand_shipyard.png",
+    "box": {
+      "x": 0,
+      "y": 940,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "lighthouse",
+    "source": "assets/source-boards/historical/historical-buildings-02.png",
+    "output": "assets/buildings/historical-details/lighthouse.png",
+    "box": {
+      "x": 314,
+      "y": 940,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "engineers_guild",
+    "source": "assets/source-boards/historical/historical-buildings-02.png",
+    "output": "assets/buildings/historical-details/engineers_guild.png",
+    "box": {
+      "x": 627,
+      "y": 940,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "blacksmith",
+    "source": "assets/source-boards/historical/historical-buildings-02.png",
+    "output": "assets/buildings/historical-details/blacksmith.png",
+    "box": {
+      "x": 940,
+      "y": 940,
+      "width": 314,
+      "height": 314
+    }
+  }
+]

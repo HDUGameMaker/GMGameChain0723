@@ -1,0 +1,178 @@
+[
+  {
+    "slug": "spain_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-05.png",
+    "output": "assets/buildings/historical-details/spain_unique_building.png",
+    "box": {
+      "x": 0,
+      "y": 0,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "portugal_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-05.png",
+    "output": "assets/buildings/historical-details/portugal_unique_building.png",
+    "box": {
+      "x": 314,
+      "y": 0,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "england_exploration_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-05.png",
+    "output": "assets/buildings/historical-details/england_exploration_unique_building.png",
+    "box": {
+      "x": 627,
+      "y": 0,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "dutch_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-05.png",
+    "output": "assets/buildings/historical-details/dutch_unique_building.png",
+    "box": {
+      "x": 940,
+      "y": 0,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "mughal_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-05.png",
+    "output": "assets/buildings/historical-details/mughal_unique_building.png",
+    "box": {
+      "x": 0,
+      "y": 314,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "aztec_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-05.png",
+    "output": "assets/buildings/historical-details/aztec_unique_building.png",
+    "box": {
+      "x": 314,
+      "y": 314,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "songhai_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-05.png",
+    "output": "assets/buildings/historical-details/songhai_unique_building.png",
+    "box": {
+      "x": 627,
+      "y": 314,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "sengoku_japan_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-05.png",
+    "output": "assets/buildings/historical-details/sengoku_japan_unique_building.png",
+    "box": {
+      "x": 940,
+      "y": 314,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "qing_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-05.png",
+    "output": "assets/buildings/historical-details/qing_unique_building.png",
+    "box": {
+      "x": 0,
+      "y": 627,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "british_empire_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-05.png",
+    "output": "assets/buildings/historical-details/british_empire_unique_building.png",
+    "box": {
+      "x": 314,
+      "y": 627,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "french_empire_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-05.png",
+    "output": "assets/buildings/historical-details/french_empire_unique_building.png",
+    "box": {
+      "x": 627,
+      "y": 627,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "russian_empire_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-05.png",
+    "output": "assets/buildings/historical-details/russian_empire_unique_building.png",
+    "box": {
+      "x": 940,
+      "y": 627,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "prussia_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-05.png",
+    "output": "assets/buildings/historical-details/prussia_unique_building.png",
+    "box": {
+      "x": 0,
+      "y": 940,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "usa_industrial_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-05.png",
+    "output": "assets/buildings/historical-details/usa_industrial_unique_building.png",
+    "box": {
+      "x": 314,
+      "y": 940,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "meiji_japan_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-05.png",
+    "output": "assets/buildings/historical-details/meiji_japan_unique_building.png",
+    "box": {
+      "x": 627,
+      "y": 940,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "ottoman_reform_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-05.png",
+    "output": "assets/buildings/historical-details/ottoman_reform_unique_building.png",
+    "box": {
+      "x": 940,
+      "y": 940,
+      "width": 314,
+      "height": 314
+    }
+  }
+]

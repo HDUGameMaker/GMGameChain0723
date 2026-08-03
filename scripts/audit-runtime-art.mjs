@@ -51,11 +51,12 @@ function inspectAsset(relativePath) {
   };
 }
 
-function buildRecord({ contentType, contentId, configPath, resolvedPath, runtimeSurface, minSize }) {
+function buildRecord({ contentType, contentId, configPath, resolvedPath, runtimeSurface, minSize, allowedExtensions = null }) {
   const inspected = inspectAsset(resolvedPath);
   let status = 'ok';
   if (!inspected.exists) status = 'missing';
   else if (!inspected.decodes) status = 'corrupt';
+  else if (allowedExtensions && !allowedExtensions.includes(extname(resolvedPath).toLowerCase())) status = 'fallback';
   else if (extname(resolvedPath).toLowerCase() !== '.svg' && Math.min(inspected.width, inspected.height) < minSize) status = 'too-small';
   return { contentType, contentId, configPath, resolvedPath, ...inspected, runtimeSurface, status };
 }
@@ -76,16 +77,18 @@ export async function auditRuntimeArt() {
   const records = [
     ...buildings.map(({ record, configPath }) => buildRecord({
       contentType: 'building', contentId: record.id, configPath,
-      resolvedPath: record.imageDetail || '', runtimeSurface: 'building-detail', minSize: 256
+      resolvedPath: record.imageDetail || '', runtimeSurface: 'building-detail', minSize: 256,
+      allowedExtensions: ['.png', '.webp']
     })),
     ...units.map(({ record, configPath }) => buildRecord({
       contentType: 'unit', contentId: record.id, configPath,
       resolvedPath: record.cardArt || `assets/unit-cards/${record.id}.png`,
-      runtimeSurface: 'training-card', minSize: 200
+      runtimeSurface: 'training-card', minSize: 200, allowedExtensions: ['.png', '.webp']
     })),
     ...Object.entries(resourceTypes).map(([id, definition]) => buildRecord({
       contentType: 'resource', contentId: id, configPath: 'config/resource-nodes.json',
-      resolvedPath: definition.mapArt || '', runtimeSurface: 'map-resource-node', minSize: 128
+      resolvedPath: definition.mapArt || '', runtimeSurface: 'map-resource-node', minSize: 128,
+      allowedExtensions: ['.png', '.webp']
     }))
   ];
 

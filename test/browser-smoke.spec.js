@@ -9,6 +9,12 @@ async function closeVisiblePopup(page) {
   }
 }
 
+async function expectFirstDetailImage(page) {
+  const image = page.locator('#popup-body img').first();
+  await expect(image).toBeVisible();
+  await expect.poll(() => image.evaluate(node => node.complete && node.naturalWidth >= 250)).toBe(true);
+}
+
 test('new game opens economy panels without browser errors', async ({ page }) => {
   const errors = [];
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
@@ -19,15 +25,61 @@ test('new game opens economy panels without browser errors', async ({ page }) =>
   await expect(page.locator('#popup-title')).toHaveText('战役目标', { timeout: 15000 });
   await closeVisiblePopup(page);
   await page.locator('#btn-pause').click();
+  await page.screenshot({ path: 'test-results/qa-fixed-map-and-fog.png' });
+
+  await page.evaluate(() => {
+    const game = window.__game;
+    const buildingIndex = game.systems.building.buildings.findIndex(building => building.buildingId === 'warehouse');
+    game.popupManager.open('building_detail', { buildingIndex });
+  });
+  await expect(page.locator('#popup-title')).toHaveText('建筑详情');
+  await expectFirstDetailImage(page);
+  await expect(page.locator('#popup-body')).toContainText('无需人口');
+  await page.screenshot({ path: 'test-results/qa-building-detail.png' });
+  await closeVisiblePopup(page);
+
+  await page.evaluate(() => {
+    const game = window.__game;
+    const farm = {
+      instanceId: 'browser_qa_farm', buildingId: 'farm', gridX: 270, gridY: 184,
+      status: 'active', buildProgress: 3, currentWorkers: 0,
+      cropId: 'grain', pendingCropId: null, pendingCropDay: null, cropLuxuryProgress: 0
+    };
+    game.systems.building.buildings.push(farm);
+    game.popupManager.open('building_detail', { buildingIndex: game.systems.building.buildings.length - 1 });
+  });
+  await expect(page.locator('#popup-body')).toContainText('农田作物');
+  await expect(page.locator('#popup-body')).toContainText('当前种植');
+  await expectFirstDetailImage(page);
+  await page.screenshot({ path: 'test-results/qa-farm-detail.png' });
+  await closeVisiblePopup(page);
+
   await page.getByRole('button', { name: /农业/ }).click();
   await expect(page.locator('#popup-title')).toHaveText('农业总览');
+  await expect(page.locator('#popup-body select')).toHaveCount(0);
+  await expect(page.locator('#popup-body')).toContainText('打开农田详情');
   await closeVisiblePopup(page);
+
+  await page.evaluate(() => {
+    const game = window.__game;
+    game.systems.building.buildings.push({
+      instanceId: 'browser_qa_market', buildingId: 'market_square', gridX: 274, gridY: 184,
+      status: 'active', buildProgress: 3, currentWorkers: 1
+    });
+    game.popupManager.open('building_detail', { buildingIndex: game.systems.building.buildings.length - 1 });
+  });
+  await expect(page.locator('#popup-body')).toContainText('商业经营');
+  await expect(page.locator('#popup-body')).toContainText('唯一 Buff');
+  await page.screenshot({ path: 'test-results/qa-commercial-detail.png' });
+  await closeVisiblePopup(page);
+
   await page.getByRole('button', { name: /商业/ }).click();
   await expect(page.locator('#popup-title')).toHaveText('城市商业');
   await closeVisiblePopup(page);
   await page.getByRole('button', { name: /贸易/ }).click();
   await expect(page.locator('#popup-title')).toHaveText('城邦贸易');
   await expect(page.locator('#popup-body')).toContainText('城邦贸易与资源加工');
+  await page.screenshot({ path: 'test-results/qa-trade-panel.png' });
   await closeVisiblePopup(page);
   await page.getByRole('button', { name: /军队/ }).click();
   await expect(page.getByText('军队管理')).toBeVisible();
@@ -61,6 +113,26 @@ test('new game opens economy panels without browser errors', async ({ page }) =>
   await expect.poll(() => heroPortrait.evaluate(image => image.complete && image.naturalWidth >= 200)).toBe(true);
   await closeVisiblePopup(page);
   await page.setViewportSize({ width: 1280, height: 720 });
+
+  const renderedResourceArt = await page.evaluate(() => {
+    const game = window.__game;
+    const definitions = game.systems.resourceNodes ? window.__game.mapRenderer._resourceNodeSystem && ['wood', 'stone', 'food', 'gold'] : [];
+    const config = window.__game.mapRenderer ? window.__game.mapRenderer._textureCache : null;
+    const paths = ['wood', 'stone', 'food', 'gold'].map(id => `assets/resource-nodes/${id}.png`);
+    return definitions.length === 4 && paths.every(path => config?.get(path)?.width > 0);
+  });
+  expect(renderedResourceArt).toBe(true);
+
+  const fogContract = await page.evaluate(() => {
+    const fog = window.__game.mapRenderer._fogOfWar;
+    if (!fog || !window.__game.mapRenderer._fogCanvas) return false;
+    const probe = new fog.constructor(32, 32);
+    probe.recalculate([{ gridX: 15, gridY: 15 }], 'morning');
+    const dayTen = probe.getTileState(25, 15) === 'visible';
+    probe.recalculate([{ gridX: 15, gridY: 15 }], 'night');
+    return dayTen && probe.getTileState(25, 15) === 'remembered' && probe.getTileState(21, 15) === 'visible';
+  });
+  expect(fogContract).toBe(true);
 
   const buildingPoint = await page.evaluate(() => {
     const game = window.__game;

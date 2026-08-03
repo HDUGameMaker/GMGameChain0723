@@ -1,0 +1,178 @@
+[
+  {
+    "slug": "timber_house",
+    "source": "assets/source-boards/historical/historical-buildings-01.png",
+    "output": "assets/buildings/historical-details/timber_house.png",
+    "box": {
+      "x": 0,
+      "y": 0,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "stone_tenement",
+    "source": "assets/source-boards/historical/historical-buildings-01.png",
+    "output": "assets/buildings/historical-details/stone_tenement.png",
+    "box": {
+      "x": 314,
+      "y": 0,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "manor",
+    "source": "assets/source-boards/historical/historical-buildings-01.png",
+    "output": "assets/buildings/historical-details/manor.png",
+    "box": {
+      "x": 627,
+      "y": 0,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "forestry_camp",
+    "source": "assets/source-boards/historical/historical-buildings-01.png",
+    "output": "assets/buildings/historical-details/forestry_camp.png",
+    "box": {
+      "x": 940,
+      "y": 0,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "stone_quarry",
+    "source": "assets/source-boards/historical/historical-buildings-01.png",
+    "output": "assets/buildings/historical-details/stone_quarry.png",
+    "box": {
+      "x": 0,
+      "y": 314,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "grain_farm",
+    "source": "assets/source-boards/historical/historical-buildings-01.png",
+    "output": "assets/buildings/historical-details/grain_farm.png",
+    "box": {
+      "x": 314,
+      "y": 314,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "gold_mine",
+    "source": "assets/source-boards/historical/historical-buildings-01.png",
+    "output": "assets/buildings/historical-details/gold_mine.png",
+    "box": {
+      "x": 627,
+      "y": 314,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "granary_hall",
+    "source": "assets/source-boards/historical/historical-buildings-01.png",
+    "output": "assets/buildings/historical-details/granary_hall.png",
+    "box": {
+      "x": 940,
+      "y": 314,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "central_warehouse",
+    "source": "assets/source-boards/historical/historical-buildings-01.png",
+    "output": "assets/buildings/historical-details/central_warehouse.png",
+    "box": {
+      "x": 0,
+      "y": 627,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "academy",
+    "source": "assets/source-boards/historical/historical-buildings-01.png",
+    "output": "assets/buildings/historical-details/academy.png",
+    "box": {
+      "x": 314,
+      "y": 627,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "library",
+    "source": "assets/source-boards/historical/historical-buildings-01.png",
+    "output": "assets/buildings/historical-details/library.png",
+    "box": {
+      "x": 627,
+      "y": 627,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "monument",
+    "source": "assets/source-boards/historical/historical-buildings-01.png",
+    "output": "assets/buildings/historical-details/monument.png",
+    "box": {
+      "x": 940,
+      "y": 627,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "civic_hall",
+    "source": "assets/source-boards/historical/historical-buildings-01.png",
+    "output": "assets/buildings/historical-details/civic_hall.png",
+    "box": {
+      "x": 0,
+      "y": 940,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "council_hall",
+    "source": "assets/source-boards/historical/historical-buildings-01.png",
+    "output": "assets/buildings/historical-details/council_hall.png",
+    "box": {
+      "x": 314,
+      "y": 940,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "market_square",
+    "source": "assets/source-boards/historical/historical-buildings-01.png",
+    "output": "assets/buildings/historical-details/market_square.png",
+    "box": {
+      "x": 627,
+      "y": 940,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "trade_depot",
+    "source": "assets/source-boards/historical/historical-buildings-01.png",
+    "output": "assets/buildings/historical-details/trade_depot.png",
+    "box": {
+      "x": 940,
+      "y": 940,
+      "width": 314,
+      "height": 314
+    }
+  }
+]

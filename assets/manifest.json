@@ -1,7 +1,7 @@
 {
-  "generated": "2026-08-03T09:12:51.705Z",
+  "generated": "2026-08-03T09:49:25.532Z",
   "basePath": "assets/",
-  "totalFiles": 1074,
+  "totalFiles": 1180,
   "categories": {
     "buildings": [
       "buildings/anim_plank_house.png",
@@ -16,6 +16,108 @@
       "buildings/anim_plank_house/building_plank_house_1.png",
       "buildings/anim_plank_house/building_plank_house_2.png",
       "buildings/anim_plank_house/building_plank_house_3.png"
+    ],
+    "buildings/historical-details": [
+      "buildings/historical-details/abbasid_unique_building.png",
+      "buildings/historical-details/academy.png",
+      "buildings/historical-details/aksum_unique_building.png",
+      "buildings/historical-details/anglo_saxon_unique_building.png",
+      "buildings/historical-details/archaic_greece_unique_building.png",
+      "buildings/historical-details/archery_range.png",
+      "buildings/historical-details/assyria_unique_building.png",
+      "buildings/historical-details/aztec_unique_building.png",
+      "buildings/historical-details/barracks_hall.png",
+      "buildings/historical-details/blacksmith.png",
+      "buildings/historical-details/brazil_empire_unique_building.png",
+      "buildings/historical-details/brazil_modern_unique_building.png",
+      "buildings/historical-details/british_empire_unique_building.png",
+      "buildings/historical-details/byzantium_unique_building.png",
+      "buildings/historical-details/castle.png",
+      "buildings/historical-details/central_warehouse.png",
+      "buildings/historical-details/china_modern_unique_building.png",
+      "buildings/historical-details/chola_unique_building.png",
+      "buildings/historical-details/city_wall.png",
+      "buildings/historical-details/civic_hall.png",
+      "buildings/historical-details/council_hall.png",
+      "buildings/historical-details/courthouse.png",
+      "buildings/historical-details/dutch_unique_building.png",
+      "buildings/historical-details/embassy.png",
+      "buildings/historical-details/engineers_guild.png",
+      "buildings/historical-details/england_exploration_unique_building.png",
+      "buildings/historical-details/field_camp.png",
+      "buildings/historical-details/forestry_camp.png",
+      "buildings/historical-details/france_modern_unique_building.png",
+      "buildings/historical-details/franks_unique_building.png",
+      "buildings/historical-details/french_empire_unique_building.png",
+      "buildings/historical-details/frontier_fort.png",
+      "buildings/historical-details/germany_modern_unique_building.png",
+      "buildings/historical-details/ghana_empire_unique_building.png",
+      "buildings/historical-details/gold_mine.png",
+      "buildings/historical-details/grain_farm.png",
+      "buildings/historical-details/granary_hall.png",
+      "buildings/historical-details/grand_fortress.png",
+      "buildings/historical-details/grand_shipyard.png",
+      "buildings/historical-details/han_unique_building.png",
+      "buildings/historical-details/harbor.png",
+      "buildings/historical-details/heian_japan_unique_building.png",
+      "buildings/historical-details/historical-buildings-01-contact-sheet.png",
+      "buildings/historical-details/historical-buildings-02-contact-sheet.png",
+      "buildings/historical-details/historical-buildings-03-contact-sheet.png",
+      "buildings/historical-details/historical-buildings-04-contact-sheet.png",
+      "buildings/historical-details/historical-buildings-05-contact-sheet.png",
+      "buildings/historical-details/historical-buildings-06-contact-sheet.png",
+      "buildings/historical-details/india_modern_unique_building.png",
+      "buildings/historical-details/indonesia_modern_unique_building.png",
+      "buildings/historical-details/japan_modern_unique_building.png",
+      "buildings/historical-details/korea_modern_unique_building.png",
+      "buildings/historical-details/kushan_unique_building.png",
+      "buildings/historical-details/library.png",
+      "buildings/historical-details/lighthouse.png",
+      "buildings/historical-details/luxury_workshop.png",
+      "buildings/historical-details/manor.png",
+      "buildings/historical-details/market_square.png",
+      "buildings/historical-details/maya_classic_unique_building.png",
+      "buildings/historical-details/meiji_japan_unique_building.png",
+      "buildings/historical-details/mexico_industrial_unique_building.png",
+      "buildings/historical-details/ming_unique_building.png",
+      "buildings/historical-details/monument.png",
+      "buildings/historical-details/mughal_unique_building.png",
+      "buildings/historical-details/neo_babylon_unique_building.png",
+      "buildings/historical-details/nigeria_modern_unique_building.png",
+      "buildings/historical-details/old_egypt_unique_building.png",
+      "buildings/historical-details/ottoman_reform_unique_building.png",
+      "buildings/historical-details/ottoman_unique_building.png",
+      "buildings/historical-details/parthia_unique_building.png",
+      "buildings/historical-details/portugal_unique_building.png",
+      "buildings/historical-details/proto_civilization_unique_building.png",
+      "buildings/historical-details/prussia_unique_building.png",
+      "buildings/historical-details/qing_unique_building.png",
+      "buildings/historical-details/rome_unique_building.png",
+      "buildings/historical-details/russia_modern_unique_building.png",
+      "buildings/historical-details/russian_empire_unique_building.png",
+      "buildings/historical-details/sengoku_japan_unique_building.png",
+      "buildings/historical-details/siege_workshop.png",
+      "buildings/historical-details/songhai_unique_building.png",
+      "buildings/historical-details/spain_unique_building.png",
+      "buildings/historical-details/srivijaya_unique_building.png",
+      "buildings/historical-details/stable.png",
+      "buildings/historical-details/stone_quarry.png",
+      "buildings/historical-details/stone_tenement.png",
+      "buildings/historical-details/strategy_office.png",
+      "buildings/historical-details/tang_unique_building.png",
+      "buildings/historical-details/tavern_hall.png",
+      "buildings/historical-details/teotihuacan_unique_building.png",
+      "buildings/historical-details/timber_house.png",
+      "buildings/historical-details/toltec_unique_building.png",
+      "buildings/historical-details/trade_depot.png",
+      "buildings/historical-details/uk_modern_unique_building.png",
+      "buildings/historical-details/usa_industrial_unique_building.png",
+      "buildings/historical-details/usa_modern_unique_building.png",
+      "buildings/historical-details/vedic_india_unique_building.png",
+      "buildings/historical-details/war_academy.png",
+      "buildings/historical-details/watch_tower.png",
+      "buildings/historical-details/yamatai_unique_building.png",
+      "buildings/historical-details/zhou_unique_building.png"
     ],
     "buildings/overhaul": [
       "buildings/overhaul/coastal_watch.png",
@@ -983,6 +1085,14 @@
       "source-boards/core-buildings-board.png",
       "source-boards/food-resource-cyan-source.png"
     ],
+    "source-boards/historical": [
+      "source-boards/historical/historical-buildings-01.png",
+      "source-boards/historical/historical-buildings-02.png",
+      "source-boards/historical/historical-buildings-03.png",
+      "source-boards/historical/historical-buildings-04.png",
+      "source-boards/historical/historical-buildings-05.png",
+      "source-boards/historical/historical-buildings-06.png"
+    ],
     "unit-cards": [
       "unit-cards/abbasid_unique_unit.png",
       "unit-cards/aksum_unique_unit.png",
@@ -1132,6 +1242,106 @@
     "buildings/anim_plank_house/building_plank_house_3.png",
     "buildings/building_plank_house_1784771253.png",
     "buildings/building_work_shed_1784771193.png",
+    "buildings/historical-details/abbasid_unique_building.png",
+    "buildings/historical-details/academy.png",
+    "buildings/historical-details/aksum_unique_building.png",
+    "buildings/historical-details/anglo_saxon_unique_building.png",
+    "buildings/historical-details/archaic_greece_unique_building.png",
+    "buildings/historical-details/archery_range.png",
+    "buildings/historical-details/assyria_unique_building.png",
+    "buildings/historical-details/aztec_unique_building.png",
+    "buildings/historical-details/barracks_hall.png",
+    "buildings/historical-details/blacksmith.png",
+    "buildings/historical-details/brazil_empire_unique_building.png",
+    "buildings/historical-details/brazil_modern_unique_building.png",
+    "buildings/historical-details/british_empire_unique_building.png",
+    "buildings/historical-details/byzantium_unique_building.png",
+    "buildings/historical-details/castle.png",
+    "buildings/historical-details/central_warehouse.png",
+    "buildings/historical-details/china_modern_unique_building.png",
+    "buildings/historical-details/chola_unique_building.png",
+    "buildings/historical-details/city_wall.png",
+    "buildings/historical-details/civic_hall.png",
+    "buildings/historical-details/council_hall.png",
+    "buildings/historical-details/courthouse.png",
+    "buildings/historical-details/dutch_unique_building.png",
+    "buildings/historical-details/embassy.png",
+    "buildings/historical-details/engineers_guild.png",
+    "buildings/historical-details/england_exploration_unique_building.png",
+    "buildings/historical-details/field_camp.png",
+    "buildings/historical-details/forestry_camp.png",
+    "buildings/historical-details/france_modern_unique_building.png",
+    "buildings/historical-details/franks_unique_building.png",
+    "buildings/historical-details/french_empire_unique_building.png",
+    "buildings/historical-details/frontier_fort.png",
+    "buildings/historical-details/germany_modern_unique_building.png",
+    "buildings/historical-details/ghana_empire_unique_building.png",
+    "buildings/historical-details/gold_mine.png",
+    "buildings/historical-details/grain_farm.png",
+    "buildings/historical-details/granary_hall.png",
+    "buildings/historical-details/grand_fortress.png",
+    "buildings/historical-details/grand_shipyard.png",
+    "buildings/historical-details/han_unique_building.png",
+    "buildings/historical-details/harbor.png",
+    "buildings/historical-details/heian_japan_unique_building.png",
+    "buildings/historical-details/historical-buildings-01-contact-sheet.png",
+    "buildings/historical-details/historical-buildings-02-contact-sheet.png",
+    "buildings/historical-details/historical-buildings-03-contact-sheet.png",
+    "buildings/historical-details/historical-buildings-04-contact-sheet.png",
+    "buildings/historical-details/historical-buildings-05-contact-sheet.png",
+    "buildings/historical-details/historical-buildings-06-contact-sheet.png",
+    "buildings/historical-details/india_modern_unique_building.png",
+    "buildings/historical-details/indonesia_modern_unique_building.png",
+    "buildings/historical-details/japan_modern_unique_building.png",
+    "buildings/historical-details/korea_modern_unique_building.png",
+    "buildings/historical-details/kushan_unique_building.png",
+    "buildings/historical-details/library.png",
+    "buildings/historical-details/lighthouse.png",
+    "buildings/historical-details/luxury_workshop.png",
+    "buildings/historical-details/manor.png",
+    "buildings/historical-details/market_square.png",
+    "buildings/historical-details/maya_classic_unique_building.png",
+    "buildings/historical-details/meiji_japan_unique_building.png",
+    "buildings/historical-details/mexico_industrial_unique_building.png",
+    "buildings/historical-details/ming_unique_building.png",
+    "buildings/historical-details/monument.png",
+    "buildings/historical-details/mughal_unique_building.png",
+    "buildings/historical-details/neo_babylon_unique_building.png",
+    "buildings/historical-details/nigeria_modern_unique_building.png",
+    "buildings/historical-details/old_egypt_unique_building.png",
+    "buildings/historical-details/ottoman_reform_unique_building.png",
+    "buildings/historical-details/ottoman_unique_building.png",
+    "buildings/historical-details/parthia_unique_building.png",
+    "buildings/historical-details/portugal_unique_building.png",
+    "buildings/historical-details/proto_civilization_unique_building.png",
+    "buildings/historical-details/prussia_unique_building.png",
+    "buildings/historical-details/qing_unique_building.png",
+    "buildings/historical-details/rome_unique_building.png",
+    "buildings/historical-details/russia_modern_unique_building.png",
+    "buildings/historical-details/russian_empire_unique_building.png",
+    "buildings/historical-details/sengoku_japan_unique_building.png",
+    "buildings/historical-details/siege_workshop.png",
+    "buildings/historical-details/songhai_unique_building.png",
+    "buildings/historical-details/spain_unique_building.png",
+    "buildings/historical-details/srivijaya_unique_building.png",
+    "buildings/historical-details/stable.png",
+    "buildings/historical-details/stone_quarry.png",
+    "buildings/historical-details/stone_tenement.png",
+    "buildings/historical-details/strategy_office.png",
+    "buildings/historical-details/tang_unique_building.png",
+    "buildings/historical-details/tavern_hall.png",
+    "buildings/historical-details/teotihuacan_unique_building.png",
+    "buildings/historical-details/timber_house.png",
+    "buildings/historical-details/toltec_unique_building.png",
+    "buildings/historical-details/trade_depot.png",
+    "buildings/historical-details/uk_modern_unique_building.png",
+    "buildings/historical-details/usa_industrial_unique_building.png",
+    "buildings/historical-details/usa_modern_unique_building.png",
+    "buildings/historical-details/vedic_india_unique_building.png",
+    "buildings/historical-details/war_academy.png",
+    "buildings/historical-details/watch_tower.png",
+    "buildings/historical-details/yamatai_unique_building.png",
+    "buildings/historical-details/zhou_unique_building.png",
     "buildings/icon-metal_1784486384.png",
     "buildings/icon-stone_1784486357.png",
     "buildings/icon-wood_1784486194.png",
@@ -2061,6 +2271,12 @@
     "source-boards/common-resource-nodes-board.png",
     "source-boards/core-buildings-board.png",
     "source-boards/food-resource-cyan-source.png",
+    "source-boards/historical/historical-buildings-01.png",
+    "source-boards/historical/historical-buildings-02.png",
+    "source-boards/historical/historical-buildings-03.png",
+    "source-boards/historical/historical-buildings-04.png",
+    "source-boards/historical/historical-buildings-05.png",
+    "source-boards/historical/historical-buildings-06.png",
     "unit-cards/abbasid_unique_unit.png",
     "unit-cards/aksum_unique_unit.png",
     "unit-cards/ancient_anti_cavalry_3.png",
@@ -2235,6 +2451,506 @@
       "path": "buildings/building_work_shed_1784771193.png",
       "bytes": 979763,
       "sha256": "cdf8f34801fff73a9607c24675f3bd41ae2b4125235daafb4751f3dfc602d50e"
+    },
+    {
+      "path": "buildings/historical-details/abbasid_unique_building.png",
+      "bytes": 164875,
+      "sha256": "06c44e830a492560893bdd088fb8f2a949c2f8fa31f93aa2d62ab183fcfb6a21"
+    },
+    {
+      "path": "buildings/historical-details/academy.png",
+      "bytes": 185796,
+      "sha256": "09986a57af3f74ea262ca5de4b413b5bc764353eeda7b70fc0b413f51c7b60c9"
+    },
+    {
+      "path": "buildings/historical-details/aksum_unique_building.png",
+      "bytes": 146167,
+      "sha256": "3feff3b299f1af5f6a062acbd963ef5b9412ecebfabfd422e384daf3e1e9a85a"
+    },
+    {
+      "path": "buildings/historical-details/anglo_saxon_unique_building.png",
+      "bytes": 154726,
+      "sha256": "3178c6528c5275b0ff7a68d03a0f9aba62762746b9bb21df1a56bc39707da79b"
+    },
+    {
+      "path": "buildings/historical-details/archaic_greece_unique_building.png",
+      "bytes": 177561,
+      "sha256": "a8ee686a3907f76559b0e6b6d56a96d178595591ddfedd686792cea339a07cc5"
+    },
+    {
+      "path": "buildings/historical-details/archery_range.png",
+      "bytes": 145615,
+      "sha256": "aef3a7bfc7fbb7bea8190acf354df88f7cab76a70c5f67be251dbb47bf991d0e"
+    },
+    {
+      "path": "buildings/historical-details/assyria_unique_building.png",
+      "bytes": 152983,
+      "sha256": "3c5d16798857a681cdf688719193fe0ee608220e4b6b751b8d475f921d878e34"
+    },
+    {
+      "path": "buildings/historical-details/aztec_unique_building.png",
+      "bytes": 159968,
+      "sha256": "4019442614d95316fc479c692d1a2c8d8c7cb7567d9b6331dfa4d3c1b1287db8"
+    },
+    {
+      "path": "buildings/historical-details/barracks_hall.png",
+      "bytes": 161641,
+      "sha256": "5dc9e1d023bbf893c63ad379bbb41f3ca80023b3d0c4db96303dc2531e2c3c6b"
+    },
+    {
+      "path": "buildings/historical-details/blacksmith.png",
+      "bytes": 162856,
+      "sha256": "f63b605185f4e4af100f9ecb0343b1027827d9c8215ce1012ac7f29ed92e0481"
+    },
+    {
+      "path": "buildings/historical-details/brazil_empire_unique_building.png",
+      "bytes": 164480,
+      "sha256": "45643317ad2714dcc08a3c2400800afa26ea37a4d7464c1f76df487c47f434ca"
+    },
+    {
+      "path": "buildings/historical-details/brazil_modern_unique_building.png",
+      "bytes": 149889,
+      "sha256": "fd5fd1d5b36fcf348f752af053694ae05f0a77117ea05be3b5beb937f2b2543a"
+    },
+    {
+      "path": "buildings/historical-details/british_empire_unique_building.png",
+      "bytes": 152641,
+      "sha256": "0fe93847d24133172566656a1d680d03c50b3de7b1b157b95ab592cd130adc23"
+    },
+    {
+      "path": "buildings/historical-details/byzantium_unique_building.png",
+      "bytes": 171658,
+      "sha256": "6e66efff3c9ffada740c4a4d00009b451998eec0a967c17251462815e811c645"
+    },
+    {
+      "path": "buildings/historical-details/castle.png",
+      "bytes": 163536,
+      "sha256": "05dd6431dc89ded8499190b37e13a010421e0e4962548fcbdb1e4c3ef205ebec"
+    },
+    {
+      "path": "buildings/historical-details/central_warehouse.png",
+      "bytes": 174131,
+      "sha256": "42ff223ed638968af9673647d77af15bdf99ae5437f6d6b49025c4981cb93518"
+    },
+    {
+      "path": "buildings/historical-details/china_modern_unique_building.png",
+      "bytes": 165956,
+      "sha256": "219e3f974bc5bf1e4f53abb2e04fbc84172071f793ceb5fbbdb232830d4c9bb0"
+    },
+    {
+      "path": "buildings/historical-details/chola_unique_building.png",
+      "bytes": 162990,
+      "sha256": "1452ac08d7dc102fcaaab6ac98185f312ffe75f098fff00e4100dcc510ea8eb1"
+    },
+    {
+      "path": "buildings/historical-details/city_wall.png",
+      "bytes": 154473,
+      "sha256": "a6f91290e754fc617e5dadda2aa2b19596194b87089ac2478fc018a920ff1132"
+    },
+    {
+      "path": "buildings/historical-details/civic_hall.png",
+      "bytes": 183541,
+      "sha256": "3687482966aa3f64fee8be06d7bada40d57202da69b78bc5e9eae0cb6a06413a"
+    },
+    {
+      "path": "buildings/historical-details/council_hall.png",
+      "bytes": 180448,
+      "sha256": "c6a1bec468ae7691bacc9113edd241588f0d863f45ba95d7aa7f27c550f93399"
+    },
+    {
+      "path": "buildings/historical-details/courthouse.png",
+      "bytes": 167300,
+      "sha256": "711163ce90f971d20299f6e72ae09fef22499293f8735d91938adb9f4fa1cf71"
+    },
+    {
+      "path": "buildings/historical-details/dutch_unique_building.png",
+      "bytes": 153961,
+      "sha256": "3a0a3c3fe2192416ae4633d1286832ea6a55b8edb6dd5acfd2a9dea28dbd555d"
+    },
+    {
+      "path": "buildings/historical-details/embassy.png",
+      "bytes": 160560,
+      "sha256": "7dd33a1efba3b023f8eb2057b969aeaa995e937d8ca24a83f23fa166e82e6679"
+    },
+    {
+      "path": "buildings/historical-details/engineers_guild.png",
+      "bytes": 164519,
+      "sha256": "4e19e73d9b1b6eb4e82b9047f2d08201523ca91e9293ad8800f0accb48b286ec"
+    },
+    {
+      "path": "buildings/historical-details/england_exploration_unique_building.png",
+      "bytes": 170410,
+      "sha256": "353cf25c80480e6946c4cc0d20d1cfec7070905bb5c4b4a68e15c34d325ef0be"
+    },
+    {
+      "path": "buildings/historical-details/field_camp.png",
+      "bytes": 154411,
+      "sha256": "c92be52bad193cd9f2c7d5f3c76fe2604398dccf12d40b49dc1828d33bbdaa6f"
+    },
+    {
+      "path": "buildings/historical-details/forestry_camp.png",
+      "bytes": 170109,
+      "sha256": "53e0ad09a5534a3d72a5af151ac2b3f28a2207a66c368bd4c037ea8c258248bb"
+    },
+    {
+      "path": "buildings/historical-details/france_modern_unique_building.png",
+      "bytes": 177782,
+      "sha256": "26ee71ebb5cd2a235dd04a59c37b739e236469a6dd208e1e6eadaa0989698964"
+    },
+    {
+      "path": "buildings/historical-details/franks_unique_building.png",
+      "bytes": 163576,
+      "sha256": "300ecf758aa438907cd90b35e915fb3b6ec0c9f34d07569133b2de4e56e4793b"
+    },
+    {
+      "path": "buildings/historical-details/french_empire_unique_building.png",
+      "bytes": 186172,
+      "sha256": "5687d45e15aa35e42c8374cba1c8bf3d723afa5d87a092794383ed250a76e98a"
+    },
+    {
+      "path": "buildings/historical-details/frontier_fort.png",
+      "bytes": 144065,
+      "sha256": "1cfdfc0e25504f13c7a5b6f0c16e818e59c4e9ce3066c2faccc8dcdb3bf0ebef"
+    },
+    {
+      "path": "buildings/historical-details/germany_modern_unique_building.png",
+      "bytes": 150108,
+      "sha256": "be4a5bc80e3fedddef12086d42bd57ff20e557aac4be679c08587565746a9f19"
+    },
+    {
+      "path": "buildings/historical-details/ghana_empire_unique_building.png",
+      "bytes": 165489,
+      "sha256": "0968040f3e647cb5d767c6da60683d16892f380b35a6f3240b37ebc958a604ef"
+    },
+    {
+      "path": "buildings/historical-details/gold_mine.png",
+      "bytes": 165821,
+      "sha256": "3425f64a0fb4440e060d7e52a8747e6bf8fc0681008e84843a9e605d9c997144"
+    },
+    {
+      "path": "buildings/historical-details/grain_farm.png",
+      "bytes": 163502,
+      "sha256": "9dd0b51d8e5b1022129986a6066e32f487afbad8a03d8c79761460e6cecd9e5b"
+    },
+    {
+      "path": "buildings/historical-details/granary_hall.png",
+      "bytes": 176378,
+      "sha256": "f2a1afa63d28f07b5aef947852b76c63a1cc4c6edcbd0e0799b1ea2b025e597b"
+    },
+    {
+      "path": "buildings/historical-details/grand_fortress.png",
+      "bytes": 166646,
+      "sha256": "f596773b293ab8de4653040e05683b5c8685fd2b98f944e255ed5fd74c99aa55"
+    },
+    {
+      "path": "buildings/historical-details/grand_shipyard.png",
+      "bytes": 171586,
+      "sha256": "7566dc4b3f18c607bd43be99ef4692886b08a015d2bb06218b135179b73bcdbf"
+    },
+    {
+      "path": "buildings/historical-details/han_unique_building.png",
+      "bytes": 179953,
+      "sha256": "31dd4fa0bd51ce61bcf144a228fe95fde3a4163e965312f66960d7f85c0d338f"
+    },
+    {
+      "path": "buildings/historical-details/harbor.png",
+      "bytes": 180420,
+      "sha256": "2acb9ab58dc529dcbd6c4d2a94abc99497c9624e3f4a47365a95006f4c5b1d1d"
+    },
+    {
+      "path": "buildings/historical-details/heian_japan_unique_building.png",
+      "bytes": 149340,
+      "sha256": "5f59709a245b09d2ee63bd80ea229834b226446ac5c95c90432461c3c7fdcd45"
+    },
+    {
+      "path": "buildings/historical-details/historical-buildings-01-contact-sheet.png",
+      "bytes": 2709845,
+      "sha256": "7fb57c3a099729b842fb25d437719351f6ca531abd93981d9ba2ade2e79f84cc"
+    },
+    {
+      "path": "buildings/historical-details/historical-buildings-02-contact-sheet.png",
+      "bytes": 2495391,
+      "sha256": "90361599d2a70feca22b0014bb140f5d0a5aed6d16bfb35e6aa3b8658c1d2359"
+    },
+    {
+      "path": "buildings/historical-details/historical-buildings-03-contact-sheet.png",
+      "bytes": 2562641,
+      "sha256": "710ec6d4ed5e32e6760add9987e9a900eb1d6e20579a10ea7595eeaceb4efc91"
+    },
+    {
+      "path": "buildings/historical-details/historical-buildings-04-contact-sheet.png",
+      "bytes": 2485371,
+      "sha256": "8f4e0fa556bdb83b27b33fd8738a755b4062d0f0e22aecaf41e8399ac5d4a2cf"
+    },
+    {
+      "path": "buildings/historical-details/historical-buildings-05-contact-sheet.png",
+      "bytes": 2527789,
+      "sha256": "1a455f66eba09e741f3c3fd8163b8084023725bf40f0dd19be725d3d9e471269"
+    },
+    {
+      "path": "buildings/historical-details/historical-buildings-06-contact-sheet.png",
+      "bytes": 2344936,
+      "sha256": "b771012ee8620f90d06c34717a8daa9a11a5e5bfc9b36202eac8112011cb508c"
+    },
+    {
+      "path": "buildings/historical-details/india_modern_unique_building.png",
+      "bytes": 152446,
+      "sha256": "b254e7ec2b82a8998afc4db22159409b386bcfaf76e8850d38e091a739217ffe"
+    },
+    {
+      "path": "buildings/historical-details/indonesia_modern_unique_building.png",
+      "bytes": 192638,
+      "sha256": "a82a157962c3a0187d8cb17f93b5234561f99ac2e37ae2bb575edd6b5294806b"
+    },
+    {
+      "path": "buildings/historical-details/japan_modern_unique_building.png",
+      "bytes": 157618,
+      "sha256": "f07e20ce914d1bb154dc3857833cdb1fa56accb6cfc255468800eecfd129e66e"
+    },
+    {
+      "path": "buildings/historical-details/korea_modern_unique_building.png",
+      "bytes": 152531,
+      "sha256": "aa357a4a1bd3029297f7ae086151d896fe060d6ac21599168b02d3888b40e236"
+    },
+    {
+      "path": "buildings/historical-details/kushan_unique_building.png",
+      "bytes": 184260,
+      "sha256": "b3ef4f1a5ee2db25a198102fba8e29cc178f5ed3b18c85c28207095caeaa7c9b"
+    },
+    {
+      "path": "buildings/historical-details/library.png",
+      "bytes": 175040,
+      "sha256": "035c7e6a6443ae8acb00088e5318cda1f83081f3985a6a9965644059366ea387"
+    },
+    {
+      "path": "buildings/historical-details/lighthouse.png",
+      "bytes": 141427,
+      "sha256": "41e9ccbf4a93be050750dcd44fd1425f9844cb744382d6af675d937a01f11530"
+    },
+    {
+      "path": "buildings/historical-details/luxury_workshop.png",
+      "bytes": 160007,
+      "sha256": "045122c982413fa4fd244ef54c09c54df5e0a5eeaa1dc7ec72dd919ebbbcf162"
+    },
+    {
+      "path": "buildings/historical-details/manor.png",
+      "bytes": 173438,
+      "sha256": "54c5b91d340d07cade163cfbd88cc81828870d60247508317a46ddf3060988a2"
+    },
+    {
+      "path": "buildings/historical-details/market_square.png",
+      "bytes": 193378,
+      "sha256": "8a7cf4edb304de171ec5d59c6acd6d5dafd9faf46be82ee22da2dd8b9f72f413"
+    },
+    {
+      "path": "buildings/historical-details/maya_classic_unique_building.png",
+      "bytes": 153458,
+      "sha256": "43b641af66e7202ee08fbaa30bcb2f80469f34a8549a7d9d0415079e724cff27"
+    },
+    {
+      "path": "buildings/historical-details/meiji_japan_unique_building.png",
+      "bytes": 160476,
+      "sha256": "50ce1d8571b37b4ea3f6564ead5c94fef492df487115c0ef2a7fb9d8cf243d51"
+    },
+    {
+      "path": "buildings/historical-details/mexico_industrial_unique_building.png",
+      "bytes": 161943,
+      "sha256": "d6df3c5b1446ac733b5283228a9fe35d4fb8ad752c984c30207f6b89b223244c"
+    },
+    {
+      "path": "buildings/historical-details/ming_unique_building.png",
+      "bytes": 166742,
+      "sha256": "20d04fe49e1b2a78efed6ddd10124929502c7358594f7f2d485a23754745ec2f"
+    },
+    {
+      "path": "buildings/historical-details/monument.png",
+      "bytes": 122973,
+      "sha256": "2f3207e634eb5dbe0a89c3b6e74aed858dcdd27343daf78723133d1fc41b78b8"
+    },
+    {
+      "path": "buildings/historical-details/mughal_unique_building.png",
+      "bytes": 159122,
+      "sha256": "61445d1b5b38db8d869f0a2b4c0dcd150f824385a988491d44bf277fb7f1dc77"
+    },
+    {
+      "path": "buildings/historical-details/neo_babylon_unique_building.png",
+      "bytes": 166594,
+      "sha256": "0d1e32005f85343d0dd76268530f9efd68f0e5df00b3e241e9b2047aec133579"
+    },
+    {
+      "path": "buildings/historical-details/nigeria_modern_unique_building.png",
+      "bytes": 172663,
+      "sha256": "98692fac3501c9e840bef81a5a75432bf630ca05fea6cea8f7e943e5506c5268"
+    },
+    {
+      "path": "buildings/historical-details/old_egypt_unique_building.png",
+      "bytes": 168215,
+      "sha256": "c37194511b5e2aae5fc82dbadb2abe80fc2e3fb71eae45671e5c6d72a73bf937"
+    },
+    {
+      "path": "buildings/historical-details/ottoman_reform_unique_building.png",
+      "bytes": 168161,
+      "sha256": "4dd824eeb45c9177a44d067a15a2a4a8d38c18eed2ed872e3fcc33dee5a136ff"
+    },
+    {
+      "path": "buildings/historical-details/ottoman_unique_building.png",
+      "bytes": 166399,
+      "sha256": "a74ad83269175dd9a20d757870235e00b683808f905c92d1f09bb721b38c0ab0"
+    },
+    {
+      "path": "buildings/historical-details/parthia_unique_building.png",
+      "bytes": 166813,
+      "sha256": "174702b284bc3bc871825ec48d90da4ca06967dcf2eba506e4305044c4551ce7"
+    },
+    {
+      "path": "buildings/historical-details/portugal_unique_building.png",
+      "bytes": 159422,
+      "sha256": "2f098393c6d37d9f06895dcd454cff3b5c5ac3ff658b677061cb9d7fbe5f23f1"
+    },
+    {
+      "path": "buildings/historical-details/proto_civilization_unique_building.png",
+      "bytes": 154713,
+      "sha256": "190de1ed35682d22f6f71a9298196ed3ff4f4562e4a555870d5f517c5fd43c9f"
+    },
+    {
+      "path": "buildings/historical-details/prussia_unique_building.png",
+      "bytes": 158051,
+      "sha256": "c910ad7b7c7cec8e96fd0172c63a8b70849b48f3013b03ef2cbf817a97fa7e27"
+    },
+    {
+      "path": "buildings/historical-details/qing_unique_building.png",
+      "bytes": 159437,
+      "sha256": "4d209fac85d1ef19c1c4f99513529414bf43a448840343cc9c8ca36f476e06af"
+    },
+    {
+      "path": "buildings/historical-details/rome_unique_building.png",
+      "bytes": 172352,
+      "sha256": "a8afa85ca0378e947575659e66a13c2f82d711851b1eb7d5eb53b38eddad5a40"
+    },
+    {
+      "path": "buildings/historical-details/russia_modern_unique_building.png",
+      "bytes": 150176,
+      "sha256": "e8d474f862c65235d8328d31b2b26f8ffb3562ec9b20355b6fc052c13a86763f"
+    },
+    {
+      "path": "buildings/historical-details/russian_empire_unique_building.png",
+      "bytes": 168521,
+      "sha256": "7cda112808cdd98db6859c14374d7248fa94716205fd1f4f59064d8b019bee5e"
+    },
+    {
+      "path": "buildings/historical-details/sengoku_japan_unique_building.png",
+      "bytes": 167163,
+      "sha256": "07dd59be19ddf539d5ef9a5d9f34719f7f05010274f7d8f440dad0fba9408405"
+    },
+    {
+      "path": "buildings/historical-details/siege_workshop.png",
+      "bytes": 161159,
+      "sha256": "a4d4765a9455465b81a2f058943f880b6c7d8abbbd185cc5dcba701ac524fcee"
+    },
+    {
+      "path": "buildings/historical-details/songhai_unique_building.png",
+      "bytes": 152342,
+      "sha256": "03f55edf286c88b03115f9e95c5615f777a30e26b6e68dd59319783106d60d90"
+    },
+    {
+      "path": "buildings/historical-details/spain_unique_building.png",
+      "bytes": 159748,
+      "sha256": "bef0d84cde0bc7d48b6f425741dfb2ae70ee3eb744b259e1c51fb9c9e0737eea"
+    },
+    {
+      "path": "buildings/historical-details/srivijaya_unique_building.png",
+      "bytes": 155080,
+      "sha256": "767a9ef476016f833f85cf0bd10f9e4ac7292c56002046301606378a16619a3a"
+    },
+    {
+      "path": "buildings/historical-details/stable.png",
+      "bytes": 161884,
+      "sha256": "6a64fc3b547f5f1451bf749b965f406b7e6e309cb3e5c3bb716ded9d545c6ffc"
+    },
+    {
+      "path": "buildings/historical-details/stone_quarry.png",
+      "bytes": 176904,
+      "sha256": "fa8145fc6fe38c8a60f6e6240b0cb21f412e0ca869ec7d4b15f6e492a1bc43bd"
+    },
+    {
+      "path": "buildings/historical-details/stone_tenement.png",
+      "bytes": 179542,
+      "sha256": "9197290fab9a6c5d2fd952b369ed5ca56a80bfda97bdd034684a9a66597185aa"
+    },
+    {
+      "path": "buildings/historical-details/strategy_office.png",
+      "bytes": 156935,
+      "sha256": "5a7a64b7241350c33f772c8e18dd8aec00918514d311ce335e85bdefa0a64ff7"
+    },
+    {
+      "path": "buildings/historical-details/tang_unique_building.png",
+      "bytes": 170837,
+      "sha256": "5114cbf520a9fe4feb86e0baa4acad2fbc3107995f2149bd2fca023974c59388"
+    },
+    {
+      "path": "buildings/historical-details/tavern_hall.png",
+      "bytes": 162674,
+      "sha256": "38396ca341f8cdd5f43dcbc0dbcbfd2b100ca58449d4cb28ccd93de5c9d57233"
+    },
+    {
+      "path": "buildings/historical-details/teotihuacan_unique_building.png",
+      "bytes": 156956,
+      "sha256": "b11e89d8704e3ee7eaad68056b8b9cb9f7fbcfbe31ef449093e1e6052407aff5"
+    },
+    {
+      "path": "buildings/historical-details/timber_house.png",
+      "bytes": 166940,
+      "sha256": "0363bf4e2ec9292b61b95153cd7c782b2b10868d8bee4e661daef2e1ec1741d2"
+    },
+    {
+      "path": "buildings/historical-details/toltec_unique_building.png",
+      "bytes": 166426,
+      "sha256": "67178f04747fbd931b8e437576cd640da72f260df838890d9ce3d3598eb002d7"
+    },
+    {
+      "path": "buildings/historical-details/trade_depot.png",
+      "bytes": 172184,
+      "sha256": "c46b24a1a28464385630fb1258e1db867a22ff9bfb59779cec7fda811de0385b"
+    },
+    {
+      "path": "buildings/historical-details/uk_modern_unique_building.png",
+      "bytes": 158522,
+      "sha256": "8f143676b271752ea4264196d4f0e9aaf13a7b6731ef4ef45ae00542c326f608"
+    },
+    {
+      "path": "buildings/historical-details/usa_industrial_unique_building.png",
+      "bytes": 169482,
+      "sha256": "afc13031b7f59f7196ab335408415d3fe98aa2618def4a80360ab4b5aa188ff8"
+    },
+    {
+      "path": "buildings/historical-details/usa_modern_unique_building.png",
+      "bytes": 169895,
+      "sha256": "c0b22ec4c6d38375244017e55f8a6ddb5e8ed8b7fba5af489d300803eb86cf47"
+    },
+    {
+      "path": "buildings/historical-details/vedic_india_unique_building.png",
+      "bytes": 169495,
+      "sha256": "843eeca12ced174eed7f0ab93a8911e626208c551044fb36c587e39d2e6825ed"
+    },
+    {
+      "path": "buildings/historical-details/war_academy.png",
+      "bytes": 154057,
+      "sha256": "4715622d7181df9abff932041df69b91ff7fc1746a556f4dd52fe93cd8b8f6b4"
+    },
+    {
+      "path": "buildings/historical-details/watch_tower.png",
+      "bytes": 140244,
+      "sha256": "ec56c806d316d9a86e470eaaf2b254d5edc193fa69e7c5645a28d9485b50cf13"
+    },
+    {
+      "path": "buildings/historical-details/yamatai_unique_building.png",
+      "bytes": 156818,
+      "sha256": "1bb1e1e09c7cd17cff658e26420fd796778ee1c116d90074ccb990ab7cd66de9"
+    },
+    {
+      "path": "buildings/historical-details/zhou_unique_building.png",
+      "bytes": 155991,
+      "sha256": "f8cd7a58089a489045b6dd17f0069a972cbacd7521c91caede173578c9ff0759"
     },
     {
       "path": "buildings/icon-metal_1784486384.png",
@@ -6880,6 +7596,36 @@
       "path": "source-boards/food-resource-cyan-source.png",
       "bytes": 1873707,
       "sha256": "d7bf9a683c4293dd129aebf499da0c4514ef1222eda417c9899b8a9be3d04f43"
+    },
+    {
+      "path": "source-boards/historical/historical-buildings-01.png",
+      "bytes": 2507003,
+      "sha256": "3e0de2864ea7bf17cae1fc15fa80ad0d84523130c76e61bccf9a698bd9c34d07"
+    },
+    {
+      "path": "source-boards/historical/historical-buildings-02.png",
+      "bytes": 2317269,
+      "sha256": "75fa446b91be3389b68e5950d97c34e60b85289bdcd1ddd007ea35b3580c2ce4"
+    },
+    {
+      "path": "source-boards/historical/historical-buildings-03.png",
+      "bytes": 2385344,
+      "sha256": "86ba8d2d7f640c632e0a6ba1499c6d906bcb163f0f4f96154d8cac59f25a8804"
+    },
+    {
+      "path": "source-boards/historical/historical-buildings-04.png",
+      "bytes": 2339394,
+      "sha256": "8a7dd202b26ff86921c21de188a3cd094bf1f40a9389f0a499fb1d17e159210a"
+    },
+    {
+      "path": "source-boards/historical/historical-buildings-05.png",
+      "bytes": 2366698,
+      "sha256": "cf0ca5136dfe8c47c0e9bebd4d48115f2bafb4eb5bd23440a923041ed34ccfe0"
+    },
+    {
+      "path": "source-boards/historical/historical-buildings-06.png",
+      "bytes": 2205530,
+      "sha256": "df990784111984437a21e912365d83bd1a4af0de070de2dbe3525f83751b506a"
     },
     {
       "path": "unit-cards/abbasid_unique_unit.png",

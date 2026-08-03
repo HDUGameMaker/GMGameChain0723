@@ -1,0 +1,178 @@
+[
+  {
+    "slug": "tavern_hall",
+    "source": "assets/source-boards/historical/historical-buildings-03.png",
+    "output": "assets/buildings/historical-details/tavern_hall.png",
+    "box": {
+      "x": 0,
+      "y": 0,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "strategy_office",
+    "source": "assets/source-boards/historical/historical-buildings-03.png",
+    "output": "assets/buildings/historical-details/strategy_office.png",
+    "box": {
+      "x": 314,
+      "y": 0,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "field_camp",
+    "source": "assets/source-boards/historical/historical-buildings-03.png",
+    "output": "assets/buildings/historical-details/field_camp.png",
+    "box": {
+      "x": 627,
+      "y": 0,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "frontier_fort",
+    "source": "assets/source-boards/historical/historical-buildings-03.png",
+    "output": "assets/buildings/historical-details/frontier_fort.png",
+    "box": {
+      "x": 940,
+      "y": 0,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "grand_fortress",
+    "source": "assets/source-boards/historical/historical-buildings-03.png",
+    "output": "assets/buildings/historical-details/grand_fortress.png",
+    "box": {
+      "x": 0,
+      "y": 314,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "proto_civilization_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-03.png",
+    "output": "assets/buildings/historical-details/proto_civilization_unique_building.png",
+    "box": {
+      "x": 314,
+      "y": 314,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "zhou_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-03.png",
+    "output": "assets/buildings/historical-details/zhou_unique_building.png",
+    "box": {
+      "x": 627,
+      "y": 314,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "assyria_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-03.png",
+    "output": "assets/buildings/historical-details/assyria_unique_building.png",
+    "box": {
+      "x": 940,
+      "y": 314,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "neo_babylon_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-03.png",
+    "output": "assets/buildings/historical-details/neo_babylon_unique_building.png",
+    "box": {
+      "x": 0,
+      "y": 627,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "old_egypt_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-03.png",
+    "output": "assets/buildings/historical-details/old_egypt_unique_building.png",
+    "box": {
+      "x": 314,
+      "y": 627,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "archaic_greece_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-03.png",
+    "output": "assets/buildings/historical-details/archaic_greece_unique_building.png",
+    "box": {
+      "x": 627,
+      "y": 627,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "vedic_india_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-03.png",
+    "output": "assets/buildings/historical-details/vedic_india_unique_building.png",
+    "box": {
+      "x": 940,
+      "y": 627,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "han_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-03.png",
+    "output": "assets/buildings/historical-details/han_unique_building.png",
+    "box": {
+      "x": 0,
+      "y": 940,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "rome_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-03.png",
+    "output": "assets/buildings/historical-details/rome_unique_building.png",
+    "box": {
+      "x": 314,
+      "y": 940,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "parthia_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-03.png",
+    "output": "assets/buildings/historical-details/parthia_unique_building.png",
+    "box": {
+      "x": 627,
+      "y": 940,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "kushan_unique_building",
+    "source": "assets/source-boards/historical/historical-buildings-03.png",
+    "output": "assets/buildings/historical-details/kushan_unique_building.png",
+    "box": {
+      "x": 940,
+      "y": 940,
+      "width": 314,
+      "height": 314
+    }
+  }
+]
