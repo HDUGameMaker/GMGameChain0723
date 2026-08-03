@@ -27,6 +27,7 @@ export class BuildingSystem {
     eventBus.on('workTick', (data) => this._onWorkTick(data));
     eventBus.on('tick', (data) => this._onAnyTick(data));
     eventBus.on('dayProductionTick', (data) => this._onDayProductionTick(data));
+    eventBus.on('dayStart', (data) => this.applyPendingFarmCrops(data?.day));
   }
 
   _isWorkPeriodNow(timeData = null) {
@@ -218,7 +219,10 @@ export class BuildingSystem {
       status: 'active',
       buildProgress: null,
       currentWorkers: 0,
-      synthesisProgress: null // { recipeId, progress }
+      synthesisProgress: null, // { recipeId, progress }
+      cropId: this._isFarmConfig(config) ? 'grain' : null,
+      pendingCropId: null,
+      cropLuxuryProgress: 0
     };
 
     this.buildings.push(building);
@@ -236,6 +240,7 @@ export class BuildingSystem {
    * 放置初始建筑（无消耗，直接 active）
    */
   placeInitialBuilding(buildingId, gridX, gridY) {
+    const config = configRegistry.getBuilding(buildingId);
     const building = {
       buildingId,
       gridX,
@@ -243,7 +248,10 @@ export class BuildingSystem {
       status: 'active',
       buildProgress: null,
       currentWorkers: 0,
-      synthesisProgress: null
+      synthesisProgress: null,
+      cropId: this._isFarmConfig(config) ? 'grain' : null,
+      pendingCropId: null,
+      cropLuxuryProgress: 0
     };
     this.buildings.push(building);
     this._updateStore();
@@ -299,6 +307,13 @@ export class BuildingSystem {
     building.currentWorkers = 0; // 工人遣返
     // 清除遗留的合成进度（升级后建筑变体可能无对应合成配方，残留进度会导致 UI/逻辑异常）
     building.synthesisProgress = null;
+    if (this._isFarmConfig(targetConfig)) {
+      building.cropId ||= 'grain';
+    } else {
+      building.cropId = null;
+      building.pendingCropId = null;
+      building.cropLuxuryProgress = 0;
+    }
 
     this._updateStore();
     // 升级即落成：触发完成回调（存储上限重算 / 连锁解锁 / buildingComplete 事件）
@@ -334,6 +349,121 @@ export class BuildingSystem {
     this._populationSystem.refresh();
     eventBus.emit('workerChanged', { buildingIndex });
     return true;
+  }
+
+  _isFarmConfig(config) {
+    return !!config && (config.category === 'agriculture' || (config.tags || []).includes('farm'));
+  }
+
+  _getCropDefinitions() {
+    const config = configRegistry.get('economicOrders') || {};
+    return Array.isArray(config.crops) ? config.crops : [];
+  }
+
+  _getCropDefinition(cropId) {
+    return this._getCropDefinitions().find(crop => crop.id === cropId) || null;
+  }
+
+  _getEraGateState(eraId) {
+    if (!eraId || !this._eraSystem) return true;
+    const eras = this._eraSystem.getEras?.() || configRegistry.getHistoricalContent().eras || [];
+    const currentId = this._eraSystem.getCurrentEra?.()?.id;
+    const currentIndex = eras.findIndex(era => era.id === currentId);
+    const requiredIndex = eras.findIndex(era => era.id === eraId);
+    return requiredIndex < 0 || (currentIndex >= 0 && currentIndex >= requiredIndex);
+  }
+
+  _getCropUnlockState(crop) {
+    const reasons = [];
+    if (crop?.eraId && !this._getEraGateState(crop.eraId)) reasons.push(`需要时代 ${crop.eraId}`);
+    for (const condition of crop?.unlockConditions || []) {
+      if (condition.type === 'tech' && !this._techSystem?.isResearched?.(condition.techId)) {
+        reasons.push(`需要科技 ${condition.techId}`);
+      }
+      if (condition.type === 'culture' && !this._cultureSystem?.isResearched?.(condition.cultureId)) {
+        reasons.push(`需要人文 ${condition.cultureId}`);
+      }
+    }
+    return { unlocked: reasons.length === 0, reasons };
+  }
+
+  _getBuildingGround(building) {
+    const row = this._mapConfig?.grid?.[building?.gridY];
+    return typeof row === 'string' ? row[building.gridX] : Array.isArray(row) ? row[building.gridX] : null;
+  }
+
+  setFarmCrop(buildingIndex, cropId) {
+    const building = this.buildings[buildingIndex];
+    const config = building ? configRegistry.getBuilding(building.buildingId) : null;
+    if (!building || building.status !== 'active' || !this._isFarmConfig(config)) {
+      return { ok: false, reason: 'not_farm' };
+    }
+    const crop = this._getCropDefinition(cropId);
+    if (!crop) return { ok: false, reason: 'unknown_crop' };
+    const unlock = this._getCropUnlockState(crop);
+    if (!unlock.unlocked) return { ok: false, reason: 'crop_locked', details: unlock.reasons };
+    const ground = this._getBuildingGround(building);
+    if (ground && Array.isArray(crop.allowedGrounds) && !crop.allowedGrounds.includes(ground)) {
+      return { ok: false, reason: 'terrain_mismatch' };
+    }
+    const effectiveOnDay = Math.max(1, Math.floor(store.getState('timeDay') || 1)) + 1;
+    building.pendingCropId = crop.id;
+    building.pendingCropDay = effectiveOnDay;
+    this._updateStore();
+    eventBus.emit('farmCropScheduled', { buildingIndex, cropId: crop.id, effectiveOnDay });
+    return { ok: true, effectiveOnDay };
+  }
+
+  applyPendingFarmCrops(day = store.getState('timeDay') || 1) {
+    const currentDay = Math.max(1, Math.floor(Number(day) || 1));
+    let changed = false;
+    for (let buildingIndex = 0; buildingIndex < this.buildings.length; buildingIndex++) {
+      const building = this.buildings[buildingIndex];
+      if (!building.pendingCropId || currentDay < (building.pendingCropDay || currentDay)) continue;
+      building.cropId = building.pendingCropId;
+      building.pendingCropId = null;
+      building.pendingCropDay = null;
+      building.cropLuxuryProgress = 0;
+      changed = true;
+      eventBus.emit('farmCropChanged', { buildingIndex, cropId: building.cropId, day: currentDay });
+    }
+    if (changed) this._updateStore();
+    return changed;
+  }
+
+  getFarmOperation(buildingIndex) {
+    const building = this.buildings[buildingIndex];
+    const config = building ? configRegistry.getBuilding(building.buildingId) : null;
+    if (!building || !this._isFarmConfig(config)) return null;
+    const crop = this._getCropDefinition(building.cropId || 'grain');
+    const workers = Math.max(0, building.currentWorkers || 0);
+    return {
+      buildingIndex,
+      cropId: crop?.id || null,
+      crop,
+      pendingCropId: building.pendingCropId || null,
+      pendingCropDay: building.pendingCropDay || null,
+      workers,
+      maxWorkers: config.maxWorkers || 0,
+      outputs: (crop?.outputs || []).map(output => ({
+        resourceId: output.resourceId,
+        amount: Number((output.amount * workers).toFixed(4))
+      })),
+      availableCrops: this._getCropDefinitions().map(definition => ({
+        ...definition,
+        ...this._getCropUnlockState(definition)
+      }))
+    };
+  }
+
+  getFarmOperations() {
+    return this.buildings.map((_, index) => this.getFarmOperation(index)).filter(Boolean);
+  }
+
+  _getProductionForBuilding(building, config) {
+    if (!this._isFarmConfig(config)) return config?.production || null;
+    const crop = this._getCropDefinition(building.cropId || 'grain');
+    return crop ? { perWorker: true, output: crop.outputs || [] } : config?.production || null;
   }
 
   // ===== 合成 =====
@@ -893,13 +1023,13 @@ export class BuildingSystem {
 
   _processProduction(building, options = {}) {
     const config = configRegistry.getBuilding(building.buildingId);
-    if (!config || !config.production) return;
-    if (building.currentWorkers <= 0 && config.production.perWorker) {
+    const prod = this._getProductionForBuilding(building, config);
+    if (!config || !prod) return;
+    if (building.currentWorkers <= 0 && prod.perWorker) {
       // 没有工人但有装置？装置替代工人
       if (!building._attachmentType) return;
     }
 
-    const prod = config.production;
     const effectiveWorkers = this._getEffectiveProductionWorkers(building, config);
 
     // 获取相邻加成
@@ -936,6 +1066,17 @@ export class BuildingSystem {
           store.setState({ inspiration: (store.getState('inspiration') || 0) + amount });
         } else {
           this._resourceSystem.addClamped(out.resourceId, amount);
+        }
+      }
+    }
+
+    if (this._isFarmConfig(config)) {
+      const crop = this._getCropDefinition(building.cropId || 'grain');
+      if (crop?.luxury && effectiveWorkers > 0) {
+        building.cropLuxuryProgress = Math.max(0, Number(building.cropLuxuryProgress) || 0) + effectiveWorkers;
+        while (building.cropLuxuryProgress >= crop.luxury.intervalWorkerTicks) {
+          building.cropLuxuryProgress -= crop.luxury.intervalWorkerTicks;
+          this._luxurySystem?.addLuxury?.(crop.luxury.id, 1);
         }
       }
     }
@@ -1031,7 +1172,7 @@ export class BuildingSystem {
       const config = configRegistry.getBuilding(b.buildingId);
       const cycle = config?.productionCycle || 'tick';
       if (cycleFilter && cycle !== cycleFilter) continue;
-      const prod = config?.production;
+      const prod = this._getProductionForBuilding(b, config);
       if (config && config.foodCapacity) {
         if (b.currentWorkers <= 0) continue;
         const baseAmount = config.foodCapacity * b.currentWorkers * this._getProductionMultiplier('food', b);
@@ -1131,9 +1272,9 @@ export class BuildingSystem {
       if (building.status !== 'active') continue;
 
       const config = configRegistry.getBuilding(building.buildingId);
-      if (!config || !config.production) continue;
+      const prod = this._getProductionForBuilding(building, config);
+      if (!config || !prod) continue;
 
-      const prod = config.production;
       const cyclesPerDay = this._getProductionCyclesPerDay(building, config);
       const effectiveWorkers = this._getEffectiveProductionWorkers(building, config);
       const multiplier = prod.perWorker ? effectiveWorkers : 1;
@@ -1191,9 +1332,9 @@ export class BuildingSystem {
     const building = this.buildings[buildingIndex];
     if (!building) return null;
     const config = configRegistry.getBuilding(building.buildingId);
-    if (!config || !config.production) return null;
+    const prod = this._getProductionForBuilding(building, config);
+    if (!config || !prod) return null;
 
-    const prod = config.production;
     const cyclesPerDay = this._getProductionCyclesPerDay(building, config);
     const effectiveWorkers = building.status === 'active' ? this._getEffectiveProductionWorkers(building, config) : 0;
     const multiplier = prod.perWorker ? effectiveWorkers : 1;
@@ -1435,17 +1576,18 @@ export class BuildingSystem {
     if (!config) return [];
     const conditions = config.unlockConditions;
     const result = [];
+    let eraCondition = null;
     if (config.eraId && this._eraSystem) {
       const eras = this._eraSystem.getEras?.() || configRegistry.getHistoricalContent().eras || [];
       const currentEra = this._eraSystem.getCurrentEra?.();
       const currentIndex = eras.findIndex(era => era.id === currentEra?.id);
       const requiredIndex = eras.findIndex(era => era.id === config.eraId);
       const requiredEra = eras[requiredIndex];
-      result.push({
+      eraCondition = {
         type: 'era',
         desc: `时代: ${requiredEra?.name || config.eraId}`,
         met: requiredIndex < 0 || (currentIndex >= 0 && currentIndex >= requiredIndex)
-      });
+      };
     }
 
     for (const cond of conditions || []) {
@@ -1494,6 +1636,7 @@ export class BuildingSystem {
       }
       })());
     }
+    if (eraCondition) result.push(eraCondition);
     if (result.length === 0) result.push({ type: 'always', desc: '初始可用', met: true });
     return result;
   }
@@ -1822,24 +1965,38 @@ export class BuildingSystem {
       startTick: b.startTick,
       startTimeProgress: b.startTimeProgress,
       synthesisProgress: b.synthesisProgress,
-      _attachmentType: b._attachmentType
+      _attachmentType: b._attachmentType,
+      cropId: b.cropId || null,
+      pendingCropId: b.pendingCropId || null,
+      pendingCropDay: b.pendingCropDay || null,
+      cropLuxuryProgress: Math.max(0, Number(b.cropLuxuryProgress) || 0)
     }));
   }
 
   restoreState(states) {
     if (!states) return;
-    this.buildings = states.map(s => ({
-      buildingId: s.buildingId,
-      gridX: s.gridX,
-      gridY: s.gridY,
-      status: s.status,
-      currentWorkers: s.currentWorkers || 0,
-      buildProgress: s.buildProgress !== undefined ? s.buildProgress : null,
-      startTick: s.startTick,
-      startTimeProgress: s.startTimeProgress,
-      synthesisProgress: s.synthesisProgress || null,
-      _attachmentType: s._attachmentType || null
-    }));
+    this.buildings = states.map(s => {
+      const config = configRegistry.getBuilding(s.buildingId);
+      const isFarm = this._isFarmConfig(config);
+      const cropId = isFarm && this._getCropDefinition(s.cropId || 'grain') ? (s.cropId || 'grain') : null;
+      const pendingCropId = isFarm && this._getCropDefinition(s.pendingCropId) ? s.pendingCropId : null;
+      return {
+        buildingId: s.buildingId,
+        gridX: s.gridX,
+        gridY: s.gridY,
+        status: s.status,
+        currentWorkers: s.currentWorkers || 0,
+        buildProgress: s.buildProgress !== undefined ? s.buildProgress : null,
+        startTick: s.startTick,
+        startTimeProgress: s.startTimeProgress,
+        synthesisProgress: s.synthesisProgress || null,
+        _attachmentType: s._attachmentType || null,
+        cropId,
+        pendingCropId,
+        pendingCropDay: pendingCropId ? Math.max(1, Math.floor(Number(s.pendingCropDay) || 1)) : null,
+        cropLuxuryProgress: Math.max(0, Number(s.cropLuxuryProgress) || 0)
+      };
+    });
     this._updateStorageMultiplier();
     this._updateStore();
   }

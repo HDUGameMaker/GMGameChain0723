@@ -44,6 +44,7 @@ export class EconomyOrderSystem {
   }
 
   createOrder({ type, targetId, workers = 0 } = {}) {
+    if (type === 'crop') return { ok: false, reason: 'farm_required' };
     const definition = this._getDefinition(type, targetId);
     if (!definition) return { ok: false, reason: 'unknown_order' };
     const order = {
@@ -145,7 +146,7 @@ export class EconomyOrderSystem {
   restoreState(state) {
     const source = Array.isArray(state?.orders) ? state.orders : [];
     this._orders = source
-      .filter(order => this._getDefinition(order.type, order.targetId))
+      .filter(order => order.type === 'gathering' && this._getDefinition(order.type, order.targetId))
       .map(order => {
         const definition = this._getDefinition(order.type, order.targetId);
         return {

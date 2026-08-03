@@ -358,7 +358,7 @@ export class PopupManager {
       'era_civilization': '时代与文明',
       'luxury_trade': '奢侈品与贸易',
       'strategy_cards': '历史策略',
-      'economic_orders': '农业与采集作业',
+      'economic_orders': '农业总览',
       'commerce': '商业与贸易路线',
       'world_factions': '世界势力与野外目标',
       'save_recovery': '存档恢复',

@@ -5,6 +5,8 @@
       "name": "谷物",
       "description": "稳定的主粮作物，专注提供食物。",
       "icon": "🌾",
+      "allowedGrounds": ["G", "D"],
+      "unlockConditions": [],
       "maxWorkers": 6,
       "outputs": [{ "resourceId": "food", "amount": 1.4 }]
     },
@@ -13,6 +15,8 @@
       "name": "豆类",
       "description": "耐贫瘠的轮作作物，提供可靠食物。",
       "icon": "🫘",
+      "allowedGrounds": ["G", "D"],
+      "unlockConditions": [{ "type": "tech", "techId": "farming" }],
       "maxWorkers": 6,
       "outputs": [{ "resourceId": "food", "amount": 1.2 }]
     },
@@ -21,6 +25,8 @@
       "name": "果蔬",
       "description": "改善饮食，并带来少量市场收入。",
       "icon": "🥬",
+      "allowedGrounds": ["G"],
+      "unlockConditions": [{ "type": "tech", "techId": "farming" }],
       "maxWorkers": 6,
       "outputs": [
         { "resourceId": "food", "amount": 1.1 },
@@ -32,6 +38,9 @@
       "name": "葡萄",
       "description": "兼顾口粮与贸易，可周期性酿成葡萄酒奢侈品。",
       "icon": "🍇",
+      "allowedGrounds": ["G", "D"],
+      "eraId": "ancient",
+      "unlockConditions": [{ "type": "tech", "techId": "tech_ancient_2" }],
       "maxWorkers": 6,
       "outputs": [
         { "resourceId": "food", "amount": 0.6 },
@@ -44,6 +53,9 @@
       "name": "棉花",
       "description": "主要用于贸易，并周期性提供棉花奢侈品。",
       "icon": "☁️",
+      "allowedGrounds": ["G", "D"],
+      "eraId": "ancient",
+      "unlockConditions": [],
       "maxWorkers": 6,
       "outputs": [{ "resourceId": "gold", "amount": 0.6 }],
       "luxury": { "id": "cotton", "intervalWorkerTicks": 6 }
@@ -53,6 +65,8 @@
       "name": "亚麻",
       "description": "纤维秸秆可补充木材，并产生贸易收入。",
       "icon": "🌿",
+      "allowedGrounds": ["G", "D"],
+      "unlockConditions": [{ "type": "tech", "techId": "farming" }],
       "maxWorkers": 6,
       "outputs": [
         { "resourceId": "wood", "amount": 0.25 },
@@ -64,6 +78,9 @@
       "name": "香料",
       "description": "高价值经济作物，可周期性提供香料奢侈品。",
       "icon": "🌶️",
+      "allowedGrounds": ["G"],
+      "eraId": "ancient",
+      "unlockConditions": [],
       "maxWorkers": 6,
       "outputs": [{ "resourceId": "gold", "amount": 0.8 }],
       "luxury": { "id": "spices", "intervalWorkerTicks": 10 }
@@ -73,6 +90,9 @@
       "name": "甘蔗",
       "description": "提供少量食物和较高贸易收入。",
       "icon": "🎋",
+      "allowedGrounds": ["G"],
+      "eraId": "medieval",
+      "unlockConditions": [],
       "maxWorkers": 6,
       "outputs": [
         { "resourceId": "food", "amount": 0.5 },

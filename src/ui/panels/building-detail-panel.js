@@ -190,6 +190,41 @@ export function renderBuildingDetailPanel(data, body, pm) {
     container.appendChild(effectSection);
   }
 
+  const farmOperation = buildingSystem.getFarmOperation?.(buildingIndex);
+  if (farmOperation) {
+    const cropSection = section('农田作物', '🌾');
+    const current = document.createElement('div');
+    current.style.cssText = 'font-size:12px;color:#d7deea;margin-bottom:10px;line-height:1.6;';
+    const pendingCrop = farmOperation.availableCrops.find(crop => crop.id === farmOperation.pendingCropId);
+    current.innerHTML = `当前种植：<b style="color:#79d89b">${farmOperation.crop?.icon || ''} ${farmOperation.crop?.name || '未种植'}</b>`
+      + (pendingCrop ? `<br><span style="color:#e3bd73">第 ${farmOperation.pendingCropDay} 天改种：${pendingCrop.icon || ''} ${pendingCrop.name}</span>` : '')
+      + `<br>当前人口：${farmOperation.workers}/${farmOperation.maxWorkers} · 当前产出：${formatResourceList(farmOperation.outputs)}`;
+    cropSection.appendChild(current);
+
+    const cropGrid = document.createElement('div');
+    cropGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;';
+    for (const crop of farmOperation.availableCrops) {
+      const button = document.createElement('button');
+      const selected = crop.id === farmOperation.cropId;
+      button.type = 'button';
+      button.disabled = !crop.unlocked || selected;
+      button.style.cssText = `padding:10px;text-align:left;border-radius:9px;border:1px solid ${selected ? 'rgba(121,216,155,.55)' : 'rgba(255,255,255,.1)'};background:${selected ? 'rgba(121,216,155,.12)' : 'rgba(255,255,255,.04)'};color:#e8edf4;cursor:${button.disabled ? 'default' : 'pointer'};opacity:${crop.unlocked ? 1 : 0.5};font-family:inherit;`;
+      button.innerHTML = `<b>${crop.icon || ''} ${crop.name}</b><br><span style="font-size:11px;color:#aeb8c5">每人 ${formatResourceList(crop.outputs)}</span>`
+        + (!crop.unlocked ? `<br><span style="font-size:10px;color:#e79a9a">${crop.reasons.join('；')}</span>` : '');
+      button.addEventListener('click', () => {
+        const result = buildingSystem.setFarmCrop(buildingIndex, crop.id);
+        if (!result.ok) {
+          pm.alert({ crop_locked: '该作物尚未解锁', terrain_mismatch: '这块农田的地形不适合该作物' }[result.reason] || '无法改种');
+          return;
+        }
+        pm.refresh({ buildingIndex });
+      });
+      cropGrid.appendChild(button);
+    }
+    cropSection.appendChild(cropGrid);
+    container.appendChild(cropSection);
+  }
+
   // 建造进度注册到统一进度管理器
   if (building.status === 'constructing') {
     const progressFill = header.querySelector('.build-progress-fill');

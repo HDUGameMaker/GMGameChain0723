@@ -54,8 +54,8 @@ test('one unlock status supplies both era and configured gate results', () => {
   assert.deepEqual(system.getUnlockStatus('bank'), {
     unlocked: false,
     conditions: [
-      { type: 'era', desc: '时代: 中世纪', met: false },
-      { type: 'tech', desc: '科技: 铸币术', met: false }
+      { type: 'tech', desc: '科技: 铸币术', met: false },
+      { type: 'era', desc: '时代: 中世纪', met: false }
     ]
   });
   assert.equal(system.isUnlocked('bank'), false);

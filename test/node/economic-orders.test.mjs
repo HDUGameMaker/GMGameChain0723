@@ -57,41 +57,45 @@ test('economic orders expose eight crops and four gathering jobs', () => {
 
 test('economic orders and buildings share the same finite worker pool', () => {
   const { population, economy } = createScenario(6);
-  const order = economy.createOrder({ type: 'crop', targetId: 'grain' }).order;
+  const order = economy.createOrder({ type: 'gathering', targetId: 'woodcutting' }).order;
   assert.equal(population.getAvailableWorkers(), 4);
   assert.equal(economy.assignWorkers(order.id, 4).ok, true);
   assert.equal(population.getAvailableWorkers(), 0);
   assert.equal(economy.assignWorkers(order.id, 5).ok, false);
   assert.equal(economy.assignWorkers(order.id, 1).ok, true);
   assert.equal(population.getAvailableWorkers(), 3);
-  assert.equal(population.getPopulationStats().jobs.agriculture, 1);
+  assert.equal(population.getPopulationStats().jobs.gathering, 1);
 });
 
-test('staffed crop and gathering orders produce base resources and luxuries each tick', () => {
-  const { resource, luxury, economy } = createScenario(12);
-  const crop = economy.createOrder({ type: 'crop', targetId: 'grapes' }).order;
+test('economic orders reject crop creation because farms own crop choice', () => {
+  const { economy } = createScenario(12);
+
+  assert.deepEqual(economy.createOrder({ type: 'crop', targetId: 'grain' }), {
+    ok: false,
+    reason: 'farm_required'
+  });
+});
+
+test('staffed gathering orders produce common resources each tick', () => {
+  const { resource, economy } = createScenario(12);
   const gather = economy.createOrder({ type: 'gathering', targetId: 'woodcutting' }).order;
-  economy.assignWorkers(crop.id, 2);
   economy.assignWorkers(gather.id, 3);
 
   for (let tick = 0; tick < 4; tick += 1) eventBus.emit('tick', {});
-  assert.equal(resource.getAmount('food'), 4.8);
-  assert.equal(resource.getAmount('gold'), 2.8);
   assert.ok(Math.abs(resource.getAmount('wood') - 14.4) < 1e-9);
-  assert.equal(luxury.inventory.wine, 1);
 });
 
-test('economic order save state preserves assignments and luxury progress', () => {
+test('economic order restore preserves gathering and drops legacy global crop orders', () => {
   const { economy } = createScenario(12);
-  const crop = economy.createOrder({ type: 'crop', targetId: 'spices' }).order;
-  economy.assignWorkers(crop.id, 3);
-  eventBus.emit('tick', {});
+  const gather = economy.createOrder({ type: 'gathering', targetId: 'stonecutting' }).order;
+  economy.assignWorkers(gather.id, 3);
   const saved = economy.getState();
+  saved.orders.push({ id: 'legacy_crop', type: 'crop', targetId: 'spices', workers: 4, luxuryProgress: 2 });
 
   const restoredScenario = createScenario(12);
   restoredScenario.economy.restoreState(saved);
-  const restored = restoredScenario.economy.getOrders()[0];
-  assert.equal(restored.targetId, 'spices');
+  const [restored] = restoredScenario.economy.getOrders();
+  assert.equal(restoredScenario.economy.getOrders().length, 1);
+  assert.equal(restored.targetId, 'stonecutting');
   assert.equal(restored.workers, 3);
-  assert.equal(restored.luxuryProgress, 3);
 });

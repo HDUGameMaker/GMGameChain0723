@@ -3219,7 +3219,7 @@
     {
       "id": "grain_farm",
       "name": "粮食农场",
-      "category": "gathering",
+      "category": "agriculture",
       "description": "粮食农场承担gathering体系中的独特职责。",
       "footprint": {
         "width": 1,
@@ -3228,7 +3228,7 @@
       "maxCount": null,
       "initialBuilding": false,
       "maxWorkers": 6,
-      "jobType": "gathering",
+      "jobType": "agriculture",
       "buildCost": [
         {
           "resourceId": "wood",
@@ -3273,7 +3273,7 @@
         "workersOffsetY": 0
       },
       "tags": [
-        "gathering"
+        "farm"
       ]
     },
     {
@@ -3342,7 +3342,7 @@
     {
       "id": "granary_hall",
       "name": "粮仓",
-      "category": "storage",
+      "category": "administration",
       "description": "粮仓承担storage体系中的独特职责。",
       "footprint": {
         "width": 1,
@@ -3390,7 +3390,7 @@
     {
       "id": "central_warehouse",
       "name": "中央仓库",
-      "category": "storage",
+      "category": "administration",
       "description": "中央仓库承担storage体系中的独特职责。",
       "footprint": {
         "width": 2,
@@ -3825,7 +3825,7 @@
     {
       "id": "embassy",
       "name": "使馆",
-      "category": "diplomacy",
+      "category": "administration",
       "description": "使馆承担diplomacy体系中的独特职责。",
       "footprint": {
         "width": 1,
@@ -4586,7 +4586,7 @@
     {
       "id": "tavern_hall",
       "name": "历史酒馆",
-      "category": "hero",
+      "category": "civic",
       "description": "历史酒馆承担hero体系中的独特职责。",
       "footprint": {
         "width": 2,
@@ -4634,7 +4634,7 @@
     {
       "id": "strategy_office",
       "name": "谋略府",
-      "category": "strategy",
+      "category": "research",
       "description": "谋略府承担strategy体系中的独特职责。",
       "footprint": {
         "width": 1,
