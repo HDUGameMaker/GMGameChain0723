@@ -34,7 +34,22 @@ test('event system supports inspiration and fixed-outpost relation effects', () 
 });
 
 test('save schema uses the current version and persists historical state after migration', () => {
-  assert.equal(SaveManager.CURRENT_VERSION, 8);
+  assert.equal(SaveManager.CURRENT_VERSION, 9);
+  const migrated = SaveManager.migrate({
+    version: 8,
+    resources: {},
+    buildings: [],
+    armies: [{ id: 'army_1', unitIds: ['spearman'] }],
+    availableUnits: { archer: 2 },
+    tradeRoutes: { nextId: 2, routes: [], conversions: [] },
+    factions: { states: {}, relations: {}, lastSyncDay: 3 }
+  });
+  assert.deepEqual(migrated.world, { schemaVersion: 1, source: 'legacy_static', mapId: 'base_map_v1' });
+  assert.equal(migrated.armyState.armies[0].ownerId, 'player');
+  assert.equal(migrated.commerce.factions.lastSyncDay, 3);
+  for (const mirrorKey of ['armies', 'availableUnits', 'tradeRoutes', 'factions']) {
+    assert.equal(mirrorKey in migrated, false, `${mirrorKey} must not survive v9 migration`);
+  }
   assert.match(mainSource, /rawSave\.version\s*===\s*SaveManager\.CURRENT_VERSION/);
   assert.match(mainSource, /version:\s*SaveManager\.CURRENT_VERSION/);
   for (const key of ['territory', 'enemyExpansion', 'buildingTech', 'diplomacy', 'heroes', 'era', 'luxuries', 'strategies']) {

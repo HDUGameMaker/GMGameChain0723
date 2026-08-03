@@ -4,6 +4,7 @@
  */
 import { eventBus } from '../core/EventBus.js';
 import { renderTutorialPromptPanel } from './panels/tutorial-prompt-panel.js';
+import { renderSaveRecoveryPanel } from './panels/save-recovery-panel.js';
 
 // 阻塞时间的面板类型
 const SYSTEM_DIALOG_TYPE = '_system_dialog';
@@ -360,6 +361,7 @@ export class PopupManager {
       'economic_orders': '农业与采集作业',
       'commerce': '商业与贸易路线',
       'world_factions': '世界势力与野外目标',
+      'save_recovery': '存档恢复',
       'tutorial_prompt': '新手教程',
       'quest_panel': '任务'
     };
@@ -387,6 +389,7 @@ export class PopupManager {
    */
   _registerBuiltinPanels() {
     this.register('tutorial_prompt', renderTutorialPromptPanel);
+    this.register('save_recovery', renderSaveRecoveryPanel);
 
     // 延迟导入避免循环依赖，使用动态注册
     import('./panels/building-select-panel.js').then(m => {

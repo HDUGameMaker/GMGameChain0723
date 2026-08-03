@@ -45,6 +45,16 @@ import { cheatManager } from './utils/CheatManager.js';
 import { messageLog } from './ui/MessageLog.js';
 import { DebugPanel } from './ui/panels/debug-panel.js';
 
+function omitUndefinedSaveProperties(value) {
+  if (Array.isArray(value)) return value.map(omitUndefinedSaveProperties);
+  if (!value || typeof value !== 'object' || Object.getPrototypeOf(value) !== Object.prototype) return value;
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([, item]) => item !== undefined)
+      .map(([key, item]) => [key, omitUndefinedSaveProperties(item)])
+  );
+}
+
 class Game {
   constructor() {
     this.app = null;
@@ -53,6 +63,7 @@ class Game {
     this._started = false;
     this._resetting = false;
     this._gameOver = false;
+    this._worldState = { schemaVersion: 1, source: 'legacy_static', mapId: 'base_map_v1' };
   }
 
   async boot() {
@@ -373,7 +384,10 @@ class Game {
     });
 
     // 5. 尝试加载存档
-    const rawSave = options.forceNew ? null : await SaveManager.load();
+    const recovery = options.forceNew
+      ? { source: null, envelope: null, payload: null, warnings: [] }
+      : await SaveManager.loadRecoverable();
+    const rawSave = recovery.payload;
     // 重设计后存档结构不兼容，旧存档(version<5)强制开新局
     const saveData = (rawSave && rawSave.version === SaveManager.CURRENT_VERSION) ? rawSave : null;
     if (rawSave && !saveData) console.log('[Game] 旧存档不兼容重设计，开始新游戏');
@@ -421,6 +435,14 @@ class Game {
     this.hud = new HUD(this.systems, this.popupManager);
     // 7.01 初始化入侵 UI
     this.invasionUI = new InvasionUI(this.systems.invasion);
+
+    if (recovery.source || recovery.warnings.length > 0) {
+      this.popupManager.open('save_recovery', {
+        source: recovery.source,
+        warnings: recovery.warnings,
+        blocking: false
+      });
+    }
 
     // 7.03 有存档时恢复任务悬浮窗显示
     if (saveData) {
@@ -543,6 +565,7 @@ class Game {
   }
 
   restoreFromSave(saveData) {
+    this._worldState = structuredClone(saveData.world);
     this.systems.time.restoreState(saveData.time);
     this.systems.resource.restoreState(saveData.resources);
     this.systems.building.restoreState(saveData.buildings);
@@ -603,7 +626,7 @@ class Game {
     else this.systems.strategy.initNew();
     if (saveData.economicOrders) this.systems.economyOrders.restoreState(saveData.economicOrders);
     else this.systems.economyOrders.initNew();
-    if (saveData.tradeRoutes) this.systems.commerce.restoreState(saveData.tradeRoutes);
+    if (saveData.commerce) this.systems.commerce.restoreState(saveData.commerce);
     else this.systems.commerce.initNew();
     if (saveData.weather) {
       this.systems.weather.restoreState(saveData.weather);
@@ -619,15 +642,11 @@ class Game {
     if (saveData.quest) {
       this.systems.quest.restoreState(saveData.quest);
     }
-    this.systems.army.restoreState(saveData.armyState || {
-      armies: saveData.armies || [],
-      availableUnits: saveData.availableUnits || {},
-      nextId: (saveData.armies?.length || 0) + 1
-    });
+    this.systems.army.restoreState(saveData.armyState);
     if (saveData.wildSites) this.systems.wildSites.restoreState(saveData.wildSites);
     else this.systems.wildSites.initNew();
     store.setState({
-      factions: saveData.factions || { states: {}, relations: {}, lastSyncDay: 0 },
+      factions: saveData.commerce?.factions || { states: {}, relations: {}, lastSyncDay: 0 },
       eraMusic: saveData.eraMusic || { currentEraId: saveData.era?.currentEraId || 'primitive', currentTrackId: null }
     });
     store.setState({
@@ -662,6 +681,7 @@ class Game {
     const state = {
       version: SaveManager.CURRENT_VERSION,
       timestamp: Date.now(),
+      world: structuredClone(this._worldState),
       time: this.systems.time.getState(),
       population: this.systems.population.getState(),
       resources: this.systems.resource.getSaveState(),
@@ -689,19 +709,19 @@ class Game {
       audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
       armyState: this.systems.army.getState(),
-      armies: this.systems.army.getState().armies,
-      availableUnits: this.systems.army.getAvailableUnits(),
       wildSites: this.systems.wildSites.getState(),
       economicOrders: this.systems.economyOrders.getState(),
-      tradeRoutes: this.systems.commerce.getState(),
-      factions: store.getState('factions'),
+      commerce: {
+        ...this.systems.commerce.getState(),
+        factions: store.getState('factions') || { states: {}, relations: {}, lastSyncDay: 0 }
+      },
       eraMusic: store.getState('eraMusic'),
       doctrineResearched: store.getState('doctrineResearched') || [],
       doctrineResearchLevels: store.getState('doctrineResearchLevels') || {},
       inspiration: store.getState('inspiration') || 0,
       removedEventMarkers: this.mapRenderer ? this.mapRenderer.getMarkerState() : []
     };
-    await SaveManager.save(state);
+    await SaveManager.save(omitUndefinedSaveProperties(state));
     console.log('[Game] Auto-saved');
     return true;
   }

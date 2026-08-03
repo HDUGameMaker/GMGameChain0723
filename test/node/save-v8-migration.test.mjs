@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { SaveManager } from '../../src/core/SaveManager.js';
 
-test('v7 saves migrate to v8 without losing developed historical state', () => {
+test('v7 saves migrate to v9 without losing developed historical state', () => {
   const source = {
     version: 7,
     resources: {
@@ -35,9 +35,9 @@ test('v7 saves migrate to v8 without losing developed historical state', () => {
 
   const migrated = SaveManager.migrate(source);
 
-  assert.equal(SaveManager.CURRENT_VERSION, 8);
-  assert.equal(migrated.version, 8);
-  assert.deepEqual(migrated.migrationHistory, [7, 8]);
+  assert.equal(SaveManager.CURRENT_VERSION, 9);
+  assert.equal(migrated.version, 9);
+  assert.deepEqual(migrated.migrationHistory, [7, 8, 9]);
   assert.equal(migrated.resources.wood.current, 237);
   assert.equal(migrated.population.current, 19);
   assert.deepEqual(migrated.tech, source.tech);
@@ -47,31 +47,37 @@ test('v7 saves migrate to v8 without losing developed historical state', () => {
   assert.equal(migrated.era.currentEraId, 'early_modern');
   assert.equal(migrated.era.selectedCivilizations.primitive, 'river_tribe');
   assert.equal(migrated.era.selectedCivilizations.early_modern, 'britain_industrial');
-  assert.equal(migrated.armies[0].id, 'army_1');
   assert.deepEqual(migrated.armyState.armies[0].unitIds, ['spearman', 'spearman', 'archer']);
+  assert.equal(migrated.armyState.armies[0].ownerId, 'player');
   assert.deepEqual(migrated.armyState.availableUnits, { spearman: 4, archer: 0 });
   assert.equal(migrated.armyState.armies[0].morale, 73);
   assert.equal(migrated.armyState.armies[0].supply, 0.8);
-  assert.deepEqual(migrated.armies, migrated.armyState.armies);
-  assert.deepEqual(migrated.availableUnits, migrated.armyState.availableUnits);
   assert.deepEqual(migrated.economicOrders, { nextId: 1, orders: [] });
-  assert.deepEqual(migrated.tradeRoutes, { nextId: 1, routes: [], conversionCounters: {} });
-  assert.deepEqual(migrated.factions, { states: {}, relations: {}, lastSyncDay: 0 });
+  assert.deepEqual(migrated.commerce, {
+    nextId: 1,
+    routes: [],
+    conversionCounters: {},
+    factions: { states: {}, relations: {}, lastSyncDay: 0 }
+  });
+  assert.deepEqual(migrated.world, { schemaVersion: 1, source: 'legacy_static', mapId: 'base_map_v1' });
+  for (const mirrorKey of ['armies', 'availableUnits', 'tradeRoutes', 'factions']) {
+    assert.equal(mirrorKey in migrated, false, `${mirrorKey} mirror removed`);
+  }
   assert.deepEqual(migrated.eraMusic, { currentEraId: 'early_modern', currentTrackId: null });
   assert.equal(source.version, 7, 'migration must not mutate the source save');
 });
 
-test('v5 and v6 saves pass through every migration step to v8', () => {
+test('v5 and v6 saves pass through every migration step to v9', () => {
   const fromV5 = SaveManager.migrate({ version: 5, resources: {}, buildings: [] });
   const fromV6 = SaveManager.migrate({ version: 6, resources: {}, buildings: [] });
 
-  assert.equal(fromV5.version, 8);
-  assert.deepEqual(fromV5.migrationHistory, [5, 6, 7, 8]);
-  assert.equal(fromV6.version, 8);
-  assert.deepEqual(fromV6.migrationHistory, [6, 7, 8]);
+  assert.equal(fromV5.version, 9);
+  assert.deepEqual(fromV5.migrationHistory, [5, 6, 7, 8, 9]);
+  assert.equal(fromV6.version, 9);
+  assert.deepEqual(fromV6.migrationHistory, [6, 7, 8, 9]);
 });
 
-test('fresh v8 saves receive missing collection defaults but preserve valid collections', () => {
+test('fresh v8 saves receive canonical domain defaults and preserve valid collections', () => {
   const source = {
     version: 8,
     era: { currentEraId: 'modern', selectedCivilizations: {}, legacyCivilizationIds: [], eraStars: {} },
@@ -80,11 +86,13 @@ test('fresh v8 saves receive missing collection defaults but preserve valid coll
   };
 
   const migrated = SaveManager.migrate(source);
-  assert.equal(migrated.version, 8);
+  assert.equal(migrated.version, 9);
   assert.deepEqual(migrated.economicOrders, source.economicOrders);
-  assert.deepEqual(migrated.tradeRoutes, source.tradeRoutes);
-  assert.deepEqual(migrated.armies, []);
-  assert.deepEqual(migrated.factions, { states: {}, relations: {}, lastSyncDay: 0 });
+  assert.deepEqual(migrated.commerce, {
+    ...source.tradeRoutes,
+    factions: { states: {}, relations: {}, lastSyncDay: 0 }
+  });
+  assert.deepEqual(migrated.armyState.armies, []);
 });
 
 test('v8 saves normalize array reserves and derive the next army id', () => {
@@ -96,4 +104,49 @@ test('v8 saves normalize array reserves and derive the next army id', () => {
 
   assert.deepEqual(migrated.armyState.availableUnits, { spearman: 2, archer: 1 });
   assert.equal(migrated.armyState.nextId, 4);
+});
+
+test('v8 migration preserves era stars and marks abstract occupied colonies as legacy off-map', () => {
+  const source = {
+    version: 8,
+    era: {
+      currentEraId: 'medieval',
+      selectedCivilizations: {},
+      legacyCivilizationIds: ['river_tribe'],
+      eraStars: { primitive: 5, classical: 2, medieval: 1 }
+    },
+    colony: {
+      occupied: {
+        spice_island: { id: 'spice_island', defense: 7, occupiedDay: 12 }
+      }
+    },
+    armies: [{ id: 'army_2', unitIds: ['archer'], ownerId: 'ally' }],
+    factions: { states: { city_1: { status: 'friendly' } }, relations: {}, lastSyncDay: 8 }
+  };
+  const before = structuredClone(source);
+
+  const migrated = SaveManager.migrate(source);
+
+  assert.deepEqual(source, before, 'v8 source remains byte-for-byte equivalent');
+  assert.deepEqual(migrated.era.eraStars, { primitive: 5, classical: 2, medieval: 1 });
+  assert.equal(migrated.colony.occupied.spice_island.legacyOffmap, true);
+  assert.equal(migrated.armyState.armies[0].ownerId, 'ally', 'an explicit owner is preserved');
+  assert.deepEqual(migrated.commerce.factions, source.factions);
+});
+
+test('already-v9 payloads remain canonical without mutating the input', () => {
+  const source = {
+    version: 9,
+    world: { schemaVersion: 1, source: 'procedural', mapId: 'world_7' },
+    armyState: { nextId: 1, armies: [], availableUnits: {}, battleHistory: [] },
+    commerce: { nextId: 2, routes: [], conversions: [], factions: { states: {}, relations: {}, lastSyncDay: 4 } },
+    migrationHistory: [7, 8, 9]
+  };
+  const before = structuredClone(source);
+
+  const migrated = SaveManager.migrate(source);
+
+  assert.deepEqual(source, before);
+  assert.deepEqual(migrated, source);
+  assert.notEqual(migrated, source);
 });

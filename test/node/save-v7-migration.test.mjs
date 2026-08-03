@@ -33,7 +33,7 @@ test('v5 saves pass through v6 and v7 compatibility defaults before current migr
   for (const key of ['territory', 'enemyExpansion', 'buildingTech', 'diplomacy', 'heroes', 'era', 'luxuries', 'strategies']) {
     assert.ok(key in migrated, key);
   }
-  assert.deepEqual(migrated.migrationHistory, [5, 6, 7, 8]);
+  assert.deepEqual(migrated.migrationHistory, [5, 6, 7, 8, 9]);
 });
 
 test('unsupported legacy or invalid saves are rejected', () => {
