@@ -8,6 +8,7 @@ import { store } from '../core/Store.js';
 import { progressManager } from '../utils/ProgressManager.js';
 import { gridToScreenTopLeft, screenToGrid } from '../utils/gridUtils.js';
 import { AnimatedSpriteHelper } from './AnimatedSpriteHelper.js';
+import { createBuildingHoverDetails, createMapTokenModels } from './MapPresentation.js';
 
 export class MapRenderer {
   constructor(app, buildingSystem, torchSystem, roadSystem, combatSystem, territorySystem) {
@@ -55,6 +56,8 @@ export class MapRenderer {
     this.worldContainer.addChild(this.buildingLayer);
     this.roadLayer = new PIXI.Container();
     this.worldContainer.addChild(this.roadLayer);
+    this.actorLayer = new PIXI.Container();
+    this.worldContainer.addChild(this.actorLayer);
     this.worldContainer.addChild(this.ghostLayer);
     this.worldContainer.addChild(this.lightOverlay);
 
@@ -153,6 +156,8 @@ export class MapRenderer {
   setEnemyExpansion(ees) { this._enemyExpansion = ees || null; }
   setSpellSystem(ss) { this._spellSystem = ss || null; }
   setDiplomacySystem(ds) { this._diplomacySystem = ds || null; }
+  setArmySystem(system) { this._armySystem = system || null; }
+  setWildSiteSystem(system) { this._wildSiteSystem = system || null; }
 
   async init() {
     await this._preloadTerrainTextures();
@@ -166,6 +171,7 @@ export class MapRenderer {
     this._drawEnemyExpansion();
     this._drawSpellZones();
     this._drawRoads();
+    this._drawStrategicTokens();
     this._createFogCanvas();
     this.refreshBuildings();
   }
@@ -489,6 +495,89 @@ export class MapRenderer {
 
   _isClickOnOutpost(col, row) {
     return (this._outpostData || []).find(outpost => outpost.gridX === col && outpost.gridY === row) || null;
+  }
+
+  _getStrategicTokenModels() {
+    const armies = (this._armySystem?.getArmies?.() || []).map(army => ({
+      ...army,
+      unitCount: army.unitIds?.length || 0,
+      power: this._armySystem.getArmyPower(army.id)
+    }));
+    const wildSites = (this._wildSiteSystem?.getVisibleSites?.() || []).map(site => ({
+      ...site,
+      strength: this._wildSiteSystem.getSiteStrength(site.id)
+    }));
+    return createMapTokenModels({ armies, wildSites });
+  }
+
+  _drawStrategicTokens() {
+    this.actorLayer.removeChildren().forEach(child => child.destroy({ children: true }));
+    const ts = this.tileSize;
+    for (const token of this._getStrategicTokenModels()) {
+      const x = token.gridX * ts;
+      const y = token.gridY * ts;
+      const container = new PIXI.Container();
+      const bg = new PIXI.Graphics();
+      bg.roundRect(x + 4, y + 4, ts - 8, ts - 8, 8);
+      bg.fill({ color: token.color, alpha: 0.9 });
+      bg.roundRect(x + 4, y + 4, ts - 8, ts - 8, 8);
+      bg.stroke({ color: 0xf4e1b8, alpha: 0.9, width: 2 });
+      container.addChild(bg);
+      const icon = new PIXI.Text({ text: token.icon, style: { fontSize: Math.max(18, ts * 0.38), fill: 0xffffff, fontWeight: 'bold' } });
+      icon.anchor.set(0.5);
+      icon.x = x + ts / 2;
+      icon.y = y + ts / 2 - 5;
+      container.addChild(icon);
+      const label = new PIXI.Text({ text: token.label, style: { fontSize: Math.max(8, ts * 0.13), fill: 0xffffff, align: 'center', dropShadow: { color: 0x000000, alpha: 0.9, blur: 2, distance: 1 } } });
+      label.anchor.set(0.5);
+      label.x = x + ts / 2;
+      label.y = y + ts - 8;
+      container.addChild(label);
+      this.actorLayer.addChild(container);
+    }
+  }
+
+  _escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+  }
+
+  _hideMapHover() {
+    const card = document.getElementById('map-hover-card');
+    if (card) card.classList.remove('visible');
+  }
+
+  _showMapHover(model, clientX, clientY) {
+    const card = document.getElementById('map-hover-card');
+    if (!card || !model) return this._hideMapHover();
+    card.innerHTML = `<div class="map-hover-card__title">${this._escapeHtml(model.title)}</div>`
+      + `<div class="map-hover-card__subtitle">${this._escapeHtml(model.subtitle || '')}</div>`
+      + model.lines.map(line => `<div class="map-hover-card__line">${this._escapeHtml(line)}</div>`).join('');
+    card.style.left = `${Math.max(12, Math.min(window.innerWidth - 336, clientX + 18))}px`;
+    card.style.top = `${Math.max(12, Math.min(window.innerHeight - 240, clientY + 18))}px`;
+    card.classList.add('visible');
+  }
+
+  _updateMapHover(event) {
+    if (this.isDragging || this._dragBuildingIndex !== null || this._dragUnitIndex !== null || this.buildingSystem.placingState === 'PLACING') {
+      return this._hideMapHover();
+    }
+    const position = this._clientToGrid(event.clientX, event.clientY);
+    if (!position) return this._hideMapHover();
+    const buildingIndex = this._getBuildingAt(position.col, position.row);
+    if (buildingIndex >= 0) {
+      const building = this.buildingSystem.buildings[buildingIndex];
+      const config = configRegistry.getBuilding(building.buildingId);
+      const upgradeName = config?.upgradesTo ? configRegistry.getBuilding(config.upgradesTo)?.name : null;
+      return this._showMapHover(createBuildingHoverDetails(building, config, { upgradeName }), event.clientX, event.clientY);
+    }
+    const token = this._getStrategicTokenModels().find(item => item.gridX === position.col && item.gridY === position.row);
+    if (token) return this._showMapHover({ title: token.label, subtitle: token.kind, lines: [token.detail] }, event.clientX, event.clientY);
+    const outpost = (this._outpostData || []).find(item => item.gridX === position.col && item.gridY === position.row);
+    if (outpost) {
+      const state = this._diplomacySystem?.getOutpostState?.(outpost.id) || {};
+      return this._showMapHover({ title: outpost.name, subtitle: '城邦', lines: [`关系：${state.status || '中立'}`, `好感：${state.relation ?? 0}`, outpost.description || '可交涉、贸易、结盟或宣战。'] }, event.clientX, event.clientY);
+    }
+    return this._hideMapHover();
   }
 
   // ===== 敌人渲染 =====
@@ -1211,6 +1300,7 @@ export class MapRenderer {
     // 建筑拖动状态
     this._dragBuildingIndex = null;
     this._dragBuildingConfig = null;
+    this._dragUnitIndex = null;
 
     // 挪动模式（右下角开关控制）
     this._moveMode = false;
@@ -1360,7 +1450,10 @@ export class MapRenderer {
         this._spellHover = sp ? { x: sp.col, y: sp.row } : null;
         this._drawSpellZones();
       }
+      this._updateMapHover(e);
     });
+
+    canvas.addEventListener('pointerleave', () => this._hideMapHover());
 
     canvas.addEventListener('pointerup', (e) => {
       // 单位拖动结束
@@ -2530,11 +2623,20 @@ export class MapRenderer {
       const container = new PIXI.Container();
       const isConstructing = building.status === 'constructing';
 
+      // 所有建筑始终保留“文明染色占地”，图标与名称叠加在其上。
+      const tileBackground = new PIXI.Graphics();
+      const tileColor = this._getBuildingColor(building.buildingId, config.category);
+      tileBackground.roundRect(x + 2, y + 2, w * this.tileSize - 4, h * this.tileSize - 4, 6);
+      tileBackground.fill({ color: tileColor, alpha: 0.76 });
+      tileBackground.roundRect(x + 2, y + 2, w * this.tileSize - 4, h * this.tileSize - 4, 6);
+      tileBackground.stroke({ color: 0xe6d1a3, alpha: 0.58, width: 1.5 });
+      container.addChild(tileBackground);
+
       // 标签布局：从配置读取偏移量，支持策划/美术按建筑微调
       const layout = config.labelLayout || {};
       const centerX = x + (w * this.tileSize) / 2;
       const centerY = y + (h * this.tileSize) / 2;
-      const nameBaseY = centerY - 10;
+      const nameBaseY = y + h * this.tileSize - 9;
       const progressBaseY = centerY + 4;
       const workersBaseY = y + h * this.tileSize - 12;
 
@@ -2585,16 +2687,17 @@ export class MapRenderer {
         const iconOffsetX = iconLayout.offsetX || 0;
         const iconOffsetY = iconLayout.offsetY || 0;
 
-        sprite.x = x + iconOffsetX;
-        sprite.y = y + iconOffsetY;
+        sprite.anchor.set(0.5);
+        sprite.x = centerX + iconOffsetX;
+        sprite.y = centerY - 5 + iconOffsetY;
 
         // 安全设置缩放：PixiJS v8 Texture.from() 异步加载，纹理可能 0×0
         // 直接设 sprite.width 会除以 0 → scale 变成 Infinity，永久不显示
         const texW = texture.width || 0;
         const texH = texture.height || 0;
         if (texW > 0 && texH > 0) {
-          sprite.scale.x = (w * this.tileSize / texW) * iconScaleX;
-          sprite.scale.y = (h * this.tileSize / texH) * iconScaleY;
+          sprite.scale.x = (w * this.tileSize * 0.7 / texW) * iconScaleX;
+          sprite.scale.y = (h * this.tileSize * 0.7 / texH) * iconScaleY;
         }
         // 注意：纹理异步加载完成后 scale 会自动生效——下次 refreshBuildings 时纹理已缓存，
         // texture.width 即为实际尺寸，scale 计算正确
@@ -2604,10 +2707,10 @@ export class MapRenderer {
       } else {
         // ===== 文字回退模式（纯色矩形 + 名称）=====
         const graphics = new PIXI.Graphics();
-        const color = this._getBuildingColor(building.buildingId);
+        const color = this._getBuildingColor(building.buildingId, config.category);
 
         graphics.rect(x + 2, y + 2, w * this.tileSize - 4, h * this.tileSize - 4);
-        graphics.fill({ color, alpha: 0.9 });
+        graphics.fill({ color, alpha: 0.32 });
         graphics.rect(x + 2, y + 2, w * this.tileSize - 4, h * this.tileSize - 4);
         graphics.stroke({ color: 0xffffff, alpha: 0.3, width: 1 });
         container.addChild(graphics);
@@ -2839,7 +2942,7 @@ export class MapRenderer {
     return this._textureCache.get(path);
   }
 
-  _getBuildingColor(buildingId) {
+  _getBuildingColor(buildingId, category = null) {
     const colors = {
       'work_shed': 0x8B4513,
       'plank_house': 0xA0522D,
@@ -2856,7 +2959,13 @@ export class MapRenderer {
       'basic_workshop': 0x9370DB,
       'advanced_workshop': 0x7B2FBE
     };
-    return colors[buildingId] || 0x666666;
+    const categories = {
+      housing: 0x7e6a50, gathering: 0x3f7251, storage: 0x576879, research: 0x3d5f91,
+      civic: 0x795a91, administration: 0x766146, commerce: 0x8d6b32, diplomacy: 0x476f72,
+      military: 0x7e493f, defense: 0x626773, naval: 0x315f80, industry: 0x6d5550,
+      hero: 0x815f37, strategy: 0x5b4d78, civilization: 0x6d5f86
+    };
+    return colors[buildingId] || categories[category] || 0x666666;
   }
 
   // ===== 地图建造进度条（PIXI，由 ProgressManager 驱动） =====
@@ -3205,6 +3314,8 @@ export class MapRenderer {
       this._refreshEventMarkers();
     });
     store.subscribe('outpostVersion', () => this._drawOutposts());
+    eventBus.on('armyChanged', () => this._drawStrategicTokens());
+    eventBus.on('wildSitesChanged', () => this._drawStrategicTokens());
   }
 
   /**

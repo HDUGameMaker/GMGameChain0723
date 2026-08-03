@@ -1405,10 +1405,32 @@
       #hud-bottom .hud-btn { flex: 0 0 auto; }
       #hud-bottom .hud-spacer { display: none; }
     }
+
+    #map-hover-card {
+      position: fixed;
+      z-index: 1200;
+      width: 300px;
+      padding: 14px 16px;
+      border: 1px solid rgba(214, 176, 103, 0.68);
+      border-radius: 10px;
+      background: linear-gradient(145deg, rgba(20, 27, 35, 0.97), rgba(9, 14, 20, 0.97));
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.52);
+      color: #e9e0cf;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(5px);
+      transition: opacity .12s ease, transform .12s ease;
+    }
+
+    #map-hover-card.visible { opacity: 1; transform: translateY(0); }
+    .map-hover-card__title { color: #f0c879; font-size: 16px; font-weight: 700; }
+    .map-hover-card__subtitle { margin: 2px 0 8px; color: #8fb7c5; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    .map-hover-card__line { margin-top: 4px; color: #d4d9dc; font-size: 12px; line-height: 1.45; }
   </style>
 </head>
 <body>
   <div id="game-canvas"></div>
+  <div id="map-hover-card" role="tooltip" aria-live="polite"></div>
 
   <div id="hud">
     <div id="hud-top">

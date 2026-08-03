@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createBuildingHoverDetails, createMapTokenModels } from '../../src/rendering/MapPresentation.js';
+
+test('building hover details expose status, jobs, output, aura and upgrade information', () => {
+  const details = createBuildingHoverDetails(
+    { buildingId: 'academy', status: 'active', currentWorkers: 3 },
+    {
+      id: 'academy', name: '学院', category: 'research', maxWorkers: 6, upgradesTo: 'library',
+      description: '解锁科技树并生产科技值。',
+      production: { output: [{ resourceId: 'gold', amount: 2 }] },
+      uniqueFunction: { sciencePerWorker: 1, aura: { radius: 2, effect: 'researchSpeedMul', multiplier: 1.1 } }
+    },
+    { upgradeName: '图书馆' }
+  );
+  assert.equal(details.title, '学院');
+  assert.match(details.lines.join('\n'), /运行中/);
+  assert.match(details.lines.join('\n'), /3\/6/);
+  assert.match(details.lines.join('\n'), /科技/);
+  assert.match(details.lines.join('\n'), /半径 2/);
+  assert.match(details.lines.join('\n'), /图书馆/);
+});
+
+test('map token models distinguish armies, fleets and wild sites', () => {
+  const tokens = createMapTokenModels({
+    armies: [
+      { id: 'a1', name: '第一军团', gridX: 2, gridY: 3, embarked: false, unitCount: 5, power: 40 },
+      { id: 'a2', name: '远洋舰队', gridX: 5, gridY: 6, embarked: true, unitCount: 3, power: 55 }
+    ],
+    wildSites: [
+      { id: 'w1', name: '海盗港', category: 'pirate_haven', gridX: 8, gridY: 9, strength: 30 },
+      { id: 'w2', name: '古代遗迹', category: 'ruin_guard', gridX: 10, gridY: 11, strength: 20 }
+    ]
+  });
+  assert.equal(tokens.length, 4);
+  assert.equal(tokens.find(token => token.id === 'a1').kind, 'army');
+  assert.equal(tokens.find(token => token.id === 'a2').kind, 'fleet');
+  assert.equal(tokens.find(token => token.id === 'w1').icon, '☠');
+  assert.equal(tokens.find(token => token.id === 'w2').icon, '◆');
+  assert.ok(tokens.every(token => Number.isFinite(token.gridX) && token.label));
+});

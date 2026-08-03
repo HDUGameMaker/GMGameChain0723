@@ -389,6 +389,8 @@ class Game {
     this.mapRenderer = new MapRenderer(this.app, this.systems.building, this.systems.torch, this.systems.road, this.systems.combat, this.systems.territory);
     this.mapRenderer.setEnemyExpansion(this.systems.enemyExpansion);
     this.mapRenderer.setDiplomacySystem(this.systems.diplomacy);
+    this.mapRenderer.setArmySystem(this.systems.army);
+    this.mapRenderer.setWildSiteSystem(this.systems.wildSites);
     await this.mapRenderer.init();
 
     // 6.05 加载存档后恢复相机位置（覆盖 _centerView 的默认/配置位置）
