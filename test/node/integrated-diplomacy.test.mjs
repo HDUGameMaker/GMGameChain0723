@@ -9,6 +9,7 @@ const map = JSON.parse(await readFile(new URL('../../config/maps/base_map.json',
 
 function setup(unlocked = ['talk', 'gift', 'aid', 'negotiate', 'trade', 'ceasefire', 'alliance']) {
   configRegistry._configs.eaIntegration = integration;
+  configRegistry._configs.map = map;
   const resources = { wood: 200, stone: 200, food: 200, gold: 200 };
   const resource = {
     canAfford: costs => costs.every(cost => (resources[cost.resourceId] || 0) >= cost.amount),
@@ -24,7 +25,9 @@ function setup(unlocked = ['talk', 'gift', 'aid', 'negotiate', 'trade', 'ceasefi
 
 test('six fixed NPC outposts occupy terrain matching their domain', () => {
   assert.equal(integration.outposts.length, 6);
-  for (const outpost of integration.outposts) {
+  const positions = new Map(map.spawnManifest.cityStates.map(outpost => [outpost.id, outpost]));
+  for (const configured of integration.outposts) {
+    const outpost = { ...configured, ...positions.get(configured.id) };
     const terrain = map.grid[outpost.gridY][outpost.gridX];
     assert.equal(outpost.domain === 'naval' ? ['S', 'W'].includes(terrain) : !['S', 'W'].includes(terrain), true, outpost.id);
     assert.equal(outpost.develops, false);

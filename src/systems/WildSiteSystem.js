@@ -18,7 +18,10 @@ export class WildSiteSystem {
     this._army = army || null;
   }
 
-  getSites() { return configRegistry.get('worldFactions')?.wildSites || []; }
+  getSites() {
+    const positions = new Map((configRegistry.get('map')?.spawnManifest?.wildSites || []).map(item => [item.id, item]));
+    return (configRegistry.get('worldFactions')?.wildSites || []).map(site => ({ ...site, ...(positions.get(site.id) || {}) }));
+  }
   getSite(id) { return this.getSites().find(site => site.id === id) || null; }
 
   initNew() {

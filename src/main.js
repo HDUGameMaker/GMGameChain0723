@@ -111,6 +111,12 @@ class Game {
 
     // 1. 加载配置
     await configRegistry.loadAll();
+    const recovery = options.forceNew
+      ? { source: null, envelope: null, payload: null, warnings: [] }
+      : await SaveManager.loadRecoverable();
+    const rawSave = recovery.payload;
+    const saveData = (rawSave && rawSave.version === SaveManager.CURRENT_VERSION) ? rawSave : null;
+    configRegistry.selectFixedMap(saveData?.world?.mapId || 'grand_map_v2');
 
     // 2. 初始化 PixiJS
     await this.initPixi();
@@ -396,12 +402,7 @@ class Game {
     });
 
     // 5. 尝试加载存档
-    const recovery = options.forceNew
-      ? { source: null, envelope: null, payload: null, warnings: [] }
-      : await SaveManager.loadRecoverable();
-    const rawSave = recovery.payload;
     // 重设计后存档结构不兼容，旧存档(version<5)强制开新局
-    const saveData = (rawSave && rawSave.version === SaveManager.CURRENT_VERSION) ? rawSave : null;
     if (rawSave && !saveData) console.log('[Game] 旧存档不兼容重设计，开始新游戏');
     if (saveData) {
       this.restoreFromSave(saveData);

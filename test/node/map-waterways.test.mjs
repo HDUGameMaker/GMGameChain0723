@@ -35,7 +35,7 @@ test('grand map dedicates fifteen to twenty percent to connected shallow and dee
 
 test('starting settlement stays on land and fixed naval city-state stays in water', () => {
   for (const building of map.initialBuildings) assert.ok(!['S', 'W'].includes(map.grid[building.gridY][building.gridX]), building.buildingId);
-  for (const outpost of integration.outposts) {
+  for (const outpost of map.spawnManifest.cityStates) {
     const water = ['S', 'W'].includes(map.grid[outpost.gridY][outpost.gridX]);
     assert.equal(water, outpost.domain === 'naval', outpost.id);
   }

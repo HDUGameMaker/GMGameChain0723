@@ -1,22 +1,22 @@
 {
   "productionSeed": "GM-GRAND-MAP-V1-2026",
-  "mapId": "grand_map_v1",
+  "mapId": "grand_map_v2",
   "source": "fixed_static",
-  "playerSpawn": { "gridX": 226, "gridY": 198 },
+  "playerSpawn": { "gridX": 270, "gridY": 180 },
   "initialBuildings": [
-    { "buildingId": "work_shed", "gridX": 226, "gridY": 198 },
-    { "buildingId": "warehouse", "gridX": 223, "gridY": 197 },
-    { "buildingId": "timber_house", "gridX": 228, "gridY": 198 }
+    { "buildingId": "work_shed", "gridX": 270, "gridY": 180 },
+    { "buildingId": "warehouse", "gridX": 267, "gridY": 179 },
+    { "buildingId": "timber_house", "gridX": 272, "gridY": 180 }
   ],
-  "ports": [{ "id": "founders_harbor", "gridX": 233, "gridY": 198 }],
+  "ports": [{ "id": "founders_harbor", "gridX": 277, "gridY": 180 }],
   "expeditionEntrancePositions": {
-    "forest_entrance": { "gridX": 220, "gridY": 201 },
-    "mine_entrance": { "gridX": 218, "gridY": 194 },
-    "mountain_entrance": { "gridX": 214, "gridY": 188 },
-    "scrapyard_entrance": { "gridX": 224, "gridY": 207 }
+    "forest_entrance": { "gridX": 264, "gridY": 185 },
+    "mine_entrance": { "gridX": 261, "gridY": 176 },
+    "mountain_entrance": { "gridX": 258, "gridY": 169 },
+    "scrapyard_entrance": { "gridX": 268, "gridY": 189 }
   },
   "terrainPatches": [],
-  "generatorVersion": 1,
+  "generatorVersion": 2,
   "defaultPreset": "huge",
   "tileSize": 60,
   "customSize": { "min": 192, "max": 512, "multiple": 32, "maxCells": 262144 },

@@ -34,7 +34,12 @@ export class DiplomacySystem {
   get _config() {
     const integration = configRegistry.get('eaIntegration') || {};
     const world = configRegistry.get('worldFactions') || {};
-    return { actions: integration.outpostActions || {}, outposts: [...(integration.outposts || []), ...(world.cityStates || [])] };
+    const positions = new Map((configRegistry.get('map')?.spawnManifest?.cityStates || []).map(item => [item.id, item]));
+    const outposts = [...(integration.outposts || []), ...(world.cityStates || [])].map(outpost => ({
+      ...outpost,
+      ...(positions.get(outpost.id) || {})
+    }));
+    return { actions: integration.outpostActions || {}, outposts };
   }
 
   getAllOutposts() { return this._config.outposts; }

@@ -20,6 +20,7 @@ class ConfigRegistry {
       'resourceNodes': 'config/resource-nodes.json',
       'items': 'config/items.json',
       'map': 'config/maps/base_map.json',
+      'mapV1': 'config/maps/grand_map_v1.json',
       'regions': 'config/expeditions/regions.json',
       'expeditionGlobal': 'config/expeditions/expedition_global.json',
       'eventsBase': 'config/events/events_base.json',
@@ -64,6 +65,7 @@ class ConfigRegistry {
     });
 
     await Promise.all(loadPromises);
+    this._configs.mapV2 = this._configs.map;
 
     this._applyEaIntegration();
     this._applyHistoricalContent();
@@ -73,6 +75,13 @@ class ConfigRegistry {
     this._inheritSynthesisRecipes();
 
     console.log('[ConfigRegistry] All configs loaded:', Object.keys(this._configs));
+  }
+
+  selectFixedMap(mapId = 'grand_map_v2') {
+    const candidate = mapId === 'grand_map_v1' ? this._configs.mapV1 : this._configs.mapV2;
+    if (!candidate || candidate.mapId !== mapId) return false;
+    this._configs.map = candidate;
+    return true;
   }
 
   /**

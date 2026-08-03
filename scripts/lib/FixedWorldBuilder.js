@@ -872,3 +872,238 @@ export function buildFixedWorld({ width = 384, height = 384, seed, patches, temp
     }
   };
 }
+
+function pointInPolygon(x, y, points) {
+  let inside = false;
+  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+    const [xi, yi] = points[i];
+    const [xj, yj] = points[j];
+    if (((yi > y) !== (yj > y)) && x < ((xj - xi) * (y - yi)) / ((yj - yi) || 1e-9) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+function shapeContains(shape, x, y) {
+  if (shape.type === 'ellipse') {
+    const dx = (x - shape.cx) / shape.rx;
+    const dy = (y - shape.cy) / shape.ry;
+    return dx * dx + dy * dy <= 1;
+  }
+  if (shape.type === 'polygon') return pointInPolygon(x, y, shape.points || []);
+  throw new TypeError('invalid_macro_shape');
+}
+
+function isWaterCode(code) {
+  return code === 'W' || code === 'S';
+}
+
+function hasNeighbor(rows, x, y, predicate) {
+  const height = rows.length;
+  const width = rows[0].length;
+  for (let dy = -1; dy <= 1; dy += 1) {
+    for (let dx = -1; dx <= 1; dx += 1) {
+      if (dx === 0 && dy === 0) continue;
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx >= 0 && ny >= 0 && nx < width && ny < height && predicate(rows[ny][nx])) return true;
+    }
+  }
+  return false;
+}
+
+function getWaterComponents(rows) {
+  const height = rows.length;
+  const width = rows[0].length;
+  const visited = new Uint8Array(width * height);
+  const components = [];
+  for (let start = 0; start < visited.length; start += 1) {
+    const startX = start % width;
+    const startY = Math.floor(start / width);
+    if (visited[start] || !isWaterCode(rows[startY][startX])) continue;
+    const queue = [start];
+    const cells = [];
+    visited[start] = 1;
+    for (let head = 0; head < queue.length; head += 1) {
+      const index = queue[head];
+      cells.push(index);
+      const x = index % width;
+      const y = Math.floor(index / width);
+      for (const [dx, dy] of CARDINAL_DIRECTIONS) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+        const next = ny * width + nx;
+        if (!visited[next] && isWaterCode(rows[ny][nx])) {
+          visited[next] = 1;
+          queue.push(next);
+        }
+      }
+    }
+    components.push(cells);
+  }
+  return components.sort((left, right) => right.length - left.length || left[0] - right[0]);
+}
+
+function connectWaterNetwork(rows) {
+  const height = rows.length;
+  const width = rows[0].length;
+  while (true) {
+    const components = getWaterComponents(rows);
+    if (components.length <= 1) return;
+    const main = new Set(components[0]);
+    const parent = new Int32Array(width * height);
+    parent.fill(-1);
+    const visited = new Uint8Array(width * height);
+    const queue = [...components[0]];
+    for (const index of queue) visited[index] = 1;
+    let target = -1;
+    for (let head = 0; head < queue.length && target < 0; head += 1) {
+      const index = queue[head];
+      const x = index % width;
+      const y = Math.floor(index / width);
+      for (const [dx, dy] of CARDINAL_DIRECTIONS) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+        const next = ny * width + nx;
+        if (visited[next]) continue;
+        visited[next] = 1;
+        parent[next] = index;
+        if (isWaterCode(rows[ny][nx]) && !main.has(next)) {
+          target = next;
+          break;
+        }
+        queue.push(next);
+      }
+    }
+    if (target < 0) throw new RangeError('macro_water_network_unreachable');
+    for (let cursor = target; cursor >= 0 && !main.has(cursor); cursor = parent[cursor]) {
+      rows[Math.floor(cursor / width)][cursor % width] = 'W';
+    }
+  }
+}
+
+function refineWaterRatio(rows, targetRatio, seed) {
+  const height = rows.length;
+  const width = rows[0].length;
+  const target = Math.round(width * height * targetRatio);
+  let water = rows.flat().filter(isWaterCode).length;
+  const fillWater = water > target;
+  while (water !== target) {
+    const candidates = [];
+    for (let y = 3; y < height - 3; y += 1) {
+      for (let x = 3; x < width - 3; x += 1) {
+        const currentWater = isWaterCode(rows[y][x]);
+        if (fillWater !== currentWater) continue;
+        const touchesOther = hasNeighbor(rows, x, y, code => isWaterCode(code) !== currentWater);
+        if (!touchesOther) continue;
+        candidates.push({ x, y, score: hashSeedParts([seed, 'macro-coast', fillWater ? 'fill' : 'carve', x, y]) });
+      }
+    }
+    if (candidates.length === 0) throw new RangeError('macro_water_ratio_unreachable');
+    candidates.sort((left, right) => left.score - right.score || left.y - right.y || left.x - right.x);
+    const count = Math.min(Math.abs(water - target), candidates.length);
+    for (let index = 0; index < count; index += 1) {
+      const { x, y } = candidates[index];
+      rows[y][x] = fillWater ? 'G' : 'W';
+    }
+    water += fillWater ? -count : count;
+  }
+}
+
+function buildMacroRows(width, height, macroTemplate, seed, patches) {
+  if (!macroTemplate || macroTemplate.templateId !== 'reference_world_2026' || macroTemplate.mapId !== 'grand_map_v2') {
+    throw new TypeError('invalid_macro_template');
+  }
+  const rows = Array.from({ length: height }, () => Array(width).fill('W'));
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      if ((macroTemplate.landShapes || []).some(shape => shapeContains(shape, x + 0.5, y + 0.5))) rows[y][x] = 'G';
+    }
+  }
+  for (const shape of macroTemplate.waterCutouts || []) {
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) if (shapeContains(shape, x + 0.5, y + 0.5)) rows[y][x] = 'W';
+    }
+  }
+  for (const shape of macroTemplate.islandShapes || []) {
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) if (shapeContains(shape, x + 0.5, y + 0.5)) rows[y][x] = 'G';
+    }
+  }
+  refineWaterRatio(rows, macroTemplate.targetWaterRatio, seed);
+  connectWaterNetwork(rows);
+  for (const shape of macroTemplate.terrainShapes || []) {
+    if (!TERRAIN_CODES.includes(shape.fill) || isWaterCode(shape.fill)) throw new TypeError('invalid_macro_terrain');
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        if (!isWaterCode(rows[y][x]) && shapeContains(shape, x + 0.5, y + 0.5)) rows[y][x] = shape.fill;
+      }
+    }
+  }
+  const beforeCoast = rows.map(row => [...row]);
+  for (let y = 1; y < height - 1; y += 1) {
+    for (let x = 1; x < width - 1; x += 1) {
+      if (isWaterCode(beforeCoast[y][x])) {
+        if (hasNeighbor(beforeCoast, x, y, code => !isWaterCode(code))) rows[y][x] = 'S';
+      } else if (hasNeighbor(beforeCoast, x, y, isWaterCode) && (rows[y][x] === 'G' || rows[y][x] === 'D')) {
+        rows[y][x] = 'B';
+      }
+    }
+  }
+  const patched = applyTerrainPatches(rows.map(row => row.join('')), patches.terrainPatches || []).map(row => [...row]);
+  const spawn = patches.playerSpawn;
+  for (let y = spawn.gridY - 5; y <= spawn.gridY + 5; y += 1) {
+    for (let x = spawn.gridX - 5; x <= spawn.gridX + 5; x += 1) {
+      if (y >= 0 && x >= 0 && y < height && x < width) patched[y][x] = 'G';
+    }
+  }
+  return patched.map(row => row.join(''));
+}
+
+export function buildTemplateDrivenWorld({ width = 384, height = 384, macroTemplate, seed, patches, template }) {
+  if (!patches || patches.mapId !== 'grand_map_v2' || seed !== patches.productionSeed) throw new TypeError('invalid_fixed_world_identity');
+  const grid = buildMacroRows(width, height, macroTemplate, seed, patches);
+  const waterCells = [...grid.join('')].filter(isWaterCode).length;
+  const waterRatio = waterCells / (width * height);
+  const checksum = hashSeedParts([macroTemplate.templateId, seed, ...grid]).toString(16).padStart(8, '0');
+  const playerSpawn = cloneJson(patches.playerSpawn);
+  const initialBuildings = cloneJson(patches.initialBuildings);
+  return {
+    mapId: patches.mapId,
+    source: patches.source,
+    schemaVersion: 1,
+    generationVersion: 2,
+    generationChecksum: checksum,
+    generation: { templateId: macroTemplate.templateId, metrics: { waterRatio } },
+    gridWidth: width,
+    gridHeight: height,
+    tileSize: patches.tileSize,
+    chunkSize: patches.chunkSize,
+    viewportCols: template.viewportCols || 53,
+    viewportRows: template.viewportRows || 26,
+    groundTypes: cloneJson(template.groundTypes),
+    grid,
+    spawnManifest: {
+      playerSpawn,
+      initialBuildings,
+      ports: cloneJson(patches.ports || []),
+      cityStates: [],
+      wildSites: [],
+      resourceNodes: []
+    },
+    expeditionEntrances: (template.expeditionEntrances || []).map(entrance => ({
+      ...cloneJson(entrance), ...(patches.expeditionEntrancePositions?.[entrance.id] || {})
+    })),
+    initialBuildings,
+    viewportCenter: { defaultGridX: playerSpawn.gridX, defaultGridY: playerSpawn.gridY, useLastSavedPosition: false },
+    waterDesign: {
+      targetRatio: macroTemplate.targetWaterRatio,
+      actualRatio: waterRatio,
+      navigableGrounds: ['S', 'W'],
+      riverCount: 0,
+      lakeCount: (macroTemplate.waterCutouts || []).length,
+      description: '固定参考式大陆、内海、海峡与岛链布局。'
+    }
+  };
+}

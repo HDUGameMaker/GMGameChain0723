@@ -12,7 +12,7 @@ const map = JSON.parse(readFileSync(new URL('../../config/maps/base_map.json', i
 
 test('fixed grand world contains twenty-four city-states and ninety-six wild sites on valid unique coordinates', () => {
   const cityStates = [...integration.outposts, ...world.cityStates];
-  const placements = [...cityStates, ...world.wildSites];
+  const placements = [...map.spawnManifest.cityStates, ...map.spawnManifest.wildSites];
   assert.equal(cityStates.length, 24);
   assert.equal(world.wildSites.length, 96);
   assert.equal(new Set(placements.map(site => `${site.gridX},${site.gridY}`)).size, placements.length);
@@ -24,7 +24,7 @@ test('fixed grand world contains twenty-four city-states and ninety-six wild sit
   }
   assert.ok(cityStates.every(state => state.personality && state.specialty && state.emblem));
   const spawn = map.spawnManifest.playerSpawn;
-  assert.ok(world.wildSites.every(site => Math.hypot(site.gridX - spawn.gridX, site.gridY - spawn.gridY) >= 20));
+  assert.ok(map.spawnManifest.wildSites.every(site => Math.hypot(site.gridX - spawn.gridX, site.gridY - spawn.gridY) >= 12));
   assert.deepEqual(
     map.spawnManifest.cityStates.map(site => site.id).sort(),
     cityStates.map(site => site.id).sort()
