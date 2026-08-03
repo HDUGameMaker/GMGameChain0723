@@ -2,34 +2,50 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { SaveManager } from '../../src/core/SaveManager.js';
+import { createEnvelopeRecord } from '../../src/core/SaveEnvelope.js';
+
+function canonicalForTest(value) {
+  if (Array.isArray(value)) return `[${value.map(canonicalForTest).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${canonicalForTest(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function integrityBody(envelope) {
+  const { checksum: _checksum, ...body } = envelope;
+  return body;
+}
+
+function checksumForEnvelope(envelope) {
+  return createHash('sha256').update(canonicalForTest(integrityBody(envelope))).digest('hex');
+}
+
+function validPayload(extra = {}) {
+  return { ...SaveManager.migrate({ version: 8, resources: {}, buildings: [] }), ...extra };
+}
 
 test('createEnvelope uses canonical payload JSON and a real SHA-256 digest', async () => {
-  const payload = {
-    version: 9,
+  const payload = validPayload({
     nested: { z: 2, a: 1 },
     a: 1,
-    migrationHistory: [8, 9],
     recoveryReport: [{ code: 'migrated_v8' }]
-  };
-  const reordered = {
+  });
+  const reordered = validPayload({
     recoveryReport: [{ code: 'migrated_v8' }],
-    migrationHistory: [8, 9],
     a: 1,
-    nested: { a: 1, z: 2 },
-    version: 9
-  };
+    nested: { a: 1, z: 2 }
+  });
 
   const first = await SaveManager.createEnvelope(payload);
   const second = await SaveManager.createEnvelope(reordered);
-  const canonical = '{"a":1,"migrationHistory":[8,9],"nested":{"a":1,"z":2},"recoveryReport":[{"code":"migrated_v8"}],"version":9}';
-  const expected = createHash('sha256').update(canonical).digest('hex');
-
   assert.deepEqual(Object.keys(first).sort(), [
     'buildId', 'checksum', 'envelopeVersion', 'format', 'migrationHistory',
     'payload', 'payloadVersion', 'recoveryReport', 'sequence'
   ]);
-  assert.equal(first.checksum, expected);
-  assert.equal(second.checksum, expected);
+  assert.equal(first.checksum, checksumForEnvelope(first));
+  assert.equal(second.checksum, checksumForEnvelope(second));
+  assert.notEqual(first.checksum, second.checksum, 'sequence is part of envelope integrity');
   assert.match(first.checksum, /^[a-f0-9]{64}$/);
   assert.equal(first.format, 'gmgc-save-envelope');
   assert.equal(first.envelopeVersion, 1);
@@ -43,6 +59,22 @@ test('createEnvelope uses canonical payload JSON and a real SHA-256 digest', asy
   assert.equal(first.payload.nested.a, 1);
   assert.deepEqual(first.migrationHistory, [8, 9]);
   assert.deepEqual(first.recoveryReport, [{ code: 'migrated_v8' }]);
+});
+
+test('canonicalization preserves root and nested __proto__ keys in checksum integrity', async () => {
+  const payload = validPayload();
+  Object.defineProperty(payload, '__proto__', { enumerable: true, value: { marker: 'root-original' } });
+  Object.defineProperty(payload.world, '__proto__', { enumerable: true, value: { marker: 'nested-original' } });
+  const envelope = await SaveManager.createEnvelope(payload);
+  assert.equal((await SaveManager.verifyEnvelope(envelope)).ok, true);
+
+  const rootTamper = structuredClone(envelope);
+  rootTamper.payload.__proto__.marker = 'root-tampered';
+  assert.deepEqual(await SaveManager.verifyEnvelope(rootTamper), { ok: false, reason: 'checksum_mismatch' });
+
+  const nestedTamper = structuredClone(envelope);
+  nestedTamper.payload.world.__proto__.marker = 'nested-tampered';
+  assert.deepEqual(await SaveManager.verifyEnvelope(nestedTamper), { ok: false, reason: 'checksum_mismatch' });
 });
 
 test('verifyEnvelope detects payload and checksum tampering', async () => {
@@ -59,17 +91,71 @@ test('verifyEnvelope detects payload and checksum tampering', async () => {
   assert.deepEqual(await SaveManager.verifyEnvelope(changedDigest), { ok: false, reason: 'checksum_mismatch' });
 });
 
+test('checksum binds sequence and cloned outer metadata', async () => {
+  const envelope = await SaveManager.createEnvelope(validPayload({ recoveryReport: [{ code: 'original' }] }));
+
+  const sequenceTamper = structuredClone(envelope);
+  sequenceTamper.sequence += 1;
+  assert.deepEqual(await SaveManager.verifyEnvelope(sequenceTamper), { ok: false, reason: 'checksum_mismatch' });
+
+  const metadataTamper = structuredClone(envelope);
+  metadataTamper.migrationHistory.push(10);
+  metadataTamper.payload.migrationHistory.push(10);
+  metadataTamper.recoveryReport[0].code = 'tampered';
+  metadataTamper.payload.recoveryReport[0].code = 'tampered';
+  assert.deepEqual(await SaveManager.verifyEnvelope(metadataTamper), { ok: false, reason: 'checksum_mismatch' });
+});
+
+test('public envelope APIs reject noncanonical v9 schema without mutating callers', async () => {
+  assert.equal(SaveManager.createEnvelope.length, 1);
+  const canonical = validPayload();
+  const invalidPayloads = [];
+  for (const key of ['world', 'armyState', 'commerce']) {
+    const missing = structuredClone(canonical);
+    delete missing[key];
+    invalidPayloads.push(missing);
+  }
+  for (const key of ['armies', 'availableUnits', 'tradeRoutes', 'factions']) {
+    invalidPayloads.push({ ...structuredClone(canonical), [key]: {} });
+  }
+  invalidPayloads.push({ ...structuredClone(canonical), version: 9.5 });
+  invalidPayloads.push({ ...structuredClone(canonical), version: '9' });
+  invalidPayloads.push({ ...structuredClone(canonical), armyState: { nextId: 1, armies: [], availableUnits: {} } });
+  invalidPayloads.push({ ...structuredClone(canonical), commerce: { nextId: 1, routes: [], factions: {} } });
+
+  for (const invalid of invalidPayloads) {
+    const before = structuredClone(invalid);
+    await assert.rejects(() => SaveManager.createEnvelope(invalid), /canonical v9|schema/i);
+    assert.deepEqual(invalid, before);
+  }
+
+  const noncanonicalPayload = { ...structuredClone(canonical), armies: [] };
+  const checksumValidButNoncanonical = await createEnvelopeRecord(noncanonicalPayload, { sequence: 101 });
+  assert.deepEqual(await SaveManager.verifyEnvelope(checksumValidButNoncanonical), { ok: false, reason: 'invalid_payload' });
+});
+
+test('recovery skips checksum-valid envelopes with invalid v9 schema', async () => {
+  const invalidPayload = validPayload({ marker: 'invalid-primary', tradeRoutes: { nextId: 1, routes: [] } });
+  const primary = await createEnvelopeRecord(invalidPayload, { sequence: 102 });
+  const rollback = await SaveManager.createEnvelope(validPayload({ marker: 'valid-rollback' }));
+
+  const recovered = await SaveManager.chooseRecovery({ primary, rollback });
+  assert.equal(recovered.source, 'rollback');
+  assert.equal(recovered.payload.marker, 'valid-rollback');
+  assert.deepEqual(recovered.warnings, ['primary_invalid']);
+});
+
 test('createEnvelope rejects cycles, non-finite numbers, functions and unsupported values', async () => {
-  const cyclic = { version: 9 };
+  const cyclic = validPayload();
   cyclic.self = cyclic;
   const invalidPayloads = [
     cyclic,
-    { version: 9, value: Number.NaN },
-    { version: 9, value: Infinity },
-    { version: 9, value() {} },
-    { version: 9, value: undefined },
-    { version: 9, value: 1n },
-    { version: 9, value: new Date(0) }
+    validPayload({ value: Number.NaN }),
+    validPayload({ value: Infinity }),
+    validPayload({ value() {} }),
+    validPayload({ value: undefined }),
+    validPayload({ value: 1n }),
+    validPayload({ value: new Date(0) })
   ];
 
   for (const payload of invalidPayloads) {
@@ -129,4 +215,7 @@ test('v9 migration rejects corrupt inputs without mutating callers', () => {
   assert.notEqual(migrated, source);
   assert.equal(SaveManager.migrate({ version: 8, broken() {} }), null);
   assert.equal(SaveManager.migrate({ version: 9, value: Number.NaN }), null);
+  assert.equal(SaveManager.migrate({ version: 8.5, resources: {}, buildings: [] }), null);
+  assert.equal(SaveManager.migrate({ version: 9.5, resources: {}, buildings: [] }), null);
+  assert.equal(SaveManager.migrate({ version: '9', resources: {}, buildings: [] }), null);
 });

@@ -28,8 +28,15 @@ function normalize(value, active) {
       throw new TypeError('Unsupported canonical payload symbol key');
     }
 
-    const result = {};
-    for (const key of Object.keys(value).sort()) result[key] = normalize(value[key], active);
+    const result = Object.create(null);
+    for (const key of Object.keys(value).sort()) {
+      Object.defineProperty(result, key, {
+        configurable: true,
+        enumerable: true,
+        value: normalize(value[key], active),
+        writable: true
+      });
+    }
     return result;
   } finally {
     active.delete(value);
@@ -50,20 +57,22 @@ export async function sha256(canonicalText) {
 
 export async function createEnvelopeRecord(payload, { sequence = 1 } = {}) {
   if (!Number.isInteger(sequence) || sequence <= 0) throw new TypeError('Envelope sequence must be a positive integer');
-  const canonical = canonicalizePayload(payload);
   const payloadClone = structuredClone(payload);
   const migrationHistory = structuredClone(payloadClone.migrationHistory || []);
   const recoveryReport = structuredClone(payloadClone.recoveryReport || []);
-  return {
+  const integrityBody = {
     format: FORMAT,
     envelopeVersion: ENVELOPE_VERSION,
     payloadVersion: payloadClone.version,
     buildId: BUILD_ID,
     sequence,
     payload: payloadClone,
-    checksum: await sha256(canonical),
     migrationHistory,
     recoveryReport
+  };
+  return {
+    ...integrityBody,
+    checksum: await sha256(canonicalizePayload(integrityBody))
   };
 }
 
@@ -93,7 +102,14 @@ export async function verifyEnvelopeRecord(envelope) {
     if (canonicalizePayload(envelope.recoveryReport) !== canonicalizePayload(envelope.payload.recoveryReport || [])) {
       return { ok: false, reason: 'metadata_mismatch' };
     }
-    const expectedChecksum = await sha256(canonicalizePayload(envelope.payload));
+    const {
+      format, envelopeVersion, payloadVersion, buildId, sequence,
+      payload, migrationHistory, recoveryReport
+    } = envelope;
+    const expectedChecksum = await sha256(canonicalizePayload({
+      format, envelopeVersion, payloadVersion, buildId, sequence,
+      payload, migrationHistory, recoveryReport
+    }));
     if (expectedChecksum !== envelope.checksum) return { ok: false, reason: 'checksum_mismatch' };
     return { ok: true };
   } catch {

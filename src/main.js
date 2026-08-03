@@ -678,6 +678,8 @@ class Game {
 
   async saveGame() {
     if (this._resetting || this._gameOver) return false;
+    const armyState = this.systems.army.getState();
+    armyState.armies = armyState.armies.map(army => ({ ownerId: 'player', ...army }));
     const state = {
       version: SaveManager.CURRENT_VERSION,
       timestamp: Date.now(),
@@ -708,7 +710,7 @@ class Game {
       strategies: this.systems.strategy.getState(),
       audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
-      armyState: this.systems.army.getState(),
+      armyState,
       wildSites: this.systems.wildSites.getState(),
       economicOrders: this.systems.economyOrders.getState(),
       commerce: {

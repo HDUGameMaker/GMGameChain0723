@@ -55,8 +55,9 @@ test('v7 saves migrate to v9 without losing developed historical state', () => {
   assert.deepEqual(migrated.economicOrders, { nextId: 1, orders: [] });
   assert.deepEqual(migrated.commerce, {
     nextId: 1,
+    lastProcessedDay: 0,
     routes: [],
-    conversionCounters: {},
+    conversions: [],
     factions: { states: {}, relations: {}, lastSyncDay: 0 }
   });
   assert.deepEqual(migrated.world, { schemaVersion: 1, source: 'legacy_static', mapId: 'base_map_v1' });
@@ -89,7 +90,10 @@ test('fresh v8 saves receive canonical domain defaults and preserve valid collec
   assert.equal(migrated.version, 9);
   assert.deepEqual(migrated.economicOrders, source.economicOrders);
   assert.deepEqual(migrated.commerce, {
-    ...source.tradeRoutes,
+    nextId: source.tradeRoutes.nextId,
+    lastProcessedDay: 0,
+    routes: source.tradeRoutes.routes,
+    conversions: [],
     factions: { states: {}, relations: {}, lastSyncDay: 0 }
   });
   assert.deepEqual(migrated.armyState.armies, []);
@@ -139,7 +143,7 @@ test('already-v9 payloads remain canonical without mutating the input', () => {
     version: 9,
     world: { schemaVersion: 1, source: 'procedural', mapId: 'world_7' },
     armyState: { nextId: 1, armies: [], availableUnits: {}, battleHistory: [] },
-    commerce: { nextId: 2, routes: [], conversions: [], factions: { states: {}, relations: {}, lastSyncDay: 4 } },
+    commerce: { nextId: 2, lastProcessedDay: 0, routes: [], conversions: [], factions: { states: {}, relations: {}, lastSyncDay: 4 } },
     migrationHistory: [7, 8, 9]
   };
   const before = structuredClone(source);

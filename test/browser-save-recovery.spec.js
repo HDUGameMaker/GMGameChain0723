@@ -55,6 +55,83 @@ test('SaveManager rotates primary rollback and emergency records, then reset rem
   expect(result.afterReset).toEqual({ primary: null, rollback: null, emergency: null, legacy: null, local: null });
 });
 
+test('overlapping saves serialize the full rotation into three newest generations', async ({ page }) => {
+  await page.goto(BASE_URL);
+  const result = await page.evaluate(async () => {
+    const { SaveManager } = await import('/src/core/SaveManager.js');
+    await SaveManager.reset();
+    await SaveManager.save({ version: 8, resources: {}, buildings: [], marker: 'old-primary' });
+    const outcomes = await Promise.all([
+      SaveManager.save({ version: 8, resources: {}, buildings: [], marker: 'overlap-first' }),
+      SaveManager.save({ version: 8, resources: {}, buildings: [], marker: 'overlap-second' })
+    ]);
+    const db = await SaveManager._getDB();
+    const read = key => new Promise(resolve => {
+      const request = db.transaction('saves', 'readonly').objectStore('saves').get(key);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => resolve(null);
+    });
+    return {
+      outcomes,
+      primary: await read('primary'),
+      rollback: await read('rollback'),
+      emergency: await read('emergency')
+    };
+  });
+
+  expect(result.outcomes).toEqual([true, true]);
+  expect(result.primary.payload.marker).toBe('overlap-second');
+  expect(result.rollback.payload.marker).toBe('overlap-first');
+  expect(result.emergency.payload.marker).toBe('old-primary');
+  expect(result.primary.sequence).toBeGreaterThan(result.rollback.sequence);
+  expect(result.rollback.sequence).toBeGreaterThan(result.emergency.sequence);
+});
+
+test('an IndexedDB write exception aborts rotation without changing any generation', async ({ page }) => {
+  await page.goto(BASE_URL);
+  const result = await page.evaluate(async () => {
+    const { SaveManager } = await import('/src/core/SaveManager.js');
+    await SaveManager.reset();
+    for (const marker of ['first', 'second', 'third']) {
+      await SaveManager.save({ version: 8, resources: {}, buildings: [], marker });
+    }
+    const db = await SaveManager._getDB();
+    const read = key => new Promise(resolve => {
+      const request = db.transaction('saves', 'readonly').objectStore('saves').get(key);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => resolve(null);
+    });
+    const before = {
+      primary: await read('primary'),
+      rollback: await read('rollback'),
+      emergency: await read('emergency'),
+      local: localStorage.getItem('gmgc_emergency_save')
+    };
+
+    const realPut = IDBObjectStore.prototype.put;
+    IDBObjectStore.prototype.put = function(value, key) {
+      if (key === 'rollback') throw new DOMException('injected write failure', 'QuotaExceededError');
+      return realPut.call(this, value, key);
+    };
+    let outcome;
+    try {
+      outcome = await SaveManager.save({ version: 8, resources: {}, buildings: [], marker: 'must-not-commit' });
+    } finally {
+      IDBObjectStore.prototype.put = realPut;
+    }
+    const after = {
+      primary: await read('primary'),
+      rollback: await read('rollback'),
+      emergency: await read('emergency'),
+      local: localStorage.getItem('gmgc_emergency_save')
+    };
+    return { outcome, before, after };
+  });
+
+  expect(result.outcome).toBe(false);
+  expect(result.after).toEqual(result.before);
+});
+
 test('loadRecoverable reads legacy IndexedDB and local emergency payloads through v9 migration', async ({ page }) => {
   await page.goto(BASE_URL);
   const recovered = await page.evaluate(async () => {
@@ -90,6 +167,7 @@ test('main saves and restores canonical domains and shows non-blocking rollback 
     const { store } = await import('/src/core/Store.js');
     const { SaveManager } = await import('/src/core/SaveManager.js');
     game.systems.army.setAvailableUnits({ spearman: 2 });
+    game.systems.army.createArmy('Canonical owner army');
     store.setState({ factions: { states: { city_1: { status: 'friendly' } }, relations: {}, lastSyncDay: 6 } });
     const saveResults = [await game.saveGame(), await game.saveGame()];
     const db = await SaveManager._getDB();
@@ -110,12 +188,19 @@ test('main saves and restores canonical domains and shows non-blocking rollback 
     return {
       hasArmyState: Boolean(primary.payload.armyState),
       hasCommerce: Boolean(primary.payload.commerce),
+      armyOwnerIds: primary.payload.armyState.armies.map(army => army.ownerId),
       mirrors: ['armies', 'availableUnits', 'tradeRoutes', 'factions'].filter(key => key in primary.payload),
       saveResults
     };
   });
 
-  expect(saved).toEqual({ hasArmyState: true, hasCommerce: true, mirrors: [], saveResults: [true, true] });
+  expect(saved).toEqual({
+    hasArmyState: true,
+    hasCommerce: true,
+    armyOwnerIds: ['player'],
+    mirrors: [],
+    saveResults: [true, true]
+  });
   await page.reload();
   await page.getByText('继续游戏', { exact: true }).click();
   await expect(page.locator('[data-testid="save-recovery-panel"]')).toBeVisible();

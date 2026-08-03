@@ -12,17 +12,51 @@ const PRIMARY_KEY = 'primary';
 const ROLLBACK_KEY = 'rollback';
 const EMERGENCY_KEY = 'emergency';
 const LOCAL_EMERGENCY_KEY = 'gmgc_emergency_save';
+const STORAGE_LOCK_NAME = 'gmgc-v9-save-storage';
+const FORBIDDEN_V9_KEYS = ['armies', 'availableUnits', 'tradeRoutes', 'factions'];
+
+function isRecord(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function canonicalV9Violation(payload) {
+  if (!isRecord(payload) || !Number.isInteger(payload.version) || payload.version !== 9) return 'version';
+  if (FORBIDDEN_V9_KEYS.some(key => Object.hasOwn(payload, key))) return 'forbidden_mirror';
+
+  const world = payload.world;
+  if (!isRecord(world) || world.schemaVersion !== 1 || typeof world.source !== 'string' || !world.source
+      || typeof world.mapId !== 'string' || !world.mapId) return 'world';
+
+  const army = payload.armyState;
+  if (!isRecord(army) || !Number.isInteger(army.nextId) || army.nextId <= 0
+      || !Array.isArray(army.armies) || !isRecord(army.availableUnits) || !Array.isArray(army.battleHistory)) return 'armyState';
+  if (Object.values(army.availableUnits).some(count => !Number.isInteger(count) || count < 0)) return 'armyState.availableUnits';
+  if (army.armies.some(record => !isRecord(record) || typeof record.id !== 'string' || !record.id
+      || typeof record.ownerId !== 'string' || !record.ownerId || !Array.isArray(record.unitIds))) return 'armyState.armies';
+
+  const commerce = payload.commerce;
+  if (!isRecord(commerce) || !Number.isInteger(commerce.nextId) || commerce.nextId <= 0
+      || !Number.isInteger(commerce.lastProcessedDay) || commerce.lastProcessedDay < 0
+      || !Array.isArray(commerce.routes) || !Array.isArray(commerce.conversions)) return 'commerce';
+  const factions = commerce.factions;
+  if (!isRecord(factions) || !isRecord(factions.states) || !isRecord(factions.relations)
+      || !Number.isInteger(factions.lastSyncDay) || factions.lastSyncDay < 0) return 'commerce.factions';
+  return null;
+}
 
 export class SaveManager {
   static CURRENT_VERSION = 9;
   static _db = null;
   static _nextEnvelopeSequence = 1;
+  static _mutationQueue = Promise.resolve();
 
   static migrate(raw) {
     try {
       if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
       canonicalizePayload(raw);
-      if (!Number.isFinite(raw.version) || raw.version < 5 || raw.version > SaveManager.CURRENT_VERSION) return null;
+      if (!Number.isInteger(raw.version) || raw.version < 5 || raw.version > SaveManager.CURRENT_VERSION) return null;
       const state = structuredClone(raw);
       const history = Array.isArray(state.migrationHistory) && state.migrationHistory.length > 0
         ? [...state.migrationHistory]
@@ -99,8 +133,8 @@ export class SaveManager {
         history.push(9);
       }
 
-      if (state.version === 9) SaveManager._canonicalizeV9(state);
       state.migrationHistory = [...new Set(history)];
+      if (canonicalV9Violation(state)) return null;
       return state;
     } catch {
       return null;
@@ -172,7 +206,7 @@ export class SaveManager {
       return match ? Math.max(highest, Number(match[1])) : highest;
     }, 0) + 1;
     return {
-      nextId: Number.isFinite(armyState.nextId) ? armyState.nextId : derivedNextId,
+      nextId: Number.isInteger(armyState.nextId) && armyState.nextId > 0 ? armyState.nextId : derivedNextId,
       armies,
       availableUnits,
       battleHistory: Array.isArray(armyState.battleHistory)
@@ -199,26 +233,26 @@ export class SaveManager {
   static _migrateV8ToV9(state) {
     state.world ??= { schemaVersion: 1, source: 'legacy_static', mapId: 'base_map_v1' };
     state.armyState = SaveManager._normalizeArmyState(state);
-    const legacyCommerce = state.tradeRoutes && typeof state.tradeRoutes === 'object'
-      ? structuredClone(state.tradeRoutes)
-      : { nextId: 1, routes: [], conversionCounters: {} };
-    state.commerce = { ...legacyCommerce, factions: structuredClone(state.factions || { states: {}, relations: {}, lastSyncDay: 0 }) };
+    const legacyCommerce = isRecord(state.tradeRoutes) ? state.tradeRoutes : {};
+    const legacyFactions = isRecord(state.factions) ? state.factions : {};
+    state.commerce = {
+      nextId: Number.isInteger(legacyCommerce.nextId) && legacyCommerce.nextId > 0 ? legacyCommerce.nextId : 1,
+      lastProcessedDay: Number.isInteger(legacyCommerce.lastProcessedDay) && legacyCommerce.lastProcessedDay >= 0
+        ? legacyCommerce.lastProcessedDay : 0,
+      routes: Array.isArray(legacyCommerce.routes) ? structuredClone(legacyCommerce.routes) : [],
+      conversions: Array.isArray(legacyCommerce.conversions) ? structuredClone(legacyCommerce.conversions) : [],
+      factions: {
+        states: isRecord(legacyFactions.states) ? structuredClone(legacyFactions.states) : {},
+        relations: isRecord(legacyFactions.relations) ? structuredClone(legacyFactions.relations) : {},
+        lastSyncDay: Number.isInteger(legacyFactions.lastSyncDay) && legacyFactions.lastSyncDay >= 0
+          ? legacyFactions.lastSyncDay : 0
+      }
+    };
     if (state.colony?.occupied && typeof state.colony.occupied === 'object') {
       for (const colony of Object.values(state.colony.occupied)) {
         if (colony && typeof colony === 'object') colony.legacyOffmap = true;
       }
     }
-    SaveManager._removeV9Mirrors(state);
-  }
-
-  static _canonicalizeV9(state) {
-    state.armyState = SaveManager._normalizeArmyState(state);
-    if (!state.commerce || typeof state.commerce !== 'object' || Array.isArray(state.commerce)) {
-      state.commerce = { nextId: 1, routes: [], conversions: [], factions: { states: {}, relations: {}, lastSyncDay: 0 } };
-    } else if (!state.commerce.factions || typeof state.commerce.factions !== 'object') {
-      state.commerce.factions = { states: {}, relations: {}, lastSyncDay: 0 };
-    }
-    state.world ??= { schemaVersion: 1, source: 'legacy_static', mapId: 'base_map_v1' };
     SaveManager._removeV9Mirrors(state);
   }
 
@@ -229,11 +263,19 @@ export class SaveManager {
     delete state.factions;
   }
 
-  static async createEnvelope(payload, options = {}) {
+  static _assertCanonicalV9(payload) {
     canonicalizePayload(payload);
-    if (!payload || payload.version !== SaveManager.CURRENT_VERSION) throw new TypeError('Envelope payload must be canonical v9');
-    const requested = options.sequence;
-    const sequence = requested === undefined ? SaveManager._nextEnvelopeSequence : requested;
+    const violation = canonicalV9Violation(payload);
+    if (violation) throw new TypeError(`Canonical v9 schema violation: ${violation}`);
+  }
+
+  static async createEnvelope(payload) {
+    const sequence = SaveManager._nextEnvelopeSequence;
+    return SaveManager._createEnvelopeWithSequence(payload, sequence);
+  }
+
+  static async _createEnvelopeWithSequence(payload, sequence) {
+    SaveManager._assertCanonicalV9(payload);
     const envelope = await createEnvelopeRecord(payload, { sequence });
     const verification = await SaveManager.verifyEnvelope(envelope);
     if (!verification.ok) throw new Error(`Created envelope failed verification: ${verification.reason}`);
@@ -242,7 +284,11 @@ export class SaveManager {
   }
 
   static async verifyEnvelope(envelope) {
-    return verifyEnvelopeRecord(envelope);
+    const verification = await verifyEnvelopeRecord(envelope);
+    if (!verification.ok) return verification;
+    return canonicalV9Violation(envelope.payload)
+      ? { ok: false, reason: 'invalid_payload' }
+      : verification;
   }
 
   static async _candidateEnvelope(candidate) {
@@ -339,10 +385,33 @@ export class SaveManager {
     return recovered.payload;
   }
 
+  static _queueMutation(operation) {
+    const queued = SaveManager._mutationQueue.then(operation, operation);
+    SaveManager._mutationQueue = queued.catch(() => undefined);
+    return queued;
+  }
+
+  static _withStorageLock(operation) {
+    const locks = globalThis.navigator?.locks;
+    return locks?.request
+      ? locks.request(STORAGE_LOCK_NAME, { mode: 'exclusive' }, operation)
+      : operation();
+  }
+
   static async save(gameState) {
-    try {
-      const payload = SaveManager.migrate(gameState);
-      if (!payload) return false;
+    const payload = SaveManager.migrate(gameState);
+    if (!payload) return false;
+    return SaveManager._queueMutation(() => SaveManager._withStorageLock(async () => {
+      try {
+        return await SaveManager._savePayload(payload);
+      } catch (error) {
+        console.error('[SaveManager] Save failed:', error);
+        return false;
+      }
+    }));
+  }
+
+  static async _savePayload(payload) {
       const records = await SaveManager._readRecords([PRIMARY_KEY, ROLLBACK_KEY, EMERGENCY_KEY]);
       const primary = await SaveManager._candidateEnvelope(records[PRIMARY_KEY]);
       const rollback = await SaveManager._candidateEnvelope(records[ROLLBACK_KEY]);
@@ -350,31 +419,43 @@ export class SaveManager {
       const localEmergency = await SaveManager._candidateEnvelope(SaveManager._readLocalEmergency());
       const verified = [primary, rollback, storedEmergency, localEmergency].filter(Boolean);
       const sequence = verified.reduce((highest, item) => Math.max(highest, item.sequence), 0) + 1;
-      const envelope = await SaveManager.createEnvelope(payload, { sequence });
+      const envelope = await SaveManager._createEnvelopeWithSequence(payload, sequence);
       const nextRollback = primary;
       const nextEmergency = rollback || storedEmergency || localEmergency;
 
       const db = await SaveManager._getDB();
       await new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, 'readwrite');
-        const store = tx.objectStore(STORE_NAME);
-        store.put(envelope, PRIMARY_KEY);
-        if (nextRollback) store.put(nextRollback, ROLLBACK_KEY);
-        else store.delete(ROLLBACK_KEY);
-        if (nextEmergency) store.put(nextEmergency, EMERGENCY_KEY);
-        else store.delete(EMERGENCY_KEY);
-        store.delete(LEGACY_SAVE_KEY);
-        tx.oncomplete = resolve;
-        tx.onerror = event => reject(event.target.error || event);
+        let tx;
+        let operationError = null;
+        try {
+          tx = db.transaction(STORE_NAME, 'readwrite');
+          tx.oncomplete = resolve;
+          tx.onabort = event => reject(operationError || tx.error || event.target.error || event);
+          tx.onerror = () => {};
+          const store = tx.objectStore(STORE_NAME);
+          store.put(envelope, PRIMARY_KEY);
+          if (nextRollback) store.put(nextRollback, ROLLBACK_KEY);
+          else store.delete(ROLLBACK_KEY);
+          if (nextEmergency) store.put(nextEmergency, EMERGENCY_KEY);
+          else store.delete(EMERGENCY_KEY);
+          store.delete(LEGACY_SAVE_KEY);
+        } catch (error) {
+          operationError = error;
+          if (!tx) {
+            reject(error);
+            return;
+          }
+          try {
+            tx.abort();
+          } catch {
+            reject(error);
+          }
+        }
       });
 
       if (nextEmergency) localStorage.setItem(LOCAL_EMERGENCY_KEY, JSON.stringify(nextEmergency));
       else localStorage.removeItem(LOCAL_EMERGENCY_KEY);
       return true;
-    } catch (error) {
-      console.error('[SaveManager] Save failed:', error);
-      return false;
-    }
   }
 
   static async hasSave() {
@@ -383,21 +464,34 @@ export class SaveManager {
   }
 
   static async reset() {
-    try {
-      localStorage.removeItem(LOCAL_EMERGENCY_KEY);
-      const db = await SaveManager._getDB();
-      await new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, 'readwrite');
-        const store = tx.objectStore(STORE_NAME);
-        for (const key of [PRIMARY_KEY, ROLLBACK_KEY, EMERGENCY_KEY, LEGACY_SAVE_KEY]) store.delete(key);
-        tx.oncomplete = resolve;
-        tx.onerror = event => reject(event.target.error || event);
-      });
-      SaveManager._nextEnvelopeSequence = 1;
-      return true;
-    } catch (error) {
-      console.error('[SaveManager] Reset failed:', error);
-      return false;
-    }
+    return SaveManager._queueMutation(() => SaveManager._withStorageLock(async () => {
+      try {
+        localStorage.removeItem(LOCAL_EMERGENCY_KEY);
+        const db = await SaveManager._getDB();
+        await new Promise((resolve, reject) => {
+          let tx;
+          let operationError = null;
+          try {
+            tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.oncomplete = resolve;
+            tx.onabort = event => reject(operationError || tx.error || event.target.error || event);
+            tx.onerror = () => {};
+            const store = tx.objectStore(STORE_NAME);
+            for (const key of [PRIMARY_KEY, ROLLBACK_KEY, EMERGENCY_KEY, LEGACY_SAVE_KEY]) store.delete(key);
+          } catch (error) {
+            operationError = error;
+            if (!tx) reject(error);
+            else {
+              try { tx.abort(); } catch { reject(error); }
+            }
+          }
+        });
+        SaveManager._nextEnvelopeSequence = 1;
+        return true;
+      } catch (error) {
+        console.error('[SaveManager] Reset failed:', error);
+        return false;
+      }
+    }));
   }
 }
