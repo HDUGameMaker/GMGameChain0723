@@ -12,6 +12,7 @@ test('day reveals ten tiles and night reveals six while retaining memory', () =>
   fog.recalculate([{ gridX: 100, gridY: 100, bonus: 0 }], 'night');
   assert.equal(fog.getTileState(110, 100), 'remembered');
   assert.equal(fog.getTileState(106, 100), 'visible');
+  assert.equal(fog.getTileState(107, 100), 'remembered');
 });
 
 test('visibility uses grid coordinates, footprints and integer bonuses', () => {

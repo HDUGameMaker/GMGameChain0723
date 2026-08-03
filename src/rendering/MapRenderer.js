@@ -9,6 +9,7 @@ import { progressManager } from '../utils/ProgressManager.js';
 import { gridToScreenTopLeft, screenToGrid } from '../utils/gridUtils.js';
 import { AnimatedSpriteHelper } from './AnimatedSpriteHelper.js';
 import { classifyArmyInteractionTarget } from '../domain/ArmyInteractionTarget.js';
+import { getStrategicFogStyle } from './FogPresentation.js';
 import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels, getVisibleTileBounds } from './MapPresentation.js';
 
 export class MapRenderer {
@@ -940,6 +941,8 @@ export class MapRenderer {
     // 迷雾精灵固定在视口原点（fogContainer 是固定的）
     this._fogSprite.x = 0;
     this._fogSprite.y = 0;
+    this._fogSprite.width = viewW;
+    this._fogSprite.height = viewH;
     this.fogContainer.addChild(this._fogSprite);
 
     this._updateFogTexture();
@@ -1018,7 +1021,7 @@ export class MapRenderer {
     const ctx = this._fogCanvas.getContext('2d');
     const ts = this.tileSize;
     const period = store.getState('timePeriod') || 'morning';
-    const night = period === 'night' || period === 'midnight';
+    ctx.globalCompositeOperation = 'source-over';
     ctx.clearRect(0, 0, this._fogCanvas.width, this._fogCanvas.height);
     const bounds = getVisibleTileBounds({
       gridWidth: this.mapConfig.gridWidth,
@@ -1035,9 +1038,9 @@ export class MapRenderer {
       let runState = null;
       let runStart = bounds.startCol;
       const flush = endCol => {
-        if (!runState || runState === 'visible' || endCol < runStart) return;
-        const alpha = runState === 'unexplored' ? (night ? 0.97 : 0.94) : (night ? 0.66 : 0.58);
-        ctx.fillStyle = `rgba(${night ? '4, 6, 16' : '10, 14, 26'}, ${alpha})`;
+        const style = getStrategicFogStyle(runState, period);
+        if (!style || endCol < runStart) return;
+        ctx.fillStyle = `rgba(${style.color.join(', ')}, ${style.alpha})`;
         ctx.fillRect(runStart * ts - this.camX, row * ts - this.camY, (endCol - runStart + 1) * ts, ts);
       };
       for (let col = bounds.startCol; col <= bounds.endCol; col += 1) {
@@ -3683,11 +3686,10 @@ export class MapRenderer {
    * 重建迷雾离屏Canvas（屏幕尺寸变化时调用）
    */
   _recreateFogCanvas() {
-    if (this._fogSprite) {
-      this.fogContainer.removeChild(this._fogSprite);
-      this._fogSprite.destroy();
-      this._fogSprite = null;
+    for (const child of this.fogContainer.removeChildren()) {
+      child.destroy({ children: true });
     }
+    this._fogSprite = null;
     if (this._fogTexture) {
       this._fogTexture.destroy();
       this._fogTexture = null;
