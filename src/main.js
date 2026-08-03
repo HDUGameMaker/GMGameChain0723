@@ -252,6 +252,7 @@ class Game {
     this.systems.culture.init();
     this.systems.era.setTechSystem(this.systems.tech);
     this.systems.era.setCultureSystem(this.systems.culture);
+    this.systems.era.setBuildingSystem(this.systems.building);
     this.systems.luxury.setSystems({ resource: this.systems.resource, building: this.systems.building, diplomacy: this.systems.diplomacy });
     this.systems.economyOrders.setSystems({
       population: this.systems.population,

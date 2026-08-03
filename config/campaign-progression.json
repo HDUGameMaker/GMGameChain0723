@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "eraStars": {
+    "researchCompletionThreshold": 0.7,
+    "awards": {
+      "civilizationSelected": { "category": "civilization", "amount": 1 },
+      "technologyResearched": { "category": "science", "amount": 1 },
+      "civicResearched": { "category": "culture", "amount": 1 },
+      "technologyThreshold": { "category": "science", "amount": 2 },
+      "civicThreshold": { "category": "culture", "amount": 2 },
+      "uniqueBuildingCompleted": { "category": "growth", "amount": 3 }
+    }
+  }
+}

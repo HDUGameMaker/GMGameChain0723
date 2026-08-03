@@ -14,7 +14,7 @@
       "description": "我们的人手并不充裕，但好在每天都有新的冒险者会来到我们的营地，建造些工棚和狩猎小屋，也许能给他们提供所需的食物及住所。\n点击🏗️建设图标，即可打开修建栏目，有些建筑拥有特殊的修建要求，务必看清！\n放置建筑时按住 Ctrl 点击，可以连续建造同一种建筑；不按 Ctrl 时，成功放置后会退出建造模式。",
       "type": "build_building",
       "icon": "🏗️",
-      "target": { "buildings": ["work_shed", "hunting_hut"] }
+      "target": { "buildings": ["work_shed", "hunting_lodge"] }
     },
     {
       "id": "tutorial_expedition",

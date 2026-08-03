@@ -16890,8 +16890,8 @@
     {
       "id": "cave_entrance_01",
       "name": "岩穴入口",
-      "gridX": 308,
-      "gridY": 61,
+      "gridX": 284,
+      "gridY": 185,
       "regionIds": [
         "mine_periphery",
         "mine_interior"
@@ -16910,8 +16910,8 @@
     {
       "id": "cave_entrance_02",
       "name": "矿洞入口",
-      "gridX": 110,
-      "gridY": 74,
+      "gridX": 308,
+      "gridY": 61,
       "regionIds": [
         "mountain_summit",
         "summit_ruins"
@@ -16930,8 +16930,8 @@
     {
       "id": "cave_entrance_03",
       "name": "山麓洞口",
-      "gridX": 70,
-      "gridY": 298,
+      "gridX": 110,
+      "gridY": 74,
       "regionIds": [
         "mine_periphery",
         "iron_ridge"
@@ -16950,8 +16950,8 @@
     {
       "id": "cave_entrance_04",
       "name": "古道洞口",
-      "gridX": 31,
-      "gridY": 328,
+      "gridX": 70,
+      "gridY": 298,
       "regionIds": [
         "mine_interior",
         "coal_seam"
@@ -16970,8 +16970,8 @@
     {
       "id": "cave_entrance_05",
       "name": "岩穴入口",
-      "gridX": 85,
-      "gridY": 363,
+      "gridX": 31,
+      "gridY": 328,
       "regionIds": [
         "mine_periphery",
         "mine_interior"
@@ -16990,8 +16990,8 @@
     {
       "id": "cave_entrance_06",
       "name": "矿洞入口",
-      "gridX": 40,
-      "gridY": 96,
+      "gridX": 85,
+      "gridY": 363,
       "regionIds": [
         "mountain_summit",
         "summit_ruins"
@@ -17010,8 +17010,8 @@
     {
       "id": "cave_entrance_07",
       "name": "山麓洞口",
-      "gridX": 337,
-      "gridY": 340,
+      "gridX": 40,
+      "gridY": 96,
       "regionIds": [
         "mine_periphery",
         "iron_ridge"
@@ -17030,8 +17030,8 @@
     {
       "id": "cave_entrance_08",
       "name": "古道洞口",
-      "gridX": 69,
-      "gridY": 349,
+      "gridX": 337,
+      "gridY": 340,
       "regionIds": [
         "mine_interior",
         "coal_seam"
@@ -17050,8 +17050,8 @@
     {
       "id": "cave_entrance_09",
       "name": "岩穴入口",
-      "gridX": 77,
-      "gridY": 71,
+      "gridX": 69,
+      "gridY": 349,
       "regionIds": [
         "mine_periphery",
         "mine_interior"
@@ -17070,8 +17070,8 @@
     {
       "id": "cave_entrance_10",
       "name": "矿洞入口",
-      "gridX": 320,
-      "gridY": 91,
+      "gridX": 77,
+      "gridY": 71,
       "regionIds": [
         "mountain_summit",
         "summit_ruins"
@@ -17090,8 +17090,8 @@
     {
       "id": "cave_entrance_11",
       "name": "山麓洞口",
-      "gridX": 62,
-      "gridY": 90,
+      "gridX": 320,
+      "gridY": 91,
       "regionIds": [
         "mine_periphery",
         "iron_ridge"
@@ -17110,8 +17110,8 @@
     {
       "id": "cave_entrance_12",
       "name": "古道洞口",
-      "gridX": 362,
-      "gridY": 290,
+      "gridX": 62,
+      "gridY": 90,
       "regionIds": [
         "mine_interior",
         "coal_seam"

@@ -236,10 +236,32 @@ function buildCaveEntrances(map, seed) {
     ['mine_interior', 'coal_seam']
   ];
   const mountains = terrainComponents(map, new Set(['M'])).filter(component => component.length >= 12);
-  const candidates = mountains.map((component, index) => [...component].sort((left, right) => (
+  const spawn = map.spawnManifest.playerSpawn;
+  const blocked = new Set([
+    ...(map.spawnManifest.initialBuildings || []).map(record => `${record.gridX}:${record.gridY}`),
+    ...(map.spawnManifest.resourceNodes || []).map(record => `${record.gridX}:${record.gridY}`),
+    ...(map.spawnManifest.cityStates || []).map(record => `${record.gridX}:${record.gridY}`),
+    ...(map.spawnManifest.wildSites || []).map(record => `${record.gridX}:${record.gridY}`),
+    `${spawn.gridX}:${spawn.gridY}`
+  ]);
+  const available = component => component.filter(cell => !blocked.has(`${cell.x}:${cell.y}`));
+  const regularCandidates = mountains.map((component, index) => [...available(component)].sort((left, right) => (
     right.y - left.y
     || hashSeedParts([seed, 'cave-mouth', index, left.x, left.y]) - hashSeedParts([seed, 'cave-mouth', index, right.x, right.y])
-  ))[0]);
+  ))[0]).filter(Boolean);
+  const tutorialCandidate = mountains.flatMap(available).sort((left, right) => (
+    Math.abs(left.x - spawn.gridX) + Math.abs(left.y - spawn.gridY)
+    - Math.abs(right.x - spawn.gridX) - Math.abs(right.y - spawn.gridY)
+    || left.y - right.y
+    || left.x - right.x
+  ))[0];
+  if (!tutorialCandidate) throw new RangeError('missing_tutorial_cave_entrance');
+  const tutorialDistance = Math.abs(tutorialCandidate.x - spawn.gridX) + Math.abs(tutorialCandidate.y - spawn.gridY);
+  if (tutorialDistance > 25) throw new RangeError(`tutorial_cave_too_far_${tutorialDistance}`);
+  const candidates = [
+    tutorialCandidate,
+    ...regularCandidates.filter(candidate => candidate.x !== tutorialCandidate.x || candidate.y !== tutorialCandidate.y)
+  ];
   const entrances = [];
   for (const candidate of candidates) {
     if (entrances.some(item => Math.hypot(item.gridX - candidate.x, item.gridY - candidate.y) < 18)) continue;

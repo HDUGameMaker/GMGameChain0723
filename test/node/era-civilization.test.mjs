@@ -29,15 +29,13 @@ test('era system starts with the single original civilization', () => {
   assert.equal(era.selectCivilization('zhou').ok, false);
 });
 
-test('era advancement requires civilization, five stars and seventy percent of both trees', () => {
+test('era advancement converts civilization and tree milestones into the required stars', () => {
   const era = createSystem();
   assert.equal(era.canAdvance().ok, false);
   era.selectCivilization('zhou');
   assert.equal(era.getSelectedCivilization(), null, 'future civilization cannot be selected');
   era.selectCivilization('proto_civilization');
-  era.addEraStars('growth', 4);
-  assert.equal(era.canAdvance().ok, false);
-  era.addEraStars('science', 1);
+  assert.equal(era.getEraStars().total, 5);
   assert.equal(era.canAdvance().ok, true);
   assert.equal(era.advanceEra().ok, true);
   assert.equal(era.getCurrentEra().id, 'ancient');

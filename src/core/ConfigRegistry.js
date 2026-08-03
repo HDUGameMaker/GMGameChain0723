@@ -46,7 +46,9 @@ class ConfigRegistry {
       'militaryTactics': 'config/military-tactics.json',
       'worldFactions': 'config/world-factions.json',
       'eaIntegration': 'config/ea_integration.json',
-      'historicalContent': 'config/historical_content.json'
+      'historicalContent': 'config/historical_content.json',
+      'civilizationBuildingOverrides': 'config/civilization-building-overrides.json',
+      'campaignProgression': 'config/campaign-progression.json'
     };
 
     const loadPromises = Object.entries(configFiles).map(async ([key, path]) => {
@@ -69,6 +71,7 @@ class ConfigRegistry {
 
     this._applyEaIntegration();
     this._applyHistoricalContent();
+    this._applyCivilizationBuildingOverrides();
     this._ensureContentIcons();
 
     // 合成配方继承：高级建筑自动继承低级建筑的合成配方
@@ -154,6 +157,59 @@ class ConfigRegistry {
       if (!metadata) return unit;
       return { ...unit, eraId: unit.eraId || metadata[0], branch: metadata[1] };
     });
+  }
+
+  /**
+   * Apply civilization-specific building roles after the generated historical
+   * content is merged. Keeping this as a small overlay means generated content
+   * can be refreshed without collapsing every unique building back into an
+   * academy or civic hall.
+   */
+  _applyCivilizationBuildingOverrides() {
+    const content = this._configs.historicalContent;
+    const config = this._configs.civilizationBuildingOverrides;
+    if (!content || !config?.civilizations || !config?.archetypes) return;
+
+    const civilizationsById = new Map((content.civilizations || []).map(item => [item.id, item]));
+    const patchesByBuildingId = new Map();
+
+    content.buildings = (content.buildings || []).map(building => {
+      if (!building.civilizationId) return building;
+      const assignment = config.civilizations[building.civilizationId];
+      const archetype = config.archetypes[assignment?.archetype];
+      if (!assignment || !archetype) return building;
+
+      const { archetype: _archetypeId, ...specific } = assignment;
+      const patched = {
+        ...building,
+        ...archetype,
+        ...specific,
+        uniqueFunction: {
+          ...(building.uniqueFunction || {}),
+          ...(archetype.uniqueFunction || {}),
+          ...(specific.uniqueFunction || {})
+        },
+        tags: [...new Set([...(building.tags || []), 'civilization_unique', archetype.category])]
+      };
+      patchesByBuildingId.set(patched.id, patched);
+
+      const civilization = civilizationsById.get(building.civilizationId);
+      if (civilization) {
+        civilization.uniqueBuilding = {
+          ...civilization.uniqueBuilding,
+          id: patched.id,
+          name: patched.name,
+          description: patched.description,
+          category: patched.category,
+          replaces: patched.replaces
+        };
+      }
+      return patched;
+    });
+
+    this._configs.buildings = (this._configs.buildings || []).map(building => (
+      patchesByBuildingId.get(building.id) || building
+    ));
   }
 
   getHistoricalContent() {
