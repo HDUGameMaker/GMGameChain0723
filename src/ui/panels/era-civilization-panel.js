@@ -43,6 +43,43 @@ export function renderEraCivilizationPanel(data, body, pm) {
     container.appendChild(prompt);
   }
 
+  const guidance = system.getAdvancementRequirements?.();
+  if (guidance?.finalEra) {
+    const finalNotice = el('section', 'era-requirements', '已进入最终时代：现代时代没有下一时代晋升条件。');
+    finalNotice.style.cssText = 'padding:12px;border:1px solid rgba(121,216,155,.4);border-radius:10px;background:rgba(121,216,155,.08);font-size:13px;color:#9de0b4;';
+    container.appendChild(finalNotice);
+  } else if (guidance?.nextEra) {
+    const requirementSection = el('section', 'era-requirements');
+    requirementSection.dataset.testid = 'era-advancement-requirements';
+    requirementSection.style.cssText = 'padding:13px;border:1px solid rgba(212,173,86,.38);border-radius:10px;background:rgba(12,16,23,.7);';
+    const title = el('div', '', `进入${guidance.nextEra.name}的条件`);
+    title.style.cssText = 'font-size:14px;font-weight:700;color:#e6c675;margin-bottom:9px;';
+    requirementSection.appendChild(title);
+    for (const requirement of guidance.requirements) {
+      const row = el('div', 'era-requirement-row');
+      row.style.cssText = `display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:12px;color:${requirement.complete ? '#79d89b' : '#e8b0a0'};`;
+      let progress = requirement.complete ? '已完成' : '未完成';
+      if (requirement.id === 'civilization') progress = requirement.current || '未选择';
+      if (requirement.id === 'technology' || requirement.id === 'civics') {
+        progress = `${Math.round(requirement.current * 100)}% / ${Math.round(requirement.required * 100)}%`;
+      }
+      if (requirement.id === 'stars') progress = `${requirement.current} / ${requirement.required}`;
+      row.textContent = `${requirement.complete ? '✓' : '○'} ${requirement.label} ${progress}`;
+      requirementSection.appendChild(row);
+    }
+
+    const sourceTitle = el('div', '', '时代星获取方式');
+    sourceTitle.style.cssText = 'font-size:12px;font-weight:700;color:#cdbb91;margin:10px 0 4px;';
+    requirementSection.appendChild(sourceTitle);
+    const sourceList = el('div', 'era-star-sources');
+    sourceList.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:3px 12px;font-size:11px;color:#9faabd;';
+    for (const source of guidance.starSources) {
+      sourceList.appendChild(el('span', '', `${source.label}：${source.amount} 星`));
+    }
+    requirementSection.appendChild(sourceList);
+    container.appendChild(requirementSection);
+  }
+
   const grid = el('div', 'civilization-grid');
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;';
   for (const civ of system.getAvailableCivilizations()) {
@@ -69,7 +106,7 @@ export function renderEraCivilizationPanel(data, body, pm) {
   }
   container.appendChild(grid);
 
-  const advance = el('button', 'era-advance-btn', '进入下一时代');
+  const advance = el('button', 'era-advance-btn', guidance?.nextEra ? `进入${guidance.nextEra.name}` : '已是最终时代');
   const check = system.canAdvance();
   advance.disabled = !check.ok;
   advance.title = check.ok ? '满足时代推进条件' : check.reason;

@@ -27,6 +27,75 @@ test('new game opens economy panels without browser errors', async ({ page }) =>
   await page.locator('#btn-pause').click();
   await page.screenshot({ path: 'test-results/qa-fixed-map-and-fog.png' });
 
+  const mountainPreview = await page.evaluate(() => {
+    const game = window.__game;
+    const renderer = game.mapRenderer;
+    const map = game.configRegistry.get('map');
+    let target = null;
+    for (let row = 2; row < map.gridHeight - 2 && !target; row += 1) {
+      for (let col = 2; col < map.gridWidth - 2; col += 1) {
+        if (map.grid[row][col] !== 'M') continue;
+        let neighbors = 0;
+        for (let dy = -1; dy <= 1; dy += 1) {
+          for (let dx = -1; dx <= 1; dx += 1) {
+            if (map.grid[row + dy]?.[col + dx] === 'M') neighbors += 1;
+          }
+        }
+        if (neighbors >= 7) { target = { col, row }; break; }
+      }
+    }
+    if (!target) return false;
+    window.__qaCameraState = renderer.getCameraState();
+    renderer.setCameraState(
+      target.col * renderer.tileSize - renderer.screenW / 3,
+      target.row * renderer.tileSize - renderer.screenH / 3,
+      1.35
+    );
+    renderer.fogContainer.visible = false;
+    return Boolean(renderer._mountainRockGraphics);
+  });
+  expect(mountainPreview).toBe(true);
+  await page.screenshot({ path: 'test-results/qa-mountain-rock-piles.png' });
+  await page.evaluate(() => {
+    const renderer = window.__game.mapRenderer;
+    const camera = window.__qaCameraState;
+    renderer.fogContainer.visible = true;
+    renderer.setCameraState(camera.camX, camera.camY, camera.zoom);
+  });
+
+  await page.evaluate(() => {
+    const game = window.__game;
+    game.popupManager.open('era_civilization', { eraSystem: game.systems.era });
+  });
+  await expect(page.getByTestId('era-advancement-requirements')).toBeVisible();
+  await expect(page.getByTestId('era-advancement-requirements')).toContainText('进入上古时代的条件');
+  await expect(page.getByTestId('era-advancement-requirements')).toContainText('科技树 0% / 70%');
+  await expect(page.getByTestId('era-advancement-requirements')).toContainText('时代星获取方式');
+  await page.screenshot({ path: 'test-results/qa-era-advancement-guidance.png' });
+  await closeVisiblePopup(page);
+
+  await page.evaluate(() => {
+    const game = window.__game;
+    const entrance = game.configRegistry.get('map').expeditionEntrances[0];
+    game.systems.building.buildings.push({
+      instanceId: 'browser_qa_exploration_camp',
+      buildingId: 'exploration_camp',
+      gridX: entrance.gridX,
+      gridY: entrance.gridY,
+      status: 'active',
+      buildProgress: null,
+      currentWorkers: 0
+    });
+    game.popupManager.open('building_detail', { buildingIndex: game.systems.building.buildings.length - 1 });
+  });
+  await expect(page.locator('#popup-body')).toContainText('洞穴探索');
+  await expect(page.getByTestId('open-exploration-camp')).toBeVisible();
+  await expectFirstDetailImage(page);
+  await page.screenshot({ path: 'test-results/qa-exploration-camp.png' });
+  await page.getByTestId('open-exploration-camp').click();
+  await expect(page.locator('#popup-title')).toHaveText('探险准备');
+  await closeVisiblePopup(page);
+
   await page.evaluate(() => {
     const game = window.__game;
     const buildingIndex = game.systems.building.buildings.findIndex(building => building.buildingId === 'warehouse');

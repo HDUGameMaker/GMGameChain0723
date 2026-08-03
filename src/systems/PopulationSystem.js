@@ -320,17 +320,9 @@ export class PopulationSystem {
       this.starvationDays += 1;
       this.satisfaction = Math.max(0, this.satisfaction - Math.ceil(10 + shortageRatio * 20));
 
-      if (this.satisfaction <= this.starvationEmigrationThreshold) {
-        const emigrants = Math.min(this.current, Math.max(1, Math.ceil(deficit / Math.max(1, this.foodPerPerson) * 0.5)));
-        this.current -= emigrants;
-        eventBus.emit('combatBroadcast', { message: `🚶 粮食短缺，${emigrants}名居民离开了聚落` });
-      }
-
-      if (this.starvationDays >= 3 && this.current > 0) {
-        const deaths = Math.min(this.current, Math.max(1, Math.ceil(deficit / Math.max(1, this.foodPerPerson) * 0.25)));
-        this.current -= deaths;
-        eventBus.emit('combatBroadcast', { message: `⚠️ 连续饥荒造成${deaths}人死亡` });
-      }
+      eventBus.emit('combatBroadcast', {
+        message: '⚠️ 食物短缺：满意度下降，本日停止人口自然增长。已招募人口不会离开或死亡。'
+      });
     } else {
       this.starvationDays = 0;
       this.satisfaction = Math.min(100, this.satisfaction + 2);
@@ -347,7 +339,6 @@ export class PopulationSystem {
     if (this.current > 0 && this.inspirationPerPerson > 0) {
       store.setState({ inspiration: (store.getState('inspiration') || 0) + this.current * this.inspirationPerPerson });
     }
-    if (this.current <= 0) eventBus.emit('gameOver', { reason: 'population_zero' });
     this._updateStore();
   }
 

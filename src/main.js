@@ -385,9 +385,11 @@ class Game {
 
     // 注册探险出发口点击事件
     eventBus.on('expeditionEntranceClicked', (entrance) => {
-      // 入口必须与道路相连
-      if (this.systems.road && !this.systems.road.hasAdjacentRoad(entrance.gridX, entrance.gridY, 1, 1)) {
-        eventBus.emit('combatBroadcast', { message: '🛑 该入口还未与道路相连，无法进入！' });
+      const access = this.systems.building.getExpeditionAccessStatus(entrance);
+      if (!access.ok) {
+        eventBus.emit('combatBroadcast', {
+          message: '⛺ 请先打开建造菜单，在洞穴入口格上建造探索营地；营地落成后点击这里即可探索，不需要铺路。'
+        });
         return;
       }
       const active = this.systems.expedition.getActiveCount();

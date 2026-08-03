@@ -60,3 +60,19 @@ test('insufficient research progress blocks advancement and state restores safel
   assert.equal(restored.getSelectedCivilization().id, 'zhou');
   assert.deepEqual(restored.getLegacyCivilizationIds(), ['proto_civilization', 'zhou']);
 });
+
+test('era guidance exposes every advancement requirement and its live progress', () => {
+  const era = createSystem(0.69);
+  assert.equal(typeof era.getAdvancementRequirements, 'function');
+  const guidance = era.getAdvancementRequirements();
+  assert.equal(guidance.nextEra.id, 'ancient');
+  assert.deepEqual(guidance.requirements.map(item => item.id), [
+    'civilization', 'technology', 'civics', 'stars'
+  ]);
+  assert.deepEqual(guidance.requirements.map(item => item.complete), [false, false, false, false]);
+  assert.equal(guidance.requirements[1].current, 0.69);
+  assert.equal(guidance.requirements[1].required, 0.7);
+  assert.equal(guidance.requirements[3].current, 0);
+  assert.equal(guidance.requirements[3].required, 5);
+  assert.deepEqual(guidance.starSources.map(source => source.amount), [1, 1, 1, 2, 2, 3]);
+});

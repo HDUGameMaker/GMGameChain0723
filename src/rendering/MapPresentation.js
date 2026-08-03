@@ -1,6 +1,24 @@
 const RESOURCE_NAMES = { wood: '木材', stone: '石料', food: '食物', gold: '黄金' };
 const STATUS_NAMES = { active: '运行中', constructing: '建造中', disabled: '停用', damaged: '受损' };
-const MOUNTAIN_BLOCK_COLORS = [0x89847a, 0x74777a, 0x62666b, 0xaeb3b8, 0xd5d9dc];
+const MOUNTAIN_BASE_COLORS = { B: 0x89847a, M: 0x625f5b };
+const MOUNTAIN_ROCK_PALETTES = [
+  { top: 0xb6aa98, front: 0x81776b, side: 0x625b54, outline: 0x403c38 },
+  { top: 0x9fa49f, front: 0x707672, side: 0x565b58, outline: 0x383c3a },
+  { top: 0xc0b59f, front: 0x8b806e, side: 0x685f54, outline: 0x463f39 },
+  { top: 0x8f8982, front: 0x67625d, side: 0x4d4946, outline: 0x34312f },
+  { top: 0xaaa39a, front: 0x77716a, side: 0x5b5651, outline: 0x3b3835 }
+];
+const MOUNTAIN_ROCK_VARIANTS = ['slab', 'block', 'wedge', 'weathered'];
+
+function coordinateHash(col, row, salt = 0) {
+  let value = (Math.imul(col + 17, 374761393) + Math.imul(row + 31, 668265263) + Math.imul(salt + 1, 1442695041)) >>> 0;
+  value = Math.imul(value ^ (value >>> 13), 1274126177) >>> 0;
+  return (value ^ (value >>> 16)) >>> 0;
+}
+
+function normalizedHash(col, row, salt) {
+  return coordinateHash(col, row, salt) / 0xffffffff;
+}
 
 function parseHexColor(colorHint, fallback = 0x333333) {
   if (typeof colorHint !== 'string' || !/^#[0-9a-f]{6}$/i.test(colorHint)) return fallback;
@@ -12,30 +30,48 @@ export function getTerrainFillColor(mapConfig, col, row) {
   const code = grid[row]?.[col];
   const groundType = mapConfig?.groundTypes?.[code];
   if (code !== 'M' && code !== 'B') return parseHexColor(groundType?.colorHint);
-  if (code === 'B') return MOUNTAIN_BLOCK_COLORS[0];
+  return parseHexColor(groundType?.colorHint, MOUNTAIN_BASE_COLORS[code]);
+}
 
-  const height = grid.length;
-  const width = grid[0]?.length || 0;
-  let band = MOUNTAIN_BLOCK_COLORS.length - 1;
-  for (let radius = 1; radius <= 3; radius += 1) {
-    let touchesOutside = false;
-    for (let dy = -radius; dy <= radius && !touchesOutside; dy += 1) {
-      for (let dx = -radius; dx <= radius; dx += 1) {
-        if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue;
-        const x = col + dx;
-        const y = row + dy;
-        if (x < 0 || y < 0 || x >= width || y >= height || grid[y][x] !== 'M') {
-          touchesOutside = true;
-          break;
-        }
-      }
-    }
-    if (touchesOutside) {
-      band = radius;
-      break;
-    }
+export function getMountainRockShapes(mapConfig, col, row, tileSize = 60) {
+  const code = mapConfig?.grid?.[row]?.[col];
+  if ((code !== 'M' && code !== 'B') || !Number.isFinite(tileSize) || tileSize <= 0) return [];
+
+  const ridge = code === 'M';
+  const count = (ridge ? 2 : 1) + (coordinateHash(col, row, 0) % 2);
+  const anchors = ridge
+    ? [[0.02, 0.42], [0.44, 0.34], [0.23, 0.05]]
+    : [[0.08, 0.45], [0.45, 0.34]];
+  const rocks = [];
+
+  for (let index = 0; index < count; index += 1) {
+    const widthRatio = (ridge ? 0.48 : 0.42) + normalizedHash(col, row, index * 5 + 1) * (ridge ? 0.18 : 0.14);
+    const heightRatio = (ridge ? 0.38 : 0.3) + normalizedHash(col, row, index * 5 + 2) * (ridge ? 0.18 : 0.12);
+    const width = Math.max(8, Math.round(tileSize * widthRatio));
+    const height = Math.max(7, Math.round(tileSize * heightRatio));
+    const [anchorX, anchorY] = anchors[index];
+    const jitterX = (normalizedHash(col, row, index * 5 + 3) - 0.5) * tileSize * 0.08;
+    const jitterY = (normalizedHash(col, row, index * 5 + 4) - 0.5) * tileSize * 0.06;
+    const x = Math.round(Math.max(0, Math.min(tileSize - width, tileSize * anchorX + jitterX)));
+    const y = Math.round(Math.max(0, Math.min(tileSize - height, tileSize * anchorY + jitterY)));
+    const paletteIndex = coordinateHash(col, row, index * 7 + 9) % MOUNTAIN_ROCK_PALETTES.length;
+    const palette = MOUNTAIN_ROCK_PALETTES[paletteIndex];
+    rocks.push({
+      x,
+      y,
+      width,
+      height,
+      capHeight: Math.max(3, Math.round(height * (0.3 + normalizedHash(col, row, index * 7 + 10) * 0.12))),
+      inset: Math.max(2, Math.round(width * (0.12 + normalizedHash(col, row, index * 7 + 11) * 0.1))),
+      variant: MOUNTAIN_ROCK_VARIANTS[coordinateHash(col, row, index * 7 + 12) % MOUNTAIN_ROCK_VARIANTS.length],
+      topColor: palette.top,
+      frontColor: palette.front,
+      sideColor: palette.side,
+      outlineColor: palette.outline
+    });
   }
-  return MOUNTAIN_BLOCK_COLORS[band];
+
+  return rocks.sort((left, right) => (left.y + left.height) - (right.y + right.height));
 }
 
 export function getTopDownShoreEdges(mapConfig, col, row) {

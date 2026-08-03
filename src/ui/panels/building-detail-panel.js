@@ -707,6 +707,23 @@ export function renderBuildingDetailPanel(data, body, pm) {
     container.appendChild(assemblySection);
   }
 
+  const expeditionEntrance = buildingSystem.getExpeditionEntranceForBuilding?.(buildingIndex);
+  if (expeditionEntrance) {
+    const explorationSection = section('洞穴探索', '⛺');
+    const info = document.createElement('div');
+    info.style.cssText = 'font-size:12px;color:#a0a0ba;margin-bottom:10px;line-height:1.6;';
+    info.textContent = `营地已覆盖“${expeditionEntrance.name}”。无需道路，点击下方按钮即可组织探索队。`;
+    explorationSection.appendChild(info);
+    const exploreButton = actionButton(
+      '开始探索洞穴',
+      'rgba(214,168,75,.24)',
+      () => eventBus.emit('expeditionEntranceClicked', expeditionEntrance)
+    );
+    exploreButton.dataset.testid = 'open-exploration-camp';
+    explorationSection.appendChild(exploreButton);
+    container.appendChild(explorationSection);
+  }
+
   if (config.id === 'tavern' && building.status === 'active') {
     const tavernSection = section('传奇访客', '🍺');
     const info = document.createElement('div');

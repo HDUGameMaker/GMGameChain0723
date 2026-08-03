@@ -78,17 +78,18 @@ test('research and civic buildings unlock their systems with zero workers but pr
   assert.equal(civicHall.outputPerTick, 0);
 });
 
-test('daily settlement consumes food and shortage lowers satisfaction and population', () => {
+test('food shortage lowers satisfaction but never removes recruited civilians', () => {
   const { resources, population } = createScenario();
   population.onDayStart();
   assert.equal(resources.getAmount('food'), 88);
   assert.equal(population.current, 12);
   resources._resources.food.current = 2;
   const beforeSatisfaction = population.satisfaction;
-  population.onDayStart();
+  for (let day = 0; day < 5; day += 1) population.onDayStart();
   assert.equal(resources.getAmount('food'), 0);
-  assert.ok(population.current < 12);
+  assert.equal(population.current, 12);
   assert.ok(population.satisfaction < beforeSatisfaction);
+  assert.equal(population.getDailyGrowthPreview().max, 0);
 });
 
 test('completed job buildings no longer auto-fill every available worker', () => {

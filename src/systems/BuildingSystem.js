@@ -66,6 +66,37 @@ export class BuildingSystem {
     this._adjacencyConfig = configRegistry.get('adjacency_bonuses') || [];
   }
 
+  getExpeditionEntranceAt(gridX, gridY) {
+    return (this._mapConfig?.expeditionEntrances || [])
+      .find(entrance => entrance.gridX === gridX && entrance.gridY === gridY) || null;
+  }
+
+  getExpeditionEntranceForBuilding(buildingIndex) {
+    const building = this.buildings[buildingIndex];
+    if (!building || building.status !== 'active') return null;
+    const config = configRegistry.getBuilding(building.buildingId);
+    if (!config?.requiredExpeditionEntrance) return null;
+    return this.getExpeditionEntranceAt(building.gridX, building.gridY);
+  }
+
+  hasExplorationCampAt(entrance) {
+    if (!entrance) return false;
+    return this.buildings.some(building => {
+      if (building.status !== 'active') return false;
+      const config = configRegistry.getBuilding(building.buildingId);
+      return config?.requiredExpeditionEntrance === true
+        && building.gridX === entrance.gridX
+        && building.gridY === entrance.gridY;
+    });
+  }
+
+  getExpeditionAccessStatus(entrance) {
+    if (!entrance || !this.hasExplorationCampAt(entrance)) {
+      return { ok: false, reason: 'exploration_camp_required' };
+    }
+    return { ok: true };
+  }
+
   // ===== 放置模式 =====
 
   enterPlacingMode(buildingId) {
@@ -113,6 +144,10 @@ export class BuildingSystem {
       return { valid: false, reason: '超出地图边界' };
     }
 
+    if (config.requiredExpeditionEntrance && !this.getExpeditionEntranceAt(gridX, gridY)) {
+      return { valid: false, reason: '必须覆盖地图上的洞穴入口' };
+    }
+
     // 地形检查
     for (let r = gridY; r < gridY + h; r++) {
       for (let c = gridX; c < gridX + w; c++) {
@@ -122,7 +157,7 @@ export class BuildingSystem {
           return { valid: false, reason: '无效地形' };
         }
         // 不可建造地形（山脉、水源）
-        if (groundType.buildable === false) {
+        if (groundType.buildable === false && !config.requiredExpeditionEntrance) {
           return { valid: false, reason: `${groundType.name}上不可建造` };
         }
         // 受限地形：仅特定建筑可建造（如采石场→裸露石头）

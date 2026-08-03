@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "buildings": {
+    "warehouse": {
+      "maxCount": null,
+      "initialBuilding": true
+    }
+  }
+}

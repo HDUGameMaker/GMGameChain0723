@@ -48,7 +48,9 @@ class ConfigRegistry {
       'eaIntegration': 'config/ea_integration.json',
       'historicalContent': 'config/historical_content.json',
       'civilizationBuildingOverrides': 'config/civilization-building-overrides.json',
-      'campaignProgression': 'config/campaign-progression.json'
+      'campaignProgression': 'config/campaign-progression.json',
+      'explorationBuildings': 'config/exploration-buildings.json',
+      'buildingRuntimeOverrides': 'config/building-runtime-overrides.json'
     };
 
     const loadPromises = Object.entries(configFiles).map(async ([key, path]) => {
@@ -71,6 +73,8 @@ class ConfigRegistry {
 
     this._applyEaIntegration();
     this._applyHistoricalContent();
+    this._applyExplorationBuildings();
+    this._applyBuildingRuntimeOverrides();
     this._applyCivilizationBuildingOverrides();
     this._ensureContentIcons();
 
@@ -210,6 +214,33 @@ class ConfigRegistry {
     this._configs.buildings = (this._configs.buildings || []).map(building => (
       patchesByBuildingId.get(building.id) || building
     ));
+  }
+
+  _applyExplorationBuildings() {
+    const additions = this._configs.explorationBuildings;
+    if (!Array.isArray(additions)) return;
+    const ids = new Set((this._configs.buildings || []).map(building => building.id));
+    this._configs.buildings = [
+      ...(this._configs.buildings || []),
+      ...additions.filter(building => !ids.has(building.id))
+    ];
+  }
+
+  _applyBuildingRuntimeOverrides() {
+    const overrides = this._configs.buildingRuntimeOverrides?.buildings;
+    if (!overrides || typeof overrides !== 'object') return;
+    this._configs.buildings = (this._configs.buildings || []).map(building => {
+      const patch = overrides[building.id];
+      if (!patch) return building;
+      return {
+        ...building,
+        ...patch,
+        uniqueFunction: {
+          ...(building.uniqueFunction || {}),
+          ...(patch.uniqueFunction || {})
+        }
+      };
+    });
   }
 
   getHistoricalContent() {

@@ -190,6 +190,58 @@ export class EraSystem {
     return changed;
   }
 
+  getAdvancementRequirements() {
+    const era = this.getCurrentEra();
+    const eras = this.getEras();
+    const nextEra = eras[this._currentEraIndex + 1] || null;
+    if (!era || !nextEra) {
+      return { currentEra: era, nextEra: null, finalEra: true, requirements: [], starSources: [] };
+    }
+
+    this.reconcileProgressionMilestones();
+    const selected = this.getSelectedCivilization(era.id);
+    const requiredCompletion = era.researchCompletionRequired
+      ?? this._content().eraSettings?.researchCompletionRequired
+      ?? 0.7;
+    const techProgress = this._techSystem?.getEraProgress?.(era.id) ?? 0;
+    const civicProgress = this._cultureSystem?.getEraProgress?.(era.id) ?? 0;
+    const stars = this.getEraStars(era.id).total;
+    const requiredStars = nextEra.starRequirement || 0;
+    const awards = this._progressionConfig().awards || {};
+
+    return {
+      currentEra: era,
+      nextEra,
+      finalEra: false,
+      requirements: [
+        {
+          id: 'civilization', label: '选择本时代文明',
+          current: selected?.name || null, required: true, complete: Boolean(selected)
+        },
+        {
+          id: 'technology', label: '科技树',
+          current: techProgress, required: requiredCompletion, complete: techProgress >= requiredCompletion
+        },
+        {
+          id: 'civics', label: '人文树',
+          current: civicProgress, required: requiredCompletion, complete: civicProgress >= requiredCompletion
+        },
+        {
+          id: 'stars', label: '时代星',
+          current: stars, required: requiredStars, complete: stars >= requiredStars
+        }
+      ],
+      starSources: [
+        { id: 'civilization', label: '选择当代文明', amount: awards.civilizationSelected?.amount || 0 },
+        { id: 'technology', label: '每完成一项当代科技', amount: awards.technologyResearched?.amount || 0 },
+        { id: 'civic', label: '每完成一项当代人文', amount: awards.civicResearched?.amount || 0 },
+        { id: 'technology-threshold', label: '科技树达到 70%', amount: awards.technologyThreshold?.amount || 0 },
+        { id: 'civic-threshold', label: '人文树达到 70%', amount: awards.civicThreshold?.amount || 0 },
+        { id: 'unique-building', label: '建成当代文明特色建筑', amount: awards.uniqueBuildingCompleted?.amount || 0 }
+      ]
+    };
+  }
+
   canAdvance() {
     const era = this.getCurrentEra();
     const eras = this.getEras();
