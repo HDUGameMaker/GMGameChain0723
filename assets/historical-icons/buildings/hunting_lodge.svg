@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="狩猎小屋">
+  <title>狩猎小屋</title><metadata>buildings:hunting_lodge</metadata>
+  <defs><linearGradient id="hunt-bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#24351f"/><stop offset="1" stop-color="#0c120b"/></linearGradient></defs>
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="url(#hunt-bg)" stroke="#b58a4c" stroke-width="2"/>
+  <path d="M13 50h38M18 31l14-12 14 12v18H18z" fill="#6d4526" stroke="#ecd1a0" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M12 31l20-17 20 17M27 49V36h10v13M45 17l6-7M47 18l8-2" fill="none" stroke="#ecd1a0" stroke-width="3" stroke-linecap="round"/>
+  <path d="M12 15c5 1 8 4 9 9M18 11c2 5 2 9-1 13" fill="none" stroke="#8eb36a" stroke-width="2" stroke-linecap="round"/>
+</svg>

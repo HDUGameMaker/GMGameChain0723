@@ -16,7 +16,7 @@
     "scrapyard_entrance": { "gridX": 268, "gridY": 189 }
   },
   "terrainPatches": [],
-  "generatorVersion": 3,
+  "generatorVersion": 4,
   "defaultPreset": "huge",
   "tileSize": 60,
   "customSize": { "min": 192, "max": 512, "multiple": 32, "maxCells": 262144 },

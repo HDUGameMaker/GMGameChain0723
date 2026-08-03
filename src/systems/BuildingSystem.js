@@ -1168,6 +1168,20 @@ export class BuildingSystem {
     }
 
     // 炼金材料副产品（概率×数量模型）
+    const boundLuxuryYield = config.boundLuxuryYield;
+    if (boundLuxuryYield && effectiveWorkers > 0 && building.resourceNodeId) {
+      const node = this._resourceNodeSystem?.getNode?.(building.resourceNodeId);
+      if (node?.type === 'luxury' && node.luxuryId) {
+        const interval = Math.max(1, Math.floor(Number(boundLuxuryYield.intervalWorkerTicks) || 12));
+        const amount = Math.max(1, Math.floor(Number(boundLuxuryYield.amount) || 1));
+        building.boundLuxuryProgress = Math.max(0, Number(building.boundLuxuryProgress) || 0) + effectiveWorkers;
+        while (building.boundLuxuryProgress >= interval) {
+          building.boundLuxuryProgress -= interval;
+          this._luxurySystem?.addLuxury?.(node.luxuryId, amount);
+        }
+      }
+    }
+
     if (prod.alchemyYields && this._alchemySystem) {
       for (const drop of prod.alchemyYields) {
         if (Math.random() > (drop.chance || 0)) continue;

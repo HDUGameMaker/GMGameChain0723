@@ -64,6 +64,18 @@ test('common nodes never deplete while rare nodes recover and persist', () => {
   assert.equal(restored.getNodeAt(3, 4).remaining, 2);
 });
 
+test('luxury deposits retain their luxury identity and map cue through save restore', () => {
+  const nodes = makeNodeSystem([
+    { id: 'luxury_silk_1', type: 'luxury', luxuryId: 'silk', visualCue: 'silk_bales', gridX: 3, gridY: 4, rarity: 'common' }
+  ]);
+  assert.equal(nodes.getNode('luxury_silk_1').luxuryId, 'silk');
+  assert.equal(nodes.getNode('luxury_silk_1').visualCue, 'silk_bales');
+  const restored = makeNodeSystem([]);
+  restored.restoreState(nodes.getState());
+  assert.equal(restored.getNode('luxury_silk_1').luxuryId, 'silk');
+  assert.equal(restored.getNode('luxury_silk_1').visualCue, 'silk_bales');
+});
+
 test('node claims reject mismatches and duplicate development', () => {
   const nodes = makeNodeSystem([
     { id: 'gold_1', type: 'gold', gridX: 7, gridY: 8, rarity: 'common', capacity: null }
@@ -117,4 +129,38 @@ test('all four gathering buildings place on and claim their matching resource no
     assert.equal(buildings.placeBuilding(gridX, gridY, buildingId), true, buildingId);
     assert.ok(nodes.getNode(nodeId).developedByBuildingId, `${nodeId} claimed`);
   }
+});
+
+test('a staffed trade post slowly gathers the luxury bound to its deposit', () => {
+  eventBus.clear();
+  configRegistry._configs = {
+    map: {
+      gridWidth: 4, gridHeight: 4, grid: Array.from({ length: 4 }, () => 'GGGG'),
+      groundTypes: { G: { name: '草地', buildable: true } }
+    },
+    buildings: [{
+      id: 'trade_post', name: '贸易站', footprint: { width: 1, height: 1 },
+      allowedGrounds: ['G'], requiredResourceNode: 'luxury', unlockConditions: [],
+      buildCost: [], maxCount: null, maxWorkers: 3,
+      production: { perWorker: true, output: [] },
+      boundLuxuryYield: { intervalWorkerTicks: 6, amount: 1 }
+    }],
+    historicalContent: { eras: [], civilizations: [] }
+  };
+  const nodes = makeNodeSystem([
+    { id: 'luxury_tea_1', type: 'luxury', luxuryId: 'tea', gridX: 1, gridY: 1, rarity: 'common' }
+  ]);
+  const gathered = [];
+  const buildings = new BuildingSystem();
+  buildings.setResourceSystem({ consumeAll: () => true, setStorageMultiplier() {} });
+  buildings.setResourceNodeSystem(nodes);
+  buildings.setLuxurySystem({ addLuxury: (id, amount) => gathered.push([id, amount]) });
+  buildings.init();
+  assert.equal(buildings.placeBuilding(1, 1, 'trade_post'), true);
+  buildings.buildings[0].currentWorkers = 2;
+  buildings._processProduction(buildings.buildings[0]);
+  buildings._processProduction(buildings.buildings[0]);
+  assert.deepEqual(gathered, []);
+  buildings._processProduction(buildings.buildings[0]);
+  assert.deepEqual(gathered, [['tea', 1]]);
 });

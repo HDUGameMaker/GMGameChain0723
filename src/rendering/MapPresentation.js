@@ -1,6 +1,6 @@
 const RESOURCE_NAMES = { wood: '木材', stone: '石料', food: '食物', gold: '黄金' };
 const STATUS_NAMES = { active: '运行中', constructing: '建造中', disabled: '停用', damaged: '受损' };
-const MOUNTAIN_CONTOUR_COLORS = [0x89847a, 0x74777a, 0x595d63, 0xc8cdd2, 0xe8ebee];
+const MOUNTAIN_BLOCK_COLORS = [0x89847a, 0x74777a, 0x62666b, 0xaeb3b8, 0xd5d9dc];
 
 function parseHexColor(colorHint, fallback = 0x333333) {
   if (typeof colorHint !== 'string' || !/^#[0-9a-f]{6}$/i.test(colorHint)) return fallback;
@@ -12,30 +12,30 @@ export function getTerrainFillColor(mapConfig, col, row) {
   const code = grid[row]?.[col];
   const groundType = mapConfig?.groundTypes?.[code];
   if (code !== 'M' && code !== 'B') return parseHexColor(groundType?.colorHint);
-  if (code === 'B') return MOUNTAIN_CONTOUR_COLORS[0];
+  if (code === 'B') return MOUNTAIN_BLOCK_COLORS[0];
 
   const height = grid.length;
   const width = grid[0]?.length || 0;
-  let contourBand = MOUNTAIN_CONTOUR_COLORS.length - 1;
+  let band = MOUNTAIN_BLOCK_COLORS.length - 1;
   for (let radius = 1; radius <= 3; radius += 1) {
-    let touchesOutsideMountain = false;
-    for (let dy = -radius; dy <= radius && !touchesOutsideMountain; dy += 1) {
+    let touchesOutside = false;
+    for (let dy = -radius; dy <= radius && !touchesOutside; dy += 1) {
       for (let dx = -radius; dx <= radius; dx += 1) {
         if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue;
         const x = col + dx;
         const y = row + dy;
         if (x < 0 || y < 0 || x >= width || y >= height || grid[y][x] !== 'M') {
-          touchesOutsideMountain = true;
+          touchesOutside = true;
           break;
         }
       }
     }
-    if (touchesOutsideMountain) {
-      contourBand = radius;
+    if (touchesOutside) {
+      band = radius;
       break;
     }
   }
-  return MOUNTAIN_CONTOUR_COLORS[contourBand];
+  return MOUNTAIN_BLOCK_COLORS[band];
 }
 
 export function getTopDownShoreEdges(mapConfig, col, row) {

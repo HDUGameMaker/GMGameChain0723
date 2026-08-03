@@ -13,7 +13,9 @@ function normalizeNode(node) {
     recoveryDays: rarity ? Math.max(1, Math.floor(Number(node.recoveryDays) || 7)) : null,
     recoveryDay: rarity && Number.isFinite(node.recoveryDay) ? Math.max(1, Math.floor(node.recoveryDay)) : null,
     developedByBuildingId: node.developedByBuildingId || null,
-    discovered: node.discovered !== false
+    discovered: node.discovered !== false,
+    luxuryId: node.luxuryId ? String(node.luxuryId) : null,
+    visualCue: node.visualCue ? String(node.visualCue) : null
   };
 }
 

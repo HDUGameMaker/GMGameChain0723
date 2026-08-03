@@ -403,5 +403,89 @@
     "synthesisRecipes": [],
     "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
     "tags": ["gold_mint"]
+  },
+  {
+    "id": "hunting_lodge",
+    "name": "狩猎小屋",
+    "description": "在野生动物出没的食物点建立猎人营地。配置工人后持续取得食物，适合游戏前期机动供给。",
+    "category": "gathering",
+    "eraId": "primitive",
+    "footprint": { "width": 1, "height": 1 },
+    "maxCount": null,
+    "initialBuilding": false,
+    "allowedGrounds": ["G", "D", "F", "B"],
+    "requiredResourceNode": "food",
+    "unlockConditions": [],
+    "maxWorkers": 5,
+    "buildCost": [
+      { "resourceId": "wood", "amount": 24 }
+    ],
+    "buildTime": 1,
+    "production": {
+      "perWorker": true,
+      "output": [{ "resourceId": "food", "amount": 2 }]
+    },
+    "productionCycle": "tick",
+    "imageDetail": "assets/buildings/historical-details/hunting_lodge.png",
+    "mapIcon": "assets/historical-icons/buildings/hunting_lodge.svg",
+    "synthesisRecipes": [],
+    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
+    "tags": ["gathering", "hunting"]
+  },
+  {
+    "id": "forager_hut",
+    "name": "采集小屋",
+    "description": "覆盖浆果、野粮与灌木食物点，配置工人后以稳定但较低的速度采集食物。",
+    "category": "gathering",
+    "eraId": "primitive",
+    "footprint": { "width": 1, "height": 1 },
+    "maxCount": null,
+    "initialBuilding": false,
+    "allowedGrounds": ["G", "D", "F", "B"],
+    "requiredResourceNode": "food",
+    "unlockConditions": [],
+    "maxWorkers": 4,
+    "buildCost": [
+      { "resourceId": "wood", "amount": 16 }
+    ],
+    "buildTime": 1,
+    "production": {
+      "perWorker": true,
+      "output": [{ "resourceId": "food", "amount": 1 }]
+    },
+    "productionCycle": "tick",
+    "imageDetail": "assets/buildings/historical-details/forager_hut.png",
+    "mapIcon": "assets/historical-icons/buildings/forager_hut.svg",
+    "synthesisRecipes": [],
+    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
+    "tags": ["gathering", "foraging"]
+  },
+  {
+    "id": "trade_post",
+    "name": "贸易站",
+    "description": "只能覆盖地图奢侈品产地。配置工人后缓慢采集该产地对应的奢侈品，首份提供帝国加成，重复份可用于贸易。",
+    "category": "commerce",
+    "eraId": "primitive",
+    "footprint": { "width": 1, "height": 1 },
+    "maxCount": null,
+    "initialBuilding": false,
+    "allowedGrounds": ["G", "D", "F", "R", "S"],
+    "requiredResourceNode": "luxury",
+    "unlockConditions": [],
+    "maxWorkers": 3,
+    "buildCost": [
+      { "resourceId": "wood", "amount": 45 },
+      { "resourceId": "stone", "amount": 20 },
+      { "resourceId": "gold", "amount": 15 }
+    ],
+    "buildTime": 2,
+    "production": { "perWorker": true, "output": [] },
+    "boundLuxuryYield": { "intervalWorkerTicks": 12, "amount": 1 },
+    "productionCycle": "tick",
+    "imageDetail": "assets/buildings/historical-details/trade_post.png",
+    "mapIcon": "assets/historical-icons/buildings/trade_post.svg",
+    "synthesisRecipes": [],
+    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
+    "tags": ["commerce", "luxury", "trade"]
   }
 ]

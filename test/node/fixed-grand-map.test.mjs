@@ -52,6 +52,7 @@ test('new campaigns load the committed 384 square grand map', () => {
   const waterRatio = waterCells / (384 * 384);
   assert.ok(waterRatio >= 0.15 && waterRatio <= 0.20, `water ratio ${waterRatio}`);
   assert.equal(map.generation?.templateId, 'reference_world_2026');
+  assert.ok(map.generationVersion >= 4, `generation version ${map.generationVersion}`);
   assert.ok(Math.abs(map.spawnManifest.playerSpawn.gridX - 270) <= 12);
   assert.ok(Math.abs(map.spawnManifest.playerSpawn.gridY - 180) <= 12);
   assert.equal(map.spawnManifest.cityStates.length, 24);
@@ -65,6 +66,94 @@ test('new campaigns load the committed 384 square grand map', () => {
     assert.ok(new Set(typed.map(node => `${Math.floor(node.gridX / 96)}:${Math.floor(node.gridY / 96)}`)).size >= 8,
       `${type} nodes should cover the fixed world's macro regions`);
   }
+});
+
+function terrainComponents(map, accepted) {
+  const remaining = new Set();
+  for (let y = 0; y < map.gridHeight; y += 1) for (let x = 0; x < map.gridWidth; x += 1) {
+    if (accepted.has(map.grid[y][x])) remaining.add(`${x},${y}`);
+  }
+  const components = [];
+  while (remaining.size) {
+    const first = remaining.values().next().value;
+    remaining.delete(first);
+    const queue = [first];
+    const cells = [];
+    for (let head = 0; head < queue.length; head += 1) {
+      const key = queue[head];
+      cells.push(key);
+      const [x, y] = key.split(',').map(Number);
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const next = `${x + dx},${y + dy}`;
+        if (remaining.delete(next)) queue.push(next);
+      }
+    }
+    components.push(cells.map(key => key.split(',').map(Number)));
+  }
+  return components;
+}
+
+test('forest and mountain formations vary from small patches to large ranges', () => {
+  const map = loadMap();
+  for (const [label, codes] of [['forest', new Set(['F'])], ['mountain', new Set(['M'])]]) {
+    const sizes = terrainComponents(map, codes).map(component => component.length);
+    assert.ok(sizes.some(size => size <= 12), `${label} lacks small formations`);
+    assert.ok(sizes.some(size => size >= 30 && size < 100), `${label} lacks medium formations`);
+    assert.ok(sizes.some(size => size >= 100), `${label} lacks large formations`);
+  }
+});
+
+test('every forest has timber access and every mountain has nearby stone and gold deposits', () => {
+  const map = loadMap();
+  const nodes = map.spawnManifest.resourceNodes;
+  const near = (component, type) => nodes.some(node => node.type === type && component.some(([x, y]) => (
+    Math.max(Math.abs(node.gridX - x), Math.abs(node.gridY - y)) <= 2
+  )));
+  for (const component of terrainComponents(map, new Set(['F']))) {
+    assert.ok(near(component, 'wood'), `forest at ${component[0]} lacks a wood node`);
+  }
+  for (const component of terrainComponents(map, new Set(['M']))) {
+    assert.ok(near(component, 'stone'), `mountain at ${component[0]} lacks a stone node`);
+    assert.ok(near(component, 'gold'), `mountain at ${component[0]} lacks a gold node`);
+  }
+});
+
+test('food nodes use wildlife or forage cues and all twenty luxuries are sparse map deposits', () => {
+  const map = loadMap();
+  const historical = JSON.parse(readFileSync(historicalContentUrl, 'utf8'));
+  const foodCues = new Set(['deer', 'boar', 'wild_sheep', 'berry_bush', 'grain_patch']);
+  const foodNodes = map.spawnManifest.resourceNodes.filter(node => node.type === 'food');
+  assert.ok(foodNodes.every(node => foodCues.has(node.visualCue)), 'food nodes need readable forage cues');
+
+  const luxuryNodes = map.spawnManifest.resourceNodes.filter(node => node.type === 'luxury');
+  assert.deepEqual(new Set(luxuryNodes.map(node => node.luxuryId)), new Set(historical.luxuries.map(item => item.id)));
+  assert.ok(luxuryNodes.length < foodNodes.length / 3, 'luxuries should be substantially rarer than basic resources');
+  for (const luxury of historical.luxuries) {
+    const deposits = luxuryNodes.filter(node => node.luxuryId === luxury.id);
+    assert.ok(deposits.length >= 2, `${luxury.id} needs multiple world deposits`);
+    assert.ok(deposits.every(node => map.grid[node.gridY][node.gridX] === luxury.groundType), `${luxury.id} ground mismatch`);
+  }
+});
+
+test('large mountain ranges expose restored clickable cave expedition entrances', () => {
+  const map = loadMap();
+  assert.ok(map.expeditionEntrances.length >= 8, `cave entrances ${map.expeditionEntrances.length}`);
+  for (const entrance of map.expeditionEntrances) {
+    assert.match(entrance.id, /^cave_entrance_/);
+    assert.ok(['M', 'B'].includes(map.grid[entrance.gridY][entrance.gridX]), `${entrance.id} is not in a mountain`);
+    assert.ok(Array.isArray(entrance.regionIds) && entrance.regionIds.length >= 2);
+  }
+});
+
+test('hunting, foraging and luxury gathering buildings are available', () => {
+  const baseBuildings = JSON.parse(readFileSync(buildingsUrl, 'utf8'));
+  const byId = new Map(baseBuildings.map(building => [building.id, building]));
+  for (const id of ['hunting_lodge', 'forager_hut']) {
+    assert.equal(byId.get(id)?.requiredResourceNode, 'food', `${id} should develop food nodes`);
+    assert.ok(byId.get(id)?.production?.output?.some(output => output.resourceId === 'food'));
+  }
+  assert.equal(byId.get('trade_post')?.requiredResourceNode, 'luxury');
+  assert.ok(byId.get('trade_post')?.boundLuxuryYield?.intervalWorkerTicks >= 6);
 });
 
 test('the micro-biome pass preserves the approved macro water mask', () => {
@@ -161,7 +250,7 @@ test('wood food stone and gold nodes all accept their dedicated gathering buildi
     assert.ok(building, `${resourceType} gathering building is configured`);
     assert.equal(building.requiredResourceNode, resourceType);
     const nodes = map.spawnManifest.resourceNodes.filter(node => node.type === resourceType);
-    assert.equal(nodes.length, 320, `${resourceType} node count`);
+    assert.ok(nodes.length >= 400, `${resourceType} node count ${nodes.length}`);
     for (const node of nodes) {
       assert.ok(footprintFitsNode(map, node, building), `${buildingId} cannot cover ${node.id} at ${node.gridX},${node.gridY}`);
     }

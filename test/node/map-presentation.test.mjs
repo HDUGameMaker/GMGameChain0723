@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels, getTerrainFillColor, getTopDownShoreEdges } from '../../src/rendering/MapPresentation.js';
+import {
+  createArmySelectionModel,
+  createBuildingHoverDetails,
+  createMapTokenModels,
+  getTerrainFillColor,
+  getTopDownShoreEdges
+} from '../../src/rendering/MapPresentation.js';
 
 test('building hover details expose status, jobs, output, aura and upgrade information', () => {
   const details = createBuildingHoverDetails(
@@ -76,7 +82,7 @@ test('selected army presentation exposes its name, unit count and remaining rout
   });
 });
 
-test('mountain terrain uses readable contour bands instead of pure black tiles', () => {
+test('mountain terrain is expressed entirely through readable square color bands', () => {
   const map = {
     groundTypes: {
       G: { colorHint: '#7BA05B' },

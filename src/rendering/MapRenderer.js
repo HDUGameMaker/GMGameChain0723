@@ -174,7 +174,7 @@ export class MapRenderer {
     this._centerView();
     this._drawTerrainChunk();
     this._recalculateFogState();
-    // this._drawExpeditionEntrances(); // 重设计：隐藏探险入口（探险系统已移出核心循环）
+    this._drawExpeditionEntrances();
     this._drawEventMarkers();
     this._drawOutposts();
     this._drawEnemies();
@@ -227,6 +227,9 @@ export class MapRenderer {
     }
     for (const definition of Object.values(configRegistry.get('resourceNodes')?.types || {})) {
       if (definition.mapArt) tasks.push(loadOne(definition.mapArt));
+    }
+    for (const luxury of configRegistry.getHistoricalContent?.().luxuries || []) {
+      if (luxury.icon) tasks.push(loadOne(luxury.icon));
     }
     for (const building of configRegistry.get('buildings') || []) {
       if (building.mapIcon) tasks.push(loadOne(building.mapIcon));
@@ -519,6 +522,8 @@ export class MapRenderer {
     this.resourceNodeLayer.removeChildren().forEach(child => child.destroy({ children: true }));
     const nodes = this._resourceNodeSystem?.getNodes?.() || [];
     const definitions = configRegistry.get('resourceNodes')?.types || {};
+    const luxuries = new Map((configRegistry.getHistoricalContent?.().luxuries || []).map(luxury => [luxury.id, luxury]));
+    const foodCueIcons = { deer: '🦌', boar: '🐗', wild_sheep: '🐑', berry_bush: '🫐', grain_patch: '🌾' };
     const ts = this.tileSize;
     const bounds = getVisibleTileBounds({
       gridWidth: this.mapConfig.gridWidth,
@@ -536,7 +541,10 @@ export class MapRenderer {
       const fogState = this._fogOfWar?.getTileState(node.gridX, node.gridY) || 'visible';
       if (fogState === 'unexplored') continue;
       if (node.gridX < bounds.startCol || node.gridX > bounds.endCol || node.gridY < bounds.startRow || node.gridY > bounds.endRow) continue;
-      const definition = definitions[node.type] || {};
+      const luxury = node.luxuryId ? luxuries.get(node.luxuryId) : null;
+      const definition = luxury
+        ? { ...(definitions[node.type] || {}), name: luxury.name, mapArt: luxury.icon, icon: '◆' }
+        : (definitions[node.type] || {});
       const colorText = String(definition.color || '#d8c787').replace('#', '');
       const color = Number.parseInt(colorText, 16) || 0xd8c787;
       const container = new PIXI.Container();
@@ -575,6 +583,16 @@ export class MapRenderer {
         marker.x = x + ts * 0.76;
         marker.y = y + ts * 0.24;
         container.addChild(marker);
+      }
+      if (node.type === 'food' && foodCueIcons[node.visualCue]) {
+        const cue = new PIXI.Text({
+          text: foodCueIcons[node.visualCue],
+          style: { fontSize: Math.max(12, ts * 0.25), fill: 0xffffff }
+        });
+        cue.anchor.set(0.5);
+        cue.x = x + ts * 0.74;
+        cue.y = y + ts * 0.72;
+        container.addChild(cue);
       }
       this.resourceNodeLayer.addChild(container);
     }

@@ -930,6 +930,42 @@ function paintMicroEllipse(rows, waterMask, center, radiusX, radiusY, terrain, b
   }
 }
 
+function paintOrganicEllipse(rows, waterMask, center, radiusX, radiusY, terrain, bounds, seed, namespace, predicate = () => true) {
+  for (let y = Math.max(bounds.startY, center.y - radiusY); y <= Math.min(bounds.endY - 1, center.y + radiusY); y += 1) {
+    for (let x = Math.max(bounds.startX, center.x - radiusX); x <= Math.min(bounds.endX - 1, center.x + radiusX); x += 1) {
+      const nx = (x - center.x) / Math.max(1, radiusX);
+      const ny = (y - center.y) / Math.max(1, radiusY);
+      const edgeNoise = (hashSeedParts([seed, namespace, x, y]) / 0x1_0000_0000 - 0.5) * 0.28;
+      if (nx * nx + ny * ny > 1 + edgeNoise) continue;
+      if (!waterMask[y][x] && predicate(rows[y][x], x, y)) rows[y][x] = terrain;
+    }
+  }
+}
+
+function paintMountainFormation(rows, waterMask, center, radiusX, radiusY, bounds, seed, namespace, isProtected) {
+  const innerX = Math.max(2, radiusX - 1);
+  const innerY = Math.max(2, radiusY - 1);
+  paintOrganicEllipse(rows, waterMask, center, radiusX, radiusY, 'B', bounds, seed, `${namespace}:foothill`, (_code, x, y) => !isProtected(x, y));
+  paintOrganicEllipse(rows, waterMask, center, innerX, innerY, 'M', bounds, seed, `${namespace}:ridge`, (_code, x, y) => !isProtected(x, y));
+
+  const ledges = [
+    { x: center.x - 1, y: center.y + innerY },
+    { x: center.x + innerX, y: center.y - 1 },
+    { x: center.x - innerX - 1, y: center.y - 1 },
+    { x: center.x - 1, y: center.y - innerY - 1 }
+  ];
+  for (const ledge of deterministicCellOrder(ledges, seed, `${namespace}:ore-ledge`)) {
+    if (ledge.x < bounds.startX || ledge.y < bounds.startY || ledge.x + 1 >= bounds.endX || ledge.y + 1 >= bounds.endY) continue;
+    let valid = true;
+    for (let dy = 0; dy < 2; dy += 1) for (let dx = 0; dx < 2; dx += 1) {
+      if (waterMask[ledge.y + dy][ledge.x + dx] || isProtected(ledge.x + dx, ledge.y + dy)) valid = false;
+    }
+    if (!valid) continue;
+    for (let dy = 0; dy < 2; dy += 1) for (let dx = 0; dx < 2; dx += 1) rows[ledge.y + dy][ledge.x + dx] = 'R';
+    break;
+  }
+}
+
 function hasLandRectangle(waterMask, center, radiusX, radiusY, bounds) {
   if (center.x - radiusX < bounds.startX || center.x + radiusX >= bounds.endX
     || center.y - radiusY < bounds.startY || center.y + radiusY >= bounds.endY) return false;
@@ -953,6 +989,43 @@ function scatterLandMicroBiomes(rows, seed, protectedArea = null) {
   const isProtected = (x, y) => protectedArea
     && Math.abs(x - protectedArea.gridX) <= protectedArea.radius
     && Math.abs(y - protectedArea.gridY) <= protectedArea.radius;
+  const worldBounds = { startX: 0, startY: 0, endX: width, endY: height };
+  const allLand = [];
+  for (let y = 2; y < height - 2; y += 1) for (let x = 2; x < width - 2; x += 1) {
+    if (!waterMask[y][x] && !isProtected(x, y)) allLand.push({ x, y });
+  }
+
+  const chooseSeparatedCenters = (namespace, count, radiusX, radiusY, preferred) => {
+    const ordered = deterministicCellOrder(allLand.filter(cell => (
+      hasLandRectangle(waterMask, cell, radiusX, radiusY, worldBounds)
+      && (!preferred || preferred(original[cell.y][cell.x]))
+    )), seed, namespace);
+    const selected = [];
+    for (const cell of ordered) {
+      if (selected.some(other => Math.hypot(other.x - cell.x, other.y - cell.y) < Math.max(radiusX, radiusY) * 2.2)) continue;
+      selected.push(cell);
+      if (selected.length >= count) break;
+    }
+    return selected;
+  };
+
+  // A few cross-region formations create genuinely large, irregular biomes while the
+  // later 25x25 pass still guarantees local access to the four basic resources.
+  chooseSeparatedCenters('macro-forest-centers', 14, 13, 9).forEach((center, index) => {
+    const radiusX = 8 + (hashSeedParts([seed, 'macro-forest-x', index]) % 6);
+    const radiusY = 6 + (hashSeedParts([seed, 'macro-forest-y', index]) % 4);
+    paintOrganicEllipse(result, waterMask, center, radiusX, radiusY, 'F', worldBounds, seed, `macro-forest:${index}`, (code, x, y) => code !== 'M' && !isProtected(x, y));
+  });
+  chooseSeparatedCenters('macro-soil-centers', 10, 11, 7).forEach((center, index) => {
+    const radiusX = 6 + (hashSeedParts([seed, 'macro-soil-x', index]) % 6);
+    const radiusY = 4 + (hashSeedParts([seed, 'macro-soil-y', index]) % 4);
+    paintOrganicEllipse(result, waterMask, center, radiusX, radiusY, 'D', worldBounds, seed, `macro-soil:${index}`, (code, x, y) => code !== 'M' && code !== 'B' && !isProtected(x, y));
+  });
+  chooseSeparatedCenters('macro-mountain-centers', 10, 13, 9, code => code === 'M' || code === 'B').forEach((center, index) => {
+    const radiusX = 9 + (hashSeedParts([seed, 'macro-mountain-x', index]) % 5);
+    const radiusY = 6 + (hashSeedParts([seed, 'macro-mountain-y', index]) % 4);
+    paintMountainFormation(result, waterMask, center, radiusX, radiusY, worldBounds, seed, `macro-mountain:${index}`, isProtected);
+  });
 
   for (let startY = 0; startY < height; startY += MICRO_REGION_SIZE) {
     for (let startX = 0; startX < width; startX += MICRO_REGION_SIZE) {
@@ -986,23 +1059,33 @@ function scatterLandMicroBiomes(rows, seed, protectedArea = null) {
       if (mountainBias >= 12 || mountainRoll < 0.24) {
         const target = anchor(0.5, 0.5);
         const centers = cellsNearestTo(safeCells, target.x, target.y, seed, `micro-mountain:${namespace}`);
-        const center = centers.find(cell => hasLandRectangle(waterMask, cell, 4, 3, bounds) && !isProtected(cell.x, cell.y));
+        const sizeBand = hashSeedParts([seed, 'micro-mountain-size', namespace]) % 3;
+        const radiusX = [2, 4, 6][sizeBand];
+        const radiusY = [2, 3, 4][sizeBand];
+        const center = centers.find(cell => hasLandRectangle(waterMask, cell, radiusX + 1, radiusY + 1, worldBounds) && !isProtected(cell.x, cell.y));
         if (center) {
-          paintMicroEllipse(result, waterMask, center, 4, 3, 'B', bounds, (_code, x, y) => !isProtected(x, y));
-          paintMicroEllipse(result, waterMask, center, 3, 2, 'M', bounds, (_code, x, y) => !isProtected(x, y));
+          paintMountainFormation(result, waterMask, center, radiusX, radiusY, worldBounds, seed, `micro-mountain:${namespace}`, isProtected);
         }
       }
 
-      const ordinaryGround = code => code !== 'M' && code !== 'B';
+      const ordinaryGround = code => code !== 'M' && code !== 'B' && code !== 'R';
       const soilTarget = anchor(0.73, 0.28);
       const soilCenter = cellsNearestTo(safeCells, soilTarget.x, soilTarget.y, seed, `micro-soil:${namespace}`)
         .find(cell => ordinaryGround(result[cell.y][cell.x]) && !isProtected(cell.x, cell.y));
-      if (soilCenter) paintMicroEllipse(result, waterMask, soilCenter, 3, 2, 'D', bounds, (code, x, y) => ordinaryGround(code) && !isProtected(x, y));
+      if (soilCenter) {
+        const soilBand = hashSeedParts([seed, 'micro-soil-size', namespace]) % 4;
+        paintOrganicEllipse(result, waterMask, soilCenter, 2 + soilBand, 1 + Math.floor(soilBand / 2), 'D', worldBounds, seed, `micro-soil:${namespace}`, (code, x, y) => ordinaryGround(code) && !isProtected(x, y));
+      }
 
       const forestTarget = anchor(0.4, 0.62);
       const forestCenter = cellsNearestTo(safeCells, forestTarget.x, forestTarget.y, seed, `micro-forest:${namespace}`)
         .find(cell => ordinaryGround(result[cell.y][cell.x]) && !isProtected(cell.x, cell.y));
-      if (forestCenter) paintMicroEllipse(result, waterMask, forestCenter, 3, 2, 'F', bounds, (code, x, y) => ordinaryGround(code) && !isProtected(x, y));
+      if (forestCenter) {
+        const forestBand = hashSeedParts([seed, 'micro-forest-size', namespace]) % 4;
+        const radiusX = [1, 2, 3, 5][forestBand];
+        const radiusY = [1, 2, 2, 4][forestBand];
+        paintOrganicEllipse(result, waterMask, forestCenter, radiusX, radiusY, 'F', worldBounds, seed, `micro-forest:${namespace}`, (code, x, y) => ordinaryGround(code) && !isProtected(x, y));
+      }
 
       const forestCount = () => landCells.filter(cell => result[cell.y][cell.x] === 'F').length;
       for (const cell of deterministicCellOrder(safeCells, seed, `micro-forest-fill:${namespace}`)) {
@@ -1215,7 +1298,7 @@ export function buildTemplateDrivenWorld({ width = 384, height = 384, macroTempl
       microDistribution: {
         regionSize: MICRO_REGION_SIZE,
         guaranteedTerrain: ['F', 'R'],
-        description: '陆地按25×25微区打散为小型森林、土壤、矿脉与等高线山体；宏观水系掩码保持不变。'
+        description: '陆地由跨区大型地貌与25×25本地资源保障共同构成；森林、土壤和山脉尺寸随机，山体仅由连续方格的分层色带表现，宏观水系掩码保持不变。'
       }
     },
     gridWidth: width,

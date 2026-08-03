@@ -8,10 +8,10 @@ test('all runtime buildings, units and common resource nodes resolve to unique u
   const byType = {};
   for (const record of report.records) (byType[record.contentType] ||= []).push(record);
 
-  assert.equal(byType.building.length, 111);
+  assert.equal(byType.building.length, 114);
   assert.equal(byType.unit.length, 138);
-  assert.equal(byType.resource.length, 4);
-  assert.deepEqual(report.summary.statuses, { ok: 253 });
+  assert.equal(byType.resource.length, 5);
+  assert.deepEqual(report.summary.statuses, { ok: 257 });
 
   for (const record of report.records) {
     assert.equal(record.status, 'ok', `${record.contentType}:${record.contentId} -> ${record.status}`);

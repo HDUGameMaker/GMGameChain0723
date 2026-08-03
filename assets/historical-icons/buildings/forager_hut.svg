@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="采集小屋">
+  <title>采集小屋</title><metadata>buildings:forager_hut</metadata>
+  <defs><radialGradient id="forage-bg"><stop stop-color="#3d2c22"/><stop offset="1" stop-color="#10130d"/></radialGradient></defs>
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="url(#forage-bg)" stroke="#c59255" stroke-width="2"/>
+  <path d="M14 49h36M19 30l13-11 13 11v19H19z" fill="#735033" stroke="#f0d5a5" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M14 30l18-16 18 16M28 49V37h8v12" fill="none" stroke="#f0d5a5" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="15" cy="19" r="3" fill="#b94458"/><circle cx="21" cy="15" r="2.5" fill="#d65b6e"/><path d="M18 22c3 3 5 7 5 12M13 24c4 0 7-1 10-4" fill="none" stroke="#74a956" stroke-width="2"/>
+</svg>
