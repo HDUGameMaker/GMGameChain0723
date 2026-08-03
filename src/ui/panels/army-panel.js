@@ -21,6 +21,24 @@ function _armySystem() { return window.__game?.systems?.army; }
 function _armies() { return _armySystem()?.getArmies?.() || []; }
 function _avail() { return _armySystem()?.getAvailableUnits?.() || {}; }
 
+function _createArtImage(primary, fallback, { testid = '', cssText = '' } = {}) {
+  const img = document.createElement('img');
+  img.src = primary || fallback || '';
+  img.alt = '';
+  img.dataset.fallbackSrc = fallback || '';
+  if (testid) img.dataset.testid = testid;
+  img.style.cssText = cssText;
+  img.addEventListener('error', () => {
+    if (!img._fallbackApplied && fallback && primary !== fallback) {
+      img._fallbackApplied = true;
+      img.src = fallback;
+      return;
+    }
+    img.style.display = 'none';
+  });
+  return img;
+}
+
 function _notifyArmyChanged(reason) {
   const version = (_store()?.getState('armyVersion') || 0) + 1;
   _store()?.setState({ armyVersion: version });
@@ -95,6 +113,17 @@ function _renderAssemblyPanel(data, body, pm) {
   const header = document.createElement('div');
   header.style.cssText = 'margin-bottom:16px;';
   header.innerHTML = `<div style="font-size:18px;font-weight:700;color:#ececf0;">⚔️ ${config.name || building.buildingId} · 军团集结</div><div style="font-size:12px;color:#9099aa;margin-top:5px;">军团将按 N、NE、E、SE、S、SW、W、NW 顺序部署到建筑完整占地外侧。</div>`;
+  const headerArt = document.createElement('div');
+  headerArt.style.cssText = 'display:flex;align-items:center;gap:10px;margin-top:10px;';
+  headerArt.appendChild(_createArtImage(config.imageDetail, config.mapIcon, {
+    testid: 'assembly-building-art',
+    cssText: 'width:112px;height:72px;object-fit:cover;border-radius:8px;border:1px solid rgba(214,176,103,.28);'
+  }));
+  headerArt.appendChild(_createArtImage(config.mapIcon, config.imageDetail, {
+    testid: 'assembly-map-icon',
+    cssText: 'width:42px;height:42px;object-fit:contain;border-radius:7px;background:rgba(8,12,18,.88);padding:4px;'
+  }));
+  header.appendChild(headerArt);
   body.appendChild(header);
 
   const nameInput = document.createElement('input');
@@ -121,6 +150,10 @@ function _renderAssemblyPanel(data, body, pm) {
     const selected = draft.unitCounts[unit.id] || 0;
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:center;gap:9px;padding:9px 11px;margin-bottom:6px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:8px;';
+    row.appendChild(_createArtImage(unit.cardArt, unit.icon, {
+      testid: `reserve-unit-art-${unit.id}`,
+      cssText: 'width:46px;height:46px;object-fit:cover;border-radius:7px;background:#111722;'
+    }));
     const details = document.createElement('div');
     details.style.cssText = 'flex:1;min-width:0;color:#e6e8ed;font-size:13px;';
     details.textContent = `${unit.icon || '⚔️'} ${unit.name} · ${unit.domain === 'naval' ? '海军' : '陆军'} · CP ${calcCP(unit.id)} · 预备 ${reserves[unit.id]}`;
@@ -278,6 +311,12 @@ export function renderArmyPanel(data, body, pm) {
     /* 头部行 */
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:14px 16px;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.06);';
+    const representative = (army.unitIds || []).map(id => unitMap[id]).filter(Boolean)
+      .sort((left, right) => (right.commandPoints || 1) - (left.commandPoints || 1))[0];
+    if (representative) row.appendChild(_createArtImage(representative.cardArt, representative.icon, {
+      testid: `army-card-art-${army.id}`,
+      cssText: 'width:54px;height:54px;object-fit:cover;border-radius:8px;background:#111722;'
+    }));
     const nameInput = document.createElement('input');
     nameInput.value = army.name;
     nameInput.style.cssText = 'flex:1;font-size:15px;font-weight:600;color:#ececf0;background:transparent;border:none;outline:none;padding:2px 0;min-width:0;';
@@ -507,6 +546,10 @@ export function renderArmyPanel(data, body, pm) {
         const uRow = document.createElement('div');
         uRow.style.cssText = 'display:flex;align-items:center;gap:10px;padding:6px 10px;background:rgba(91,141,239,0.06);border-radius:8px;margin-bottom:4px;';
         uRow.innerHTML = '<span style="font-size:13px;font-weight:500;color:#ececf0;flex:1;">' + (u ? u.name + ' (⚔️' + u.combatPower + ' · CP' + (u.commandPoints||1) + ')' : uid) + '</span><span style="font-size:14px;font-weight:600;color:#a0a0ba;">×' + cnt + '</span>';
+        if (u) uRow.appendChild(_createArtImage(u.cardArt, u.icon, {
+          testid: `army-unit-art-${uid}`,
+          cssText: 'width:42px;height:42px;object-fit:cover;border-radius:7px;background:#111722;'
+        }));
         const removeOne = document.createElement('button');
         removeOne.textContent = '−';
         removeOne.style.cssText = 'padding:2px 8px;border:none;border-radius:4px;background:rgba(255,107,107,0.12);color:#ff6b6b;cursor:pointer;font-size:14px;';

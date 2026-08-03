@@ -20,3 +20,17 @@ test('all runtime buildings, units and common resource nodes resolve to unique u
     assert.match(record.sha256, /^[a-f0-9]{64}$/);
   }
 });
+
+test('all military runtime surfaces resolve to decodable art', async () => {
+  const report = await auditRuntimeArt({ militaryOnly: true });
+
+  assert.equal(report.statuses.missing || 0, 0);
+  assert.equal(report.statuses.decode_error || 0, 0);
+  assert.ok(report.surfaces['training-card'] > 0);
+  assert.ok(report.surfaces['assembly-header'] > 0);
+  assert.ok(report.surfaces['garrison-building'] > 0);
+  assert.ok(report.surfaces['map-army-token'] > 0);
+  assert.ok(report.records.every(record => record.exists && record.decodes),
+    report.records.filter(record => !record.exists || !record.decodes)
+      .map(record => `${record.runtimeSurface}:${record.contentId}:${record.resolvedPath}`).join('\n'));
+});

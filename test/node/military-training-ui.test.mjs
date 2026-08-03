@@ -57,7 +57,9 @@ function setupDom() {
 function setupTrainingGame() {
   const unit = {
     id: 'primitive_infantry_1', name: '氏族战士', branch: 'infantry', domain: 'land', eraId: 'primitive',
-    populationRequired: 1, combatPower: 4, commandPoints: 1, unlocked: true, cost: []
+    populationRequired: 1, combatPower: 4, commandPoints: 1, unlocked: true, cost: [],
+    cardArt: 'assets/unit-cards/primitive_infantry_1.png',
+    icon: 'assets/historical-icons/units/primitive_infantry_1.svg'
   };
   const configs = [
     {
@@ -68,6 +70,8 @@ function setupTrainingGame() {
     {
       id: 'warehouse', name: '大本营', description: '行政建筑', category: 'administration', eraId: 'primitive',
       maxWorkers: 0, production: null, synthesisRecipes: [], upgradesTo: null,
+      imageDetail: 'assets/buildings/historical-details/warehouse.png',
+      mapIcon: 'assets/historical-icons/buildings/warehouse.svg',
       uniqueFunction: { armyAssemblyDomains: ['land'] }
     }
   ];
@@ -229,6 +233,20 @@ test('building-scoped assembly renders reserve controls preview and deploys the 
     unitCounts: { [unit.id]: 1 }
   }]);
   assert.equal(calls.pop, 1);
+});
+
+test('assembly binds building and reserve art to its runtime controls', () => {
+  setupDom();
+  const { army, unit } = setupTrainingGame();
+  army.getAvailableUnits = () => ({ [unit.id]: 2 });
+  const body = new FakeElement('body');
+
+  renderArmyPanel({ assemblyBuildingIndex: 1 }, body, { alert() {}, pop() {} });
+
+  const images = walk(body).filter(node => node.tagName === 'img');
+  assert.ok(images.some(image => image.src === 'assets/buildings/historical-details/warehouse.png'));
+  assert.ok(images.some(image => image.src === 'assets/historical-icons/buildings/warehouse.svg'));
+  assert.ok(images.some(image => image.src === unit.cardArt && image.dataset.fallbackSrc === unit.icon));
 });
 
 test('assembly preview warns when selected reserves have an unsupported domain', () => {

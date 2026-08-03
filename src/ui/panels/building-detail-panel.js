@@ -681,6 +681,22 @@ export function renderBuildingDetailPanel(data, body, pm) {
     && building.status === 'active'
     && !building._invalid) {
     const assemblySection = section('军团集结', '🧭');
+    if (config.mapIcon || config.imageDetail) {
+      const assemblyIcon = document.createElement('img');
+      assemblyIcon.src = config.mapIcon || config.imageDetail;
+      assemblyIcon.alt = `${config.name} 地图图标`;
+      assemblyIcon.dataset.testid = 'building-assembly-map-icon';
+      assemblyIcon.style.cssText = 'display:block;width:56px;height:56px;object-fit:contain;margin:0 auto 9px;border-radius:8px;background:rgba(8,12,18,.75);padding:5px;';
+      assemblyIcon.addEventListener('error', () => {
+        if (!assemblyIcon.dataset.fallbackApplied && config.imageDetail && config.mapIcon !== config.imageDetail) {
+          assemblyIcon.dataset.fallbackApplied = 'true';
+          assemblyIcon.src = config.imageDetail;
+          return;
+        }
+        assemblyIcon.style.display = 'none';
+      });
+      assemblySection.appendChild(assemblyIcon);
+    }
     const assemblyButton = actionButton(
       '打开军团集结',
       'rgba(91, 141, 239, 0.25)',

@@ -62,11 +62,21 @@ function renderUnitCard(unit, context, body, pm, rerender) {
   const top = document.createElement('div');
   top.style.cssText = 'display:flex;align-items:center;gap:14px;margin-bottom:10px;';
   top.innerHTML = `<div style="position:relative;flex:0 0 112px;width:112px;height:112px;overflow:hidden;border-radius:11px;background:rgba(13,17,24,.92);border:1px solid rgba(214,176,103,.28)">
-    <img data-testid="unit-card-art" src="${unit.cardArt || unit.icon || ''}" alt="${unit.name} 招募立绘" loading="lazy" style="width:100%;height:100%;object-fit:contain">
+    <img data-testid="unit-card-art" data-fallback-src="${unit.icon || ''}" src="${unit.cardArt || unit.icon || ''}" alt="${unit.name} 招募立绘" loading="lazy" style="width:100%;height:100%;object-fit:contain">
     ${unit.icon ? `<img src="${unit.icon}" alt="" style="position:absolute;right:6px;bottom:6px;width:28px;height:28px;object-fit:contain;border-radius:6px;background:rgba(8,12,18,.88);padding:3px">` : ''}
   </div><div style="min-width:0"><span style="display:block;font-size:16px;font-weight:700;color:#ececf0;margin-bottom:6px;">${isUnitUnlocked(unit) ? '' : '🔒 '}${unit.name}</span>
   <span style="display:block;font-size:12px;color:#808098;line-height:1.7;">${unit.domain === 'naval' ? '海军' : '陆军'}<br>⚔️ 战力 ${unit.combatPower || 0} · 指挥点 ${unit.commandPoints || 1}</span></div>`;
   card.appendChild(top);
+  const cardArt = top.querySelector?.('[data-testid="unit-card-art"]');
+  cardArt?.addEventListener('error', () => {
+    const fallback = cardArt.dataset.fallbackSrc;
+    if (!cardArt.dataset.fallbackApplied && fallback) {
+      cardArt.dataset.fallbackApplied = 'true';
+      cardArt.src = fallback;
+      return;
+    }
+    cardArt.style.display = 'none';
+  });
 
   const counters = document.createElement('div');
   counters.style.cssText = 'font-size:10px;color:#8fa5c6;margin:-4px 0 9px;';

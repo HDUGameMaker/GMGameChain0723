@@ -55,17 +55,30 @@ export function createBuildingHoverDetails(building, config, { upgradeName = nul
   return { title: config.name || building.buildingId, subtitle: config.category || 'building', lines };
 }
 
-export function createMapTokenModels({ armies = [], wildSites = [] } = {}) {
-  const armyTokens = armies.map(army => ({
-    id: army.id,
-    kind: army.embarked ? 'fleet' : 'army',
-    icon: army.embarked ? '⚓' : '⚔',
-    label: `${army.name} · ${army.unitCount ?? army.unitIds?.length ?? 0}队`,
-    detail: `战力 ${army.power ?? 0} · 士气 ${Math.round(army.morale ?? 100)} · 补给 ${Math.round((army.supply ?? 1) * 100)}%`,
-    gridX: army.gridX,
-    gridY: army.gridY,
-    color: army.embarked ? 0x2875a8 : 0x2f8f62
-  }));
+export function createMapTokenModels({ armies = [], wildSites = [], unitConfigs = [], selectedArmyId = null } = {}) {
+  const unitsById = new Map(unitConfigs.map(unit => [unit.id, unit]));
+  const armyTokens = armies.map(army => {
+    const representative = (army.unitIds || [])
+      .map(unitId => unitsById.get(unitId))
+      .filter(Boolean)
+      .sort((left, right) => (right.commandPoints || 1) - (left.commandPoints || 1))[0];
+    const unitCount = army.unitCount ?? army.unitIds?.length ?? 0;
+    return {
+      id: army.id,
+      kind: army.embarked ? 'fleet' : 'army',
+      art: representative?.icon || representative?.cardArt || '',
+      fallbackArt: representative?.icon ? (representative.cardArt || '') : '',
+      fallbackIcon: army.embarked ? '⚓' : '⚔️',
+      icon: army.embarked ? '⚓' : '⚔️',
+      selected: army.id === selectedArmyId,
+      unitCount,
+      label: `${army.name} · ${unitCount}队`,
+      detail: `战力 ${army.power ?? 0} · 士气 ${Math.round(army.morale ?? 100)} · 补给 ${Math.round((army.supply ?? 1) * 100)}%`,
+      gridX: army.gridX,
+      gridY: army.gridY,
+      color: army.factionColor || army.color || (army.embarked ? 0x2875a8 : 0x2f8f62)
+    };
+  });
   const siteIcons = { pirate_haven: '☠', ruin_guard: '◆', barbarian_camp: '♜', resource_guard: '✦' };
   const siteTokens = wildSites.map(site => ({
     id: site.id,

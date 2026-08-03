@@ -590,7 +590,12 @@ export class MapRenderer {
       ...site,
       strength: this._wildSiteSystem.getSiteStrength(site.id)
     }));
-    return createMapTokenModels({ armies, wildSites }).filter(token => (
+    return createMapTokenModels({
+      armies,
+      wildSites,
+      unitConfigs: configRegistry.get('enemies')?.units || [],
+      selectedArmyId: this.selectedArmyId
+    }).filter(token => (
       !this._fogOfWar || this._fogOfWar.getTileState(token.gridX, token.gridY) === 'visible'
     ));
   }
@@ -612,11 +617,7 @@ export class MapRenderer {
       bg.roundRect(x + 4, y + 4, ts - 8, ts - 8, 8);
       bg.stroke({ color: 0xf4e1b8, alpha: 0.9, width: 2 });
       container.addChild(bg);
-      const icon = new PIXI.Text({ text: token.icon, style: { fontSize: Math.max(18, ts * 0.38), fill: 0xffffff, fontWeight: 'bold' } });
-      icon.anchor.set(0.5);
-      icon.x = x + ts / 2;
-      icon.y = y + ts / 2 - 5;
-      container.addChild(icon);
+      this._addStrategicTokenArt(container, token, x, y, ts);
       const label = new PIXI.Text({ text: token.label, style: { fontSize: Math.max(8, ts * 0.13), fill: 0xffffff, align: 'center', dropShadow: { color: 0x000000, alpha: 0.9, blur: 2, distance: 1 } } });
       label.anchor.set(0.5);
       label.x = x + ts / 2;
@@ -625,6 +626,37 @@ export class MapRenderer {
       this.actorLayer.addChild(container);
     }
     if (selection) this.actorLayer.addChild(this._createArmySelectionOverlay(selection));
+  }
+
+  _addStrategicTokenArt(container, token, x, y, size) {
+    const fallback = new PIXI.Text({
+      text: token.fallbackIcon || token.icon || '!',
+      style: { fontSize: Math.max(18, size * 0.38), fill: 0xffffff, fontWeight: 'bold' }
+    });
+    fallback.anchor.set(0.5);
+    fallback.x = x + size / 2;
+    fallback.y = y + size / 2 - 5;
+    fallback.visible = !token.art;
+    container.addChild(fallback);
+
+    const candidates = [...new Set([token.art, token.fallbackArt].filter(Boolean))];
+    const loadCandidate = index => {
+      if (index >= candidates.length) {
+        fallback.visible = true;
+        return;
+      }
+      PIXI.Assets.load(candidates[index]).then(texture => {
+        if (container.destroyed) return;
+        const sprite = new PIXI.Sprite(texture);
+        sprite.anchor.set(0.5);
+        sprite.x = x + size / 2;
+        sprite.y = y + size / 2 - 5;
+        sprite.width = size * 0.66;
+        sprite.height = size * 0.66;
+        container.addChildAt(sprite, Math.min(1, container.children.length));
+      }).catch(() => loadCandidate(index + 1));
+    };
+    loadCandidate(0);
   }
 
   _createArmySelectionUnderlay(model) {

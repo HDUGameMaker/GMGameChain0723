@@ -40,6 +40,24 @@ test('map token models distinguish armies, fleets and wild sites', () => {
   assert.ok(tokens.every(token => Number.isFinite(token.gridX) && token.label));
 });
 
+test('army map tokens resolve the highest-command-point unit icon before card art', () => {
+  const units = [
+    { id: 'spear', commandPoints: 2, icon: 'assets/historical-icons/units/spear.svg', cardArt: 'assets/unit-cards/spear.png' },
+    { id: 'guard', commandPoints: 5, icon: 'assets/historical-icons/units/guard.svg', cardArt: 'assets/unit-cards/guard.png' }
+  ];
+  const [token] = createMapTokenModels({
+    armies: [{ id: 'army_1', name: 'Guard', unitIds: ['spear', 'guard'], gridX: 1, gridY: 1 }],
+    unitConfigs: units,
+    selectedArmyId: 'army_1'
+  });
+
+  assert.equal(token.art, units[1].icon);
+  assert.equal(token.fallbackArt, units[1].cardArt);
+  assert.equal(token.fallbackIcon, '⚔️');
+  assert.equal(token.selected, true);
+  assert.equal(token.unitCount, 2);
+});
+
 test('selected army presentation exposes its name, unit count and remaining route', () => {
   assert.deepEqual(createArmySelectionModel({
     id: 'army-1',
