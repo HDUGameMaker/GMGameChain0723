@@ -65,6 +65,10 @@ export class PopupManager {
     this._render();
   }
 
+  openArmyDetail(armyId) {
+    this.open('army_panel', { armyId });
+  }
+
   /**
    * 原地刷新当前面板（不关闭、不播放动画，避免闪烁）
    */
@@ -361,7 +365,9 @@ export class PopupManager {
       'world_factions': '世界势力与野外目标',
       'save_recovery': '存档恢复',
       'tutorial_prompt': '新手教程',
-      'quest_panel': '任务'
+      'quest_panel': '任务',
+      'army_panel': '军团详情',
+      'training_panel': '兵种训练'
     };
     if (type === SYSTEM_DIALOG_TYPE) return data?.title || '提示';
     return titles[type] || '';

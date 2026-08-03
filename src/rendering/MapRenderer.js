@@ -8,7 +8,8 @@ import { store } from '../core/Store.js';
 import { progressManager } from '../utils/ProgressManager.js';
 import { gridToScreenTopLeft, screenToGrid } from '../utils/gridUtils.js';
 import { AnimatedSpriteHelper } from './AnimatedSpriteHelper.js';
-import { createBuildingHoverDetails, createMapTokenModels, getVisibleTileBounds } from './MapPresentation.js';
+import { classifyArmyInteractionTarget } from '../domain/ArmyInteractionTarget.js';
+import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels, getVisibleTileBounds } from './MapPresentation.js';
 
 export class MapRenderer {
   constructor(app, buildingSystem, torchSystem, roadSystem, combatSystem, territorySystem) {
@@ -18,6 +19,7 @@ export class MapRenderer {
     this._roadSystem = roadSystem || null;
     this._combatSystem = combatSystem || null;
     this._territorySystem = territorySystem || null;
+    this.selectedArmyId = null;
     this._spellSystem = null; // 炼金法术系统
     this._spellHover = null;  // 施法模式下的悬停格子（AoE 预览）
     this.mapConfig = configRegistry.get('map');
@@ -595,6 +597,10 @@ export class MapRenderer {
   _drawStrategicTokens() {
     this.actorLayer.removeChildren().forEach(child => child.destroy({ children: true }));
     const ts = this.tileSize;
+    const selectedArmy = this._armySystem?.getArmy?.(this.selectedArmyId)
+      || this._armySystem?.getArmies?.().find(army => army.id === this.selectedArmyId);
+    const selection = createArmySelectionModel(selectedArmy);
+    if (selection) this.actorLayer.addChild(this._createArmySelectionUnderlay(selection));
     for (const token of this._getStrategicTokenModels()) {
       const x = token.gridX * ts;
       const y = token.gridY * ts;
@@ -617,6 +623,122 @@ export class MapRenderer {
       container.addChild(label);
       this.actorLayer.addChild(container);
     }
+    if (selection) this.actorLayer.addChild(this._createArmySelectionOverlay(selection));
+  }
+
+  _createArmySelectionUnderlay(model) {
+    const ts = this.tileSize;
+    const center = point => ({ x: point.x * ts + ts / 2, y: point.y * ts + ts / 2 });
+    const container = new PIXI.Container();
+    if (model.route.length > 0) {
+      const route = new PIXI.Graphics();
+      const start = center({ x: model.gridX, y: model.gridY });
+      route.moveTo(start.x, start.y);
+      for (const point of model.route) {
+        const next = center(point);
+        route.lineTo(next.x, next.y);
+      }
+      route.stroke({ color: 0xe2c15c, alpha: 0.86, width: Math.max(2, ts * 0.045) });
+      container.addChild(route);
+    }
+    const ring = new PIXI.Graphics();
+    const cx = model.gridX * ts + ts / 2;
+    const cy = model.gridY * ts + ts / 2;
+    ring.circle(cx, cy, ts * 0.45);
+    ring.stroke({ color: 0x2dd477, alpha: 0.95, width: Math.max(4, ts * 0.09) });
+    ring.circle(cx, cy, ts * 0.42);
+    ring.stroke({ color: 0xf0cf63, alpha: 1, width: Math.max(2, ts * 0.04) });
+    container.addChild(ring);
+    return container;
+  }
+
+  _createArmySelectionOverlay(model) {
+    const ts = this.tileSize;
+    const container = new PIXI.Container();
+    const name = new PIXI.Text({
+      text: model.name,
+      style: {
+        fontSize: Math.max(10, ts * 0.16),
+        fill: 0xffe69a,
+        fontWeight: 'bold',
+        align: 'center',
+        dropShadow: { color: 0x000000, alpha: 0.95, blur: 2, distance: 1 }
+      }
+    });
+    name.anchor.set(0.5, 1);
+    name.x = model.gridX * ts + ts / 2;
+    name.y = model.gridY * ts + 2;
+    container.addChild(name);
+
+    const badge = new PIXI.Text({
+      text: `×${model.unitCount}`,
+      style: { fontSize: Math.max(9, ts * 0.14), fill: 0xffffff, fontWeight: 'bold' }
+    });
+    badge.anchor.set(1, 0);
+    badge.x = model.gridX * ts + ts - 5;
+    badge.y = model.gridY * ts + 5;
+    container.addChild(badge);
+    return container;
+  }
+
+  _getPlayerArmyAt(gridX, gridY) {
+    return (this._armySystem?.getArmies?.() || []).find(army => (
+      (!army.ownerId || army.ownerId === 'player')
+      && army.gridX === gridX
+      && army.gridY === gridY
+    )) || null;
+  }
+
+  selectArmy(armyId) {
+    const army = (this._armySystem?.getArmies?.() || []).find(item => (
+      item.id === armyId && (!item.ownerId || item.ownerId === 'player')
+    ));
+    if (!army) return false;
+    this.selectedArmyId = army.id;
+    this._drawStrategicTokens();
+    return true;
+  }
+
+  clearArmySelection() {
+    if (this.selectedArmyId == null) return false;
+    this.selectedArmyId = null;
+    this._drawStrategicTokens();
+    return true;
+  }
+
+  _classifyArmyInteractionTarget(gridX, gridY) {
+    const combatEnemies = (this._combatSystem?.getAllEnemies?.() || []).map(enemy => ({ ...enemy, source: 'combat' }));
+    const expansionEnemies = (this._enemyExpansion?.getAllCells?.() || []).map(enemy => ({ ...enemy, source: 'expansion' }));
+    return classifyArmyInteractionTarget({
+      gridX,
+      gridY,
+      armies: this._armySystem?.getArmies?.() || [],
+      buildings: this.buildingSystem?.buildings || [],
+      wildSites: this._wildSiteSystem?.getVisibleSites?.() || [],
+      cityStates: this._diplomacySystem?.getVisibleOutposts?.() || [],
+      enemies: [...combatEnemies, ...expansionEnemies],
+      getBuildingConfig: buildingId => configRegistry.getBuilding(buildingId)
+    });
+  }
+
+  _handleArmyMapClick(gridX, gridY) {
+    const clickedArmy = this._getPlayerArmyAt(gridX, gridY);
+    if (clickedArmy) {
+      if (this.selectedArmyId === clickedArmy.id) {
+        eventBus.emit('armyDetailRequested', { armyId: clickedArmy.id });
+      } else {
+        this.selectArmy(clickedArmy.id);
+      }
+      return true;
+    }
+    if (!this.selectedArmyId) return false;
+    eventBus.emit('armyInteractionRequested', {
+      armyId: this.selectedArmyId,
+      gridX,
+      gridY,
+      target: this._classifyArmyInteractionTarget(gridX, gridY)
+    });
+    return true;
   }
 
   _escapeHtml(value) {
@@ -1028,6 +1150,7 @@ export class MapRenderer {
    * 进入挪动模式（右下角按钮切换）
    */
   enterMoveMode() {
+    this.clearArmySelection();
     this._moveMode = true;
     eventBus.emit('moveModeChanged', { enabled: true });
   }
@@ -1069,6 +1192,7 @@ export class MapRenderer {
     if (!building) return false;
     const config = configRegistry.getBuilding(building.buildingId);
     if (!config || config.draggable === false) return false;
+    this.clearArmySelection();
     this._relocateIndex = buildingIndex;
     this._relocateConfig = config;
     return true;
@@ -1723,6 +1847,7 @@ export class MapRenderer {
         this._spellSystem.exitCastingMode();
         this._drawSpellZones();
       }
+      if (e.key === 'Escape') this.clearArmySelection();
       // Esc 退出搬迁模式
       if (e.key === 'Escape' && this._relocateIndex !== null) {
         this._clearRelocateGhost();
@@ -2071,6 +2196,9 @@ export class MapRenderer {
     } else {
       // 检查迷雾门控
       if (!this._isTileRevealed(gridPos.col, gridPos.row)) return;
+
+      // 战略军团拥有地图点击最高优先级；已选中时的下一次点击交给交互协调器。
+      if (this._handleArmyMapClick(gridPos.col, gridPos.row)) return;
 
       const clickedOutpost = this._isClickOnOutpost(gridPos.col, gridPos.row);
       if (clickedOutpost) {
@@ -3439,6 +3567,7 @@ export class MapRenderer {
 
     // 监听放置模式变化
     store.subscribe('placingState', (state) => {
+      if (state === 'PLACING') this.clearArmySelection();
       if (state !== 'PLACING') {
         this._clearGhost();
       }
@@ -3462,10 +3591,16 @@ export class MapRenderer {
     eventBus.on('tamedCreatureGained', () => this._drawEnemies());
     store.subscribe('combatVersion', () => this._drawEnemies());
     eventBus.on('territoryChanged', () => this._drawTerritory());
-    eventBus.on('territoryCastingModeChanged', () => this._drawTerritory());
+    eventBus.on('territoryCastingModeChanged', ({ enabled } = {}) => {
+      if (enabled) this.clearArmySelection();
+      this._drawTerritory();
+    });
     eventBus.on('enemyExpansionChanged', () => this._drawEnemyExpansion());
     eventBus.on('spellZonesChanged', () => this._drawSpellZones());
-    eventBus.on('spellCastingModeChanged', () => this._drawSpellZones());
+    eventBus.on('spellCastingModeChanged', ({ enabled } = {}) => {
+      if (enabled) this.clearArmySelection();
+      this._drawSpellZones();
+    });
 
     // 光照状态变化：重绘迷雾
     eventBus.on('torchStateChanged', () => {
@@ -3476,7 +3611,14 @@ export class MapRenderer {
     eventBus.on('roadBuilt', () => { this._drawRoads(); this._updateFogTexture(); });
     eventBus.on('roadRemoved', () => { this._drawRoads(); this._updateFogTexture(); });
     eventBus.on('roadEditModeChanged', ({ enabled }) => {
+      if (enabled) this.clearArmySelection();
       if (!enabled) this._clearRoadGhost();
+    });
+    eventBus.on('combatPlaceModeChanged', ({ enabled } = {}) => {
+      if (enabled) this.clearArmySelection();
+    });
+    eventBus.on('deployTamedModeChanged', ({ enabled } = {}) => {
+      if (enabled) this.clearArmySelection();
     });
 
     // 监听已移除事件标记的变化（来自存档恢复等）
@@ -3484,7 +3626,12 @@ export class MapRenderer {
       this._refreshEventMarkers();
     });
     store.subscribe('outpostVersion', () => this._drawOutposts());
-    eventBus.on('armyChanged', () => this._drawStrategicTokens());
+    eventBus.on('armyChanged', () => {
+      if (this.selectedArmyId && !(this._armySystem?.getArmies?.() || []).some(army => army.id === this.selectedArmyId)) {
+        this.selectedArmyId = null;
+      }
+      this._drawStrategicTokens();
+    });
     eventBus.on('armyChanged', () => this._updateFogTexture());
     eventBus.on('wildSitesChanged', () => this._drawStrategicTokens());
     eventBus.on('resourceNodesChanged', () => this._drawResourceNodes());

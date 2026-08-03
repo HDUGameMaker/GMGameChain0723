@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createBuildingHoverDetails, createMapTokenModels } from '../../src/rendering/MapPresentation.js';
+import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels } from '../../src/rendering/MapPresentation.js';
 
 test('building hover details expose status, jobs, output, aura and upgrade information', () => {
   const details = createBuildingHoverDetails(
@@ -38,4 +38,22 @@ test('map token models distinguish armies, fleets and wild sites', () => {
   assert.equal(tokens.find(token => token.id === 'w1').icon, '☠');
   assert.equal(tokens.find(token => token.id === 'w2').icon, '◆');
   assert.ok(tokens.every(token => Number.isFinite(token.gridX) && token.label));
+});
+
+test('selected army presentation exposes its name, unit count and remaining route', () => {
+  assert.deepEqual(createArmySelectionModel({
+    id: 'army-1',
+    name: '第一军团',
+    gridX: 2,
+    gridY: 3,
+    unitIds: ['spear', 'archer'],
+    movePath: [{ x: 3, y: 3 }, { x: 4, y: 3 }]
+  }), {
+    armyId: 'army-1',
+    name: '第一军团',
+    unitCount: 2,
+    gridX: 2,
+    gridY: 3,
+    route: [{ x: 3, y: 3 }, { x: 4, y: 3 }]
+  });
 });

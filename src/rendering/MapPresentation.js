@@ -79,3 +79,17 @@ export function createMapTokenModels({ armies = [], wildSites = [] } = {}) {
   }));
   return [...armyTokens, ...siteTokens];
 }
+
+export function createArmySelectionModel(army) {
+  if (!army?.id || !Number.isFinite(army.gridX) || !Number.isFinite(army.gridY)) return null;
+  return {
+    armyId: army.id,
+    name: String(army.name || '未命名军团'),
+    unitCount: Array.isArray(army.unitIds) ? army.unitIds.length : Math.max(0, Number(army.unitCount) || 0),
+    gridX: army.gridX,
+    gridY: army.gridY,
+    route: (army.movePath || [])
+      .filter(point => Number.isFinite(point?.x) && Number.isFinite(point?.y))
+      .map(point => ({ x: point.x, y: point.y }))
+  };
+}

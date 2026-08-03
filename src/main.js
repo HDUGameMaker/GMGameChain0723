@@ -36,6 +36,7 @@ import { EconomyOrderSystem } from './systems/EconomyOrderSystem.js';
 import { CommerceSystem } from './systems/CommerceSystem.js';
 import { CommercialBuildingSystem } from './systems/CommercialBuildingSystem.js';
 import { ArmySystem } from './systems/ArmySystem.js';
+import { ArmyInteractionSystem } from './systems/ArmyInteractionSystem.js';
 import { WildSiteSystem } from './systems/WildSiteSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { createNewWorldState } from './world/WorldMapState.js';
@@ -184,6 +185,15 @@ class Game {
 
     // 3.05 初始化弹窗管理器（需要先有科技、人文与战斗系统）
     this.popupManager = new PopupManager(gameLoop, this.systems.tech, this.systems.culture, this.systems.combat);
+    this.systems.armyInteraction = new ArmyInteractionSystem({
+      army: this.systems.army,
+      building: this.systems.building,
+      wildSites: this.systems.wildSites,
+      diplomacy: this.systems.diplomacy,
+      combat: this.systems.combat,
+      enemyExpansion: this.systems.enemyExpansion,
+      popupManager: this.popupManager
+    });
 
     // 3.1 事件系统需要 popupManager
     this.systems.event = new EventSystem();
@@ -355,6 +365,14 @@ class Game {
     eventBus.on('outpostClicked', (outpost) => {
       this.systems.diplomacy.discoverOutpost(outpost.id);
       this.popupManager.open('outpost_diplomacy', { outpostId: outpost.id, outpostName: outpost.name });
+    });
+
+    eventBus.on('armyDetailRequested', ({ armyId }) => {
+      this.popupManager.openArmyDetail(armyId);
+    });
+
+    eventBus.on('armyInteractionRequested', request => {
+      void this.systems.armyInteraction.request(request);
     });
 
     // 道路编辑模式切换时，退出建筑放置模式
