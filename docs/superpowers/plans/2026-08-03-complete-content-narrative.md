@@ -751,7 +751,7 @@ git commit -m "feat: colonize generated city-states"
 - Test: `test/node/world-factions.test.mjs`
 
 **Interfaces:**
-- Consumes: Core Task 3's `calculateWildSiteCounts({ landReachable, navigableWater })` export and `PlacementManifest.wildSites: Array<{ instanceId, templateId, gridX, gridY, domain, threatTier }>` from `src/world/WorldPlacementSolver.js`; `RandomService.float(key)`, `RandomService.int(key, min, maxInclusive)`, `RandomService.pickWeighted(key, entries)` and the independent `createDeterministicRng(key)` export, all using `{ worldSeed, namespace, stableEntityId?, ordinal? }` keys and `{ value, weight }` weighted entries; Coordinator `registerCommandHandler()`/`previewCommand()`/`executeCommand()`; `ArmySystem.createArmy({ ownerId, name, position, unitStacks, creationId })`; current era.
+- Consumes: Core Task 3's `calculateWildSiteCounts({ landReachable, navigableWater })` export and `PlacementManifest.wildSites: Array<{ instanceId, templateId, gridX, gridY, domain, threatTier: 'low'|'medium'|'high'|'landmark' }>` from `src/world/WorldPlacementSolver.js`; `RandomService.float(key)`, `RandomService.int(key, min, maxInclusive)`, `RandomService.pickWeighted(key, entries)` and the independent `createDeterministicRng(key)` export, all using `{ worldSeed, namespace, stableEntityId?, ordinal? }` keys and `{ value, weight }` weighted entries; Coordinator `registerCommandHandler()`/`previewCommand()`/`executeCommand()`; `ArmySystem.createArmy({ ownerId, name, position, unitStacks, creationId })`; current era.
 - Produces: registered command type `army.create`; `initializeFromPlacements({ placements, currentEra })`; `advanceDay(day)`; `handleDefenderResult(input)`; instance projection with the Core-owned coordinates, lifecycle state and defender army reference. It does not produce quotas or initial coordinates.
 
 - [ ] **Step 1: Write the failing shared-quota, manifest hydration and lifecycle tests**
@@ -787,7 +787,7 @@ test('initialization preserves the exact Core PlacementManifest coordinates', ()
     worldSeed: 'placement-test',
     templates: [{ id: 'ruin_a', category: 'ruin_guard', lifecycle: { mode: 'oneShot' } }]
   });
-  const placement = { instanceId: 'site:manifest:1', templateId: 'ruin_a', gridX: 117, gridY: 42, domain: 'land', threatTier: 2 };
+  const placement = { instanceId: 'site:manifest:1', templateId: 'ruin_a', gridX: 117, gridY: 42, domain: 'land', threatTier: 'medium' };
   assert.deepEqual(system.initializeFromPlacements({ placements: [placement], currentEra: 'ancient' }), { ok: true, initialized: 1 });
   const site = system.getSiteState(placement.instanceId);
   assert.deepEqual(

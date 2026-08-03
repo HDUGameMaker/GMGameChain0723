@@ -424,7 +424,7 @@ Expected staged paths before commit: exactly the four Task 2 files above.
 - Consumes: `WorldBlueprint` from Task 2, `createDeterministicRng()` from `src/core/RandomService.js`, `CityStateProfile[]` from `configRegistry.getCityStateProfiles()`, `WildSiteTemplate[]` from `configRegistry.getWildSiteTemplates()`, and the preset block from `getWorldGenerationConfig()`.
 - Produces: `calculateWildSiteCounts({ landReachable: number, navigableWater: number }): { land: number, naval: number, total: number }` as the only density formula shared with the content volume, plus `calculateWildQuota(blueprint): { land, naval, total }` as the blueprint-measurement adapter.
 - Produces: `placeWorldEntities(input: { blueprint, cityStateProfiles, wildSiteTemplates, generationConfig, preset }): PlacementManifest`.
-- `PlacementManifest` is `{ playerStart, cityStates: Array<{instanceId, profileId, gridX, gridY, domain}>, wildSites: Array<{instanceId, templateId, gridX, gridY, domain, threatTier}>, resourceNodes: Array<{instanceId, resourceId, gridX, gridY}> }`.
+- `PlacementManifest` is `{ playerStart, cityStates: Array<{instanceId, profileId, gridX, gridY, domain}>, wildSites: Array<{instanceId, templateId, gridX, gridY, domain, threatTier}>, resourceNodes: Array<{instanceId, resourceId, gridX, gridY}> }`; `threatTier` is exactly one of `'low' | 'medium' | 'high' | 'landmark'` across Core placement and Content lifecycle systems.
 - Produces: `validateGeneratedWorld(input): { ok: boolean, errors: Array<{code, entityId, detail}>, metrics: object }` and `WorldGenerationError` with stable `reasonCode` and structured `diagnostics`.
 
 - [ ] **Step 1: Write the failing placement and validation test**
@@ -446,7 +446,7 @@ const cityStateProfiles = Array.from({ length: 24 }, (_, index) => ({
   domain: index < 6 ? 'naval' : 'land',
   personality: index % 2 ? 'mercantile' : 'militarist'
 }));
-const categories = ['resource_guard', 'bandit_camp', 'ruin_guard', 'roaming_host', 'rebel_fort', 'pirate_fleet', 'blockade_fleet', 'wreck_guard'];
+const categories = ['resource_guard', 'barbarian_camp', 'ruin_guard', 'roaming_host', 'rebel_fort', 'pirate_fleet', 'blockade_fleet', 'wreck_guard'];
 const wildSiteTemplates = Array.from({ length: 96 }, (_, index) => ({
   id: `wild_template_${index + 1}`,
   category: categories[index % categories.length],
@@ -538,6 +538,8 @@ export function placeWorldEntities({ blueprint, cityStateProfiles, wildSiteTempl
 Enforce city-to-player path distance 30, city-to-city distance 28, wild-to-wild 12, wild-to-city 16, no hostile wild site within spawn radius 20, three to seven land targets per eligible 64×64 macro-region, no more than three targets per 32×32 region, at least two naval targets in each large navigable water body, and the 35/40/20/5 threat distribution within one rounding unit. `validateGeneratedWorld()` must return all violations in deterministic code/entity order instead of throwing on the first one.
 
 Create `scripts/validate-world-generation.mjs` with CLI `--preset=<standard|large|huge> --seeds=<positive integer>`. It must generate seed names `release-seed-000000` upward, exit 1 on the first invalid world after printing its structured errors, and print JSON summary `{ preset, seeds, failures, minWildSites, maxWildSites }` on success.
+
+The master order intentionally runs Core Task 3 before the authored 24/96 catalogs in Content Tasks 1 and 6. Therefore this CLI must inject deterministic validation-only profile/template fixtures with IDs prefixed `validation_`, the same eight final category names and no coordinates. Those fixtures exist only inside the validation script, are never exported or loaded by runtime code, and are not a second production catalog. `placeWorldEntities()` remains catalog-injected; once Content Tasks 1 and 6 land, runtime and release validation pass their compiled real catalogs through the same interface without changing placement logic.
 
 - [ ] **Step 4: Run GREEN and multi-seed regression**
 
