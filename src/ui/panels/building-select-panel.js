@@ -70,22 +70,6 @@ export function renderBuildingSelectPanel(data, body, pm) {
     body.appendChild(capBar);
   }
 
-  // 建筑科技树入口
-  const buildingTech = game.systems.buildingTech;
-  if (buildingTech && pm) {
-    const treeBar = document.createElement('div');
-    treeBar.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:12px;background:rgba(255,204,68,0.08);border:1px solid rgba(255,204,68,0.25);border-radius:8px;font-size:12px;color:#ccc;';
-    const unlockedCount = buildingTech.getUnlockedNodes().length;
-    const totalCount = buildingTech.getNodes().length;
-    treeBar.innerHTML = `<span style="font-weight:600;color:#ffcc44;">🌳 建筑科技树</span><span>已解锁 ${unlockedCount}/${totalCount}</span><span style="flex:1"></span>`;
-    const treeBtn = document.createElement('button');
-    treeBtn.textContent = '查看科技树';
-    treeBtn.style.cssText = 'padding:5px 12px;border:none;border-radius:6px;background:rgba(255,204,68,0.22);color:#ffcc44;cursor:pointer;font-size:11px;font-weight:600;';
-    treeBtn.addEventListener('click', () => { pm.push('building_tree', { buildingTechSystem: buildingTech }); });
-    treeBar.appendChild(treeBtn);
-    body.appendChild(treeBar);
-  }
-
   const list = document.createElement('div');
   list.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
 

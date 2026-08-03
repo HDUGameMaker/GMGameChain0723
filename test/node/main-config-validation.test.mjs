@@ -47,6 +47,15 @@ test('building upgrade chains reference existing ids in both directions', () => 
   }
 });
 
+test('building gates only use supported era research civilization and building conditions', () => {
+  const allowed = new Set(['era', 'tech', 'culture', 'civilization', 'building']);
+  const buildings = load('config/buildings.json');
+  const invalid = buildings.flatMap(building => (building.unlockConditions || [])
+    .filter(condition => !allowed.has(condition.type))
+    .map(condition => `${building.id}:${condition.type}`));
+  assert.deepEqual(invalid, []);
+});
+
 test('unit prerequisite technologies reference existing tech ids', () => {
   const techIds = new Set(load('config/techs.json').map(tech => tech.id));
   const units = load('config/enemies.json').units || [];

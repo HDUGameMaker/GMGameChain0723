@@ -34,7 +34,6 @@ export class HUD {
     this.timeDisplay = document.getElementById('time-display');
     this.btnBuild = document.getElementById('btn-build');
     this.btnObjective = document.getElementById('btn-objective');
-    this.btnBuildingTree = document.getElementById('btn-building-tree');
     this.btnTech = document.getElementById('btn-tech');
     this.btnCulture = document.getElementById('btn-culture');
     this.btnRoad = document.getElementById('btn-road');
@@ -111,13 +110,6 @@ export class HUD {
     if (this.btnObjective) {
       this.btnObjective.addEventListener('click', () => {
         this.popupManager.open('objective', {});
-      });
-    }
-
-    // 建筑科技树直达入口
-    if (this.btnBuildingTree) {
-      this.btnBuildingTree.addEventListener('click', () => {
-        this.popupManager.open('building_tree', {});
       });
     }
 

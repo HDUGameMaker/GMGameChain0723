@@ -94,10 +94,18 @@ export class TechSystem {
   }
 
   getEffects() {
-    const result = { productionMul: 1, researchSpeedMul: 1 };
+    const result = { productionMul: 1, resourceProductionMul: {}, researchSpeedMul: 1 };
     for (const techId of this._researched) {
       const effects = this.getTech(techId)?.effects || {};
       for (const [key, value] of Object.entries(effects)) {
+        if (key === 'resourceProductionMul' && value && typeof value === 'object') {
+          for (const [resourceId, multiplier] of Object.entries(value)) {
+            if (!Number.isFinite(multiplier)) continue;
+            const current = result.resourceProductionMul[resourceId] || 1;
+            result.resourceProductionMul[resourceId] = Number((current + multiplier - 1).toFixed(12));
+          }
+          continue;
+        }
         if (!Number.isFinite(value)) continue;
         if (key.endsWith('Mul')) mergeModifierValue(result, key, value);
         else mergeModifierValue(result, key, value, 'add');

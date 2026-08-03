@@ -354,15 +354,19 @@ export class CultureSystem {
       const ce = cfg.effects.combat || {};
       const ee = cfg.effects.economy || {};
       const pe = cfg.effects.population || {};
+      const productionMul = cfg.effects.productionMul || ee.productionMul;
+      const resourceProductionMul = cfg.effects.resourceProductionMul || ee.resourceProductionMul;
       const meleeDamageMul = ce.meleeDamageMul || ce.warriorDamageMul;
       const rangedDamageMul = ce.rangedDamageMul || ce.archerDamageMul;
       if (meleeDamageMul) mergeModifierValue(e, 'meleeDamageMul', meleeDamageMul);
       if (rangedDamageMul) mergeModifierValue(e, 'rangedDamageMul', rangedDamageMul);
       if (ce.unitHpMul) mergeModifierValue(e, 'unitHpMul', ce.unitHpMul);
-      if (ee.productionMul) mergeModifierValue(e, 'productionMul', ee.productionMul);
-      if (ee.resourceProductionMul && typeof ee.resourceProductionMul === 'object') {
-        for (const [resourceId, mul] of Object.entries(ee.resourceProductionMul)) {
-          mergeModifierValue(e.resourceProductionMul, resourceId, mul);
+      if (productionMul) mergeModifierValue(e, 'productionMul', productionMul);
+      if (resourceProductionMul && typeof resourceProductionMul === 'object') {
+        for (const [resourceId, multiplier] of Object.entries(resourceProductionMul)) {
+          if (!Number.isFinite(multiplier)) continue;
+          const current = e.resourceProductionMul[resourceId] || 1;
+          e.resourceProductionMul[resourceId] = Number((current + multiplier - 1).toFixed(12));
         }
       }
       if (ee.buildCostMul) mergeModifierValue(e, 'buildCostMul', ee.buildCostMul);

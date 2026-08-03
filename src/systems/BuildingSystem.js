@@ -22,7 +22,6 @@ export class BuildingSystem {
     this._newlyUnlocked = new Set(); // 本轮新解锁的建筑ID
     this._adjacencyConfig = []; // 相邻加成配置
     this._spellSystem = null; // 炼金法术系统（区域效率乘法）
-    this._buildingTechSystem = null; // 建筑科技树（常驻产出乘法 + T2 解锁）
 
     // 订阅 tick 事件处理建造和生产
     this._strategySystem = null;
@@ -55,7 +54,6 @@ export class BuildingSystem {
   setAlchemySystem(as) { this._alchemySystem = as; }
   setSpellSystem(ss) { this._spellSystem = ss; }
   setStrategySystem(ss) { this._strategySystem = ss; }
-  setBuildingTechSystem(bts) { this._buildingTechSystem = bts; }
   setTerritorySystem(ts) { this._territorySystem = ts; }
   setHeroSystem(hs) { this._heroSystem = hs; }
   setLuxurySystem(ls) { this._luxurySystem = ls; }
@@ -84,12 +82,12 @@ export class BuildingSystem {
   }
 
   /**
-   * 地形改造解锁：建筑科技树最终节点解锁后，带 allowedGrounds 的资源采集建筑
+   * 地形改造解锁：完成「殖民补给」科技后，带 allowedGrounds 的资源采集建筑
    * 可忽略地形限制（仍不可建在 buildable:false 的山脉/屏障上）。
    */
   _terrainRestrictionBypassed(config) {
-    if (!this._buildingTechSystem || !config?.allowedGrounds || config.allowedGrounds.length === 0) return false;
-    return this._buildingTechSystem.isTerrainRestrictionRemoved();
+    if (!this._techSystem || !config?.allowedGrounds || config.allowedGrounds.length === 0) return false;
+    return this._techSystem.isResearched('tech_exploration_8');
   }
 
   /**
@@ -1454,19 +1452,17 @@ export class BuildingSystem {
   _getProductionMultiplier(resourceId, building = null) {
     const cultureEffects = this._cultureSystem ? this._cultureSystem.getEffects() : null;
     const globalCultureMul = cultureEffects?.productionMul || 1;
-    const techMul = this._techSystem?.getEffects?.().productionMul || 1;
+    const techEffects = this._techSystem?.getEffects?.() || null;
+    const techMul = techEffects?.productionMul || 1;
+    const scopedTechMul = resourceId ? (techEffects?.resourceProductionMul?.[resourceId] || 1) : 1;
     const scopedCultureMul = resourceId ? (cultureEffects?.resourceProductionMul?.[resourceId] || 1) : 1;
     const alchemyMul = this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).productionMul || 1) : 1;
     // 炼金法术：区域内生产建筑效率乘法（按建筑所在区域连乘），叠入产出链
     const spellMul = this._strategySystem?.getProductionMultiplier?.(resourceId) || 1;
-    // 建筑科技树：永久常驻产出乘法（全局 + 按资源），叠入产出链
-    const btEffects = this._buildingTechSystem ? this._buildingTechSystem.getEffects() : null;
-    const btGlobal = btEffects?.productionMul || 1;
-    const btScoped = (resourceId && btEffects) ? (btEffects.resourceProductionMul?.[resourceId] || 1) : 1;
     const heroMul = this._heroSystem?.getBonuses?.().productionMul || 1;
     const luxuryEffects = this._luxurySystem?.getBonuses?.() || {};
     const luxuryMul = resourceId === 'gold' ? (luxuryEffects.goldProductionMul || 1) : 1;
-    return globalCultureMul * techMul * scopedCultureMul * alchemyMul * spellMul * btGlobal * btScoped * heroMul * luxuryMul;
+    return globalCultureMul * techMul * scopedTechMul * scopedCultureMul * alchemyMul * spellMul * heroMul * luxuryMul;
   }
 
   getBuildingCount(buildingId) {
@@ -1644,12 +1640,6 @@ export class BuildingSystem {
           const name = t ? t.name : cond.techId;
           const met = this._techSystem ? this._techSystem.isResearched(cond.techId) : false;
           return { type: 'tech', desc: `科技: ${name}`, met };
-        }
-        case 'building_tech': {
-          const btNode = (configRegistry.getBuildingTech() || []).find(n => n.id === cond.nodeId);
-          const name = btNode ? btNode.name : cond.nodeId;
-          const met = this._buildingTechSystem ? this._buildingTechSystem.isNodeUnlocked(cond.nodeId) : false;
-          return { type: 'building_tech', desc: `建筑科技: ${name}`, met };
         }
         case 'culture': {
           const cultures = configRegistry.get('culture') || [];

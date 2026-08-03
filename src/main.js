@@ -48,6 +48,7 @@ import { SaveManager } from './core/SaveManager.js';
 import { cheatManager } from './utils/CheatManager.js';
 import { messageLog } from './ui/MessageLog.js';
 import { DebugPanel } from './ui/panels/debug-panel.js';
+import { migrateLegacyBuildingResearch } from './domain/BuildingResearchMigration.js';
 
 function omitUndefinedSaveProperties(value) {
   if (Array.isArray(value)) return value.map(omitUndefinedSaveProperties);
@@ -183,7 +184,6 @@ class Game {
 
     // 3.05 初始化弹窗管理器（需要先有科技、人文与战斗系统）
     this.popupManager = new PopupManager(gameLoop, this.systems.tech, this.systems.culture, this.systems.combat);
-    this.popupManager.setBuildingTechSystem(this.systems.buildingTech);
 
     // 3.1 事件系统需要 popupManager
     this.systems.event = new EventSystem();
@@ -213,10 +213,6 @@ class Game {
     this.systems.strategy.setSystems({ resource: this.systems.resource });
     this.systems.building.setStrategySystem(this.systems.strategy);
     this.systems.enemyExpansion.setStrategySystem(this.systems.strategy);
-    // 建筑科技树接线：注入 BuildingSystem（常驻产出乘法 + T2 解锁门禁）
-    this.systems.buildingTech.setResourceSystem(this.systems.resource);
-    this.systems.buildingTech.init();
-    this.systems.building.setBuildingTechSystem(this.systems.buildingTech);
     this.systems.torch.setResourceSystem(this.systems.resource);
     this.systems.torch.setBuildingSystem(this.systems.building);
     this.systems.torch.setRoadSystem(this.systems.road);
@@ -586,6 +582,7 @@ class Game {
   }
 
   restoreFromSave(saveData) {
+    saveData = migrateLegacyBuildingResearch(saveData);
     this._worldState = structuredClone(saveData.world);
     this.systems.time.restoreState(saveData.time);
     this.systems.resource.restoreState(saveData.resources);

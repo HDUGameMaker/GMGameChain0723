@@ -16,7 +16,6 @@ export class PopupManager {
     this._techSystem = techSystem || null;
     this._cultureSystem = cultureSystem || null;
     this._combatSystem = combatSystem || null;
-    this._buildingTechSystem = null;
     this._stack = [];
     this._panels = {}; // 注册的面板渲染函数
     this._isOpen = false;
@@ -56,8 +55,6 @@ export class PopupManager {
   register(type, renderFn) {
     this._panels[type] = renderFn;
   }
-
-  setBuildingTechSystem(bts) { this._buildingTechSystem = bts || null; }
 
   /**
    * 打开面板（清空栈）
@@ -351,7 +348,6 @@ export class PopupManager {
       'tech_tree': '科技树',
       'culture_tree': '人文树',
       'military_tradition': '军事传统',
-      'building_tree': '建筑科技树',
       'unit_research': '兵种研发',
       'outpost_diplomacy': data?.outpostName || '据点外交',
       'tavern_heroes': '历史英雄酒馆',
@@ -426,11 +422,6 @@ export class PopupManager {
     });
     import('./panels/culture-tree-panel.js').then(m => {
       this.register('culture_tree', m.renderCultureTreePanel);
-    });
-    import('./panels/building-tree-panel.js').then(m => {
-      this.register('building_tree', (data, body, pm) => {
-        m.renderBuildingTreePanel({ ...data, buildingTechSystem: this._buildingTechSystem }, body, pm);
-      });
     });
     import('./panels/quest-panel.js').then(m => {
       this.register('quest_panel', m.renderQuestPanel);

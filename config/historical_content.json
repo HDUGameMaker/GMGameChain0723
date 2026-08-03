@@ -8631,7 +8631,10 @@
       "pointCost": 12,
       "prerequisites": [],
       "effects": {
-        "productionMul": 1.01
+        "productionMul": 1.01,
+        "resourceProductionMul": {
+          "stone": 1.4
+        }
       },
       "description": "打制石器把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
       "history": "打制石器代表原始时代社会在技术、组织与知识传承上的重要积累。",
@@ -8679,7 +8682,10 @@
         "tech_primitive_2"
       ],
       "effects": {
-        "productionMul": 1.03
+        "productionMul": 1.03,
+        "resourceProductionMul": {
+          "wood": 1.4
+        }
       },
       "description": "采集篮具把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
       "history": "采集篮具代表原始时代社会在技术、组织与知识传承上的重要积累。",
@@ -9725,7 +9731,7 @@
         "tech_early_modern_6"
       ],
       "effects": {
-        "productionMul": 1.07
+        "productionMul": 1.37
       },
       "description": "钢铁工业把当代经验转化为可重复的生产与军事方法，并提升聚落整体效率。",
       "history": "钢铁工业代表近代社会在技术、组织与知识传承上的重要积累。",
@@ -10064,7 +10070,10 @@
       ],
       "effects": {
         "satisfactionBonus": 0,
-        "diplomacyMul": 1.02
+        "diplomacyMul": 1.02,
+        "resourceProductionMul": {
+          "food": 1.4
+        }
       },
       "description": "劳动分工建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
       "history": "劳动分工代表原始时代社会在技术、组织与知识传承上的重要积累。",
@@ -10089,7 +10098,10 @@
       ],
       "effects": {
         "satisfactionBonus": 0,
-        "diplomacyMul": 1.025
+        "diplomacyMul": 1.025,
+        "resourceProductionMul": {
+          "gold": 1.4
+        }
       },
       "description": "物物交换建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
       "history": "物物交换代表原始时代社会在技术、组织与知识传承上的重要积累。",
@@ -11054,7 +11066,8 @@
       ],
       "effects": {
         "satisfactionBonus": 0,
-        "diplomacyMul": 1.02
+        "diplomacyMul": 1.02,
+        "productionMul": 1.3
       },
       "description": "工厂法案建立共同体认可的制度与价值，改善居民认同并扩展对外交往手段。",
       "history": "工厂法案代表近代社会在技术、组织与知识传承上的重要积累。",
