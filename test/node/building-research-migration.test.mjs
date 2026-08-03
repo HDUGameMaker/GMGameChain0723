@@ -62,6 +62,35 @@ test('legacy migration is immutable and idempotent', () => {
   assert.deepEqual(once.buildingTech.unlockedNodes, ['bt_logging_t2', 'unknown_legacy_node']);
 });
 
+test('restoring migrated legacy research also unlocks every unit granted by mapped techs', () => {
+  eventBus.clear();
+  configRegistry._configs = {
+    historicalContent,
+    techs: historicalContent.techs,
+    enemies: { units: [] }
+  };
+  const migrated = migrateLegacyBuildingResearch({
+    buildingTech: {
+      unlockedNodes: [
+        'bt_logging', 'bt_mining', 'bt_logging_t2',
+        'bt_mining_t2', 'bt_industry', 'bt_terraforming'
+      ]
+    },
+    tech: { researched: [], unitResearch: [] },
+    culture: { researched: [] }
+  });
+  const tech = new TechSystem();
+
+  tech.restoreState(migrated.tech);
+
+  for (const unitId of [
+    'primitive_anti_cavalry_3', 'primitive_infantry_1', 'ancient_siege_5',
+    'ancient_infantry_1', 'early_modern_navy_7', 'exploration_navy_8'
+  ]) {
+    assert.equal(tech.isUnitUnlockedByTech(unitId), true, unitId);
+  }
+});
+
 test('normal research aggregates former building production bonuses additively by resource', () => {
   eventBus.clear();
   configRegistry._configs = {

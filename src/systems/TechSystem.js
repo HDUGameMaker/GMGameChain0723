@@ -344,6 +344,11 @@ export class TechSystem {
     this._researched = new Set(state.researched || []);
     this._currentResearch = state.currentResearch || null;
     this._unitResearch = new Set(state.unitResearch || []);
+    for (const techId of this._researched) {
+      for (const unitId of this.getTech(techId)?.unlocks?.units || []) {
+        this._unitResearch.add(unitId);
+      }
+    }
     this._sciencePoints = Number.isFinite(state.sciencePoints) ? state.sciencePoints : 0;
     this._ensureBaseUnitResearch();
     this._updateStore();
