@@ -652,6 +652,22 @@ export function renderBuildingDetailPanel(data, body, pm) {
     container.appendChild(trainSection);
   }
 
+  // ===== 集结设施：与训练入口分离，只从声明部署域的有效建筑进入 =====
+  if (Array.isArray(config.uniqueFunction?.armyAssemblyDomains)
+    && config.uniqueFunction.armyAssemblyDomains.length > 0
+    && building.status === 'active'
+    && !building._invalid) {
+    const assemblySection = section('军团集结', '🧭');
+    const assemblyButton = actionButton(
+      '打开军团集结',
+      'rgba(91, 141, 239, 0.25)',
+      () => pm.push('army_panel', { assemblyBuildingIndex: buildingIndex })
+    );
+    assemblyButton.dataset.testid = 'open-building-assembly';
+    assemblySection.appendChild(assemblyButton);
+    container.appendChild(assemblySection);
+  }
+
   if (config.id === 'tavern' && building.status === 'active') {
     const tavernSection = section('传奇访客', '🍺');
     const info = document.createElement('div');

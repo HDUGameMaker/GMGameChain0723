@@ -5,6 +5,7 @@
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
+import { findDeploymentTile } from '../domain/MilitaryDeployment.js';
 import { getArmyCombatPower } from '../utils/FormationUtils.js';
 import { previewStrategicBattle, resolveStrategicBattle } from './CombatResolver.js';
 import { evaluateTrainingEligibility } from './TrainingRules.js';
@@ -157,6 +158,98 @@ export class ArmySystem {
   }
 
   getAvailableUnits() { return { ...this._availableUnits }; }
+
+  _assemblyBuildingAt(buildingIndex) {
+    if (!Number.isInteger(buildingIndex)) return null;
+    const building = this._building?.buildings?.[buildingIndex];
+    if (!building || building.status !== 'active' || building._invalid) return null;
+    const config = configRegistry.getBuilding?.(building.buildingId);
+    const domains = config?.uniqueFunction?.armyAssemblyDomains;
+    if (!config || !Array.isArray(domains) || domains.length === 0) return null;
+    return { building, config, domains };
+  }
+
+  deployArmyFromBuilding({ buildingIndex, name, unitCounts, fixedTargets = [] } = {}) {
+    const assembly = this._assemblyBuildingAt(buildingIndex);
+    if (!assembly) return { ok: false, reason: 'invalid_assembly_building' };
+
+    const entries = Object.entries(unitCounts || {});
+    if (entries.length === 0) return { ok: false, reason: 'empty_unit_selection' };
+    if (entries.some(([, count]) => !Number.isInteger(count) || count <= 0)) {
+      return { ok: false, reason: 'invalid_unit_count' };
+    }
+
+    const requestedUnits = entries.map(([unitId, count]) => ({
+      unitId,
+      count,
+      config: this._unitConfig(unitId)
+    }));
+    if (requestedUnits.some(item => !item.config)) return { ok: false, reason: 'unknown_unit' };
+    if (requestedUnits.some(item => (this._availableUnits[item.unitId] || 0) < item.count)) {
+      return { ok: false, reason: 'insufficient_reserve' };
+    }
+
+    const domains = new Set(requestedUnits.map(item => item.config.domain === 'naval' ? 'naval' : 'land'));
+    if (domains.size !== 1) return { ok: false, reason: 'mixed_unit_domains' };
+    const [domain] = domains;
+    if (!assembly.domains.includes(domain)) return { ok: false, reason: 'assembly_domain_not_supported' };
+
+    const usedCommandPoints = requestedUnits.reduce(
+      (sum, item) => sum + this._unitCommandPoints(item.unitId) * item.count,
+      0
+    );
+    if (usedCommandPoints > this.getCommandPointLimit()) return { ok: false, reason: 'command_points_full' };
+    if (this._armies.length >= this.getArmyCapacity()) return { ok: false, reason: 'army_capacity_full' };
+
+    const map = this._getMap();
+    const manifestTargets = [
+      ...(map?.spawnManifest?.cityStates || []),
+      ...(map?.spawnManifest?.wildSites || [])
+    ];
+    const activeBuildings = this._activeBuildings().map(building => ({
+      ...building,
+      footprint: configRegistry.getBuilding?.(building.buildingId)?.footprint || { width: 1, height: 1 }
+    }));
+    const deploymentTile = findDeploymentTile({
+      building: assembly.building,
+      buildingConfig: assembly.config,
+      map,
+      domain,
+      activeBuildings,
+      armies: this._armies,
+      fixedTargets: [...manifestTargets, ...fixedTargets]
+    });
+    if (!deploymentTile) return { ok: false, reason: 'no_deployment_tile' };
+
+    const unitIds = requestedUnits.flatMap(item => Array(item.count).fill(item.unitId));
+    const army = {
+      id: `army_${this._nextId}`,
+      ownerId: 'player',
+      name: String(name || `第${this._armies.length + 1}军团`),
+      unitIds,
+      formationId: null,
+      tacticId: null,
+      heroId: null,
+      gridX: deploymentTile.x,
+      gridY: deploymentTile.y,
+      morale: 100,
+      supply: 1,
+      embarked: false,
+      garrisonBuildingIndex: null,
+      movePath: [],
+      order: { type: 'hold' },
+      revision: 0
+    };
+
+    for (const item of requestedUnits) {
+      this._availableUnits[item.unitId] -= item.count;
+      if (this._availableUnits[item.unitId] <= 0) delete this._availableUnits[item.unitId];
+    }
+    this._nextId += 1;
+    this._armies.push(army);
+    this._notify('deploy');
+    return { ok: true, army: this._decorateArmy(army), direction: deploymentTile.direction };
+  }
 
   _unitConfig(unitId) {
     return (configRegistry.get('enemies')?.units || []).find(unit => unit.id === unitId) || null;

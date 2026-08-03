@@ -67,7 +67,8 @@ function setupTrainingGame() {
     },
     {
       id: 'warehouse', name: '大本营', description: '行政建筑', category: 'administration', eraId: 'primitive',
-      maxWorkers: 0, production: null, synthesisRecipes: [], upgradesTo: null, uniqueFunction: {}
+      maxWorkers: 0, production: null, synthesisRecipes: [], upgradesTo: null,
+      uniqueFunction: { armyAssemblyDomains: ['land'] }
     }
   ];
   configRegistry._configs = {
@@ -76,7 +77,7 @@ function setupTrainingGame() {
     resources: [],
     historicalContent: { eras: [{ id: 'primitive', name: '原始时代', order: 0 }] }
   };
-  const calls = { get: [], train: [], push: [], reserveSets: [] };
+  const calls = { get: [], train: [], push: [], reserveSets: [], deploy: [], pop: 0 };
   const building = {
     buildings: [
       { buildingId: 'work_shed', status: 'active', currentWorkers: 0 },
@@ -103,6 +104,10 @@ function setupTrainingGame() {
     getArmyCapacity: () => 2,
     getCommandPointLimit: () => 20,
     setAvailableUnits: units => calls.reserveSets.push(units),
+    deployArmyFromBuilding: request => {
+      calls.deploy.push(request);
+      return { ok: true, army: { id: 'army_1' } };
+    },
     getTactics: () => []
   };
   globalThis.window = {
@@ -120,7 +125,7 @@ function setupTrainingGame() {
       }
     }
   };
-  return { calls };
+  return { calls, army, unit };
 }
 
 test.afterEach(() => {
@@ -177,11 +182,86 @@ test('only compatible building details expose the building-scoped training entry
   assert.equal(walk(warehouseBody).some(node => node.dataset.testid === 'open-building-training'), false);
 });
 
+test('only assembly buildings expose the building-scoped army assembly entry', () => {
+  setupDom();
+  const { calls } = setupTrainingGame();
+  const pm = { push: (panel, data) => calls.push.push([panel, data]), refresh() {}, alert() {}, close() {} };
+
+  const headquartersBody = new FakeElement('body');
+  renderBuildingDetailPanel({ buildingIndex: 1 }, headquartersBody, pm);
+  const entry = walk(headquartersBody).find(node => node.dataset.testid === 'open-building-assembly');
+  assert.ok(entry);
+  entry.click();
+  assert.deepEqual(calls.push, [['army_panel', { assemblyBuildingIndex: 1 }]]);
+
+  const trainingBody = new FakeElement('body');
+  renderBuildingDetailPanel({ buildingIndex: 0 }, trainingBody, pm);
+  assert.equal(walk(trainingBody).some(node => node.dataset.testid === 'open-building-assembly'), false);
+});
+
+test('building-scoped assembly renders reserve controls preview and deploys the selection', () => {
+  setupDom();
+  const { calls, army, unit } = setupTrainingGame();
+  army.getAvailableUnits = () => ({ [unit.id]: 2 });
+  const body = new FakeElement('body');
+  const pm = { alert: message => assert.fail(message), pop: () => { calls.pop += 1; } };
+  const data = { assemblyBuildingIndex: 1 };
+
+  renderArmyPanel(data, body, pm);
+  const name = walk(body).find(node => node.dataset.testid === 'army-name');
+  assert.ok(name);
+  name.value = '先锋军';
+  name.listeners.get('input')?.({ currentTarget: name });
+
+  const add = walk(body).find(node => node.dataset.testid === `reserve-add-${unit.id}`);
+  const remove = walk(body).find(node => node.dataset.testid === `reserve-remove-${unit.id}`);
+  assert.ok(add);
+  assert.ok(remove);
+  add.click();
+  assert.match(renderedText(body), /CP 1\/20/);
+
+  const deploy = walk(body).find(node => node.dataset.testid === 'deploy-army');
+  assert.ok(deploy);
+  deploy.click();
+  assert.deepEqual(calls.deploy, [{
+    buildingIndex: 1,
+    name: '先锋军',
+    unitCounts: { [unit.id]: 1 }
+  }]);
+  assert.equal(calls.pop, 1);
+});
+
+test('assembly preview warns when selected reserves have an unsupported domain', () => {
+  setupDom();
+  const { army } = setupTrainingGame();
+  const galley = { id: 'galley', name: '桨帆舰', branch: 'navy', domain: 'naval', commandPoints: 5 };
+  configRegistry.get('enemies').units.push(galley);
+  army.getAvailableUnits = () => ({ galley: 1 });
+  const body = new FakeElement('body');
+
+  renderArmyPanel({ assemblyBuildingIndex: 1 }, body, { alert() {}, pop() {} });
+  walk(body).find(node => node.dataset.testid === 'reserve-add-galley').click();
+
+  assert.match(renderedText(body), /部署域不匹配/);
+  assert.equal(walk(body).find(node => node.dataset.testid === 'deploy-army').disabled, true);
+});
+
 test('opening army management with no reserves does not grant free units', () => {
   setupDom();
   const { calls } = setupTrainingGame();
   renderArmyPanel({}, new FakeElement('body'), { alert() {} });
   assert.deepEqual(calls.reserveSets, []);
+});
+
+test('normal HUD army entry manages existing armies but cannot create or deploy one', () => {
+  setupDom();
+  setupTrainingGame();
+  const body = new FakeElement('body');
+  renderArmyPanel({}, body, { alert() {} });
+
+  assert.equal(walk(body).some(node => node.dataset.testid === 'deploy-army'), false);
+  assert.equal(walk(body).filter(node => node.tagName === 'button')
+    .some(node => /创建部队|部署军团/.test(node.textContent)), false);
 });
 
 test('global HUD markup has no training entry', () => {

@@ -4229,6 +4229,9 @@
       "housingCapacity": 0,
       "soldierCapacity": 20,
       "uniqueFunction": {
+        "armyAssemblyDomains": [
+          "land"
+        ],
         "soldierCapacity": 20,
         "defensePower": 60,
         "unlockEliteUnits": true,
@@ -4381,6 +4384,9 @@
         "W"
       ],
       "uniqueFunction": {
+        "armyAssemblyDomains": [
+          "naval"
+        ],
         "routeCapacity": 2,
         "navalSupply": 10,
         "transportCapacity": 12
@@ -4434,6 +4440,9 @@
         "W"
       ],
       "uniqueFunction": {
+        "armyAssemblyDomains": [
+          "naval"
+        ],
         "trainsBranches": [
           "navy"
         ],
@@ -4732,6 +4741,9 @@
       "housingCapacity": 0,
       "soldierCapacity": 0,
       "uniqueFunction": {
+        "armyAssemblyDomains": [
+          "land"
+        ],
         "garrisonCapacity": 1,
         "garrisonDefenseMul": 1.12,
         "garrisonSupplyRecovery": 0.08,
@@ -4783,6 +4795,9 @@
       "housingCapacity": 0,
       "soldierCapacity": 0,
       "uniqueFunction": {
+        "armyAssemblyDomains": [
+          "land"
+        ],
         "garrisonCapacity": 2,
         "garrisonDefenseMul": 1.3,
         "garrisonSupplyRecovery": 0.15,
@@ -4839,6 +4854,9 @@
       "housingCapacity": 0,
       "soldierCapacity": 0,
       "uniqueFunction": {
+        "armyAssemblyDomains": [
+          "land"
+        ],
         "garrisonCapacity": 4,
         "garrisonDefenseMul": 1.55,
         "garrisonSupplyRecovery": 0.25,

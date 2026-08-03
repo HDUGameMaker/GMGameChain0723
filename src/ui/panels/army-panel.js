@@ -71,10 +71,151 @@ function dismissFromArmy(armies, ai, uid) {
   return _armySystem()?.dismissUnit?.(armies[ai].id, uid, 1).ok === true;
 }
 
+function _renderAssemblyPanel(data, body, pm) {
+  const buildingIndex = data.assemblyBuildingIndex;
+  const building = window.__game?.systems?.building?.buildings?.[buildingIndex];
+  const config = building ? window.__game?.configRegistry?.getBuilding?.(building.buildingId) : null;
+  const assemblyDomains = config?.uniqueFunction?.armyAssemblyDomains || [];
+  if (!building || building.status !== 'active' || building._invalid || assemblyDomains.length === 0) {
+    const invalid = document.createElement('div');
+    invalid.style.cssText = 'padding:32px;text-align:center;color:#ff8c8c;';
+    invalid.textContent = '集结建筑无效或尚未投入使用。';
+    body.appendChild(invalid);
+    return;
+  }
+
+  const draft = data._assemblyDraft ||= {
+    name: `第${_armies().length + 1}军团`,
+    unitCounts: {}
+  };
+  const rerender = () => renderArmyPanel(data, body, pm);
+  const reserves = _avail();
+  const reserveUnits = _cfg().filter(unit => (reserves[unit.id] || 0) > 0);
+
+  const header = document.createElement('div');
+  header.style.cssText = 'margin-bottom:16px;';
+  header.innerHTML = `<div style="font-size:18px;font-weight:700;color:#ececf0;">⚔️ ${config.name || building.buildingId} · 军团集结</div><div style="font-size:12px;color:#9099aa;margin-top:5px;">军团将按 N、NE、E、SE、S、SW、W、NW 顺序部署到建筑完整占地外侧。</div>`;
+  body.appendChild(header);
+
+  const nameInput = document.createElement('input');
+  nameInput.value = draft.name;
+  nameInput.placeholder = '军团名称';
+  nameInput.dataset.testid = 'army-name';
+  nameInput.style.cssText = 'width:100%;box-sizing:border-box;margin-bottom:14px;padding:9px 11px;border:1px solid rgba(255,255,255,.15);border-radius:7px;background:#20242d;color:#ececf0;font-size:14px;';
+  nameInput.addEventListener('input', event => { draft.name = event.currentTarget.value; });
+  body.appendChild(nameInput);
+
+  const reserveTitle = document.createElement('div');
+  reserveTitle.style.cssText = 'font-size:13px;font-weight:700;color:#d6bb7a;margin-bottom:8px;';
+  reserveTitle.textContent = '预备队编成';
+  body.appendChild(reserveTitle);
+
+  if (reserveUnits.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'padding:18px;text-align:center;color:#8d94a3;background:rgba(255,255,255,.03);border-radius:8px;';
+    empty.textContent = '当前没有可用于集结的预备队。请先在训练建筑中训练单位。';
+    body.appendChild(empty);
+  }
+
+  for (const unit of reserveUnits) {
+    const selected = draft.unitCounts[unit.id] || 0;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:9px;padding:9px 11px;margin-bottom:6px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:8px;';
+    const details = document.createElement('div');
+    details.style.cssText = 'flex:1;min-width:0;color:#e6e8ed;font-size:13px;';
+    details.textContent = `${unit.icon || '⚔️'} ${unit.name} · ${unit.domain === 'naval' ? '海军' : '陆军'} · CP ${calcCP(unit.id)} · 预备 ${reserves[unit.id]}`;
+    row.appendChild(details);
+
+    const remove = document.createElement('button');
+    remove.textContent = '−';
+    remove.dataset.testid = `reserve-remove-${unit.id}`;
+    remove.disabled = selected <= 0;
+    remove.style.cssText = 'width:30px;height:28px;border:1px solid #815b5b;border-radius:5px;background:#4d2f32;color:#ffdede;cursor:pointer;';
+    remove.addEventListener('click', () => {
+      if (selected <= 1) delete draft.unitCounts[unit.id];
+      else draft.unitCounts[unit.id] = selected - 1;
+      rerender();
+    });
+    row.appendChild(remove);
+
+    const count = document.createElement('span');
+    count.style.cssText = 'min-width:24px;text-align:center;color:#ececf0;font-weight:700;';
+    count.textContent = String(selected);
+    row.appendChild(count);
+
+    const add = document.createElement('button');
+    add.textContent = '+';
+    add.dataset.testid = `reserve-add-${unit.id}`;
+    add.disabled = selected >= reserves[unit.id];
+    add.style.cssText = 'width:30px;height:28px;border:1px solid #4c7d61;border-radius:5px;background:#294939;color:#d9ffe5;cursor:pointer;';
+    add.addEventListener('click', () => {
+      draft.unitCounts[unit.id] = selected + 1;
+      rerender();
+    });
+    row.appendChild(add);
+    body.appendChild(row);
+  }
+
+  const selectedEntries = Object.entries(draft.unitCounts).filter(([, count]) => count > 0);
+  const usedCP = selectedEntries.reduce((sum, [unitId, count]) => sum + calcCP(unitId) * count, 0);
+  const selectedDomains = new Set(selectedEntries.map(([unitId]) => (
+    _cfg().find(unit => unit.id === unitId)?.domain === 'naval' ? 'naval' : 'land'
+  )));
+  let warning = '';
+  if (selectedEntries.length === 0) warning = '请至少选择一个预备队单位。';
+  else if (selectedDomains.size !== 1 || !assemblyDomains.includes([...selectedDomains][0])) {
+    warning = '部署域不匹配：同一军团必须全部属于该集结建筑支持的陆军或海军域。';
+  } else if (usedCP > _getMaxCP()) warning = '指挥点超过军团上限。';
+  else if (_armies().length >= (_armySystem()?.getArmyCapacity?.() || 2)) warning = '军团数量已达上限。';
+
+  const preview = document.createElement('div');
+  preview.style.cssText = 'margin-top:12px;padding:10px 12px;background:rgba(91,141,239,.08);border-radius:8px;color:#b9cae8;font-size:12px;';
+  preview.textContent = `编成 ${selectedEntries.reduce((sum, [, count]) => sum + count, 0)} 单位 · CP ${usedCP}/${_getMaxCP()} · ${assemblyDomains.includes('naval') ? '海军部署' : '陆军部署'}`;
+  body.appendChild(preview);
+  if (warning) {
+    const warningElement = document.createElement('div');
+    warningElement.style.cssText = 'margin-top:8px;color:#efa2a2;font-size:12px;';
+    warningElement.textContent = warning;
+    body.appendChild(warningElement);
+  }
+
+  const deploy = document.createElement('button');
+  deploy.textContent = '部署军团';
+  deploy.dataset.testid = 'deploy-army';
+  deploy.disabled = Boolean(warning);
+  deploy.style.cssText = 'width:100%;margin-top:14px;padding:11px;border:none;border-radius:8px;background:rgba(78,203,113,.28);color:#bff5ce;font-size:14px;font-weight:700;cursor:pointer;';
+  deploy.addEventListener('click', () => {
+    const result = _armySystem()?.deployArmyFromBuilding?.({
+      buildingIndex,
+      name: draft.name,
+      unitCounts: { ...draft.unitCounts }
+    });
+    if (!result?.ok) {
+      pm.alert({
+        invalid_assembly_building: '集结建筑无效。',
+        insufficient_reserve: '预备队数量不足。',
+        mixed_unit_domains: '陆军与海军不能混编部署。',
+        assembly_domain_not_supported: '该建筑不支持所选军种。',
+        command_points_full: '所选编成超过指挥点上限。',
+        army_capacity_full: '军团数量已达上限。',
+        no_deployment_tile: '建筑周围八个部署位置均不可用。'
+      }[result?.reason] || result?.reason || '军团部署失败。');
+      return;
+    }
+    pm.pop?.();
+  });
+  body.appendChild(deploy);
+}
+
 export function renderArmyPanel(data, body, pm) {
   /* 清空 body —— 修复重复渲染 Bug */
   body.innerHTML = '';
   body.style.cssText = 'padding:20px 24px;max-height:70vh;overflow-y:auto;';
+
+  if (Number.isInteger(data?.assemblyBuildingIndex)) {
+    _renderAssemblyPanel(data, body, pm);
+    return;
+  }
 
   const armies = _armies();
   const unitMap = {};
@@ -84,22 +225,6 @@ export function renderArmyPanel(data, body, pm) {
   const header = document.createElement('div');
   header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;';
   header.innerHTML = '<span style="font-size:18px;font-weight:700;color:#ececf0;">⚔️ 军队管理</span>';
-  const createBtn = document.createElement('button');
-  createBtn.textContent = '+ 创建部队';
-  createBtn.disabled = armies.length >= (_armySystem()?.getArmyCapacity?.() || 2);
-  createBtn.style.cssText = 'padding:8px 18px;border:none;border-radius:8px;background:rgba(78,203,113,0.25);color:#4ecb71;cursor:pointer;font-size:13px;font-weight:600;';
-  createBtn.addEventListener('mouseenter', () => createBtn.style.background = 'rgba(78,203,113,0.4)');
-  createBtn.addEventListener('mouseleave', () => createBtn.style.background = 'rgba(78,203,113,0.25)');
-  createBtn.addEventListener('click', () => {
-    const n = _armies().length + 1;
-    const result = _armySystem()?.createArmy?.('第' + n + '军团');
-    if (!result?.ok) {
-      pm.alert('军团数量已达上限，需要军事学院、城堡或谋略府提升上限。');
-      return;
-    }
-    renderArmyPanel(data, body, pm);
-  });
-  header.appendChild(createBtn);
   body.appendChild(header);
 
   const info = document.createElement('div');
@@ -139,7 +264,7 @@ export function renderArmyPanel(data, body, pm) {
   if (armies.length === 0) {
     const empty = document.createElement('div');
     empty.style.cssText = 'text-align:center;padding:40px;color:#808098;font-size:14px;';
-    empty.innerHTML = '暂无部队，点击上方「+ 创建部队」开始组建';
+    empty.textContent = '暂无已部署军团。请从具备集结功能的建筑开始组建。';
     body.appendChild(empty);
     return;
   }

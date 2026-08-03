@@ -208,6 +208,7 @@
     "upgradesTo": null,
     "production": null,
     "uniqueFunction": {
+      "armyAssemblyDomains": ["land"],
       "workerRecruitment": {
         "amount": 1,
         "cost": [{ "resourceId": "food", "amount": 20 }]
