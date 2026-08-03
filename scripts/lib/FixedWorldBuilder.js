@@ -79,7 +79,7 @@ function validateGeneratorConfig(config) {
     !topology
     || typeof topology !== 'object'
     || !Number.isFinite(topology.waterRatio)
-    || topology.waterRatio < 0.2
+    || topology.waterRatio < 0.1
     || topology.waterRatio > 0.45
     || !Number.isFinite(topology.waterTolerance)
     || topology.waterTolerance < 0

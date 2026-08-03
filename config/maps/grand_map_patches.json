@@ -26,8 +26,8 @@
     "huge": { "width": 384, "height": 384, "cityStateCount": 24 }
   },
   "topology": {
-    "waterRatio": 0.32,
-    "waterTolerance": 0.03,
+    "waterRatio": 0.18,
+    "waterTolerance": 0.02,
     "majorContinents": { "min": 2, "max": 4, "minimumLandShare": 0.08 },
     "islandChains": { "min": 3, "max": 6 },
     "rivers": { "min": 4, "max": 8 },

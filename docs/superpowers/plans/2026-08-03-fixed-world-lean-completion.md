@@ -28,7 +28,7 @@
 **Contract:**
 - Export `buildFixedWorld({ width, height, seed, patches })` only from development tooling.
 - Write `mapId: "grand_map_v1"`, `source: "fixed_static"`, `gridWidth: 384`, `gridHeight: 384`, `tileSize: 60`, rectangular string-row `grid`, and a fixed `spawnManifest` into `base_map.json`; `grid` is the stable terrain interface already consumed by every runtime map system.
-- Include all terrain codes `R/G/D/F/M/W/B/S`; water coverage must be 29–35%; all placement coordinates must be unique, in bounds, and domain-compatible.
+- Include all terrain codes `R/G/D/F/M/W/B/S`; water coverage must be 15–20% with an 18% production target; all placement coordinates must be unique, in bounds, and domain-compatible.
 - Preserve the existing `ConfigRegistry._applyConfiguredArtPaths()` additions, but remove the canceled `worldGeneration` runtime loader and getter.
 - Runtime imports under `src/` must contain no reference to `FixedWorldBuilder`, `WorldMapGenerator`, or `world-generation.json`.
 

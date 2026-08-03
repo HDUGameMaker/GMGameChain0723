@@ -217,8 +217,8 @@
       "name": "群岛海贸共和国",
       "icon": "⛵",
       "description": "控制河海节点的海贸共和国，舰队和港口会随玩家时代升级。",
-      "gridX": 372,
-      "gridY": 128,
+      "gridX": 376,
+      "gridY": 124,
       "domain": "naval",
       "faction": "sea_republic",
       "develops": "limited",
@@ -420,8 +420,8 @@
         "diplomacy": 5
       },
       "eraUnitBranch": "navy",
-      "gridX": 240,
-      "gridY": 227
+      "gridX": 230,
+      "gridY": 230
     },
     {
       "id": "silver_bay_port",
@@ -462,8 +462,8 @@
         "diplomacy": 6
       },
       "eraUnitBranch": "navy",
-      "gridX": 274,
-      "gridY": 182
+      "gridX": 264,
+      "gridY": 172
     },
     {
       "id": "azure_steppe_court",
@@ -756,8 +756,8 @@
         "diplomacy": 3
       },
       "eraUnitBranch": "anti_cavalry",
-      "gridX": 350,
-      "gridY": 267
+      "gridX": 361,
+      "gridY": 278
     }
   ],
   "wildSites": [
@@ -785,8 +785,8 @@
       "name": "荒野猎团",
       "category": "resource_guard",
       "domain": "land",
-      "gridX": 119,
-      "gridY": 189,
+      "gridX": 123,
+      "gridY": 193,
       "baseStrength": 18,
       "respawnDays": 5,
       "rewards": [
@@ -842,8 +842,8 @@
       "name": "野牛群地",
       "category": "resource_guard",
       "domain": "land",
-      "gridX": 370,
-      "gridY": 238,
+      "gridX": 373,
+      "gridY": 241,
       "baseStrength": 24,
       "respawnDays": 8,
       "rewards": [
@@ -899,8 +899,8 @@
       "name": "废弃矿坑守军",
       "category": "resource_guard",
       "domain": "land",
-      "gridX": 245,
-      "gridY": 301,
+      "gridX": 262,
+      "gridY": 284,
       "baseStrength": 30,
       "respawnDays": 4,
       "rewards": [
@@ -956,8 +956,8 @@
       "name": "密林盗猎团",
       "category": "resource_guard",
       "domain": "land",
-      "gridX": 145,
-      "gridY": 333,
+      "gridX": 143,
+      "gridY": 335,
       "baseStrength": 36,
       "respawnDays": 7,
       "rewards": [
@@ -1013,8 +1013,8 @@
       "name": "高地矿团",
       "category": "resource_guard",
       "domain": "land",
-      "gridX": 30,
-      "gridY": 16,
+      "gridX": 28,
+      "gridY": 18,
       "baseStrength": 42,
       "respawnDays": 10,
       "rewards": [
@@ -1051,8 +1051,8 @@
       "name": "河口劫船团",
       "category": "pirate_fleet",
       "domain": "naval",
-      "gridX": 216,
-      "gridY": 270,
+      "gridX": 230,
+      "gridY": 256,
       "baseStrength": 46,
       "respawnDays": 5,
       "rewards": [
@@ -1070,8 +1070,8 @@
       "name": "外海私掠队",
       "category": "pirate_fleet",
       "domain": "naval",
-      "gridX": 268,
-      "gridY": 74,
+      "gridX": 259,
+      "gridY": 47,
       "baseStrength": 48,
       "respawnDays": 6,
       "rewards": [
@@ -1089,8 +1089,8 @@
       "name": "北水道封锁舰",
       "category": "pirate_fleet",
       "domain": "naval",
-      "gridX": 376,
-      "gridY": 186,
+      "gridX": 355,
+      "gridY": 197,
       "baseStrength": 50,
       "respawnDays": 7,
       "rewards": [
@@ -1146,8 +1146,8 @@
       "name": "游荡军团·21",
       "category": "roaming_host",
       "domain": "land",
-      "gridX": 238,
-      "gridY": 256,
+      "gridX": 245,
+      "gridY": 249,
       "baseStrength": 20,
       "respawnDays": 10,
       "rewards": [
@@ -1184,8 +1184,8 @@
       "name": "海盗舰队·23",
       "category": "pirate_fleet",
       "domain": "naval",
-      "gridX": 20,
-      "gridY": 186,
+      "gridX": 68,
+      "gridY": 138,
       "baseStrength": 24,
       "respawnDays": 5,
       "rewards": [
@@ -1203,8 +1203,8 @@
       "name": "荒野兽群·24",
       "category": "ancient_beast",
       "domain": "land",
-      "gridX": 137,
-      "gridY": 289,
+      "gridX": 132,
+      "gridY": 294,
       "baseStrength": 26,
       "respawnDays": 6,
       "rewards": [
@@ -1260,8 +1260,8 @@
       "name": "游荡军团·27",
       "category": "roaming_host",
       "domain": "land",
-      "gridX": 25,
-      "gridY": 333,
+      "gridX": 17,
+      "gridY": 340,
       "baseStrength": 32,
       "respawnDays": 9,
       "rewards": [
@@ -1298,8 +1298,8 @@
       "name": "海盗舰队·29",
       "category": "pirate_fleet",
       "domain": "naval",
-      "gridX": 164,
-      "gridY": 236,
+      "gridX": 230,
+      "gridY": 302,
       "baseStrength": 36,
       "respawnDays": 4,
       "rewards": [
@@ -1317,8 +1317,8 @@
       "name": "荒野兽群·30",
       "category": "ancient_beast",
       "domain": "land",
-      "gridX": 268,
-      "gridY": 31,
+      "gridX": 264,
+      "gridY": 26,
       "baseStrength": 38,
       "respawnDays": 5,
       "rewards": [
@@ -1374,8 +1374,8 @@
       "name": "游荡军团·33",
       "category": "roaming_host",
       "domain": "land",
-      "gridX": 155,
-      "gridY": 79,
+      "gridX": 149,
+      "gridY": 73,
       "baseStrength": 68,
       "respawnDays": 8,
       "rewards": [
@@ -1393,8 +1393,8 @@
       "name": "遗迹守卫·34",
       "category": "ruin_guard",
       "domain": "naval",
-      "gridX": 237,
-      "gridY": 215,
+      "gridX": 230,
+      "gridY": 218,
       "baseStrength": 71,
       "respawnDays": 9,
       "rewards": [
@@ -1412,8 +1412,8 @@
       "name": "海盗舰队·35",
       "category": "pirate_fleet",
       "domain": "naval",
-      "gridX": 343,
-      "gridY": 375,
+      "gridX": 286,
+      "gridY": 376,
       "baseStrength": 74,
       "respawnDays": 10,
       "rewards": [
@@ -1507,8 +1507,8 @@
       "name": "遗迹守卫·40",
       "category": "ruin_guard",
       "domain": "land",
-      "gridX": 352,
-      "gridY": 318,
+      "gridX": 362,
+      "gridY": 308,
       "baseStrength": 34,
       "respawnDays": 8,
       "rewards": [
@@ -1526,8 +1526,8 @@
       "name": "海盗舰队·41",
       "category": "pirate_fleet",
       "domain": "naval",
-      "gridX": 104,
-      "gridY": 66,
+      "gridX": 83,
+      "gridY": 79,
       "baseStrength": 37,
       "respawnDays": 9,
       "rewards": [
@@ -1564,8 +1564,8 @@
       "name": "边地营寨·43",
       "category": "barbarian_camp",
       "domain": "land",
-      "gridX": 236,
-      "gridY": 336,
+      "gridX": 243,
+      "gridY": 343,
       "baseStrength": 43,
       "respawnDays": 4,
       "rewards": [
@@ -1602,8 +1602,8 @@
       "name": "游荡军团·45",
       "category": "roaming_host",
       "domain": "naval",
-      "gridX": 26,
-      "gridY": 242,
+      "gridX": 12,
+      "gridY": 220,
       "baseStrength": 50,
       "respawnDays": 6,
       "rewards": [
@@ -1621,8 +1621,8 @@
       "name": "遗迹守卫·46",
       "category": "ruin_guard",
       "domain": "land",
-      "gridX": 149,
-      "gridY": 21,
+      "gridX": 137,
+      "gridY": 33,
       "baseStrength": 53,
       "respawnDays": 7,
       "rewards": [
@@ -1640,8 +1640,8 @@
       "name": "海盗舰队·47",
       "category": "pirate_fleet",
       "domain": "naval",
-      "gridX": 206,
-      "gridY": 184,
+      "gridX": 194,
+      "gridY": 196,
       "baseStrength": 56,
       "respawnDays": 8,
       "rewards": [
@@ -1678,8 +1678,8 @@
       "name": "边地营寨·49",
       "category": "barbarian_camp",
       "domain": "land",
-      "gridX": 23,
-      "gridY": 83,
+      "gridX": 21,
+      "gridY": 81,
       "baseStrength": 62,
       "respawnDays": 10,
       "rewards": [
@@ -1735,8 +1735,8 @@
       "name": "遗迹守卫·52",
       "category": "ruin_guard",
       "domain": "land",
-      "gridX": 278,
-      "gridY": 120,
+      "gridX": 270,
+      "gridY": 128,
       "baseStrength": 71,
       "respawnDays": 6,
       "rewards": [
@@ -1754,8 +1754,8 @@
       "name": "海盗舰队·53",
       "category": "pirate_fleet",
       "domain": "naval",
-      "gridX": 353,
-      "gridY": 264,
+      "gridX": 363,
+      "gridY": 274,
       "baseStrength": 74,
       "respawnDays": 7,
       "rewards": [
@@ -1811,8 +1811,8 @@
       "name": "资源守卫·56",
       "category": "resource_guard",
       "domain": "naval",
-      "gridX": 243,
-      "gridY": 317,
+      "gridX": 230,
+      "gridY": 320,
       "baseStrength": 28,
       "respawnDays": 10,
       "rewards": [
@@ -1925,8 +1925,8 @@
       "name": "资源守卫·62",
       "category": "resource_guard",
       "domain": "land",
-      "gridX": 368,
-      "gridY": 46,
+      "gridX": 372,
+      "gridY": 42,
       "baseStrength": 47,
       "respawnDays": 9,
       "rewards": [
@@ -2020,8 +2020,8 @@
       "name": "边地营寨·67",
       "category": "barbarian_camp",
       "domain": "naval",
-      "gridX": 47,
-      "gridY": 375,
+      "gridX": 46,
+      "gridY": 376,
       "baseStrength": 62,
       "respawnDays": 7,
       "rewards": [
@@ -2096,8 +2096,8 @@
       "name": "海盗舰队·71",
       "category": "pirate_fleet",
       "domain": "naval",
-      "gridX": 20,
-      "gridY": 190,
+      "gridX": 11,
+      "gridY": 199,
       "baseStrength": 74,
       "respawnDays": 4,
       "rewards": [
@@ -2172,8 +2172,8 @@
       "name": "游荡军团·75",
       "category": "roaming_host",
       "domain": "land",
-      "gridX": 351,
-      "gridY": 359,
+      "gridX": 359,
+      "gridY": 367,
       "baseStrength": 43,
       "respawnDays": 8,
       "rewards": [
@@ -2210,8 +2210,8 @@
       "name": "海盗舰队·77",
       "category": "pirate_fleet",
       "domain": "naval",
-      "gridX": 164,
-      "gridY": 274,
+      "gridX": 131,
+      "gridY": 247,
       "baseStrength": 52,
       "respawnDays": 10,
       "rewards": [
@@ -2286,8 +2286,8 @@
       "name": "游荡军团·81",
       "category": "roaming_host",
       "domain": "land",
-      "gridX": 117,
-      "gridY": 109,
+      "gridX": 123,
+      "gridY": 103,
       "baseStrength": 69,
       "respawnDays": 7,
       "rewards": [
@@ -2343,8 +2343,8 @@
       "name": "荒野兽群·84",
       "category": "ancient_beast",
       "domain": "land",
-      "gridX": 15,
-      "gridY": 142,
+      "gridX": 14,
+      "gridY": 144,
       "baseStrength": 82,
       "respawnDays": 10,
       "rewards": [
@@ -2362,8 +2362,8 @@
       "name": "边地营寨·85",
       "category": "barbarian_camp",
       "domain": "land",
-      "gridX": 96,
-      "gridY": 280,
+      "gridX": 97,
+      "gridY": 281,
       "baseStrength": 86,
       "respawnDays": 4,
       "rewards": [
@@ -2381,8 +2381,8 @@
       "name": "资源守卫·86",
       "category": "resource_guard",
       "domain": "land",
-      "gridX": 179,
-      "gridY": 53,
+      "gridX": 180,
+      "gridY": 54,
       "baseStrength": 90,
       "respawnDays": 5,
       "rewards": [
@@ -2400,8 +2400,8 @@
       "name": "游荡军团·87",
       "category": "roaming_host",
       "domain": "land",
-      "gridX": 274,
-      "gridY": 202,
+      "gridX": 263,
+      "gridY": 191,
       "baseStrength": 95,
       "respawnDays": 6,
       "rewards": [
@@ -2438,8 +2438,8 @@
       "name": "海盗舰队·89",
       "category": "pirate_fleet",
       "domain": "naval",
-      "gridX": 26,
-      "gridY": 62,
+      "gridX": 68,
+      "gridY": 98,
       "baseStrength": 103,
       "respawnDays": 8,
       "rewards": [
@@ -2476,8 +2476,8 @@
       "name": "边地营寨·91",
       "category": "barbarian_camp",
       "domain": "land",
-      "gridX": 224,
-      "gridY": 18,
+      "gridX": 231,
+      "gridY": 11,
       "baseStrength": 34,
       "respawnDays": 10,
       "rewards": [
@@ -2533,8 +2533,8 @@
       "name": "遗迹守卫·94",
       "category": "ruin_guard",
       "domain": "land",
-      "gridX": 107,
-      "gridY": 49,
+      "gridX": 116,
+      "gridY": 58,
       "baseStrength": 47,
       "respawnDays": 6,
       "rewards": [
@@ -2552,8 +2552,8 @@
       "name": "海盗舰队·95",
       "category": "pirate_fleet",
       "domain": "naval",
-      "gridX": 188,
-      "gridY": 184,
+      "gridX": 198,
+      "gridY": 196,
       "baseStrength": 52,
       "respawnDays": 7,
       "rewards": [

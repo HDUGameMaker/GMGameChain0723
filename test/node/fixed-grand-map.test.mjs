@@ -27,7 +27,7 @@ test('new campaigns load the committed 384 square grand map', () => {
 
   const waterCells = [...map.grid.join('')].filter(code => WATER_CODES.has(code)).length;
   const waterRatio = waterCells / (384 * 384);
-  assert.ok(waterRatio >= 0.29 && waterRatio <= 0.35, `water ratio ${waterRatio}`);
+  assert.ok(waterRatio >= 0.15 && waterRatio <= 0.20, `water ratio ${waterRatio}`);
 });
 
 test('offline builder reproduces the committed map without rewriting it', () => {
