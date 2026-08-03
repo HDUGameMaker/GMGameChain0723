@@ -1,0 +1,40 @@
+{
+  "productionSeed": "GM-GRAND-MAP-V1-2026",
+  "mapId": "grand_map_v1",
+  "source": "fixed_static",
+  "playerSpawn": { "gridX": 226, "gridY": 198 },
+  "initialBuildings": [
+    { "buildingId": "work_shed", "gridX": 226, "gridY": 198 },
+    { "buildingId": "warehouse", "gridX": 223, "gridY": 197 },
+    { "buildingId": "timber_house", "gridX": 228, "gridY": 198 }
+  ],
+  "ports": [{ "id": "founders_harbor", "gridX": 233, "gridY": 198 }],
+  "expeditionEntrancePositions": {
+    "forest_entrance": { "gridX": 220, "gridY": 201 },
+    "mine_entrance": { "gridX": 218, "gridY": 194 },
+    "mountain_entrance": { "gridX": 214, "gridY": 188 },
+    "scrapyard_entrance": { "gridX": 224, "gridY": 207 }
+  },
+  "terrainPatches": [],
+  "generatorVersion": 1,
+  "defaultPreset": "huge",
+  "tileSize": 60,
+  "customSize": { "min": 192, "max": 512, "multiple": 32, "maxCells": 262144 },
+  "presets": {
+    "standard": { "width": 256, "height": 256, "cityStateCount": 14 },
+    "large": { "width": 320, "height": 320, "cityStateCount": 18 },
+    "huge": { "width": 384, "height": 384, "cityStateCount": 24 }
+  },
+  "topology": {
+    "waterRatio": 0.32,
+    "waterTolerance": 0.03,
+    "majorContinents": { "min": 2, "max": 4, "minimumLandShare": 0.08 },
+    "islandChains": { "min": 3, "max": 6 },
+    "rivers": { "min": 4, "max": 8 },
+    "lakes": { "min": 3, "max": 7 },
+    "maxRetries": 8
+  },
+  "chunkSize": 16,
+  "groundCodes": ["R", "G", "D", "F", "M", "W", "B", "S"],
+  "biomeCodes": ["o", "c", "g", "f", "d", "h", "w", "t"]
+}

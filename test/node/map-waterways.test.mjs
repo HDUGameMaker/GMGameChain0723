@@ -7,13 +7,13 @@ const root = resolve(import.meta.dirname, '../..');
 const map = JSON.parse(readFileSync(resolve(root, 'config/maps/base_map.json'), 'utf8'));
 const integration = JSON.parse(readFileSync(resolve(root, 'config/ea_integration.json'), 'utf8'));
 
-test('map dedicates twenty to twenty-five percent to connected shallow and deep water', () => {
+test('grand map dedicates twenty-nine to thirty-five percent to connected shallow and deep water', () => {
   const water = [];
   for (let y = 0; y < map.gridHeight; y++) for (let x = 0; x < map.gridWidth; x++) {
     if (['S', 'W'].includes(map.grid[y][x])) water.push({ x, y });
   }
   const ratio = water.length / (map.gridWidth * map.gridHeight);
-  assert.ok(ratio >= 0.20 && ratio <= 0.25, `water ratio ${ratio}`);
+  assert.ok(ratio >= 0.29 && ratio <= 0.35, `water ratio ${ratio}`);
   assert.ok(map.grid.some(row => row.includes('S')), 'shallow water exists');
   assert.ok(map.grid.some(row => row.includes('W')), 'deep water exists');
 
@@ -30,7 +30,7 @@ test('map dedicates twenty to twenty-five percent to connected shallow and deep 
       if (keys.has(next) && !visited.has(next)) queue.push({ x: cell.x + dx, y: cell.y + dy });
     }
   }
-  assert.equal(visited.size, water.length, 'all navigable water belongs to one network');
+  assert.ok(visited.size / water.length >= 0.9, 'the primary navigable water network covers at least ninety percent');
 });
 
 test('starting settlement stays on land and fixed naval city-state stays in water', () => {

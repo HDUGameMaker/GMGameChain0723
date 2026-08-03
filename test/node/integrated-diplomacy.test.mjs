@@ -26,7 +26,7 @@ test('six fixed NPC outposts occupy terrain matching their domain', () => {
   assert.equal(integration.outposts.length, 6);
   for (const outpost of integration.outposts) {
     const terrain = map.grid[outpost.gridY][outpost.gridX];
-    assert.equal(outpost.domain === 'naval' ? terrain === 'W' : terrain !== 'W', true, outpost.id);
+    assert.equal(outpost.domain === 'naval' ? ['S', 'W'].includes(terrain) : !['S', 'W'].includes(terrain), true, outpost.id);
     assert.equal(outpost.develops, false);
     assert.ok(Number.isFinite(outpost.militaryStrength));
   }

@@ -1,113 +1,2504 @@
 {
   "unitBranches": [
-    {"id":"archer","name":"弓弩兵","order":2},
-    {"id":"siege","name":"攻城器械","order":4}
+    {
+      "id": "archer",
+      "name": "弓弩兵",
+      "order": 2
+    },
+    {
+      "id": "siege",
+      "name": "攻城器械",
+      "order": 4
+    }
   ],
   "unitProfiles": {
-    "warrior":{"roleTags":["light_infantry","melee"],"strongAgainst":["archer"],"weakAgainst":["mounted","armored"]},
-    "swordsman":{"roleTags":["heavy_infantry","melee","armored"],"strongAgainst":["light_infantry","archer"],"weakAgainst":["armor_piercing","siege"]},
-    "musketeer":{"roleTags":["gunpowder","ranged","armor_piercing"],"strongAgainst":["armored","heavy_infantry"],"weakAgainst":["mounted","siege"]},
-    "modern_infantry":{"roleTags":["gunpowder","ranged","mobile"],"strongAgainst":["light_infantry","mounted"],"weakAgainst":["artillery","air"]},
-    "knight":{"roleTags":["mounted","armored","melee"],"strongAgainst":["archer","siege"],"weakAgainst":["spear","gunpowder"]},
-    "armored_cavalry":{"roleTags":["mounted","armored","mobile"],"strongAgainst":["archer","artillery"],"weakAgainst":["spear","armor_piercing"]},
-    "biplane":{"roleTags":["air","mobile"],"strongAgainst":["siege","naval_light"],"weakAgainst":["anti_air","gunpowder"]},
-    "jet_fighter":{"roleTags":["air","modern","mobile"],"strongAgainst":["air","artillery"],"weakAgainst":["anti_air"]},
-    "cannon":{"roleTags":["artillery","siege","ranged"],"strongAgainst":["fortification","heavy_infantry"],"weakAgainst":["mounted","air"]},
-    "tank":{"roleTags":["armored","mobile","artillery"],"strongAgainst":["light_infantry","fortification"],"weakAgainst":["armor_piercing","air"]},
-    "rocket_artillery":{"roleTags":["artillery","ranged","modern"],"strongAgainst":["fortification","clustered"],"weakAgainst":["mobile","air"]},
-    "raft":{"roleTags":["naval_transport","naval_light"],"strongAgainst":[],"weakAgainst":["naval_raider","naval_heavy"]},
-    "sailing_ship":{"roleTags":["naval_raider","naval_medium"],"strongAgainst":["naval_transport","naval_light"],"weakAgainst":["naval_heavy","fire_ship"]},
-    "battleship":{"roleTags":["naval_heavy","artillery"],"strongAgainst":["naval_medium","fortification"],"weakAgainst":["fire_ship","air"]},
-    "missile_destroyer":{"roleTags":["naval_heavy","anti_air","modern"],"strongAgainst":["air","naval_heavy"],"weakAgainst":["naval_swarm"]}
+    "warrior": {
+      "roleTags": [
+        "light_infantry",
+        "melee"
+      ],
+      "strongAgainst": [
+        "archer"
+      ],
+      "weakAgainst": [
+        "mounted",
+        "armored"
+      ]
+    },
+    "swordsman": {
+      "roleTags": [
+        "heavy_infantry",
+        "melee",
+        "armored"
+      ],
+      "strongAgainst": [
+        "light_infantry",
+        "archer"
+      ],
+      "weakAgainst": [
+        "armor_piercing",
+        "siege"
+      ]
+    },
+    "musketeer": {
+      "roleTags": [
+        "gunpowder",
+        "ranged",
+        "armor_piercing"
+      ],
+      "strongAgainst": [
+        "armored",
+        "heavy_infantry"
+      ],
+      "weakAgainst": [
+        "mounted",
+        "siege"
+      ]
+    },
+    "modern_infantry": {
+      "roleTags": [
+        "gunpowder",
+        "ranged",
+        "mobile"
+      ],
+      "strongAgainst": [
+        "light_infantry",
+        "mounted"
+      ],
+      "weakAgainst": [
+        "artillery",
+        "air"
+      ]
+    },
+    "knight": {
+      "roleTags": [
+        "mounted",
+        "armored",
+        "melee"
+      ],
+      "strongAgainst": [
+        "archer",
+        "siege"
+      ],
+      "weakAgainst": [
+        "spear",
+        "gunpowder"
+      ]
+    },
+    "armored_cavalry": {
+      "roleTags": [
+        "mounted",
+        "armored",
+        "mobile"
+      ],
+      "strongAgainst": [
+        "archer",
+        "artillery"
+      ],
+      "weakAgainst": [
+        "spear",
+        "armor_piercing"
+      ]
+    },
+    "biplane": {
+      "roleTags": [
+        "air",
+        "mobile"
+      ],
+      "strongAgainst": [
+        "siege",
+        "naval_light"
+      ],
+      "weakAgainst": [
+        "anti_air",
+        "gunpowder"
+      ]
+    },
+    "jet_fighter": {
+      "roleTags": [
+        "air",
+        "modern",
+        "mobile"
+      ],
+      "strongAgainst": [
+        "air",
+        "artillery"
+      ],
+      "weakAgainst": [
+        "anti_air"
+      ]
+    },
+    "cannon": {
+      "roleTags": [
+        "artillery",
+        "siege",
+        "ranged"
+      ],
+      "strongAgainst": [
+        "fortification",
+        "heavy_infantry"
+      ],
+      "weakAgainst": [
+        "mounted",
+        "air"
+      ]
+    },
+    "tank": {
+      "roleTags": [
+        "armored",
+        "mobile",
+        "artillery"
+      ],
+      "strongAgainst": [
+        "light_infantry",
+        "fortification"
+      ],
+      "weakAgainst": [
+        "armor_piercing",
+        "air"
+      ]
+    },
+    "rocket_artillery": {
+      "roleTags": [
+        "artillery",
+        "ranged",
+        "modern"
+      ],
+      "strongAgainst": [
+        "fortification",
+        "clustered"
+      ],
+      "weakAgainst": [
+        "mobile",
+        "air"
+      ]
+    },
+    "raft": {
+      "roleTags": [
+        "naval_transport",
+        "naval_light"
+      ],
+      "strongAgainst": [],
+      "weakAgainst": [
+        "naval_raider",
+        "naval_heavy"
+      ]
+    },
+    "sailing_ship": {
+      "roleTags": [
+        "naval_raider",
+        "naval_medium"
+      ],
+      "strongAgainst": [
+        "naval_transport",
+        "naval_light"
+      ],
+      "weakAgainst": [
+        "naval_heavy",
+        "fire_ship"
+      ]
+    },
+    "battleship": {
+      "roleTags": [
+        "naval_heavy",
+        "artillery"
+      ],
+      "strongAgainst": [
+        "naval_medium",
+        "fortification"
+      ],
+      "weakAgainst": [
+        "fire_ship",
+        "air"
+      ]
+    },
+    "missile_destroyer": {
+      "roleTags": [
+        "naval_heavy",
+        "anti_air",
+        "modern"
+      ],
+      "strongAgainst": [
+        "air",
+        "naval_heavy"
+      ],
+      "weakAgainst": [
+        "naval_swarm"
+      ]
+    }
   },
   "buildings": [
-    {"id":"dock","name":"码头","description":"建在水面并连接陆路，是训练和部署早期海军的基础设施。","icon":"","mapIcon":"","footprint":{"width":2,"height":2},"maxCount":3,"initialBuilding":false,"housingCapacity":0,"soldierCapacity":6,"maxWorkers":0,"buildCost":[{"resourceId":"wood","amount":80},{"resourceId":"stone","amount":40},{"resourceId":"gold","amount":15}],"buildTime":5,"upgradesFrom":null,"upgradesTo":"shipyard","upgradeCost":null,"production":null,"synthesisRecipes":[],"allowedGrounds":["W"],"tags":["dock","naval_facility"],"unlockConditions":[{"type":"tech","techId":"sail"}]},
-    {"id":"shipyard","name":"造船厂","description":"大型港口工场，提供更高海军容量和重型舰艇训练能力。","icon":"","mapIcon":"","footprint":{"width":3,"height":2},"maxCount":2,"initialBuilding":false,"housingCapacity":0,"soldierCapacity":12,"maxWorkers":0,"buildCost":[],"upgradeCost":[{"resourceId":"wood","amount":120},{"resourceId":"stone","amount":80},{"resourceId":"gold","amount":45}],"buildTime":8,"upgradesFrom":"dock","upgradesTo":null,"production":null,"synthesisRecipes":[],"allowedGrounds":["W"],"tags":["dock","shipyard","naval_facility"],"unlockConditions":[{"type":"tech","techId":"steam_engine"}]},
-    {"id":"coastal_watch","name":"海防哨塔","description":"监视近岸水域，提前发现海盗与海兽。","icon":"","mapIcon":"","footprint":{"width":1,"height":1},"maxCount":4,"initialBuilding":false,"housingCapacity":0,"maxWorkers":0,"buildCost":[{"resourceId":"wood","amount":30},{"resourceId":"stone","amount":35},{"resourceId":"gold","amount":8}],"buildTime":4,"upgradesFrom":null,"upgradesTo":null,"production":null,"synthesisRecipes":[],"tags":["defense","coastal_watch"],"unlockConditions":[{"type":"tech","techId":"sail"}]},
-    {"id":"tavern","name":"酒馆","description":"汇聚传闻、使者和传奇人物；建成后可招募并任命历史英雄。","icon":"","mapIcon":"","footprint":{"width":2,"height":2},"maxCount":1,"initialBuilding":false,"housingCapacity":0,"maxWorkers":0,"buildCost":[{"resourceId":"wood","amount":55},{"resourceId":"stone","amount":25},{"resourceId":"food","amount":40},{"resourceId":"gold","amount":10}],"buildTime":5,"upgradesFrom":null,"upgradesTo":null,"production":null,"synthesisRecipes":[],"tags":["tavern","hero_recruitment"],"unlockConditions":[{"type":"culture","cultureId":"new_policy"}]}
+    {
+      "id": "dock",
+      "name": "码头",
+      "description": "建在水面并连接陆路，是训练和部署早期海军的基础设施。",
+      "icon": "",
+      "mapIcon": "",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "maxCount": 3,
+      "initialBuilding": false,
+      "housingCapacity": 0,
+      "soldierCapacity": 6,
+      "maxWorkers": 0,
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 80
+        },
+        {
+          "resourceId": "stone",
+          "amount": 40
+        },
+        {
+          "resourceId": "gold",
+          "amount": 15
+        }
+      ],
+      "buildTime": 5,
+      "upgradesFrom": null,
+      "upgradesTo": "shipyard",
+      "upgradeCost": null,
+      "production": null,
+      "synthesisRecipes": [],
+      "allowedGrounds": [
+        "W"
+      ],
+      "tags": [
+        "dock",
+        "naval_facility"
+      ],
+      "unlockConditions": [
+        {
+          "type": "tech",
+          "techId": "sail"
+        }
+      ]
+    },
+    {
+      "id": "shipyard",
+      "name": "造船厂",
+      "description": "大型港口工场，提供更高海军容量和重型舰艇训练能力。",
+      "icon": "",
+      "mapIcon": "",
+      "footprint": {
+        "width": 3,
+        "height": 2
+      },
+      "maxCount": 2,
+      "initialBuilding": false,
+      "housingCapacity": 0,
+      "soldierCapacity": 12,
+      "maxWorkers": 0,
+      "buildCost": [],
+      "upgradeCost": [
+        {
+          "resourceId": "wood",
+          "amount": 120
+        },
+        {
+          "resourceId": "stone",
+          "amount": 80
+        },
+        {
+          "resourceId": "gold",
+          "amount": 45
+        }
+      ],
+      "buildTime": 8,
+      "upgradesFrom": "dock",
+      "upgradesTo": null,
+      "production": null,
+      "synthesisRecipes": [],
+      "allowedGrounds": [
+        "W"
+      ],
+      "tags": [
+        "dock",
+        "shipyard",
+        "naval_facility"
+      ],
+      "unlockConditions": [
+        {
+          "type": "tech",
+          "techId": "steam_engine"
+        }
+      ]
+    },
+    {
+      "id": "coastal_watch",
+      "name": "海防哨塔",
+      "description": "监视近岸水域，提前发现海盗与海兽。",
+      "icon": "",
+      "mapIcon": "",
+      "footprint": {
+        "width": 1,
+        "height": 1
+      },
+      "maxCount": 4,
+      "initialBuilding": false,
+      "housingCapacity": 0,
+      "maxWorkers": 0,
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 30
+        },
+        {
+          "resourceId": "stone",
+          "amount": 35
+        },
+        {
+          "resourceId": "gold",
+          "amount": 8
+        }
+      ],
+      "buildTime": 4,
+      "upgradesFrom": null,
+      "upgradesTo": null,
+      "production": null,
+      "synthesisRecipes": [],
+      "tags": [
+        "defense",
+        "coastal_watch"
+      ],
+      "unlockConditions": [
+        {
+          "type": "tech",
+          "techId": "sail"
+        }
+      ]
+    },
+    {
+      "id": "tavern",
+      "name": "酒馆",
+      "description": "汇聚传闻、使者和传奇人物；建成后可招募并任命历史英雄。",
+      "icon": "",
+      "mapIcon": "",
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "maxCount": 1,
+      "initialBuilding": false,
+      "housingCapacity": 0,
+      "maxWorkers": 0,
+      "buildCost": [
+        {
+          "resourceId": "wood",
+          "amount": 55
+        },
+        {
+          "resourceId": "stone",
+          "amount": 25
+        },
+        {
+          "resourceId": "food",
+          "amount": 40
+        },
+        {
+          "resourceId": "gold",
+          "amount": 10
+        }
+      ],
+      "buildTime": 5,
+      "upgradesFrom": null,
+      "upgradesTo": null,
+      "production": null,
+      "synthesisRecipes": [],
+      "tags": [
+        "tavern",
+        "hero_recruitment"
+      ],
+      "unlockConditions": [
+        {
+          "type": "culture",
+          "cultureId": "new_policy"
+        }
+      ]
+    }
   ],
   "units": [
-    {"id":"spearman","name":"长矛兵","domain":"land","branch":"infantry","tier":0,"combatPower":4,"hp":8,"attack":3,"attackRange":1,"commandPoints":2,"researchCost":20,"prerequisiteTechs":["hunting"],"cost":[{"resourceId":"wood","amount":15},{"resourceId":"food","amount":12}],"unlocked":false,"roleTags":["spear","light_infantry","melee"],"strongAgainst":["mounted"],"weakAgainst":["archer","heavy_infantry"]},
-    {"id":"pikeman","name":"重装枪兵","domain":"land","branch":"infantry","tier":1,"combatPower":9,"hp":13,"attack":5,"attackRange":1,"commandPoints":4,"researchCost":55,"prerequisiteUnits":["spearman"],"prerequisiteTechs":["military_training"],"cost":[{"resourceId":"stone","amount":18},{"resourceId":"food","amount":20},{"resourceId":"gold","amount":5}],"unlocked":false,"roleTags":["spear","heavy_infantry","armored"],"strongAgainst":["mounted","armored"],"weakAgainst":["archer","artillery"]},
-    {"id":"archer","name":"弓箭手","domain":"land","branch":"archer","tier":0,"combatPower":4,"hp":6,"attack":3,"attackRange":3,"commandPoints":2,"researchCost":20,"prerequisiteTechs":["hunting"],"cost":[{"resourceId":"wood","amount":18},{"resourceId":"food","amount":12}],"unlocked":false,"roleTags":["archer","ranged"],"strongAgainst":["light_infantry","spear"],"weakAgainst":["mounted","armored"]},
-    {"id":"crossbowman","name":"弩兵","domain":"land","branch":"archer","tier":1,"combatPower":8,"hp":7,"attack":6,"attackRange":3,"commandPoints":3,"researchCost":55,"prerequisiteUnits":["archer"],"prerequisiteTechs":["precision_manufacturing"],"cost":[{"resourceId":"wood","amount":15},{"resourceId":"stone","amount":10},{"resourceId":"food","amount":18}],"unlocked":false,"roleTags":["archer","ranged","armor_piercing"],"strongAgainst":["armored","spear"],"weakAgainst":["mounted","siege"]},
-    {"id":"longbowman","name":"长弓手","domain":"land","branch":"archer","tier":2,"combatPower":14,"hp":8,"attack":9,"attackRange":5,"commandPoints":5,"researchCost":90,"prerequisiteUnits":["archer"],"prerequisiteTechs":["advanced_military"],"cost":[{"resourceId":"wood","amount":24},{"resourceId":"food","amount":25},{"resourceId":"gold","amount":8}],"unlocked":false,"roleTags":["archer","ranged","long_range"],"strongAgainst":["light_infantry","spear","artillery"],"weakAgainst":["mounted","armored"]},
-    {"id":"catapult","name":"投石车","domain":"land","branch":"siege","tier":1,"combatPower":11,"hp":11,"attack":9,"attackRange":4,"commandPoints":6,"researchCost":70,"prerequisiteTechs":["mechanical_engineering"],"cost":[{"resourceId":"wood","amount":35},{"resourceId":"stone","amount":15},{"resourceId":"gold","amount":5}],"unlocked":false,"roleTags":["siege","artillery","ranged"],"strongAgainst":["fortification","clustered"],"weakAgainst":["mounted","melee"]},
-    {"id":"trebuchet","name":"配重投石机","domain":"land","branch":"siege","tier":2,"combatPower":21,"hp":14,"attack":15,"attackRange":6,"commandPoints":9,"researchCost":120,"prerequisiteUnits":["catapult"],"prerequisiteTechs":["precision_manufacturing"],"cost":[{"resourceId":"wood","amount":55},{"resourceId":"stone","amount":25},{"resourceId":"gold","amount":12}],"unlocked":false,"roleTags":["siege","artillery","long_range"],"strongAgainst":["fortification","armored"],"weakAgainst":["mounted","air"]},
-    {"id":"siege_tower","name":"攻城塔","domain":"land","branch":"siege","tier":1,"combatPower":10,"hp":22,"attack":3,"attackRange":1,"commandPoints":7,"researchCost":75,"prerequisiteTechs":["military_training"],"cost":[{"resourceId":"wood","amount":50},{"resourceId":"stone","amount":25}],"unlocked":false,"roleTags":["siege","armored","transport"],"strongAgainst":["fortification","archer"],"weakAgainst":["fire","artillery"]},
-    {"id":"galley","name":"桨帆战船","domain":"naval","branch":"navy","tier":1,"combatPower":9,"hp":14,"attack":6,"attackRange":2,"commandPoints":5,"researchCost":55,"prerequisiteTechs":["sail"],"cost":[{"resourceId":"wood","amount":45},{"resourceId":"stone","amount":10},{"resourceId":"food","amount":30},{"resourceId":"gold","amount":5}],"unlocked":false,"roleTags":["naval_raider","naval_light"],"strongAgainst":["naval_transport","naval_light"],"weakAgainst":["naval_heavy","fire_ship"]},
-    {"id":"fire_ship","name":"火船","domain":"naval","branch":"navy","tier":2,"combatPower":15,"hp":8,"attack":14,"attackRange":1,"commandPoints":5,"researchCost":85,"prerequisiteUnits":["galley"],"prerequisiteTechs":["gunpowder","sail"],"cost":[{"resourceId":"wood","amount":30},{"resourceId":"stone","amount":25},{"resourceId":"food","amount":18},{"resourceId":"gold","amount":8}],"unlocked":false,"roleTags":["fire_ship","naval_swarm"],"strongAgainst":["naval_heavy","naval_medium"],"weakAgainst":["naval_light","ranged"]}
+    {
+      "id": "spearman",
+      "name": "长矛兵",
+      "domain": "land",
+      "branch": "infantry",
+      "tier": 0,
+      "combatPower": 4,
+      "hp": 8,
+      "attack": 3,
+      "attackRange": 1,
+      "commandPoints": 2,
+      "researchCost": 20,
+      "prerequisiteTechs": [
+        "hunting"
+      ],
+      "cost": [
+        {
+          "resourceId": "wood",
+          "amount": 15
+        },
+        {
+          "resourceId": "food",
+          "amount": 12
+        }
+      ],
+      "unlocked": false,
+      "roleTags": [
+        "spear",
+        "light_infantry",
+        "melee"
+      ],
+      "strongAgainst": [
+        "mounted"
+      ],
+      "weakAgainst": [
+        "archer",
+        "heavy_infantry"
+      ]
+    },
+    {
+      "id": "pikeman",
+      "name": "重装枪兵",
+      "domain": "land",
+      "branch": "infantry",
+      "tier": 1,
+      "combatPower": 9,
+      "hp": 13,
+      "attack": 5,
+      "attackRange": 1,
+      "commandPoints": 4,
+      "researchCost": 55,
+      "prerequisiteUnits": [
+        "spearman"
+      ],
+      "prerequisiteTechs": [
+        "military_training"
+      ],
+      "cost": [
+        {
+          "resourceId": "stone",
+          "amount": 18
+        },
+        {
+          "resourceId": "food",
+          "amount": 20
+        },
+        {
+          "resourceId": "gold",
+          "amount": 5
+        }
+      ],
+      "unlocked": false,
+      "roleTags": [
+        "spear",
+        "heavy_infantry",
+        "armored"
+      ],
+      "strongAgainst": [
+        "mounted",
+        "armored"
+      ],
+      "weakAgainst": [
+        "archer",
+        "artillery"
+      ]
+    },
+    {
+      "id": "archer",
+      "name": "弓箭手",
+      "domain": "land",
+      "branch": "archer",
+      "tier": 0,
+      "combatPower": 4,
+      "hp": 6,
+      "attack": 3,
+      "attackRange": 3,
+      "commandPoints": 2,
+      "researchCost": 20,
+      "prerequisiteTechs": [
+        "hunting"
+      ],
+      "cost": [
+        {
+          "resourceId": "wood",
+          "amount": 18
+        },
+        {
+          "resourceId": "food",
+          "amount": 12
+        }
+      ],
+      "unlocked": false,
+      "roleTags": [
+        "archer",
+        "ranged"
+      ],
+      "strongAgainst": [
+        "light_infantry",
+        "spear"
+      ],
+      "weakAgainst": [
+        "mounted",
+        "armored"
+      ]
+    },
+    {
+      "id": "crossbowman",
+      "name": "弩兵",
+      "domain": "land",
+      "branch": "archer",
+      "tier": 1,
+      "combatPower": 8,
+      "hp": 7,
+      "attack": 6,
+      "attackRange": 3,
+      "commandPoints": 3,
+      "researchCost": 55,
+      "prerequisiteUnits": [
+        "archer"
+      ],
+      "prerequisiteTechs": [
+        "precision_manufacturing"
+      ],
+      "cost": [
+        {
+          "resourceId": "wood",
+          "amount": 15
+        },
+        {
+          "resourceId": "stone",
+          "amount": 10
+        },
+        {
+          "resourceId": "food",
+          "amount": 18
+        }
+      ],
+      "unlocked": false,
+      "roleTags": [
+        "archer",
+        "ranged",
+        "armor_piercing"
+      ],
+      "strongAgainst": [
+        "armored",
+        "spear"
+      ],
+      "weakAgainst": [
+        "mounted",
+        "siege"
+      ]
+    },
+    {
+      "id": "longbowman",
+      "name": "长弓手",
+      "domain": "land",
+      "branch": "archer",
+      "tier": 2,
+      "combatPower": 14,
+      "hp": 8,
+      "attack": 9,
+      "attackRange": 5,
+      "commandPoints": 5,
+      "researchCost": 90,
+      "prerequisiteUnits": [
+        "archer"
+      ],
+      "prerequisiteTechs": [
+        "advanced_military"
+      ],
+      "cost": [
+        {
+          "resourceId": "wood",
+          "amount": 24
+        },
+        {
+          "resourceId": "food",
+          "amount": 25
+        },
+        {
+          "resourceId": "gold",
+          "amount": 8
+        }
+      ],
+      "unlocked": false,
+      "roleTags": [
+        "archer",
+        "ranged",
+        "long_range"
+      ],
+      "strongAgainst": [
+        "light_infantry",
+        "spear",
+        "artillery"
+      ],
+      "weakAgainst": [
+        "mounted",
+        "armored"
+      ]
+    },
+    {
+      "id": "catapult",
+      "name": "投石车",
+      "domain": "land",
+      "branch": "siege",
+      "tier": 1,
+      "combatPower": 11,
+      "hp": 11,
+      "attack": 9,
+      "attackRange": 4,
+      "commandPoints": 6,
+      "researchCost": 70,
+      "prerequisiteTechs": [
+        "mechanical_engineering"
+      ],
+      "cost": [
+        {
+          "resourceId": "wood",
+          "amount": 35
+        },
+        {
+          "resourceId": "stone",
+          "amount": 15
+        },
+        {
+          "resourceId": "gold",
+          "amount": 5
+        }
+      ],
+      "unlocked": false,
+      "roleTags": [
+        "siege",
+        "artillery",
+        "ranged"
+      ],
+      "strongAgainst": [
+        "fortification",
+        "clustered"
+      ],
+      "weakAgainst": [
+        "mounted",
+        "melee"
+      ]
+    },
+    {
+      "id": "trebuchet",
+      "name": "配重投石机",
+      "domain": "land",
+      "branch": "siege",
+      "tier": 2,
+      "combatPower": 21,
+      "hp": 14,
+      "attack": 15,
+      "attackRange": 6,
+      "commandPoints": 9,
+      "researchCost": 120,
+      "prerequisiteUnits": [
+        "catapult"
+      ],
+      "prerequisiteTechs": [
+        "precision_manufacturing"
+      ],
+      "cost": [
+        {
+          "resourceId": "wood",
+          "amount": 55
+        },
+        {
+          "resourceId": "stone",
+          "amount": 25
+        },
+        {
+          "resourceId": "gold",
+          "amount": 12
+        }
+      ],
+      "unlocked": false,
+      "roleTags": [
+        "siege",
+        "artillery",
+        "long_range"
+      ],
+      "strongAgainst": [
+        "fortification",
+        "armored"
+      ],
+      "weakAgainst": [
+        "mounted",
+        "air"
+      ]
+    },
+    {
+      "id": "siege_tower",
+      "name": "攻城塔",
+      "domain": "land",
+      "branch": "siege",
+      "tier": 1,
+      "combatPower": 10,
+      "hp": 22,
+      "attack": 3,
+      "attackRange": 1,
+      "commandPoints": 7,
+      "researchCost": 75,
+      "prerequisiteTechs": [
+        "military_training"
+      ],
+      "cost": [
+        {
+          "resourceId": "wood",
+          "amount": 50
+        },
+        {
+          "resourceId": "stone",
+          "amount": 25
+        }
+      ],
+      "unlocked": false,
+      "roleTags": [
+        "siege",
+        "armored",
+        "transport"
+      ],
+      "strongAgainst": [
+        "fortification",
+        "archer"
+      ],
+      "weakAgainst": [
+        "fire",
+        "artillery"
+      ]
+    },
+    {
+      "id": "galley",
+      "name": "桨帆战船",
+      "domain": "naval",
+      "branch": "navy",
+      "tier": 1,
+      "combatPower": 9,
+      "hp": 14,
+      "attack": 6,
+      "attackRange": 2,
+      "commandPoints": 5,
+      "researchCost": 55,
+      "prerequisiteTechs": [
+        "sail"
+      ],
+      "cost": [
+        {
+          "resourceId": "wood",
+          "amount": 45
+        },
+        {
+          "resourceId": "stone",
+          "amount": 10
+        },
+        {
+          "resourceId": "food",
+          "amount": 30
+        },
+        {
+          "resourceId": "gold",
+          "amount": 5
+        }
+      ],
+      "unlocked": false,
+      "roleTags": [
+        "naval_raider",
+        "naval_light"
+      ],
+      "strongAgainst": [
+        "naval_transport",
+        "naval_light"
+      ],
+      "weakAgainst": [
+        "naval_heavy",
+        "fire_ship"
+      ]
+    },
+    {
+      "id": "fire_ship",
+      "name": "火船",
+      "domain": "naval",
+      "branch": "navy",
+      "tier": 2,
+      "combatPower": 15,
+      "hp": 8,
+      "attack": 14,
+      "attackRange": 1,
+      "commandPoints": 5,
+      "researchCost": 85,
+      "prerequisiteUnits": [
+        "galley"
+      ],
+      "prerequisiteTechs": [
+        "gunpowder",
+        "sail"
+      ],
+      "cost": [
+        {
+          "resourceId": "wood",
+          "amount": 30
+        },
+        {
+          "resourceId": "stone",
+          "amount": 25
+        },
+        {
+          "resourceId": "food",
+          "amount": 18
+        },
+        {
+          "resourceId": "gold",
+          "amount": 8
+        }
+      ],
+      "unlocked": false,
+      "roleTags": [
+        "fire_ship",
+        "naval_swarm"
+      ],
+      "strongAgainst": [
+        "naval_heavy",
+        "naval_medium"
+      ],
+      "weakAgainst": [
+        "naval_light",
+        "ranged"
+      ]
+    }
   ],
   "enemies": [
-    {"id":"wolf","name":"野狼","icon":"🐺","faction":"wildlife","domain":"land","roleTags":["beast","mobile"],"maxHp":5,"attack":2,"spawnConditions":{"minDay":2},"drops":[{"resourceId":"food","amount":2}]},
-    {"id":"boar","name":"野猪","icon":"🐗","faction":"wildlife","domain":"land","roleTags":["beast","armored"],"maxHp":9,"attack":3,"spawnConditions":{"minDay":4},"drops":[{"resourceId":"food","amount":4}]},
-    {"id":"bandit_raider","name":"掠夺者","icon":"🗡️","faction":"outpost","domain":"land","roleTags":["light_infantry","mobile"],"maxHp":10,"attack":4,"spawnConditions":{"minDay":7},"drops":[{"resourceId":"food","amount":5}]},
-    {"id":"bandit_archer","name":"盗匪弓手","icon":"🏹","faction":"outpost","domain":"land","roleTags":["archer","ranged"],"maxHp":8,"attack":4,"attackRange":3,"spawnConditions":{"minDay":9},"drops":[{"resourceId":"wood","amount":6}]},
-    {"id":"outpost_guard","name":"据点守卫","icon":"🛡️","faction":"outpost","domain":"land","roleTags":["heavy_infantry","armored"],"maxHp":15,"attack":5,"spawnConditions":{"minDay":14},"drops":[{"resourceId":"gold","amount":4}]},
-    {"id":"outpost_crossbow","name":"据点弩手","icon":"🎯","faction":"outpost","domain":"land","roleTags":["archer","armor_piercing"],"maxHp":12,"attack":6,"attackRange":3,"spawnConditions":{"minDay":16},"drops":[{"resourceId":"wood","amount":5}]},
-    {"id":"corsair_galley","name":"海盗桨船","icon":"🏴‍☠️","faction":"corsair","domain":"naval","roleTags":["naval_raider","naval_light"],"maxHp":18,"attack":6,"spawnConditions":{"minDay":10},"drops":[{"resourceId":"gold","amount":8}]},
-    {"id":"sea_serpent","name":"海蛇","icon":"🐉","faction":"wildlife","domain":"naval","roleTags":["beast","naval_heavy"],"maxHp":24,"attack":8,"spawnConditions":{"minDay":18},"drops":[{"resourceId":"food","amount":10}]}
+    {
+      "id": "wolf",
+      "name": "野狼",
+      "icon": "🐺",
+      "faction": "wildlife",
+      "domain": "land",
+      "roleTags": [
+        "beast",
+        "mobile"
+      ],
+      "maxHp": 5,
+      "attack": 2,
+      "spawnConditions": {
+        "minDay": 2
+      },
+      "drops": [
+        {
+          "resourceId": "food",
+          "amount": 2
+        }
+      ]
+    },
+    {
+      "id": "boar",
+      "name": "野猪",
+      "icon": "🐗",
+      "faction": "wildlife",
+      "domain": "land",
+      "roleTags": [
+        "beast",
+        "armored"
+      ],
+      "maxHp": 9,
+      "attack": 3,
+      "spawnConditions": {
+        "minDay": 4
+      },
+      "drops": [
+        {
+          "resourceId": "food",
+          "amount": 4
+        }
+      ]
+    },
+    {
+      "id": "bandit_raider",
+      "name": "掠夺者",
+      "icon": "🗡️",
+      "faction": "outpost",
+      "domain": "land",
+      "roleTags": [
+        "light_infantry",
+        "mobile"
+      ],
+      "maxHp": 10,
+      "attack": 4,
+      "spawnConditions": {
+        "minDay": 7
+      },
+      "drops": [
+        {
+          "resourceId": "food",
+          "amount": 5
+        }
+      ]
+    },
+    {
+      "id": "bandit_archer",
+      "name": "盗匪弓手",
+      "icon": "🏹",
+      "faction": "outpost",
+      "domain": "land",
+      "roleTags": [
+        "archer",
+        "ranged"
+      ],
+      "maxHp": 8,
+      "attack": 4,
+      "attackRange": 3,
+      "spawnConditions": {
+        "minDay": 9
+      },
+      "drops": [
+        {
+          "resourceId": "wood",
+          "amount": 6
+        }
+      ]
+    },
+    {
+      "id": "outpost_guard",
+      "name": "据点守卫",
+      "icon": "🛡️",
+      "faction": "outpost",
+      "domain": "land",
+      "roleTags": [
+        "heavy_infantry",
+        "armored"
+      ],
+      "maxHp": 15,
+      "attack": 5,
+      "spawnConditions": {
+        "minDay": 14
+      },
+      "drops": [
+        {
+          "resourceId": "gold",
+          "amount": 4
+        }
+      ]
+    },
+    {
+      "id": "outpost_crossbow",
+      "name": "据点弩手",
+      "icon": "🎯",
+      "faction": "outpost",
+      "domain": "land",
+      "roleTags": [
+        "archer",
+        "armor_piercing"
+      ],
+      "maxHp": 12,
+      "attack": 6,
+      "attackRange": 3,
+      "spawnConditions": {
+        "minDay": 16
+      },
+      "drops": [
+        {
+          "resourceId": "wood",
+          "amount": 5
+        }
+      ]
+    },
+    {
+      "id": "corsair_galley",
+      "name": "海盗桨船",
+      "icon": "🏴‍☠️",
+      "faction": "corsair",
+      "domain": "naval",
+      "roleTags": [
+        "naval_raider",
+        "naval_light"
+      ],
+      "maxHp": 18,
+      "attack": 6,
+      "spawnConditions": {
+        "minDay": 10
+      },
+      "drops": [
+        {
+          "resourceId": "gold",
+          "amount": 8
+        }
+      ]
+    },
+    {
+      "id": "sea_serpent",
+      "name": "海蛇",
+      "icon": "🐉",
+      "faction": "wildlife",
+      "domain": "naval",
+      "roleTags": [
+        "beast",
+        "naval_heavy"
+      ],
+      "maxHp": 24,
+      "attack": 8,
+      "spawnConditions": {
+        "minDay": 18
+      },
+      "drops": [
+        {
+          "resourceId": "food",
+          "amount": 10
+        }
+      ]
+    }
   ],
   "outpostActions": {
-    "talk":{"name":"交谈","description":"了解对方诉求并缓和紧张。","relationDelta":5,"basic":true},
-    "gift":{"name":"赠礼","description":"赠送粮食表达善意。","cost":[{"resourceId":"food","amount":30}],"relationDelta":15,"basic":true},
-    "aid":{"name":"援助","description":"提供木材和粮食协助据点。","cost":[{"resourceId":"wood","amount":25},{"resourceId":"food","amount":25}],"relationDelta":22,"basic":true},
-    "negotiate":{"name":"正式谈判","description":"派遣使者推动停战和边界安排。","cost":[{"resourceId":"gold","amount":8}],"relationDelta":12,"cultureUnlock":"diplomatic_corps"},
-    "ceasefire":{"name":"缔结停战","description":"结束敌对状态，恢复有限往来。","cost":[{"resourceId":"food","amount":40},{"resourceId":"gold","amount":12}],"minimumRelation":-45,"relationDelta":25,"forceStatus":"neutral","cultureUnlock":"peace_treaty"},
-    "trade":{"name":"互市贸易","description":"交换货物并逐步提高互信。","cost":[{"resourceId":"wood","amount":20}],"rewards":[{"resourceId":"food","amount":35}],"minimumRelation":0,"relationDelta":4,"cultureUnlock":"market_customs"},
-    "open_borders":{"name":"开放边界","description":"允许探险队安全通过据点控制区。","minimumRelation":25,"relationDelta":8,"forceStatus":"friendly","cultureUnlock":"open_borders"},
-    "non_aggression":{"name":"互不侵犯","description":"承诺长期不主动攻击。","cost":[{"resourceId":"gold","amount":15}],"minimumRelation":40,"relationDelta":10,"forceStatus":"friendly","cultureUnlock":"peace_treaty"},
-    "joint_patrol":{"name":"联合巡逻","description":"共同清剿野兽和海盗。","cost":[{"resourceId":"food","amount":35},{"resourceId":"gold","amount":10}],"minimumRelation":45,"relationDelta":12,"cultureUnlock":"joint_command"},
-    "alliance":{"name":"结盟","description":"建立正式同盟并获得周期性支援。","cost":[{"resourceId":"gold","amount":30}],"minimumRelation":60,"relationDelta":20,"forceStatus":"allied","cultureUnlock":"grand_alliance"}
+    "talk": {
+      "name": "交谈",
+      "description": "了解对方诉求并缓和紧张。",
+      "relationDelta": 5,
+      "basic": true
+    },
+    "gift": {
+      "name": "赠礼",
+      "description": "赠送粮食表达善意。",
+      "cost": [
+        {
+          "resourceId": "food",
+          "amount": 30
+        }
+      ],
+      "relationDelta": 15,
+      "basic": true
+    },
+    "aid": {
+      "name": "援助",
+      "description": "提供木材和粮食协助据点。",
+      "cost": [
+        {
+          "resourceId": "wood",
+          "amount": 25
+        },
+        {
+          "resourceId": "food",
+          "amount": 25
+        }
+      ],
+      "relationDelta": 22,
+      "basic": true
+    },
+    "negotiate": {
+      "name": "正式谈判",
+      "description": "派遣使者推动停战和边界安排。",
+      "cost": [
+        {
+          "resourceId": "gold",
+          "amount": 8
+        }
+      ],
+      "relationDelta": 12,
+      "cultureUnlock": "diplomatic_corps"
+    },
+    "ceasefire": {
+      "name": "缔结停战",
+      "description": "结束敌对状态，恢复有限往来。",
+      "cost": [
+        {
+          "resourceId": "food",
+          "amount": 40
+        },
+        {
+          "resourceId": "gold",
+          "amount": 12
+        }
+      ],
+      "minimumRelation": -45,
+      "relationDelta": 25,
+      "forceStatus": "neutral",
+      "cultureUnlock": "peace_treaty"
+    },
+    "trade": {
+      "name": "互市贸易",
+      "description": "交换货物并逐步提高互信。",
+      "cost": [
+        {
+          "resourceId": "wood",
+          "amount": 20
+        }
+      ],
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 35
+        }
+      ],
+      "minimumRelation": 0,
+      "relationDelta": 4,
+      "cultureUnlock": "market_customs"
+    },
+    "open_borders": {
+      "name": "开放边界",
+      "description": "允许探险队安全通过据点控制区。",
+      "minimumRelation": 25,
+      "relationDelta": 8,
+      "forceStatus": "friendly",
+      "cultureUnlock": "open_borders"
+    },
+    "non_aggression": {
+      "name": "互不侵犯",
+      "description": "承诺长期不主动攻击。",
+      "cost": [
+        {
+          "resourceId": "gold",
+          "amount": 15
+        }
+      ],
+      "minimumRelation": 40,
+      "relationDelta": 10,
+      "forceStatus": "friendly",
+      "cultureUnlock": "peace_treaty"
+    },
+    "joint_patrol": {
+      "name": "联合巡逻",
+      "description": "共同清剿野兽和海盗。",
+      "cost": [
+        {
+          "resourceId": "food",
+          "amount": 35
+        },
+        {
+          "resourceId": "gold",
+          "amount": 10
+        }
+      ],
+      "minimumRelation": 45,
+      "relationDelta": 12,
+      "cultureUnlock": "joint_command"
+    },
+    "alliance": {
+      "name": "结盟",
+      "description": "建立正式同盟并获得周期性支援。",
+      "cost": [
+        {
+          "resourceId": "gold",
+          "amount": 30
+        }
+      ],
+      "minimumRelation": 60,
+      "relationDelta": 20,
+      "forceStatus": "allied",
+      "cultureUnlock": "grand_alliance"
+    }
   },
   "cultureDiplomacyUnlocks": {
-    "new_policy":["negotiate","trade"],
-    "order":["ceasefire"],
-    "wine":["open_borders"],
-    "standing_watch":["non_aggression"],
-    "logistics_yard":["joint_patrol"],
-    "settle_down":["alliance"]
+    "new_policy": [
+      "negotiate",
+      "trade"
+    ],
+    "order": [
+      "ceasefire"
+    ],
+    "wine": [
+      "open_borders"
+    ],
+    "standing_watch": [
+      "non_aggression"
+    ],
+    "logistics_yard": [
+      "joint_patrol"
+    ],
+    "settle_down": [
+      "alliance"
+    ]
   },
   "outposts": [
-    {"id":"forest_camp","name":"林地匪寨","icon":"🏕️","description":"控制林道的松散盗匪营地，既会劫掠，也愿意为利益谈判。","gridX":65,"gridY":115,"domain":"land","faction":"bandits","develops":false,"initialRelation":-35,"militaryStrength":34,"garrison":[{"enemyId":"bandit_raider","count":4},{"enemyId":"bandit_archer","count":2}],"actions":["talk","gift","aid","negotiate","ceasefire","trade","non_aggression","alliance"]},
-    {"id":"iron_watch","name":"铁岭守备所","icon":"🏰","description":"占据旧矿道的纪律化守军，重视力量、边界与正式条约。","gridX":110,"gridY":95,"domain":"land","faction":"outpost","develops":false,"initialRelation":-55,"militaryStrength":62,"garrison":[{"enemyId":"outpost_guard","count":5},{"enemyId":"outpost_crossbow","count":3}],"actions":["talk","gift","negotiate","ceasefire","open_borders","non_aggression","joint_patrol","alliance"]},
-    {"id":"hill_clan","name":"丘陵氏族","icon":"⛺","description":"以狩猎和牧养为生的氏族聚落，尊重援助与共同作战。","gridX":55,"gridY":125,"domain":"land","faction":"clan","develops":false,"initialRelation":5,"militaryStrength":28,"garrison":[{"enemyId":"bandit_raider","count":3}],"actions":["talk","gift","aid","trade","open_borders","joint_patrol","alliance"]},
-    {"id":"free_market","name":"自由市集","icon":"🏘️","description":"不隶属任何大势力的固定商站，以互市和道路安全为核心。","gridX":110,"gridY":125,"domain":"land","faction":"merchants","develops":false,"initialRelation":15,"militaryStrength":22,"garrison":[{"enemyId":"outpost_guard","count":2}],"actions":["talk","gift","aid","trade","open_borders","non_aggression","alliance"]},
-    {"id":"corsair_anchorage","name":"海盗锚地","icon":"🏴‍☠️","description":"隐藏在水道中的海盗锚地，可被征服、招安或纳入海上贸易。","gridX":95,"gridY":110,"domain":"naval","faction":"corsair","develops":false,"initialRelation":-65,"militaryStrength":58,"garrison":[{"enemyId":"corsair_galley","count":5}],"actions":["talk","gift","negotiate","ceasefire","trade","non_aggression","alliance"]},
-    {"id":"river_shrine","name":"河湾圣所","icon":"⛩️","description":"守护河湾和渡口的古老共同体，偏好礼法、援助和和平往来。","gridX":145,"gridY":100,"domain":"land","faction":"shrine","develops":false,"initialRelation":25,"militaryStrength":31,"garrison":[{"enemyId":"outpost_crossbow","count":2},{"enemyId":"outpost_guard","count":1}],"actions":["talk","gift","aid","trade","open_borders","joint_patrol","alliance"]}
+    {
+      "id": "forest_camp",
+      "name": "林地匪寨",
+      "icon": "🏕️",
+      "description": "控制林道的松散盗匪营地，既会劫掠，也愿意为利益谈判。",
+      "gridX": 31,
+      "gridY": 31,
+      "domain": "land",
+      "faction": "bandits",
+      "develops": false,
+      "initialRelation": -35,
+      "militaryStrength": 34,
+      "garrison": [
+        {
+          "enemyId": "bandit_raider",
+          "count": 4
+        },
+        {
+          "enemyId": "bandit_archer",
+          "count": 2
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "negotiate",
+        "ceasefire",
+        "trade",
+        "non_aggression",
+        "alliance"
+      ],
+      "personality": "merchant",
+      "specialty": "wood_trade",
+      "emblem": "assets/historical-icons/civilizations/han.svg",
+      "dailyActionProfile": {
+        "economy": 3,
+        "military": 2,
+        "diplomacy": 3
+      },
+      "developmentProfile": {
+        "military": 0.9,
+        "economy": 0.9,
+        "diplomacy": 0.9
+      }
+    },
+    {
+      "id": "iron_watch",
+      "name": "铁岭守备所",
+      "icon": "🏰",
+      "description": "占据旧矿道的纪律化守军，重视力量、边界与正式条约。",
+      "gridX": 111,
+      "gridY": 38,
+      "domain": "land",
+      "faction": "outpost",
+      "develops": false,
+      "initialRelation": -55,
+      "militaryStrength": 62,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 5
+        },
+        {
+          "enemyId": "outpost_crossbow",
+          "count": 3
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "negotiate",
+        "ceasefire",
+        "open_borders",
+        "non_aggression",
+        "joint_patrol",
+        "alliance"
+      ],
+      "personality": "guardian",
+      "specialty": "gold_trade",
+      "emblem": "assets/historical-icons/civilizations/venice.svg",
+      "dailyActionProfile": {
+        "economy": 3,
+        "military": 2,
+        "diplomacy": 3
+      },
+      "developmentProfile": {
+        "military": 0.9,
+        "economy": 0.9,
+        "diplomacy": 0.9
+      }
+    },
+    {
+      "id": "hill_clan",
+      "name": "丘陵氏族",
+      "icon": "⛺",
+      "description": "以狩猎和牧养为生的氏族聚落，尊重援助与共同作战。",
+      "gridX": 173,
+      "gridY": 44,
+      "domain": "land",
+      "faction": "clan",
+      "develops": false,
+      "initialRelation": 5,
+      "militaryStrength": 28,
+      "garrison": [
+        {
+          "enemyId": "bandit_raider",
+          "count": 3
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "joint_patrol",
+        "alliance"
+      ],
+      "personality": "scholar",
+      "specialty": "stone_trade",
+      "emblem": "assets/historical-icons/civilizations/mongol.svg",
+      "dailyActionProfile": {
+        "economy": 3,
+        "military": 2,
+        "diplomacy": 3
+      },
+      "developmentProfile": {
+        "military": 0.9,
+        "economy": 0.9,
+        "diplomacy": 0.9
+      }
+    },
+    {
+      "id": "free_market",
+      "name": "自由市集",
+      "icon": "🏘️",
+      "description": "不隶属任何大势力的固定商站，以互市和道路安全为核心。",
+      "gridX": 224,
+      "gridY": 39,
+      "domain": "land",
+      "faction": "merchants",
+      "develops": false,
+      "initialRelation": 15,
+      "militaryStrength": 22,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 2
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "alliance"
+      ],
+      "personality": "expansionist",
+      "specialty": "food_trade",
+      "emblem": "assets/historical-icons/civilizations/old_egypt.svg",
+      "dailyActionProfile": {
+        "economy": 3,
+        "military": 2,
+        "diplomacy": 3
+      },
+      "developmentProfile": {
+        "military": 0.9,
+        "economy": 0.9,
+        "diplomacy": 0.9
+      }
+    },
+    {
+      "id": "corsair_anchorage",
+      "name": "海盗锚地",
+      "icon": "🏴‍☠️",
+      "description": "隐藏在水道中的海盗锚地，可被征服、招安或纳入海上贸易。",
+      "gridX": 275,
+      "gridY": 11,
+      "domain": "naval",
+      "faction": "corsair",
+      "develops": false,
+      "initialRelation": -65,
+      "militaryStrength": 58,
+      "garrison": [
+        {
+          "enemyId": "corsair_galley",
+          "count": 5
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "negotiate",
+        "ceasefire",
+        "trade",
+        "non_aggression",
+        "alliance"
+      ],
+      "personality": "diplomat",
+      "specialty": "knowledge_exchange",
+      "emblem": "assets/historical-icons/civilizations/rome.svg",
+      "dailyActionProfile": {
+        "economy": 3,
+        "military": 2,
+        "diplomacy": 3
+      },
+      "developmentProfile": {
+        "military": 0.9,
+        "economy": 0.9,
+        "diplomacy": 0.9
+      }
+    },
+    {
+      "id": "river_shrine",
+      "name": "河湾圣所",
+      "icon": "⛩️",
+      "description": "守护河湾和渡口的古老共同体，偏好礼法、援助和和平往来。",
+      "gridX": 359,
+      "gridY": 39,
+      "domain": "land",
+      "faction": "shrine",
+      "develops": false,
+      "initialRelation": 25,
+      "militaryStrength": 31,
+      "garrison": [
+        {
+          "enemyId": "outpost_crossbow",
+          "count": 2
+        },
+        {
+          "enemyId": "outpost_guard",
+          "count": 1
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "joint_patrol",
+        "alliance"
+      ],
+      "personality": "traditionalist",
+      "specialty": "naval_trade",
+      "emblem": "assets/historical-icons/civilizations/ghana_empire.svg",
+      "dailyActionProfile": {
+        "economy": 3,
+        "military": 2,
+        "diplomacy": 3
+      },
+      "developmentProfile": {
+        "military": 0.9,
+        "economy": 0.9,
+        "diplomacy": 0.9
+      }
+    }
   ],
-  "heroSettings":{"refreshDays":3,"offerCount":4,"baseAssignmentSlots":2},
+  "heroSettings": {
+    "refreshDays": 3,
+    "offerCount": 4,
+    "baseAssignmentSlots": 2
+  },
   "heroes": [
-    {"id":"sun_tzu","name":"孙武","title":"兵法宗师","era":"春秋","role":"commander","icon":"🗡️","description":"擅长判断敌我态势、军阵与后勤。","inspirationCost":80,"cost":[{"resourceId":"food","amount":60}],"bonuses":{"combatPowerMul":1.14,"commandPointsBonus":2}},
-    {"id":"zhuge_liang","name":"诸葛亮","title":"丞相与军师","era":"三国","role":"scholar","icon":"🪶","description":"兼长治理、发明、后勤与战略规划。","inspirationCost":95,"cost":[{"resourceId":"food","amount":50},{"resourceId":"gold","amount":12}],"bonuses":{"researchSpeedMul":1.12,"productionMul":1.06}},
-    {"id":"yue_fei","name":"岳飞","title":"精忠统帅","era":"南宋","role":"commander","icon":"🏹","description":"以军纪、步骑协同和防御作战著称。","inspirationCost":90,"cost":[{"resourceId":"food","amount":70},{"resourceId":"gold","amount":15}],"bonuses":{"combatPowerMul":1.12,"unitHpMul":1.1}},
-    {"id":"zheng_he","name":"郑和","title":"远洋使者","era":"明代","role":"explorer","icon":"⛵","description":"组织大规模远航、海上补给与跨地域交流。","inspirationCost":90,"cost":[{"resourceId":"food","amount":55},{"resourceId":"gold","amount":10}],"bonuses":{"navalPowerMul":1.15,"expeditionYieldMul":1.12}},
-    {"id":"li_shizhen","name":"李时珍","title":"本草医家","era":"明代","role":"physician","icon":"🌿","description":"改善药材辨识、公共健康和伤员恢复。","inspirationCost":75,"cost":[{"resourceId":"food","amount":45}],"bonuses":{"healingRateBonus":1,"growthMul":1.06}},
-    {"id":"shen_kuo","name":"沈括","title":"博物学者","era":"北宋","role":"engineer","icon":"🧭","description":"在天文、地理、工程和制造方面皆有建树。","inspirationCost":85,"cost":[{"resourceId":"gold","amount":12}],"bonuses":{"researchSpeedMul":1.1,"buildCostMul":0.94}},
-    {"id":"zhang_heng","name":"张衡","title":"天文与机巧大师","era":"东汉","role":"scholar","icon":"🔭","description":"精通天文观测、数学与机械装置。","inspirationCost":80,"cost":[{"resourceId":"gold","amount":10}],"bonuses":{"researchSpeedMul":1.13}},
-    {"id":"hua_mulan","name":"花木兰","title":"边军英雄","era":"传说时代","role":"commander","icon":"⚔️","description":"象征机动、勇气与基层士兵的凝聚力。","inspirationCost":70,"cost":[{"resourceId":"food","amount":50}],"bonuses":{"combatPowerMul":1.08,"armySpeedMul":1.12}},
-    {"id":"saladin","name":"萨拉丁","title":"苏丹与外交家","era":"中世纪","role":"diplomat","icon":"🤝","description":"善于联盟、停战、纪律和跨文化治理。","inspirationCost":95,"cost":[{"resourceId":"food","amount":75},{"resourceId":"gold","amount":10}],"bonuses":{"diplomacyRelationBonus":5,"combatPowerMul":1.06}},
-    {"id":"hannibal","name":"汉尼拔","title":"远征统帅","era":"古典时代","role":"commander","icon":"🐘","description":"擅长长距离机动、包围和以弱胜强。","inspirationCost":95,"cost":[{"resourceId":"food","amount":80}],"bonuses":{"combatPowerMul":1.15,"expeditionYieldMul":1.06}},
-    {"id":"leonardo","name":"列奥纳多·达·芬奇","title":"博学工程师","era":"文艺复兴","role":"engineer","icon":"⚙️","description":"将观察、艺术和机械设计结合为新式工程。","inspirationCost":100,"cost":[{"resourceId":"gold","amount":18},{"resourceId":"wood","amount":20}],"bonuses":{"researchSpeedMul":1.14,"siegePowerMul":1.15}},
-    {"id":"joan_of_arc","name":"贞德","title":"奥尔良少女","era":"中世纪","role":"diplomat","icon":"🕊️","description":"以信念和号召力凝聚军民士气。","inspirationCost":85,"cost":[{"resourceId":"food","amount":65}],"bonuses":{"diplomacyRelationBonus":4,"unitHpMul":1.08}}
+    {
+      "id": "sun_tzu",
+      "name": "孙武",
+      "title": "兵法宗师",
+      "era": "春秋",
+      "role": "commander",
+      "icon": "🗡️",
+      "description": "擅长判断敌我态势、军阵与后勤。",
+      "inspirationCost": 80,
+      "cost": [
+        {
+          "resourceId": "food",
+          "amount": 60
+        }
+      ],
+      "bonuses": {
+        "combatPowerMul": 1.14,
+        "commandPointsBonus": 2
+      }
+    },
+    {
+      "id": "zhuge_liang",
+      "name": "诸葛亮",
+      "title": "丞相与军师",
+      "era": "三国",
+      "role": "scholar",
+      "icon": "🪶",
+      "description": "兼长治理、发明、后勤与战略规划。",
+      "inspirationCost": 95,
+      "cost": [
+        {
+          "resourceId": "food",
+          "amount": 50
+        },
+        {
+          "resourceId": "gold",
+          "amount": 12
+        }
+      ],
+      "bonuses": {
+        "researchSpeedMul": 1.12,
+        "productionMul": 1.06
+      }
+    },
+    {
+      "id": "yue_fei",
+      "name": "岳飞",
+      "title": "精忠统帅",
+      "era": "南宋",
+      "role": "commander",
+      "icon": "🏹",
+      "description": "以军纪、步骑协同和防御作战著称。",
+      "inspirationCost": 90,
+      "cost": [
+        {
+          "resourceId": "food",
+          "amount": 70
+        },
+        {
+          "resourceId": "gold",
+          "amount": 15
+        }
+      ],
+      "bonuses": {
+        "combatPowerMul": 1.12,
+        "unitHpMul": 1.1
+      }
+    },
+    {
+      "id": "zheng_he",
+      "name": "郑和",
+      "title": "远洋使者",
+      "era": "明代",
+      "role": "explorer",
+      "icon": "⛵",
+      "description": "组织大规模远航、海上补给与跨地域交流。",
+      "inspirationCost": 90,
+      "cost": [
+        {
+          "resourceId": "food",
+          "amount": 55
+        },
+        {
+          "resourceId": "gold",
+          "amount": 10
+        }
+      ],
+      "bonuses": {
+        "navalPowerMul": 1.15,
+        "expeditionYieldMul": 1.12
+      }
+    },
+    {
+      "id": "li_shizhen",
+      "name": "李时珍",
+      "title": "本草医家",
+      "era": "明代",
+      "role": "physician",
+      "icon": "🌿",
+      "description": "改善药材辨识、公共健康和伤员恢复。",
+      "inspirationCost": 75,
+      "cost": [
+        {
+          "resourceId": "food",
+          "amount": 45
+        }
+      ],
+      "bonuses": {
+        "healingRateBonus": 1,
+        "growthMul": 1.06
+      }
+    },
+    {
+      "id": "shen_kuo",
+      "name": "沈括",
+      "title": "博物学者",
+      "era": "北宋",
+      "role": "engineer",
+      "icon": "🧭",
+      "description": "在天文、地理、工程和制造方面皆有建树。",
+      "inspirationCost": 85,
+      "cost": [
+        {
+          "resourceId": "gold",
+          "amount": 12
+        }
+      ],
+      "bonuses": {
+        "researchSpeedMul": 1.1,
+        "buildCostMul": 0.94
+      }
+    },
+    {
+      "id": "zhang_heng",
+      "name": "张衡",
+      "title": "天文与机巧大师",
+      "era": "东汉",
+      "role": "scholar",
+      "icon": "🔭",
+      "description": "精通天文观测、数学与机械装置。",
+      "inspirationCost": 80,
+      "cost": [
+        {
+          "resourceId": "gold",
+          "amount": 10
+        }
+      ],
+      "bonuses": {
+        "researchSpeedMul": 1.13
+      }
+    },
+    {
+      "id": "hua_mulan",
+      "name": "花木兰",
+      "title": "边军英雄",
+      "era": "传说时代",
+      "role": "commander",
+      "icon": "⚔️",
+      "description": "象征机动、勇气与基层士兵的凝聚力。",
+      "inspirationCost": 70,
+      "cost": [
+        {
+          "resourceId": "food",
+          "amount": 50
+        }
+      ],
+      "bonuses": {
+        "combatPowerMul": 1.08,
+        "armySpeedMul": 1.12
+      }
+    },
+    {
+      "id": "saladin",
+      "name": "萨拉丁",
+      "title": "苏丹与外交家",
+      "era": "中世纪",
+      "role": "diplomat",
+      "icon": "🤝",
+      "description": "善于联盟、停战、纪律和跨文化治理。",
+      "inspirationCost": 95,
+      "cost": [
+        {
+          "resourceId": "food",
+          "amount": 75
+        },
+        {
+          "resourceId": "gold",
+          "amount": 10
+        }
+      ],
+      "bonuses": {
+        "diplomacyRelationBonus": 5,
+        "combatPowerMul": 1.06
+      }
+    },
+    {
+      "id": "hannibal",
+      "name": "汉尼拔",
+      "title": "远征统帅",
+      "era": "古典时代",
+      "role": "commander",
+      "icon": "🐘",
+      "description": "擅长长距离机动、包围和以弱胜强。",
+      "inspirationCost": 95,
+      "cost": [
+        {
+          "resourceId": "food",
+          "amount": 80
+        }
+      ],
+      "bonuses": {
+        "combatPowerMul": 1.15,
+        "expeditionYieldMul": 1.06
+      }
+    },
+    {
+      "id": "leonardo",
+      "name": "列奥纳多·达·芬奇",
+      "title": "博学工程师",
+      "era": "文艺复兴",
+      "role": "engineer",
+      "icon": "⚙️",
+      "description": "将观察、艺术和机械设计结合为新式工程。",
+      "inspirationCost": 100,
+      "cost": [
+        {
+          "resourceId": "gold",
+          "amount": 18
+        },
+        {
+          "resourceId": "wood",
+          "amount": 20
+        }
+      ],
+      "bonuses": {
+        "researchSpeedMul": 1.14,
+        "siegePowerMul": 1.15
+      }
+    },
+    {
+      "id": "joan_of_arc",
+      "name": "贞德",
+      "title": "奥尔良少女",
+      "era": "中世纪",
+      "role": "diplomat",
+      "icon": "🕊️",
+      "description": "以信念和号召力凝聚军民士气。",
+      "inspirationCost": 85,
+      "cost": [
+        {
+          "resourceId": "food",
+          "amount": 65
+        }
+      ],
+      "bonuses": {
+        "diplomacyRelationBonus": 4,
+        "unitHpMul": 1.08
+      }
+    }
   ],
   "events": [
-    {"id":"ea_caravan_bargain","name":"远方商队","description":"一支谨慎的商队愿意在营地短暂停留。","category":"economy","priority":4,"cooldownTicks":16,"maxTriggers":null,"probability":0.45,"triggerConditions":{"timePeriods":["morning","afternoon"],"requiredItems":[],"requiredBuildings":[]},"effects":[],"options":[{"text":"用木材换取粮食","effects":[{"type":"consume_resource","resourceId":"wood","amount":25},{"type":"add_resource","resourceId":"food","amount":40}]},{"text":"只交换沿途消息","effects":[{"type":"add_inspiration","amount":7}]}]},
-    {"id":"ea_warehouse_audit","name":"仓储盘点","description":"大本营盘点时发现一批登记不清的旧物资。","category":"economy","priority":4,"cooldownTicks":14,"maxTriggers":4,"probability":0.4,"triggerConditions":{"timePeriods":["afternoon"],"requiredItems":[],"requiredBuildings":["warehouse"]},"effects":[],"options":[{"text":"整理为木料","effects":[{"type":"add_resource","resourceId":"wood","amount":16}]},{"text":"重新估价出售","effects":[{"type":"add_resource","resourceId":"gold","amount":8}]}]},
-    {"id":"ea_dry_spell","name":"短期旱情","description":"土壤迅速干裂，农田需要额外储备。","category":"weather","priority":7,"cooldownTicks":20,"maxTriggers":null,"probability":0.4,"triggerConditions":{"timePeriods":["afternoon"],"requiredItems":[],"requiredBuildings":["farm"]},"effects":[],"options":[{"text":"动用储备灌溉","effects":[{"type":"consume_resource","resourceId":"food","amount":20},{"type":"add_inspiration","amount":4}]},{"text":"改种耐旱作物","effects":[{"type":"add_inspiration","amount":8}]}]},
-    {"id":"ea_flash_flood","name":"突发洪水","description":"上游暴雨使水位猛涨，码头设施面临损失。","category":"weather","priority":8,"cooldownTicks":22,"maxTriggers":null,"probability":0.35,"triggerConditions":{"timePeriods":["morning","evening"],"requiredItems":[],"requiredBuildings":["dock"]},"effects":[],"options":[{"text":"用木料加固岸线","effects":[{"type":"consume_resource","resourceId":"wood","amount":20},{"type":"add_inspiration","amount":6}]},{"text":"优先撤走物资","effects":[{"type":"add_resource","resourceId":"food","amount":10}]}]},
-    {"id":"ea_militia_debate","name":"民兵操练争论","description":"老兵希望加强长矛训练，猎手则坚持远程火力。","category":"military","priority":5,"cooldownTicks":15,"maxTriggers":null,"probability":0.45,"triggerConditions":{"timePeriods":["afternoon"],"requiredItems":[],"requiredBuildings":["work_shed"]},"effects":[],"options":[{"text":"支持长矛队列","effects":[{"type":"consume_resource","resourceId":"wood","amount":15},{"type":"add_inspiration","amount":8}]},{"text":"支持弓手轮射","effects":[{"type":"consume_resource","resourceId":"wood","amount":15},{"type":"add_inspiration","amount":8}]}]},
-    {"id":"ea_deserter_warning","name":"逃兵的警告","description":"一名外来逃兵带来了附近据点调兵的消息。","category":"military","priority":7,"cooldownTicks":18,"maxTriggers":3,"probability":0.4,"triggerConditions":{"timePeriods":["evening"],"requiredItems":[],"requiredBuildings":[]},"effects":[],"options":[{"text":"收留并询问详情","effects":[{"type":"consume_resource","resourceId":"food","amount":15},{"type":"add_inspiration","amount":10}]},{"text":"让他继续赶路","effects":[{"type":"add_inspiration","amount":3}]}]},
-    {"id":"ea_outpost_envoy","name":"据点使者","description":"林地匪寨派来一名使者试探聚落态度。","category":"diplomacy","priority":6,"cooldownTicks":18,"maxTriggers":null,"probability":0.4,"triggerConditions":{"timePeriods":["morning"],"requiredItems":[],"requiredBuildings":["tavern"]},"effects":[],"options":[{"text":"设宴接待","effects":[{"type":"consume_resource","resourceId":"food","amount":25},{"type":"modify_outpost_relation","outpostId":"forest_camp","amount":12}]},{"text":"礼貌但保持距离","effects":[{"type":"modify_outpost_relation","outpostId":"forest_camp","amount":3}]}]},
-    {"id":"ea_border_incident","name":"边界摩擦","description":"巡逻队与铁岭守备所在道路边发生对峙。","category":"diplomacy","priority":8,"cooldownTicks":20,"maxTriggers":null,"probability":0.35,"triggerConditions":{"timePeriods":["afternoon"],"requiredItems":[],"requiredBuildings":[]},"effects":[],"options":[{"text":"派使者解释","effects":[{"type":"consume_resource","resourceId":"gold","amount":8},{"type":"modify_outpost_relation","outpostId":"iron_watch","amount":8}]},{"text":"拒绝退让","effects":[{"type":"modify_outpost_relation","outpostId":"iron_watch","amount":-10},{"type":"add_inspiration","amount":6}]}]},
-    {"id":"ea_castaway","name":"水上漂来的幸存者","description":"巡岸者发现一名抓着破木板的海难幸存者。","category":"naval","priority":7,"cooldownTicks":22,"maxTriggers":3,"probability":0.4,"triggerConditions":{"timePeriods":["morning"],"requiredItems":[],"requiredBuildings":["dock"]},"effects":[],"options":[{"text":"救上岸并安置","effects":[{"type":"consume_resource","resourceId":"food","amount":15},{"type":"add_inspiration","amount":7}]},{"text":"询问海路情报","effects":[{"type":"add_inspiration","amount":11}]}]},
-    {"id":"ea_pirate_rumor","name":"海盗传闻","description":"酒馆里流传海盗锚地即将袭击商船的消息。","category":"naval","priority":6,"cooldownTicks":18,"maxTriggers":null,"probability":0.45,"triggerConditions":{"timePeriods":["evening"],"requiredItems":[],"requiredBuildings":["tavern"]},"effects":[],"options":[{"text":"向海盗送去警告","effects":[{"type":"modify_outpost_relation","outpostId":"corsair_anchorage","amount":5}]},{"text":"把情报卖给商人","effects":[{"type":"add_resource","resourceId":"gold","amount":12},{"type":"modify_outpost_relation","outpostId":"corsair_anchorage","amount":-6}]}]},
-    {"id":"ea_founders_festival","name":"拓荒纪念日","description":"居民希望纪念聚落建立以来共同渡过的难关。","category":"culture","priority":6,"cooldownTicks":28,"maxTriggers":null,"probability":0.35,"triggerConditions":{"timePeriods":["evening"],"requiredItems":[],"requiredBuildings":[]},"effects":[],"options":[{"text":"举办盛宴","effects":[{"type":"consume_resource","resourceId":"food","amount":45},{"type":"add_inspiration","amount":18}]},{"text":"举行简朴讲述会","effects":[{"type":"add_inspiration","amount":10}]}]},
-    {"id":"ea_stone_inscription","name":"古老石刻","description":"风化文字记录了附近共同体交换礼物与停战的旧规矩。","category":"culture","priority":6,"cooldownTicks":20,"maxTriggers":1,"probability":0.45,"triggerConditions":{"timePeriods":["afternoon"],"requiredItems":[],"requiredBuildings":[]},"effects":[],"options":[{"text":"拓印石刻","effects":[{"type":"add_inspiration","amount":16}]},{"text":"把译文送给河湾圣所","effects":[{"type":"modify_outpost_relation","outpostId":"river_shrine","amount":12}]}]},
-    {"id":"ea_herb_patch","name":"野生药草丛","description":"采集者发现了一片长势喜人的野生药草。","category":"alchemy","priority":3,"cooldownTicks":20,"maxTriggers":null,"probability":0.5,"triggerConditions":{"timePeriods":["morning","afternoon"],"requiredItems":[],"requiredBuildings":["alchemy_lab"]},"effects":[],"options":[{"text":"采集血棘","effects":[{"type":"add_material","materialId":"blood_thorn","amount":3}]},{"text":"寻找暗影蕈","effects":[{"type":"add_material","materialId":"shadow_mycena","amount":1}]}]},
-    {"id":"ea_old_battlefield","name":"旧战场","description":"锈蚀武器与箭簇散落在浅坑之间。","category":"exploration","priority":6,"cooldownTicks":18,"maxTriggers":2,"probability":0.35,"triggerConditions":{"timePeriods":["morning","afternoon"],"requiredItems":[],"requiredBuildings":[]},"effects":[],"options":[{"text":"回收材料","effects":[{"type":"add_resource","resourceId":"stone","amount":14}]},{"text":"复盘战术","effects":[{"type":"add_inspiration","amount":12}]}]},
-    {"id":"ea_driftwood_cache","name":"漂木堆积带","description":"水湾堆积了大量可用木料，也留下海上活动的痕迹。","category":"exploration","priority":5,"cooldownTicks":15,"maxTriggers":3,"probability":0.4,"triggerConditions":{"timePeriods":["morning"],"requiredItems":[],"requiredBuildings":["dock"]},"effects":[],"options":[{"text":"打捞木料","effects":[{"type":"add_resource","resourceId":"wood","amount":24}]},{"text":"沿痕迹侦察","effects":[{"type":"modify_outpost_relation","outpostId":"corsair_anchorage","amount":-3},{"type":"add_inspiration","amount":8}]}]},
-    {"id":"ea_tavern_challenge","name":"酒馆挑战者","description":"一位自称百战老兵的旅人要求与营地教官公开比试。","category":"hero","priority":5,"cooldownTicks":18,"maxTriggers":3,"probability":0.4,"triggerConditions":{"timePeriods":["evening"],"requiredItems":[],"requiredBuildings":["tavern"]},"effects":[],"options":[{"text":"资助公开演武","effects":[{"type":"consume_resource","resourceId":"gold","amount":10},{"type":"add_inspiration","amount":14}]},{"text":"请他讲授战例","effects":[{"type":"add_inspiration","amount":9}]}]},
-    {"id":"ea_engineers_debate","name":"工程师的争论","description":"酒馆中的工程师围绕攻城器械与港口建设争论不休。","category":"hero","priority":5,"cooldownTicks":20,"maxTriggers":null,"probability":0.35,"triggerConditions":{"timePeriods":["afternoon"],"requiredItems":[],"requiredBuildings":["tavern"]},"effects":[],"options":[{"text":"提供木材制作模型","effects":[{"type":"consume_resource","resourceId":"wood","amount":20},{"type":"add_inspiration","amount":16}]},{"text":"记录双方论点","effects":[{"type":"add_inspiration","amount":10}]}]}
+    {
+      "id": "ea_caravan_bargain",
+      "name": "远方商队",
+      "description": "一支谨慎的商队愿意在营地短暂停留。",
+      "category": "economy",
+      "priority": 4,
+      "cooldownTicks": 16,
+      "maxTriggers": null,
+      "probability": 0.45,
+      "triggerConditions": {
+        "timePeriods": [
+          "morning",
+          "afternoon"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": []
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "用木材换取粮食",
+          "effects": [
+            {
+              "type": "consume_resource",
+              "resourceId": "wood",
+              "amount": 25
+            },
+            {
+              "type": "add_resource",
+              "resourceId": "food",
+              "amount": 40
+            }
+          ]
+        },
+        {
+          "text": "只交换沿途消息",
+          "effects": [
+            {
+              "type": "add_inspiration",
+              "amount": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea_warehouse_audit",
+      "name": "仓储盘点",
+      "description": "大本营盘点时发现一批登记不清的旧物资。",
+      "category": "economy",
+      "priority": 4,
+      "cooldownTicks": 14,
+      "maxTriggers": 4,
+      "probability": 0.4,
+      "triggerConditions": {
+        "timePeriods": [
+          "afternoon"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": [
+          "warehouse"
+        ]
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "整理为木料",
+          "effects": [
+            {
+              "type": "add_resource",
+              "resourceId": "wood",
+              "amount": 16
+            }
+          ]
+        },
+        {
+          "text": "重新估价出售",
+          "effects": [
+            {
+              "type": "add_resource",
+              "resourceId": "gold",
+              "amount": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea_dry_spell",
+      "name": "短期旱情",
+      "description": "土壤迅速干裂，农田需要额外储备。",
+      "category": "weather",
+      "priority": 7,
+      "cooldownTicks": 20,
+      "maxTriggers": null,
+      "probability": 0.4,
+      "triggerConditions": {
+        "timePeriods": [
+          "afternoon"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": [
+          "farm"
+        ]
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "动用储备灌溉",
+          "effects": [
+            {
+              "type": "consume_resource",
+              "resourceId": "food",
+              "amount": 20
+            },
+            {
+              "type": "add_inspiration",
+              "amount": 4
+            }
+          ]
+        },
+        {
+          "text": "改种耐旱作物",
+          "effects": [
+            {
+              "type": "add_inspiration",
+              "amount": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea_flash_flood",
+      "name": "突发洪水",
+      "description": "上游暴雨使水位猛涨，码头设施面临损失。",
+      "category": "weather",
+      "priority": 8,
+      "cooldownTicks": 22,
+      "maxTriggers": null,
+      "probability": 0.35,
+      "triggerConditions": {
+        "timePeriods": [
+          "morning",
+          "evening"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": [
+          "dock"
+        ]
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "用木料加固岸线",
+          "effects": [
+            {
+              "type": "consume_resource",
+              "resourceId": "wood",
+              "amount": 20
+            },
+            {
+              "type": "add_inspiration",
+              "amount": 6
+            }
+          ]
+        },
+        {
+          "text": "优先撤走物资",
+          "effects": [
+            {
+              "type": "add_resource",
+              "resourceId": "food",
+              "amount": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea_militia_debate",
+      "name": "民兵操练争论",
+      "description": "老兵希望加强长矛训练，猎手则坚持远程火力。",
+      "category": "military",
+      "priority": 5,
+      "cooldownTicks": 15,
+      "maxTriggers": null,
+      "probability": 0.45,
+      "triggerConditions": {
+        "timePeriods": [
+          "afternoon"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": [
+          "work_shed"
+        ]
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "支持长矛队列",
+          "effects": [
+            {
+              "type": "consume_resource",
+              "resourceId": "wood",
+              "amount": 15
+            },
+            {
+              "type": "add_inspiration",
+              "amount": 8
+            }
+          ]
+        },
+        {
+          "text": "支持弓手轮射",
+          "effects": [
+            {
+              "type": "consume_resource",
+              "resourceId": "wood",
+              "amount": 15
+            },
+            {
+              "type": "add_inspiration",
+              "amount": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea_deserter_warning",
+      "name": "逃兵的警告",
+      "description": "一名外来逃兵带来了附近据点调兵的消息。",
+      "category": "military",
+      "priority": 7,
+      "cooldownTicks": 18,
+      "maxTriggers": 3,
+      "probability": 0.4,
+      "triggerConditions": {
+        "timePeriods": [
+          "evening"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": []
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "收留并询问详情",
+          "effects": [
+            {
+              "type": "consume_resource",
+              "resourceId": "food",
+              "amount": 15
+            },
+            {
+              "type": "add_inspiration",
+              "amount": 10
+            }
+          ]
+        },
+        {
+          "text": "让他继续赶路",
+          "effects": [
+            {
+              "type": "add_inspiration",
+              "amount": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea_outpost_envoy",
+      "name": "据点使者",
+      "description": "林地匪寨派来一名使者试探聚落态度。",
+      "category": "diplomacy",
+      "priority": 6,
+      "cooldownTicks": 18,
+      "maxTriggers": null,
+      "probability": 0.4,
+      "triggerConditions": {
+        "timePeriods": [
+          "morning"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": [
+          "tavern"
+        ]
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "设宴接待",
+          "effects": [
+            {
+              "type": "consume_resource",
+              "resourceId": "food",
+              "amount": 25
+            },
+            {
+              "type": "modify_outpost_relation",
+              "outpostId": "forest_camp",
+              "amount": 12
+            }
+          ]
+        },
+        {
+          "text": "礼貌但保持距离",
+          "effects": [
+            {
+              "type": "modify_outpost_relation",
+              "outpostId": "forest_camp",
+              "amount": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea_border_incident",
+      "name": "边界摩擦",
+      "description": "巡逻队与铁岭守备所在道路边发生对峙。",
+      "category": "diplomacy",
+      "priority": 8,
+      "cooldownTicks": 20,
+      "maxTriggers": null,
+      "probability": 0.35,
+      "triggerConditions": {
+        "timePeriods": [
+          "afternoon"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": []
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "派使者解释",
+          "effects": [
+            {
+              "type": "consume_resource",
+              "resourceId": "gold",
+              "amount": 8
+            },
+            {
+              "type": "modify_outpost_relation",
+              "outpostId": "iron_watch",
+              "amount": 8
+            }
+          ]
+        },
+        {
+          "text": "拒绝退让",
+          "effects": [
+            {
+              "type": "modify_outpost_relation",
+              "outpostId": "iron_watch",
+              "amount": -10
+            },
+            {
+              "type": "add_inspiration",
+              "amount": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea_castaway",
+      "name": "水上漂来的幸存者",
+      "description": "巡岸者发现一名抓着破木板的海难幸存者。",
+      "category": "naval",
+      "priority": 7,
+      "cooldownTicks": 22,
+      "maxTriggers": 3,
+      "probability": 0.4,
+      "triggerConditions": {
+        "timePeriods": [
+          "morning"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": [
+          "dock"
+        ]
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "救上岸并安置",
+          "effects": [
+            {
+              "type": "consume_resource",
+              "resourceId": "food",
+              "amount": 15
+            },
+            {
+              "type": "add_inspiration",
+              "amount": 7
+            }
+          ]
+        },
+        {
+          "text": "询问海路情报",
+          "effects": [
+            {
+              "type": "add_inspiration",
+              "amount": 11
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea_pirate_rumor",
+      "name": "海盗传闻",
+      "description": "酒馆里流传海盗锚地即将袭击商船的消息。",
+      "category": "naval",
+      "priority": 6,
+      "cooldownTicks": 18,
+      "maxTriggers": null,
+      "probability": 0.45,
+      "triggerConditions": {
+        "timePeriods": [
+          "evening"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": [
+          "tavern"
+        ]
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "向海盗送去警告",
+          "effects": [
+            {
+              "type": "modify_outpost_relation",
+              "outpostId": "corsair_anchorage",
+              "amount": 5
+            }
+          ]
+        },
+        {
+          "text": "把情报卖给商人",
+          "effects": [
+            {
+              "type": "add_resource",
+              "resourceId": "gold",
+              "amount": 12
+            },
+            {
+              "type": "modify_outpost_relation",
+              "outpostId": "corsair_anchorage",
+              "amount": -6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea_founders_festival",
+      "name": "拓荒纪念日",
+      "description": "居民希望纪念聚落建立以来共同渡过的难关。",
+      "category": "culture",
+      "priority": 6,
+      "cooldownTicks": 28,
+      "maxTriggers": null,
+      "probability": 0.35,
+      "triggerConditions": {
+        "timePeriods": [
+          "evening"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": []
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "举办盛宴",
+          "effects": [
+            {
+              "type": "consume_resource",
+              "resourceId": "food",
+              "amount": 45
+            },
+            {
+              "type": "add_inspiration",
+              "amount": 18
+            }
+          ]
+        },
+        {
+          "text": "举行简朴讲述会",
+          "effects": [
+            {
+              "type": "add_inspiration",
+              "amount": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea_stone_inscription",
+      "name": "古老石刻",
+      "description": "风化文字记录了附近共同体交换礼物与停战的旧规矩。",
+      "category": "culture",
+      "priority": 6,
+      "cooldownTicks": 20,
+      "maxTriggers": 1,
+      "probability": 0.45,
+      "triggerConditions": {
+        "timePeriods": [
+          "afternoon"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": []
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "拓印石刻",
+          "effects": [
+            {
+              "type": "add_inspiration",
+              "amount": 16
+            }
+          ]
+        },
+        {
+          "text": "把译文送给河湾圣所",
+          "effects": [
+            {
+              "type": "modify_outpost_relation",
+              "outpostId": "river_shrine",
+              "amount": 12
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea_herb_patch",
+      "name": "野生药草丛",
+      "description": "采集者发现了一片长势喜人的野生药草。",
+      "category": "alchemy",
+      "priority": 3,
+      "cooldownTicks": 20,
+      "maxTriggers": null,
+      "probability": 0.5,
+      "triggerConditions": {
+        "timePeriods": [
+          "morning",
+          "afternoon"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": [
+          "alchemy_lab"
+        ]
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "采集血棘",
+          "effects": [
+            {
+              "type": "add_material",
+              "materialId": "blood_thorn",
+              "amount": 3
+            }
+          ]
+        },
+        {
+          "text": "寻找暗影蕈",
+          "effects": [
+            {
+              "type": "add_material",
+              "materialId": "shadow_mycena",
+              "amount": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea_old_battlefield",
+      "name": "旧战场",
+      "description": "锈蚀武器与箭簇散落在浅坑之间。",
+      "category": "exploration",
+      "priority": 6,
+      "cooldownTicks": 18,
+      "maxTriggers": 2,
+      "probability": 0.35,
+      "triggerConditions": {
+        "timePeriods": [
+          "morning",
+          "afternoon"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": []
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "回收材料",
+          "effects": [
+            {
+              "type": "add_resource",
+              "resourceId": "stone",
+              "amount": 14
+            }
+          ]
+        },
+        {
+          "text": "复盘战术",
+          "effects": [
+            {
+              "type": "add_inspiration",
+              "amount": 12
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea_driftwood_cache",
+      "name": "漂木堆积带",
+      "description": "水湾堆积了大量可用木料，也留下海上活动的痕迹。",
+      "category": "exploration",
+      "priority": 5,
+      "cooldownTicks": 15,
+      "maxTriggers": 3,
+      "probability": 0.4,
+      "triggerConditions": {
+        "timePeriods": [
+          "morning"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": [
+          "dock"
+        ]
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "打捞木料",
+          "effects": [
+            {
+              "type": "add_resource",
+              "resourceId": "wood",
+              "amount": 24
+            }
+          ]
+        },
+        {
+          "text": "沿痕迹侦察",
+          "effects": [
+            {
+              "type": "modify_outpost_relation",
+              "outpostId": "corsair_anchorage",
+              "amount": -3
+            },
+            {
+              "type": "add_inspiration",
+              "amount": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea_tavern_challenge",
+      "name": "酒馆挑战者",
+      "description": "一位自称百战老兵的旅人要求与营地教官公开比试。",
+      "category": "hero",
+      "priority": 5,
+      "cooldownTicks": 18,
+      "maxTriggers": 3,
+      "probability": 0.4,
+      "triggerConditions": {
+        "timePeriods": [
+          "evening"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": [
+          "tavern"
+        ]
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "资助公开演武",
+          "effects": [
+            {
+              "type": "consume_resource",
+              "resourceId": "gold",
+              "amount": 10
+            },
+            {
+              "type": "add_inspiration",
+              "amount": 14
+            }
+          ]
+        },
+        {
+          "text": "请他讲授战例",
+          "effects": [
+            {
+              "type": "add_inspiration",
+              "amount": 9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea_engineers_debate",
+      "name": "工程师的争论",
+      "description": "酒馆中的工程师围绕攻城器械与港口建设争论不休。",
+      "category": "hero",
+      "priority": 5,
+      "cooldownTicks": 20,
+      "maxTriggers": null,
+      "probability": 0.35,
+      "triggerConditions": {
+        "timePeriods": [
+          "afternoon"
+        ],
+        "requiredItems": [],
+        "requiredBuildings": [
+          "tavern"
+        ]
+      },
+      "effects": [],
+      "options": [
+        {
+          "text": "提供木材制作模型",
+          "effects": [
+            {
+              "type": "consume_resource",
+              "resourceId": "wood",
+              "amount": 20
+            },
+            {
+              "type": "add_inspiration",
+              "amount": 16
+            }
+          ]
+        },
+        {
+          "text": "记录双方论点",
+          "effects": [
+            {
+              "type": "add_inspiration",
+              "amount": 10
+            }
+          ]
+        }
+      ]
+    }
   ]
 }

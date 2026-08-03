@@ -1,60 +1,2589 @@
 {
   "cityStates": [
     {
-      "id": "northern_timber_league", "name": "北境木业同盟", "icon": "🪵", "description": "由林场与猎户组成的自治同盟，擅长木材贸易与轻步兵。",
-      "gridX": 50, "gridY": 30, "domain": "land", "faction": "timber_league", "develops": "limited", "initialRelation": 5,
-      "militaryStrength": 28, "garrison": [{ "enemyId": "outpost_guard", "count": 3 }], "actions": ["talk", "gift", "aid", "trade", "open_borders", "non_aggression", "alliance"],
-      "specialty": "wood_trade", "developmentProfile": { "military": 0.8, "economy": 1.15, "diplomacy": 1.0 }, "eraUnitBranch": "infantry"
+      "id": "northern_timber_league",
+      "name": "北境木业同盟",
+      "icon": "🪵",
+      "description": "由林场与猎户组成的自治同盟，擅长木材贸易与轻步兵。",
+      "gridX": 37,
+      "gridY": 127,
+      "domain": "land",
+      "faction": "timber_league",
+      "develops": "limited",
+      "initialRelation": 5,
+      "militaryStrength": 28,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 3
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "alliance"
+      ],
+      "specialty": "wood_trade",
+      "developmentProfile": {
+        "military": 0.8,
+        "economy": 1.15,
+        "diplomacy": 1
+      },
+      "eraUnitBranch": "infantry",
+      "personality": "merchant",
+      "emblem": "assets/historical-icons/civilizations/han.svg",
+      "dailyActionProfile": {
+        "economy": 3,
+        "military": 2,
+        "diplomacy": 3
+      }
     },
     {
-      "id": "desert_caravan_council", "name": "沙海商旅议会", "icon": "🐪", "description": "掌握荒漠商路和水源的商旅议会，偏好贸易与互不侵犯。",
-      "gridX": 90, "gridY": 30, "domain": "land", "faction": "caravan_council", "develops": "limited", "initialRelation": 18,
-      "militaryStrength": 24, "garrison": [{ "enemyId": "outpost_guard", "count": 2 }], "actions": ["talk", "gift", "aid", "trade", "open_borders", "non_aggression", "alliance"],
-      "specialty": "gold_trade", "developmentProfile": { "military": 0.7, "economy": 1.25, "diplomacy": 1.15 }, "eraUnitBranch": "cavalry"
+      "id": "desert_caravan_council",
+      "name": "沙海商旅议会",
+      "icon": "🐪",
+      "description": "掌握荒漠商路和水源的商旅议会，偏好贸易与互不侵犯。",
+      "gridX": 99,
+      "gridY": 133,
+      "domain": "land",
+      "faction": "caravan_council",
+      "develops": "limited",
+      "initialRelation": 18,
+      "militaryStrength": 24,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 2
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "alliance"
+      ],
+      "specialty": "gold_trade",
+      "developmentProfile": {
+        "military": 0.7,
+        "economy": 1.25,
+        "diplomacy": 1.15
+      },
+      "eraUnitBranch": "cavalry",
+      "personality": "guardian",
+      "emblem": "assets/historical-icons/civilizations/venice.svg",
+      "dailyActionProfile": {
+        "economy": 3,
+        "military": 2,
+        "diplomacy": 3
+      }
     },
     {
-      "id": "highland_republic", "name": "高地自由邦", "icon": "⛰️", "description": "依托矿山和隘口形成的自由邦，防御顽强但扩张缓慢。",
-      "gridX": 170, "gridY": 70, "domain": "land", "faction": "highlanders", "develops": "limited", "initialRelation": -8,
-      "militaryStrength": 38, "garrison": [{ "enemyId": "outpost_guard", "count": 4 }], "actions": ["talk", "gift", "aid", "negotiate", "ceasefire", "trade", "non_aggression", "alliance"],
-      "specialty": "stone_trade", "developmentProfile": { "military": 1.05, "economy": 0.9, "diplomacy": 0.9 }, "eraUnitBranch": "anti_cavalry"
+      "id": "highland_republic",
+      "name": "高地自由邦",
+      "icon": "⛰️",
+      "description": "依托矿山和隘口形成的自由邦，防御顽强但扩张缓慢。",
+      "gridX": 161,
+      "gridY": 116,
+      "domain": "land",
+      "faction": "highlanders",
+      "develops": "limited",
+      "initialRelation": -8,
+      "militaryStrength": 38,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 4
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "negotiate",
+        "ceasefire",
+        "trade",
+        "non_aggression",
+        "alliance"
+      ],
+      "specialty": "stone_trade",
+      "developmentProfile": {
+        "military": 1.05,
+        "economy": 0.9,
+        "diplomacy": 0.9
+      },
+      "eraUnitBranch": "anti_cavalry",
+      "personality": "scholar",
+      "emblem": "assets/historical-icons/civilizations/mongol.svg",
+      "dailyActionProfile": {
+        "economy": 3,
+        "military": 2,
+        "diplomacy": 3
+      }
     },
     {
-      "id": "steppe_khanate", "name": "草原汗庭", "icon": "🏇", "description": "逐水草而居的骑乘共同体，随时代更新骑兵但不建设完整城市。",
-      "gridX": 70, "gridY": 90, "domain": "land", "faction": "steppe", "develops": "limited", "initialRelation": -22,
-      "militaryStrength": 44, "garrison": [{ "enemyId": "outpost_guard", "count": 4 }], "actions": ["talk", "gift", "negotiate", "ceasefire", "trade", "non_aggression", "joint_patrol", "alliance"],
-      "specialty": "cavalry_contract", "developmentProfile": { "military": 1.15, "economy": 0.75, "diplomacy": 0.85 }, "eraUnitBranch": "cavalry"
+      "id": "steppe_khanate",
+      "name": "草原汗庭",
+      "icon": "🏇",
+      "description": "逐水草而居的骑乘共同体，随时代更新骑兵但不建设完整城市。",
+      "gridX": 223,
+      "gridY": 122,
+      "domain": "land",
+      "faction": "steppe",
+      "develops": "limited",
+      "initialRelation": -22,
+      "militaryStrength": 44,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 4
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "negotiate",
+        "ceasefire",
+        "trade",
+        "non_aggression",
+        "joint_patrol",
+        "alliance"
+      ],
+      "specialty": "cavalry_contract",
+      "developmentProfile": {
+        "military": 1.15,
+        "economy": 0.75,
+        "diplomacy": 0.85
+      },
+      "eraUnitBranch": "cavalry",
+      "personality": "expansionist",
+      "emblem": "assets/historical-icons/civilizations/old_egypt.svg",
+      "dailyActionProfile": {
+        "economy": 3,
+        "military": 2,
+        "diplomacy": 3
+      }
     },
     {
-      "id": "scholarly_enclave", "name": "学者城社", "icon": "📚", "description": "由档案馆、书院与抄写工坊组成的小型城社，重视知识交流。",
-      "gridX": 150, "gridY": 70, "domain": "land", "faction": "scholars", "develops": "limited", "initialRelation": 22,
-      "militaryStrength": 20, "garrison": [{ "enemyId": "outpost_guard", "count": 2 }], "actions": ["talk", "gift", "aid", "trade", "open_borders", "non_aggression", "alliance"],
-      "specialty": "knowledge_exchange", "developmentProfile": { "military": 0.65, "economy": 1.0, "diplomacy": 1.2 }, "eraUnitBranch": "ranged"
+      "id": "scholarly_enclave",
+      "name": "学者城社",
+      "icon": "📚",
+      "description": "由档案馆、书院与抄写工坊组成的小型城社，重视知识交流。",
+      "gridX": 304,
+      "gridY": 128,
+      "domain": "land",
+      "faction": "scholars",
+      "develops": "limited",
+      "initialRelation": 22,
+      "militaryStrength": 20,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 2
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "alliance"
+      ],
+      "specialty": "knowledge_exchange",
+      "developmentProfile": {
+        "military": 0.65,
+        "economy": 1,
+        "diplomacy": 1.2
+      },
+      "eraUnitBranch": "ranged",
+      "personality": "diplomat",
+      "emblem": "assets/historical-icons/civilizations/rome.svg",
+      "dailyActionProfile": {
+        "economy": 3,
+        "military": 2,
+        "diplomacy": 3
+      }
     },
     {
-      "id": "sea_republic", "name": "群岛海贸共和国", "icon": "⛵", "description": "控制河海节点的海贸共和国，舰队和港口会随玩家时代升级。",
-      "gridX": 150, "gridY": 40, "domain": "naval", "faction": "sea_republic", "develops": "limited", "initialRelation": 10,
-      "militaryStrength": 40, "garrison": [{ "enemyId": "corsair_galley", "count": 3 }], "actions": ["talk", "gift", "aid", "trade", "open_borders", "non_aggression", "joint_patrol", "alliance"],
-      "specialty": "naval_trade", "developmentProfile": { "military": 1.0, "economy": 1.2, "diplomacy": 1.05 }, "eraUnitBranch": "navy"
+      "id": "sea_republic",
+      "name": "群岛海贸共和国",
+      "icon": "⛵",
+      "description": "控制河海节点的海贸共和国，舰队和港口会随玩家时代升级。",
+      "gridX": 372,
+      "gridY": 128,
+      "domain": "naval",
+      "faction": "sea_republic",
+      "develops": "limited",
+      "initialRelation": 10,
+      "militaryStrength": 40,
+      "garrison": [
+        {
+          "enemyId": "corsair_galley",
+          "count": 3
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "joint_patrol",
+        "alliance"
+      ],
+      "specialty": "naval_trade",
+      "developmentProfile": {
+        "military": 1,
+        "economy": 1.2,
+        "diplomacy": 1.05
+      },
+      "eraUnitBranch": "navy",
+      "personality": "traditionalist",
+      "emblem": "assets/historical-icons/civilizations/ghana_empire.svg",
+      "dailyActionProfile": {
+        "economy": 3,
+        "military": 2,
+        "diplomacy": 3
+      }
+    },
+    {
+      "id": "amber_coast_league",
+      "name": "琥珀海岸同盟",
+      "icon": "🏛️",
+      "description": "琥珀海岸同盟在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+      "domain": "land",
+      "faction": "amber_coast_league",
+      "develops": "limited",
+      "initialRelation": -18,
+      "militaryStrength": 24,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 2
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "alliance"
+      ],
+      "specialty": "wood_trade",
+      "personality": "merchant",
+      "emblem": "assets/historical-icons/civilizations/han.svg",
+      "developmentProfile": {
+        "military": 0.8,
+        "economy": 0.9,
+        "diplomacy": 0.85
+      },
+      "dailyActionProfile": {
+        "economy": 3,
+        "military": 2,
+        "diplomacy": 2
+      },
+      "eraUnitBranch": "infantry",
+      "gridX": 44,
+      "gridY": 199
+    },
+    {
+      "id": "red_cliff_council",
+      "name": "赤岩议会",
+      "icon": "🏛️",
+      "description": "赤岩议会在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+      "domain": "land",
+      "faction": "red_cliff_council",
+      "develops": "limited",
+      "initialRelation": -11,
+      "militaryStrength": 27,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 3
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "alliance"
+      ],
+      "specialty": "gold_trade",
+      "personality": "guardian",
+      "emblem": "assets/historical-icons/civilizations/venice.svg",
+      "developmentProfile": {
+        "military": 0.9,
+        "economy": 1,
+        "diplomacy": 0.9299999999999999
+      },
+      "dailyActionProfile": {
+        "economy": 4,
+        "military": 3,
+        "diplomacy": 3
+      },
+      "eraUnitBranch": "ranged",
+      "gridX": 106,
+      "gridY": 205
+    },
+    {
+      "id": "cloudpeak_academy",
+      "name": "云岭学社",
+      "icon": "🏛️",
+      "description": "云岭学社在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+      "domain": "land",
+      "faction": "cloudpeak_academy",
+      "develops": "limited",
+      "initialRelation": -4,
+      "militaryStrength": 30,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 4
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "alliance"
+      ],
+      "specialty": "stone_trade",
+      "personality": "scholar",
+      "emblem": "assets/historical-icons/civilizations/mongol.svg",
+      "developmentProfile": {
+        "military": 1,
+        "economy": 1.1,
+        "diplomacy": 1.01
+      },
+      "dailyActionProfile": {
+        "economy": 5,
+        "military": 4,
+        "diplomacy": 4
+      },
+      "eraUnitBranch": "cavalry",
+      "gridX": 168,
+      "gridY": 211
+    },
+    {
+      "id": "black_tide_republic",
+      "name": "黑潮共和国",
+      "icon": "⚓",
+      "description": "黑潮共和国在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+      "domain": "naval",
+      "faction": "black_tide_republic",
+      "develops": "limited",
+      "initialRelation": 3,
+      "militaryStrength": 33,
+      "garrison": [
+        {
+          "enemyId": "corsair_galley",
+          "count": 5
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "alliance"
+      ],
+      "specialty": "food_trade",
+      "personality": "expansionist",
+      "emblem": "assets/historical-icons/civilizations/old_egypt.svg",
+      "developmentProfile": {
+        "military": 1.1,
+        "economy": 0.9,
+        "diplomacy": 1.0899999999999999
+      },
+      "dailyActionProfile": {
+        "economy": 3,
+        "military": 5,
+        "diplomacy": 5
+      },
+      "eraUnitBranch": "navy",
+      "gridX": 240,
+      "gridY": 227
+    },
+    {
+      "id": "silver_bay_port",
+      "name": "银湾商港",
+      "icon": "⚓",
+      "description": "银湾商港在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+      "domain": "naval",
+      "faction": "silver_bay_port",
+      "develops": "limited",
+      "initialRelation": 10,
+      "militaryStrength": 36,
+      "garrison": [
+        {
+          "enemyId": "corsair_galley",
+          "count": 2
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "alliance"
+      ],
+      "specialty": "knowledge_exchange",
+      "personality": "diplomat",
+      "emblem": "assets/historical-icons/civilizations/rome.svg",
+      "developmentProfile": {
+        "military": 0.8,
+        "economy": 1,
+        "diplomacy": 1.17
+      },
+      "dailyActionProfile": {
+        "economy": 4,
+        "military": 2,
+        "diplomacy": 6
+      },
+      "eraUnitBranch": "navy",
+      "gridX": 274,
+      "gridY": 182
+    },
+    {
+      "id": "azure_steppe_court",
+      "name": "苍原汗庭",
+      "icon": "🏛️",
+      "description": "苍原汗庭在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+      "domain": "land",
+      "faction": "azure_steppe_court",
+      "develops": "limited",
+      "initialRelation": 17,
+      "militaryStrength": 39,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 3
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "alliance"
+      ],
+      "specialty": "naval_trade",
+      "personality": "traditionalist",
+      "emblem": "assets/historical-icons/civilizations/ghana_empire.svg",
+      "developmentProfile": {
+        "military": 0.9,
+        "economy": 1.1,
+        "diplomacy": 0.85
+      },
+      "dailyActionProfile": {
+        "economy": 5,
+        "military": 3,
+        "diplomacy": 2
+      },
+      "eraUnitBranch": "ranged",
+      "gridX": 354,
+      "gridY": 206
+    },
+    {
+      "id": "riverbend_federation",
+      "name": "河套谷仓联邦",
+      "icon": "🏛️",
+      "description": "河套谷仓联邦在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+      "domain": "land",
+      "faction": "riverbend_federation",
+      "develops": "limited",
+      "initialRelation": 24,
+      "militaryStrength": 42,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 4
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "alliance"
+      ],
+      "specialty": "wood_trade",
+      "personality": "merchant",
+      "emblem": "assets/historical-icons/civilizations/han.svg",
+      "developmentProfile": {
+        "military": 1,
+        "economy": 0.9,
+        "diplomacy": 0.9299999999999999
+      },
+      "dailyActionProfile": {
+        "economy": 3,
+        "military": 4,
+        "diplomacy": 3
+      },
+      "eraUnitBranch": "cavalry",
+      "gridX": 32,
+      "gridY": 294
+    },
+    {
+      "id": "white_tower_order",
+      "name": "白塔修会",
+      "icon": "🏛️",
+      "description": "白塔修会在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+      "domain": "land",
+      "faction": "white_tower_order",
+      "develops": "limited",
+      "initialRelation": -17,
+      "militaryStrength": 45,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 5
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "alliance"
+      ],
+      "specialty": "gold_trade",
+      "personality": "guardian",
+      "emblem": "assets/historical-icons/civilizations/venice.svg",
+      "developmentProfile": {
+        "military": 1.1,
+        "economy": 1,
+        "diplomacy": 1.01
+      },
+      "dailyActionProfile": {
+        "economy": 4,
+        "military": 5,
+        "diplomacy": 4
+      },
+      "eraUnitBranch": "anti_cavalry",
+      "gridX": 94,
+      "gridY": 300
+    },
+    {
+      "id": "golden_sheaf_city",
+      "name": "金穗自由市",
+      "icon": "🏛️",
+      "description": "金穗自由市在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+      "domain": "land",
+      "faction": "golden_sheaf_city",
+      "develops": "limited",
+      "initialRelation": -10,
+      "militaryStrength": 48,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 2
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "alliance"
+      ],
+      "specialty": "stone_trade",
+      "personality": "scholar",
+      "emblem": "assets/historical-icons/civilizations/mongol.svg",
+      "developmentProfile": {
+        "military": 0.8,
+        "economy": 1.1,
+        "diplomacy": 1.0899999999999999
+      },
+      "dailyActionProfile": {
+        "economy": 5,
+        "military": 2,
+        "diplomacy": 5
+      },
+      "eraUnitBranch": "infantry",
+      "gridX": 175,
+      "gridY": 283
+    },
+    {
+      "id": "mistwood_commune",
+      "name": "雾林公社",
+      "icon": "🏛️",
+      "description": "雾林公社在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+      "domain": "land",
+      "faction": "mistwood_commune",
+      "develops": "limited",
+      "initialRelation": -3,
+      "militaryStrength": 51,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 3
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "alliance"
+      ],
+      "specialty": "food_trade",
+      "personality": "expansionist",
+      "emblem": "assets/historical-icons/civilizations/old_egypt.svg",
+      "developmentProfile": {
+        "military": 0.9,
+        "economy": 0.9,
+        "diplomacy": 1.17
+      },
+      "dailyActionProfile": {
+        "economy": 3,
+        "military": 3,
+        "diplomacy": 6
+      },
+      "eraUnitBranch": "ranged",
+      "gridX": 237,
+      "gridY": 289
+    },
+    {
+      "id": "obsidian_mining_state",
+      "name": "曜石矿邦",
+      "icon": "🏛️",
+      "description": "曜石矿邦在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+      "domain": "land",
+      "faction": "obsidian_mining_state",
+      "develops": "limited",
+      "initialRelation": 4,
+      "militaryStrength": 54,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 4
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "alliance"
+      ],
+      "specialty": "knowledge_exchange",
+      "personality": "diplomat",
+      "emblem": "assets/historical-icons/civilizations/rome.svg",
+      "developmentProfile": {
+        "military": 1,
+        "economy": 1,
+        "diplomacy": 0.85
+      },
+      "dailyActionProfile": {
+        "economy": 4,
+        "military": 4,
+        "diplomacy": 2
+      },
+      "eraUnitBranch": "cavalry",
+      "gridX": 299,
+      "gridY": 295
+    },
+    {
+      "id": "longbridge_artisans",
+      "name": "长桥工匠邦",
+      "icon": "🏛️",
+      "description": "长桥工匠邦在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+      "domain": "land",
+      "faction": "longbridge_artisans",
+      "develops": "limited",
+      "initialRelation": 11,
+      "militaryStrength": 57,
+      "garrison": [
+        {
+          "enemyId": "outpost_guard",
+          "count": 5
+        }
+      ],
+      "actions": [
+        "talk",
+        "gift",
+        "aid",
+        "trade",
+        "open_borders",
+        "non_aggression",
+        "alliance"
+      ],
+      "specialty": "naval_trade",
+      "personality": "traditionalist",
+      "emblem": "assets/historical-icons/civilizations/ghana_empire.svg",
+      "developmentProfile": {
+        "military": 1.1,
+        "economy": 1.1,
+        "diplomacy": 0.9299999999999999
+      },
+      "dailyActionProfile": {
+        "economy": 5,
+        "military": 5,
+        "diplomacy": 3
+      },
+      "eraUnitBranch": "anti_cavalry",
+      "gridX": 350,
+      "gridY": 267
     }
   ],
   "wildSites": [
-    { "id": "wild_wood_1", "name": "盗木营地", "category": "barbarian_camp", "domain": "land", "gridX": 30, "gridY": 10, "baseStrength": 18, "respawnDays": 5, "rewards": [{ "resourceId": "wood", "amount": 35 }] },
-    { "id": "wild_food_1", "name": "荒野猎团", "category": "resource_guard", "domain": "land", "gridX": 70, "gridY": 10, "baseStrength": 16, "respawnDays": 4, "rewards": [{ "resourceId": "food", "amount": 32 }] },
-    { "id": "wild_gold_1", "name": "私铸窝点", "category": "barbarian_camp", "domain": "land", "gridX": 110, "gridY": 10, "baseStrength": 24, "respawnDays": 6, "rewards": [{ "resourceId": "gold", "amount": 20 }] },
-    { "id": "wild_bandit_1", "name": "林道匪寨", "category": "barbarian_camp", "domain": "land", "gridX": 30, "gridY": 30, "baseStrength": 22, "respawnDays": 5, "rewards": [{ "resourceId": "wood", "amount": 20 }, { "resourceId": "gold", "amount": 10 }] },
-    { "id": "wild_food_2", "name": "野牛群地", "category": "resource_guard", "domain": "land", "gridX": 130, "gridY": 30, "baseStrength": 20, "respawnDays": 4, "rewards": [{ "resourceId": "food", "amount": 40 }] },
-    { "id": "wild_stone_1", "name": "山贼石寨", "category": "barbarian_camp", "domain": "land", "gridX": 170, "gridY": 30, "baseStrength": 30, "respawnDays": 7, "rewards": [{ "resourceId": "stone", "amount": 38 }] },
-    { "id": "wild_nomad_1", "name": "流动掠骑", "category": "roaming_host", "domain": "land", "gridX": 70, "gridY": 50, "baseStrength": 34, "respawnDays": 6, "rewards": [{ "resourceId": "food", "amount": 24 }, { "resourceId": "gold", "amount": 14 }] },
-    { "id": "wild_mine_1", "name": "废弃矿坑守军", "category": "resource_guard", "domain": "land", "gridX": 170, "gridY": 50, "baseStrength": 28, "respawnDays": 6, "rewards": [{ "resourceId": "stone", "amount": 24 }, { "resourceId": "gold", "amount": 12 }] },
-    { "id": "wild_bandit_2", "name": "南道劫掠营", "category": "barbarian_camp", "domain": "land", "gridX": 30, "gridY": 70, "baseStrength": 26, "respawnDays": 5, "rewards": [{ "resourceId": "food", "amount": 20 }, { "resourceId": "gold", "amount": 12 }] },
-    { "id": "wild_ruin_1", "name": "古战场守卫", "category": "ruin_guard", "domain": "land", "gridX": 130, "gridY": 70, "baseStrength": 40, "respawnDays": 8, "rewards": [{ "resourceId": "stone", "amount": 30 }, { "resourceId": "gold", "amount": 18 }] },
-    { "id": "wild_wood_2", "name": "密林盗猎团", "category": "resource_guard", "domain": "land", "gridX": 30, "gridY": 90, "baseStrength": 20, "respawnDays": 4, "rewards": [{ "resourceId": "wood", "amount": 42 }] },
-    { "id": "wild_fort_1", "name": "旧边塞叛军", "category": "barbarian_camp", "domain": "land", "gridX": 170, "gridY": 90, "baseStrength": 46, "respawnDays": 8, "rewards": [{ "resourceId": "stone", "amount": 32 }, { "resourceId": "gold", "amount": 20 }] },
-    { "id": "wild_food_3", "name": "丰饶谷地守卫", "category": "resource_guard", "domain": "land", "gridX": 50, "gridY": 150, "baseStrength": 32, "respawnDays": 6, "rewards": [{ "resourceId": "food", "amount": 55 }] },
-    { "id": "wild_mine_2", "name": "高地矿团", "category": "resource_guard", "domain": "land", "gridX": 90, "gridY": 170, "baseStrength": 42, "respawnDays": 7, "rewards": [{ "resourceId": "stone", "amount": 35 }, { "resourceId": "gold", "amount": 15 }] },
-    { "id": "wild_pirate_1", "name": "浅湾海盗", "category": "pirate_fleet", "domain": "naval", "gridX": 20, "gridY": 150, "baseStrength": 28, "respawnDays": 5, "rewards": [{ "resourceId": "gold", "amount": 20 }] },
-    { "id": "wild_pirate_2", "name": "河口劫船团", "category": "pirate_fleet", "domain": "naval", "gridX": 100, "gridY": 150, "baseStrength": 38, "respawnDays": 6, "rewards": [{ "resourceId": "wood", "amount": 25 }, { "resourceId": "gold", "amount": 20 }] },
-    { "id": "wild_pirate_3", "name": "外海私掠队", "category": "pirate_fleet", "domain": "naval", "gridX": 150, "gridY": 150, "baseStrength": 50, "respawnDays": 8, "rewards": [{ "resourceId": "gold", "amount": 35 }] },
-    { "id": "wild_pirate_4", "name": "北水道封锁舰", "category": "pirate_fleet", "domain": "naval", "gridX": 20, "gridY": 180, "baseStrength": 44, "respawnDays": 7, "rewards": [{ "resourceId": "food", "amount": 25 }, { "resourceId": "gold", "amount": 28 }] }
+    {
+      "id": "wild_wood_1",
+      "name": "盗木营地",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 41,
+      "gridY": 57,
+      "baseStrength": 16,
+      "respawnDays": 4,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 24
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_food_1",
+      "name": "荒野猎团",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 119,
+      "gridY": 189,
+      "baseStrength": 18,
+      "respawnDays": 5,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 28
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_gold_1",
+      "name": "私铸窝点",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 207,
+      "gridY": 331,
+      "baseStrength": 20,
+      "respawnDays": 6,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 32
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_bandit_1",
+      "name": "林道匪寨",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 290,
+      "gridY": 104,
+      "baseStrength": 22,
+      "respawnDays": 7,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 36
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_food_2",
+      "name": "野牛群地",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 370,
+      "gridY": 238,
+      "baseStrength": 24,
+      "respawnDays": 8,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 40
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_stone_1",
+      "name": "山贼石寨",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 92,
+      "gridY": 14,
+      "baseStrength": 26,
+      "respawnDays": 9,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 44
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_nomad_1",
+      "name": "流动掠骑",
+      "category": "roaming_host",
+      "domain": "land",
+      "gridX": 175,
+      "gridY": 151,
+      "baseStrength": 28,
+      "respawnDays": 10,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 48
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+    },
+    {
+      "id": "wild_mine_1",
+      "name": "废弃矿坑守军",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 245,
+      "gridY": 301,
+      "baseStrength": 30,
+      "respawnDays": 4,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 52
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_bandit_2",
+      "name": "南道劫掠营",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 341,
+      "gridY": 61,
+      "baseStrength": 32,
+      "respawnDays": 5,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 56
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_ruin_1",
+      "name": "古战场守卫",
+      "category": "ruin_guard",
+      "domain": "land",
+      "gridX": 60,
+      "gridY": 198,
+      "baseStrength": 34,
+      "respawnDays": 6,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 24
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+    },
+    {
+      "id": "wild_wood_2",
+      "name": "密林盗猎团",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 145,
+      "gridY": 333,
+      "baseStrength": 36,
+      "respawnDays": 7,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 28
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_fort_1",
+      "name": "旧边塞叛军",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 226,
+      "gridY": 108,
+      "baseStrength": 38,
+      "respawnDays": 8,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 32
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_food_3",
+      "name": "丰饶谷地守卫",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 309,
+      "gridY": 245,
+      "baseStrength": 40,
+      "respawnDays": 9,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 36
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_mine_2",
+      "name": "高地矿团",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 30,
+      "gridY": 16,
+      "baseStrength": 42,
+      "respawnDays": 10,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 40
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_pirate_1",
+      "name": "浅湾海盗",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 124,
+      "gridY": 142,
+      "baseStrength": 44,
+      "respawnDays": 4,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 44
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_pirate_2",
+      "name": "河口劫船团",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 216,
+      "gridY": 270,
+      "baseStrength": 46,
+      "respawnDays": 5,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 48
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_pirate_3",
+      "name": "外海私掠队",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 268,
+      "gridY": 74,
+      "baseStrength": 48,
+      "respawnDays": 6,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 52
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_pirate_4",
+      "name": "北水道封锁舰",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 376,
+      "gridY": 186,
+      "baseStrength": 50,
+      "respawnDays": 7,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 56
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_site_019",
+      "name": "边地营寨·19",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 79,
+      "gridY": 339,
+      "baseStrength": 16,
+      "respawnDays": 8,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 24
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_site_020",
+      "name": "资源守卫·20",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 162,
+      "gridY": 112,
+      "baseStrength": 18,
+      "respawnDays": 9,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 28
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_site_021",
+      "name": "游荡军团·21",
+      "category": "roaming_host",
+      "domain": "land",
+      "gridX": 238,
+      "gridY": 256,
+      "baseStrength": 20,
+      "respawnDays": 10,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 32
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+    },
+    {
+      "id": "wild_site_022",
+      "name": "遗迹守卫·22",
+      "category": "ruin_guard",
+      "domain": "land",
+      "gridX": 328,
+      "gridY": 22,
+      "baseStrength": 22,
+      "respawnDays": 4,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 36
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+    },
+    {
+      "id": "wild_site_023",
+      "name": "海盗舰队·23",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 20,
+      "gridY": 186,
+      "baseStrength": 24,
+      "respawnDays": 5,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 40
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_site_024",
+      "name": "荒野兽群·24",
+      "category": "ancient_beast",
+      "domain": "land",
+      "gridX": 137,
+      "gridY": 289,
+      "baseStrength": 26,
+      "respawnDays": 6,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 44
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+    },
+    {
+      "id": "wild_site_025",
+      "name": "边地营寨·25",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 213,
+      "gridY": 69,
+      "baseStrength": 28,
+      "respawnDays": 7,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 48
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_site_026",
+      "name": "资源守卫·26",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 296,
+      "gridY": 206,
+      "baseStrength": 30,
+      "respawnDays": 8,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 52
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_site_027",
+      "name": "游荡军团·27",
+      "category": "roaming_host",
+      "domain": "land",
+      "gridX": 25,
+      "gridY": 333,
+      "baseStrength": 32,
+      "respawnDays": 9,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 56
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+    },
+    {
+      "id": "wild_site_028",
+      "name": "遗迹守卫·28",
+      "category": "ruin_guard",
+      "domain": "land",
+      "gridX": 98,
+      "gridY": 116,
+      "baseStrength": 34,
+      "respawnDays": 10,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 24
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+    },
+    {
+      "id": "wild_site_029",
+      "name": "海盗舰队·29",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 164,
+      "gridY": 236,
+      "baseStrength": 36,
+      "respawnDays": 4,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 28
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_site_030",
+      "name": "荒野兽群·30",
+      "category": "ancient_beast",
+      "domain": "land",
+      "gridX": 268,
+      "gridY": 31,
+      "baseStrength": 38,
+      "respawnDays": 5,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 32
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+    },
+    {
+      "id": "wild_site_031",
+      "name": "边地营寨·31",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 347,
+      "gridY": 163,
+      "baseStrength": 40,
+      "respawnDays": 6,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 36
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_site_032",
+      "name": "资源守卫·32",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 66,
+      "gridY": 300,
+      "baseStrength": 42,
+      "respawnDays": 7,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 40
+        }
+      ],
+      "threatBand": "low",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_site_033",
+      "name": "游荡军团·33",
+      "category": "roaming_host",
+      "domain": "land",
+      "gridX": 155,
+      "gridY": 79,
+      "baseStrength": 68,
+      "respawnDays": 8,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 44
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+    },
+    {
+      "id": "wild_site_034",
+      "name": "遗迹守卫·34",
+      "category": "ruin_guard",
+      "domain": "naval",
+      "gridX": 237,
+      "gridY": 215,
+      "baseStrength": 71,
+      "respawnDays": 9,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 48
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+    },
+    {
+      "id": "wild_site_035",
+      "name": "海盗舰队·35",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 343,
+      "gridY": 375,
+      "baseStrength": 74,
+      "respawnDays": 10,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 52
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_site_036",
+      "name": "荒野兽群·36",
+      "category": "ancient_beast",
+      "domain": "land",
+      "gridX": 34,
+      "gridY": 120,
+      "baseStrength": 78,
+      "respawnDays": 4,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 56
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+    },
+    {
+      "id": "wild_site_037",
+      "name": "边地营寨·37",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 117,
+      "gridY": 257,
+      "baseStrength": 25,
+      "respawnDays": 5,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 24
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_site_038",
+      "name": "资源守卫·38",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 200,
+      "gridY": 30,
+      "baseStrength": 28,
+      "respawnDays": 6,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 28
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_site_039",
+      "name": "游荡军团·39",
+      "category": "roaming_host",
+      "domain": "land",
+      "gridX": 283,
+      "gridY": 167,
+      "baseStrength": 31,
+      "respawnDays": 7,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 32
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+    },
+    {
+      "id": "wild_site_040",
+      "name": "遗迹守卫·40",
+      "category": "ruin_guard",
+      "domain": "land",
+      "gridX": 352,
+      "gridY": 318,
+      "baseStrength": 34,
+      "respawnDays": 8,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 36
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+    },
+    {
+      "id": "wild_site_041",
+      "name": "海盗舰队·41",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 104,
+      "gridY": 66,
+      "baseStrength": 37,
+      "respawnDays": 9,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 40
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_site_042",
+      "name": "荒野兽群·42",
+      "category": "ancient_beast",
+      "domain": "land",
+      "gridX": 167,
+      "gridY": 215,
+      "baseStrength": 40,
+      "respawnDays": 10,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 44
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+    },
+    {
+      "id": "wild_site_043",
+      "name": "边地营寨·43",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 236,
+      "gridY": 336,
+      "baseStrength": 43,
+      "respawnDays": 4,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 48
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_site_044",
+      "name": "资源守卫·44",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 334,
+      "gridY": 124,
+      "baseStrength": 47,
+      "respawnDays": 5,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 52
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_site_045",
+      "name": "游荡军团·45",
+      "category": "roaming_host",
+      "domain": "naval",
+      "gridX": 26,
+      "gridY": 242,
+      "baseStrength": 50,
+      "respawnDays": 6,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 56
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+    },
+    {
+      "id": "wild_site_046",
+      "name": "遗迹守卫·46",
+      "category": "ruin_guard",
+      "domain": "land",
+      "gridX": 149,
+      "gridY": 21,
+      "baseStrength": 53,
+      "respawnDays": 7,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 24
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+    },
+    {
+      "id": "wild_site_047",
+      "name": "海盗舰队·47",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 206,
+      "gridY": 184,
+      "baseStrength": 56,
+      "respawnDays": 8,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 28
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_site_048",
+      "name": "荒野兽群·48",
+      "category": "ancient_beast",
+      "domain": "land",
+      "gridX": 302,
+      "gridY": 308,
+      "baseStrength": 59,
+      "respawnDays": 9,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 32
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+    },
+    {
+      "id": "wild_site_049",
+      "name": "边地营寨·49",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 23,
+      "gridY": 83,
+      "baseStrength": 62,
+      "respawnDays": 10,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 36
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_site_050",
+      "name": "资源守卫·50",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 104,
+      "gridY": 218,
+      "baseStrength": 65,
+      "respawnDays": 4,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 40
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_site_051",
+      "name": "游荡军团·51",
+      "category": "roaming_host",
+      "domain": "land",
+      "gridX": 187,
+      "gridY": 355,
+      "baseStrength": 68,
+      "respawnDays": 5,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 44
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+    },
+    {
+      "id": "wild_site_052",
+      "name": "遗迹守卫·52",
+      "category": "ruin_guard",
+      "domain": "land",
+      "gridX": 278,
+      "gridY": 120,
+      "baseStrength": 71,
+      "respawnDays": 6,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 48
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+    },
+    {
+      "id": "wild_site_053",
+      "name": "海盗舰队·53",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 353,
+      "gridY": 264,
+      "baseStrength": 74,
+      "respawnDays": 7,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 52
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_site_054",
+      "name": "荒野兽群·54",
+      "category": "ancient_beast",
+      "domain": "land",
+      "gridX": 72,
+      "gridY": 38,
+      "baseStrength": 78,
+      "respawnDays": 8,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 56
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+    },
+    {
+      "id": "wild_site_055",
+      "name": "边地营寨·55",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 155,
+      "gridY": 175,
+      "baseStrength": 25,
+      "respawnDays": 9,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 24
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_site_056",
+      "name": "资源守卫·56",
+      "category": "resource_guard",
+      "domain": "naval",
+      "gridX": 243,
+      "gridY": 317,
+      "baseStrength": 28,
+      "respawnDays": 10,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 28
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_site_057",
+      "name": "游荡军团·57",
+      "category": "roaming_host",
+      "domain": "land",
+      "gridX": 321,
+      "gridY": 85,
+      "baseStrength": 31,
+      "respawnDays": 4,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 32
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+    },
+    {
+      "id": "wild_site_058",
+      "name": "遗迹守卫·58",
+      "category": "ruin_guard",
+      "domain": "land",
+      "gridX": 40,
+      "gridY": 222,
+      "baseStrength": 34,
+      "respawnDays": 5,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 36
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+    },
+    {
+      "id": "wild_site_059",
+      "name": "海盗舰队·59",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 123,
+      "gridY": 359,
+      "baseStrength": 37,
+      "respawnDays": 6,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 40
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_site_060",
+      "name": "荒野兽群·60",
+      "category": "ancient_beast",
+      "domain": "land",
+      "gridX": 206,
+      "gridY": 132,
+      "baseStrength": 40,
+      "respawnDays": 7,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 44
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+    },
+    {
+      "id": "wild_site_061",
+      "name": "边地营寨·61",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 289,
+      "gridY": 269,
+      "baseStrength": 43,
+      "respawnDays": 8,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 48
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_site_062",
+      "name": "资源守卫·62",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 368,
+      "gridY": 46,
+      "baseStrength": 47,
+      "respawnDays": 9,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 52
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_site_063",
+      "name": "游荡军团·63",
+      "category": "roaming_host",
+      "domain": "land",
+      "gridX": 91,
+      "gridY": 179,
+      "baseStrength": 50,
+      "respawnDays": 10,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 56
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+    },
+    {
+      "id": "wild_site_064",
+      "name": "遗迹守卫·64",
+      "category": "ruin_guard",
+      "domain": "land",
+      "gridX": 174,
+      "gridY": 316,
+      "baseStrength": 53,
+      "respawnDays": 4,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 24
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+    },
+    {
+      "id": "wild_site_065",
+      "name": "海盗舰队·65",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 257,
+      "gridY": 89,
+      "baseStrength": 56,
+      "respawnDays": 5,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 28
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_site_066",
+      "name": "荒野兽群·66",
+      "category": "ancient_beast",
+      "domain": "land",
+      "gridX": 340,
+      "gridY": 226,
+      "baseStrength": 59,
+      "respawnDays": 6,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 32
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+    },
+    {
+      "id": "wild_site_067",
+      "name": "边地营寨·67",
+      "category": "barbarian_camp",
+      "domain": "naval",
+      "gridX": 47,
+      "gridY": 375,
+      "baseStrength": 62,
+      "respawnDays": 7,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 36
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_site_068",
+      "name": "资源守卫·68",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 142,
+      "gridY": 136,
+      "baseStrength": 65,
+      "respawnDays": 8,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 40
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_site_069",
+      "name": "游荡军团·69",
+      "category": "roaming_host",
+      "domain": "land",
+      "gridX": 225,
+      "gridY": 273,
+      "baseStrength": 68,
+      "respawnDays": 9,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 44
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+    },
+    {
+      "id": "wild_site_070",
+      "name": "遗迹守卫·70",
+      "category": "ruin_guard",
+      "domain": "land",
+      "gridX": 308,
+      "gridY": 46,
+      "baseStrength": 71,
+      "respawnDays": 10,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 48
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+    },
+    {
+      "id": "wild_site_071",
+      "name": "海盗舰队·71",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 20,
+      "gridY": 190,
+      "baseStrength": 74,
+      "respawnDays": 4,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 52
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_site_072",
+      "name": "荒野兽群·72",
+      "category": "ancient_beast",
+      "domain": "land",
+      "gridX": 110,
+      "gridY": 320,
+      "baseStrength": 78,
+      "respawnDays": 5,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 56
+        }
+      ],
+      "threatBand": "medium",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+    },
+    {
+      "id": "wild_site_073",
+      "name": "边地营寨·73",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 193,
+      "gridY": 93,
+      "baseStrength": 34,
+      "respawnDays": 6,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 24
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_site_074",
+      "name": "资源守卫·74",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 276,
+      "gridY": 230,
+      "baseStrength": 39,
+      "respawnDays": 7,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 28
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_site_075",
+      "name": "游荡军团·75",
+      "category": "roaming_host",
+      "domain": "land",
+      "gridX": 351,
+      "gridY": 359,
+      "baseStrength": 43,
+      "respawnDays": 8,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 32
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+    },
+    {
+      "id": "wild_site_076",
+      "name": "遗迹守卫·76",
+      "category": "ruin_guard",
+      "domain": "land",
+      "gridX": 78,
+      "gridY": 140,
+      "baseStrength": 47,
+      "respawnDays": 9,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 36
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+    },
+    {
+      "id": "wild_site_077",
+      "name": "海盗舰队·77",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 164,
+      "gridY": 274,
+      "baseStrength": 52,
+      "respawnDays": 10,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 40
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_site_078",
+      "name": "荒野兽群·78",
+      "category": "ancient_beast",
+      "domain": "naval",
+      "gridX": 244,
+      "gridY": 50,
+      "baseStrength": 56,
+      "respawnDays": 4,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 44
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+    },
+    {
+      "id": "wild_site_079",
+      "name": "边地营寨·79",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 327,
+      "gridY": 187,
+      "baseStrength": 60,
+      "respawnDays": 5,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 48
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_site_080",
+      "name": "资源守卫·80",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 46,
+      "gridY": 324,
+      "baseStrength": 65,
+      "respawnDays": 6,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 52
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_site_081",
+      "name": "游荡军团·81",
+      "category": "roaming_host",
+      "domain": "land",
+      "gridX": 117,
+      "gridY": 109,
+      "baseStrength": 69,
+      "respawnDays": 7,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 56
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+    },
+    {
+      "id": "wild_site_082",
+      "name": "遗迹守卫·82",
+      "category": "ruin_guard",
+      "domain": "land",
+      "gridX": 212,
+      "gridY": 234,
+      "baseStrength": 73,
+      "respawnDays": 8,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 24
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+    },
+    {
+      "id": "wild_site_083",
+      "name": "海盗舰队·83",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 290,
+      "gridY": 376,
+      "baseStrength": 77,
+      "respawnDays": 9,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 28
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_site_084",
+      "name": "荒野兽群·84",
+      "category": "ancient_beast",
+      "domain": "land",
+      "gridX": 15,
+      "gridY": 142,
+      "baseStrength": 82,
+      "respawnDays": 10,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 32
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+    },
+    {
+      "id": "wild_site_085",
+      "name": "边地营寨·85",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 96,
+      "gridY": 280,
+      "baseStrength": 86,
+      "respawnDays": 4,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 36
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_site_086",
+      "name": "资源守卫·86",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 179,
+      "gridY": 53,
+      "baseStrength": 90,
+      "respawnDays": 5,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 40
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_site_087",
+      "name": "游荡军团·87",
+      "category": "roaming_host",
+      "domain": "land",
+      "gridX": 274,
+      "gridY": 202,
+      "baseStrength": 95,
+      "respawnDays": 6,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 44
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+    },
+    {
+      "id": "wild_site_088",
+      "name": "遗迹守卫·88",
+      "category": "ruin_guard",
+      "domain": "land",
+      "gridX": 346,
+      "gridY": 328,
+      "baseStrength": 99,
+      "respawnDays": 7,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 48
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+    },
+    {
+      "id": "wild_site_089",
+      "name": "海盗舰队·89",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 26,
+      "gridY": 62,
+      "baseStrength": 103,
+      "respawnDays": 8,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 52
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_site_090",
+      "name": "荒野兽群·90",
+      "category": "ancient_beast",
+      "domain": "land",
+      "gridX": 148,
+      "gridY": 238,
+      "baseStrength": 108,
+      "respawnDays": 9,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 56
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+    },
+    {
+      "id": "wild_site_091",
+      "name": "边地营寨·91",
+      "category": "barbarian_camp",
+      "domain": "land",
+      "gridX": 224,
+      "gridY": 18,
+      "baseStrength": 34,
+      "respawnDays": 10,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 24
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+    },
+    {
+      "id": "wild_site_092",
+      "name": "资源守卫·92",
+      "category": "resource_guard",
+      "domain": "land",
+      "gridX": 314,
+      "gridY": 148,
+      "baseStrength": 39,
+      "respawnDays": 4,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 28
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+    },
+    {
+      "id": "wild_site_093",
+      "name": "游荡军团·93",
+      "category": "roaming_host",
+      "domain": "land",
+      "gridX": 33,
+      "gridY": 285,
+      "baseStrength": 43,
+      "respawnDays": 5,
+      "rewards": [
+        {
+          "resourceId": "wood",
+          "amount": 32
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 2,
+      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+    },
+    {
+      "id": "wild_site_094",
+      "name": "遗迹守卫·94",
+      "category": "ruin_guard",
+      "domain": "land",
+      "gridX": 107,
+      "gridY": 49,
+      "baseStrength": 47,
+      "respawnDays": 6,
+      "rewards": [
+        {
+          "resourceId": "food",
+          "amount": 36
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 3,
+      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+    },
+    {
+      "id": "wild_site_095",
+      "name": "海盗舰队·95",
+      "category": "pirate_fleet",
+      "domain": "naval",
+      "gridX": 188,
+      "gridY": 184,
+      "baseStrength": 52,
+      "respawnDays": 7,
+      "rewards": [
+        {
+          "resourceId": "stone",
+          "amount": 40
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 4,
+      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+    },
+    {
+      "id": "wild_site_096",
+      "name": "荒野兽群·96",
+      "category": "ancient_beast",
+      "domain": "land",
+      "gridX": 282,
+      "gridY": 332,
+      "baseStrength": 56,
+      "respawnDays": 8,
+      "rewards": [
+        {
+          "resourceId": "gold",
+          "amount": 44
+        }
+      ],
+      "threatBand": "high",
+      "territoryRadius": 5,
+      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+    }
   ]
 }

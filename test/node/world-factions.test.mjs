@@ -10,15 +10,29 @@ const world = JSON.parse(readFileSync(new URL('../../config/world-factions.json'
 const integration = JSON.parse(readFileSync(new URL('../../config/ea_integration.json', import.meta.url), 'utf8'));
 const map = JSON.parse(readFileSync(new URL('../../config/maps/base_map.json', import.meta.url), 'utf8'));
 
-test('world contains twelve weaker city-states and eighteen separate wild sites on valid terrain', () => {
-  assert.equal(integration.outposts.length + world.cityStates.length, 12);
-  assert.equal(world.wildSites.length, 18);
-  for (const site of [...world.cityStates, ...world.wildSites]) {
+test('fixed grand world contains twenty-four city-states and ninety-six wild sites on valid unique coordinates', () => {
+  const cityStates = [...integration.outposts, ...world.cityStates];
+  const placements = [...cityStates, ...world.wildSites];
+  assert.equal(cityStates.length, 24);
+  assert.equal(world.wildSites.length, 96);
+  assert.equal(new Set(placements.map(site => `${site.gridX},${site.gridY}`)).size, placements.length);
+  assert.equal(new Set(placements.map(site => site.id)).size, placements.length);
+  for (const site of placements) {
     const ground = map.grid[site.gridY]?.[site.gridX];
     assert.ok(ground, site.id);
     assert.equal(['S', 'W'].includes(ground), site.domain === 'naval', `${site.id} domain`);
   }
-  assert.ok(world.cityStates.every(state => state.developmentProfile && state.specialty));
+  assert.ok(cityStates.every(state => state.personality && state.specialty && state.emblem));
+  const spawn = map.spawnManifest.playerSpawn;
+  assert.ok(world.wildSites.every(site => Math.hypot(site.gridX - spawn.gridX, site.gridY - spawn.gridY) >= 20));
+  assert.deepEqual(
+    map.spawnManifest.cityStates.map(site => site.id).sort(),
+    cityStates.map(site => site.id).sort()
+  );
+  assert.deepEqual(
+    map.spawnManifest.wildSites.map(site => site.id).sort(),
+    world.wildSites.map(site => site.id).sort()
+  );
 });
 
 test('city-states synchronize their limited development and garrisons to the player era', () => {
@@ -40,7 +54,7 @@ test('city-states synchronize their limited development and garrisons to the pla
   assert.equal(state.currentEraId, 'medieval');
   assert.equal(state.developmentLevel, 4);
   assert.ok(diplomacy.getOutpostDefense(world.cityStates[0].id) > world.cityStates[0].militaryStrength);
-  assert.equal(Object.keys(diplomacy.getInterFactionRelations()).length, 66);
+  assert.equal(Object.keys(diplomacy.getInterFactionRelations()).length, 276);
 });
 
 test('wild sites can be cleared for rewards and respawn without entering diplomacy', () => {
