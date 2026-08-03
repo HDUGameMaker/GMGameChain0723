@@ -17,6 +17,7 @@ export class BuildingSystem {
     this._resourceSystem = null;
     this._populationSystem = null;
     this._resourceNodeSystem = null;
+    this._armySystem = null;
     this._nextInstanceId = 1;
     this._mapConfig = null;
     this._newlyUnlocked = new Set(); // 本轮新解锁的建筑ID
@@ -43,6 +44,7 @@ export class BuildingSystem {
   }
 
   setResourceSystem(rs) { this._resourceSystem = rs; }
+  setArmySystem(system) { this._armySystem = system; }
   setResourceNodeSystem(system) { this._resourceNodeSystem = system; }
   setPopulationSystem(ps) { this._populationSystem = ps; }
   setItemSystem(is) { this._itemSystem = is; }
@@ -278,6 +280,7 @@ export class BuildingSystem {
 
   canUpgrade(buildingIndex) {
     const building = this.buildings[buildingIndex];
+    if (this._armySystem?.hasGarrisonAtBuilding?.(buildingIndex)) return { valid: false, reason: 'building_garrisoned' };
     if (!building || building.status !== 'active') return { valid: false, reason: '建筑不可升级' };
 
     const config = configRegistry.getBuilding(building.buildingId);
@@ -686,14 +689,20 @@ export class BuildingSystem {
     return true;
   }
 
+  canDemolish(buildingIndex, forced = false) {
+    if (buildingIndex < 0 || buildingIndex >= this.buildings.length) return { valid: false, reason: 'invalid_building' };
+    if (this._armySystem?.hasGarrisonAtBuilding?.(buildingIndex)) return { valid: false, reason: 'building_garrisoned' };
+    const config = configRegistry.getBuilding(this.buildings[buildingIndex].buildingId);
+    if (!forced && config?.demolishable === false) return { valid: false, reason: 'building_not_demolishable' };
+    return { valid: true };
+  }
+
   demolishBuilding(buildingIndex, forced = false) {
-    if (buildingIndex < 0 || buildingIndex >= this.buildings.length) return false;
+    if (!this.canDemolish(buildingIndex, forced).valid) return false;
     const building = this.buildings[buildingIndex];
     const config = configRegistry.getBuilding(building.buildingId);
 
     // demolishable 明确设为 false 的建筑不可拆除（如大本营），但敌人摧毁时忽略
-    if (!forced && config && config.demolishable === false) return false;
-
     // 建筑被摧毁时处理
     const bConfig = configRegistry.getBuilding(building.buildingId);
     if (bConfig && building.status === 'active') {
@@ -746,6 +755,7 @@ export class BuildingSystem {
    */
   canMoveTo(buildingIndex, newGridX, newGridY) {
     const building = this.buildings[buildingIndex];
+    if (this._armySystem?.hasGarrisonAtBuilding?.(buildingIndex)) return { valid: false, reason: 'building_garrisoned' };
     if (!building || building.status !== 'active') return { valid: false, reason: '建筑不可移动' };
 
     const config = configRegistry.getBuilding(building.buildingId);

@@ -7,14 +7,27 @@ import { ArmySystem } from '../../src/systems/ArmySystem.js';
 
 const historical = JSON.parse(readFileSync(new URL('../../config/historical_content.json', import.meta.url), 'utf8'));
 
-test('historical building roster has three distinct field fortification levels', () => {
-  const ids = ['field_camp', 'frontier_fort', 'grand_fortress'];
+test('historical building roster has increasing field fortification effects', () => {
+  const ids = ['field_camp', 'frontier_fort', 'castle', 'grand_fortress'];
   const forts = ids.map(id => historical.buildings.find(building => building.id === id));
   assert.ok(forts.every(Boolean));
-  assert.deepEqual(forts.map(fort => fort.footprint.width), [1, 2, 3]);
-  assert.ok(forts[0].uniqueFunction.garrisonDefenseMul < forts[1].uniqueFunction.garrisonDefenseMul);
-  assert.ok(forts[1].uniqueFunction.garrisonDefenseMul < forts[2].uniqueFunction.garrisonDefenseMul);
+  assert.deepEqual(forts.map(fort => fort.footprint.width), [1, 2, 2, 3]);
+  assert.deepEqual(forts.map(fort => fort.uniqueFunction.garrisonDefenseMul), [1.12, 1.3, 1.35, 1.55]);
+  assert.deepEqual(forts.map(fort => fort.uniqueFunction.visionRadius), [4, 7, 9, 11]);
   assert.ok(forts.every(fort => fort.uniqueFunction.visionRadius > 0));
+});
+
+test('watch tower supports one garrison with its requested defense and vision effects', () => {
+  const watchtower = historical.buildings.find(building => building.id === 'watch_tower');
+  assert.ok(watchtower);
+  assert.deepEqual(
+    {
+      capacity: watchtower.uniqueFunction.garrisonCapacity,
+      defense: watchtower.uniqueFunction.garrisonDefenseMul,
+      vision: watchtower.uniqueFunction.visionRadius
+    },
+    { capacity: 1, defense: 1.18, vision: 4 }
+  );
 });
 
 test('garrisoned armies recover supply and morale from their fortification each day', () => {

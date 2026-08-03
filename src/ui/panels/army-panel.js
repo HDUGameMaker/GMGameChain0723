@@ -399,6 +399,10 @@ export function renderArmyPanel(data, body, pm) {
     moveButton.style.cssText = 'padding:4px 8px;border:1px solid #58759a;border-radius:5px;background:#2c4565;color:#e4efff;cursor:pointer;';
     moveButton.addEventListener('click', () => {
       const result = _armySystem()?.issueMoveOrder?.(army.id, Number(targetX.value), Number(targetY.value));
+      if (!result?.ok && result?.reason === 'tile_occupied_by_building') {
+        pm.alert('目标格被建筑占用');
+        return;
+      }
       if (!result?.ok) pm.alert({ incompatible_terrain: '陆军不能直接进入水域；请先在港口登船。', no_path: '没有可通行路径', army_garrisoned: '请先撤出驻防' }[result?.reason] || result?.reason || '移动失败');
       else renderArmyPanel(data, body, pm);
     });
@@ -419,7 +423,11 @@ export function renderArmyPanel(data, body, pm) {
       const leaveButton = document.createElement('button');
       leaveButton.textContent = '撤出驻防';
       leaveButton.style.cssText = 'padding:4px 8px;border:1px solid #8c744c;border-radius:5px;background:#514123;color:#ffe8ba;cursor:pointer;';
-      leaveButton.addEventListener('click', () => { _armySystem()?.ungarrisonArmy?.(army.id); renderArmyPanel(data, body, pm); });
+      leaveButton.addEventListener('click', () => {
+        const result = _armySystem()?.ungarrisonArmy?.(army.id);
+        if (!result?.ok) pm.alert(result?.reason === 'no_ungarrison_tile' ? '要塞周围没有可用的撤出格' : result?.reason || '撤出驻防失败');
+        else renderArmyPanel(data, body, pm);
+      });
       movementRow.appendChild(leaveButton);
     } else if (fortifications.length) {
       const garrisonSelect = document.createElement('select');

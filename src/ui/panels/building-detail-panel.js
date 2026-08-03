@@ -68,6 +68,7 @@ export function renderBuildingDetailPanel(data, body, pm) {
   if (!config) return;
   const unlockStatus = buildingSystem.getUnlockStatus(config.id);
   const presentation = getBuildingPresentation(config, unlockStatus.conditions);
+  const buildingGarrisoned = game.systems.army?.hasGarrisonAtBuilding?.(buildingIndex) === true;
 
   const container = document.createElement('div');
   container.style.cssText = 'display:flex;flex-direction:column;';
@@ -188,6 +189,27 @@ export function renderBuildingDetailPanel(data, body, pm) {
       effectSection.appendChild(row);
     }
     container.appendChild(effectSection);
+  }
+
+  const garrison = config.uniqueFunction || {};
+  if (garrison.garrisonCapacity > 0) {
+    const occupied = (game.systems.army?.getArmies?.() || [])
+      .filter(army => army.garrisonBuildingIndex === buildingIndex).length;
+    const garrisonSection = section('驻防', '🛡️');
+    const effects = [
+      `驻军 ${occupied}/${garrison.garrisonCapacity}`,
+      `防御倍率 ×${garrison.garrisonDefenseMul || 1}`,
+      `视野半径 ${garrison.visionRadius || 0} 格`
+    ];
+    if (garrison.garrisonSupplyRecovery) effects.push(`每日补给恢复 +${Math.round(garrison.garrisonSupplyRecovery * 100)}%`);
+    if (garrison.garrisonMoraleRecovery) effects.push(`每日士气恢复 +${garrison.garrisonMoraleRecovery}`);
+    for (const text of effects) {
+      const row = document.createElement('div');
+      row.style.cssText = 'font-size:12px;color:#d7deea;padding:3px 0;';
+      row.textContent = text;
+      garrisonSection.appendChild(row);
+    }
+    container.appendChild(garrisonSection);
   }
 
   const farmOperation = buildingSystem.getFarmOperation?.(buildingIndex);
@@ -631,6 +653,7 @@ export function renderBuildingDetailPanel(data, body, pm) {
     if (!upgradeCheck.valid) {
       upgradeBtn.style.cursor = 'default';
       upgradeBtn.style.color = '#666';
+      upgradeBtn.title = upgradeCheck.reason === 'building_garrisoned' ? '请先撤出驻军' : upgradeCheck.reason;
     }
     upgradeSection.appendChild(upgradeBtn);
     container.appendChild(upgradeSection);
@@ -691,6 +714,11 @@ export function renderBuildingDetailPanel(data, body, pm) {
         }
       }
     );
+    if (buildingGarrisoned) {
+      moveBtn.disabled = true;
+      moveBtn.title = '请先撤出驻军';
+      moveBtn.style.cursor = 'default';
+    }
     moveBtn.style.marginTop = '4px';
     container.appendChild(moveBtn);
   }
@@ -708,6 +736,11 @@ export function renderBuildingDetailPanel(data, body, pm) {
         }
       }
     );
+    if (buildingGarrisoned) {
+      demolishBtn.disabled = true;
+      demolishBtn.title = '请先撤出驻军';
+      demolishBtn.style.cursor = 'default';
+    }
     demolishBtn.style.color = '#ff6b6b';
     demolishBtn.style.marginTop = '4px';
     container.appendChild(demolishBtn);

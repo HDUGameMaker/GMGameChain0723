@@ -4237,7 +4237,10 @@
         "unlockEliteUnits": true,
         "armyCapacityBonus": 1,
         "garrisonCapacity": 2,
-        "garrisonDefenseMul": 1.35
+        "garrisonDefenseMul": 1.35,
+        "garrisonSupplyRecovery": 0.2,
+        "garrisonMoraleRecovery": 8,
+        "visionRadius": 9
       },
       "icon": "assets/historical-icons/buildings/castle.svg",
       "imageDetail": "assets/buildings/historical-details/castle.png",
@@ -4332,7 +4335,9 @@
       "housingCapacity": 0,
       "soldierCapacity": 0,
       "uniqueFunction": {
-        "visionRadius": 8,
+        "garrisonCapacity": 1,
+        "garrisonDefenseMul": 1.18,
+        "visionRadius": 4,
         "defensePower": 12
       },
       "icon": "assets/historical-icons/buildings/watch_tower.svg",

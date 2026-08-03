@@ -5,7 +5,7 @@
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
-import { findDeploymentTile } from '../domain/MilitaryDeployment.js';
+import { findDeploymentTile, getDeploymentCandidates } from '../domain/MilitaryDeployment.js';
 import { getArmyCombatPower } from '../utils/FormationUtils.js';
 import { previewStrategicBattle, resolveStrategicBattle } from './CombatResolver.js';
 import { evaluateTrainingEligibility } from './TrainingRules.js';
@@ -442,6 +442,17 @@ export class ArmySystem {
     return army.unitIds.length > 0 && army.unitIds.every(unitId => (this._unitConfig(unitId)?.domain || 'land') !== 'naval');
   }
 
+  isTileOccupiedByBuilding(x, y, { allowGarrisonIndex = null } = {}) {
+    return (this._building?.buildings || []).some((building, buildingIndex) => {
+      if (buildingIndex === allowGarrisonIndex) return false;
+      const config = configRegistry.getBuilding?.(building.buildingId);
+      const width = Math.max(1, Math.floor(Number(config?.footprint?.width) || 1));
+      const height = Math.max(1, Math.floor(Number(config?.footprint?.height) || 1));
+      return x >= building.gridX && x < building.gridX + width
+        && y >= building.gridY && y < building.gridY + height;
+    });
+  }
+
   _buildingDistance(army, building, config) {
     const width = config?.footprint?.width || 1;
     const height = config?.footprint?.height || 1;
@@ -494,6 +505,7 @@ export class ArmySystem {
   _canOccupyForMovement(army, x, y, start) {
     const ground = this._groundAt(x, y);
     if (!ground) return false;
+    if (this.isTileOccupiedByBuilding(x, y)) return false;
     if (army.embarked) return this._isWater(x, y) || (x === start.x && y === start.y);
     if (this._armyIsNaval(army)) return this._isWater(x, y);
     return !this._isWater(x, y);
@@ -536,6 +548,7 @@ export class ArmySystem {
     if (!army) return { ok: false, reason: 'unknown_army' };
     if (army.garrisonBuildingIndex != null) return { ok: false, reason: 'army_garrisoned' };
     if (!Number.isInteger(targetX) || !Number.isInteger(targetY) || !this._groundAt(targetX, targetY)) return { ok: false, reason: 'invalid_target' };
+    if (this.isTileOccupiedByBuilding(targetX, targetY)) return { ok: false, reason: 'tile_occupied_by_building' };
     const targetIsWater = this._isWater(targetX, targetY);
     if ((army.embarked || this._armyIsNaval(army)) !== targetIsWater) return { ok: false, reason: 'incompatible_terrain' };
     const path = this._findPath(army, targetX, targetY);
@@ -583,9 +596,31 @@ export class ArmySystem {
   ungarrisonArmy(armyId) {
     const army = this._findArmy(armyId);
     if (!army || army.garrisonBuildingIndex == null) return { ok: false, reason: 'not_garrisoned' };
+    const building = this._building?.buildings?.[army.garrisonBuildingIndex];
+    const config = building ? configRegistry.getBuilding?.(building.buildingId) : null;
+    if (!building || !config || !this._getMap()) return { ok: false, reason: 'no_ungarrison_tile' };
+    const exit = getDeploymentCandidates(building, config).find(candidate => {
+      if (!this._canOccupyForMovement(army, candidate.x, candidate.y, { x: army.gridX, y: army.gridY })) return false;
+      return !this._armies.some(other => (
+        other.id !== army.id
+        && other.garrisonBuildingIndex == null
+        && other.gridX === candidate.x
+        && other.gridY === candidate.y
+      ));
+    });
+    if (!exit) return { ok: false, reason: 'no_ungarrison_tile' };
+    army.gridX = exit.x;
+    army.gridY = exit.y;
     army.garrisonBuildingIndex = null;
+    army.movePath = [];
+    army.order = { type: 'hold' };
+    this._touch(army);
     this._notify('ungarrison');
-    return { ok: true };
+    return { ok: true, army: this._decorateArmy(army), direction: exit.direction };
+  }
+
+  hasGarrisonAtBuilding(buildingIndex) {
+    return this._armies.some(army => army.garrisonBuildingIndex === buildingIndex);
   }
 
   getArmyDefenseMultiplier(armyId) {
