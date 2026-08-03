@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { configRegistry } from '../../src/core/ConfigRegistry.js';
 import { eventBus } from '../../src/core/EventBus.js';
+import { store } from '../../src/core/Store.js';
 import { ResourceSystem } from '../../src/systems/ResourceSystem.js';
 import { CommerceSystem } from '../../src/systems/CommerceSystem.js';
 
@@ -65,6 +66,15 @@ test('neutral or hostile city-states cannot open automatic trade routes', () => 
   const result = commerce.createTradeRoute('free_market', 'export_food');
   assert.equal(result.ok, false);
   assert.equal(result.reason, 'relation_too_low');
+});
+
+test('federation outcome permanently improves automatic city-state trade value', () => {
+  const { resource, commerce } = createScenario();
+  store.setState({ worldConsequenceModifiers: { tradeValueMul: 1.1 } });
+  commerce.createTradeRoute('free_market', 'export_food');
+  eventBus.emit('dayStart', { day: 2 });
+  assert.equal(resource.getAmount('gold'), 110);
+  store.setState({ worldConsequenceModifiers: {} });
 });
 
 test('luxury workshops run configurable local conversion orders and restore them from saves', () => {

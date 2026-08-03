@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { configRegistry } from '../../src/core/ConfigRegistry.js';
 import { eventBus } from '../../src/core/EventBus.js';
+import { store } from '../../src/core/Store.js';
 import { ColonySystem } from '../../src/systems/ColonySystem.js';
 
 const world = JSON.parse(readFileSync(new URL('../../config/world-factions.json', import.meta.url), 'utf8'));
@@ -74,4 +75,18 @@ test('legacy off-map colonies remain loadable but cannot become new targets', ()
   });
   assert.equal(colony.getColony('old_island').legacyOffmap, true);
   assert.equal(colony.getColonyTargets().some(target => target.id === 'old_island'), false);
+});
+
+test('strategic campaign consequences permanently alter colony governance and income', () => {
+  store._state = { worldConsequenceModifiers: { colonyCompliancePerDay: 1, colonyUnrestPerDay: 1, colonyIncomeMul: 1.15 } };
+  const { colony } = createScenario();
+  const target = cityStates[0];
+  const baseIncome = colony.getColonyTargets().find(candidate => candidate.id === target.id).dailyIncome.resources[0].amount;
+  colony.establishColony(target.id, { policy: 'autonomy' });
+  const before = colony.getColony(target.id);
+  eventBus.emit('dayStart', { day: 2 });
+  const after = colony.getColony(target.id);
+  assert.equal(after.compliance, before.compliance + 2);
+  assert.equal(after.unrest, before.unrest);
+  assert.equal(after.dailyIncome.resources[0].amount, Math.round(baseIncome * 1.15));
 });

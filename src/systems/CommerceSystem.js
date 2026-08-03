@@ -151,7 +151,8 @@ export class CommerceSystem {
 
   _getTradeValueMultiplier() {
     const bonuses = this._era?.getBonuses?.() || {};
-    let multiplier = (bonuses.tradeValueMul || 1) * (bonuses.civilizationYieldMul || 1);
+    const legacy = store.getState('worldConsequenceModifiers') || {};
+    let multiplier = (bonuses.tradeValueMul || 1) * (bonuses.civilizationYieldMul || 1) * (legacy.tradeValueMul || 1);
     for (const depot of this._activeBuildings('trade_depot')) {
       const config = configRegistry.getBuilding?.(depot.buildingId);
       multiplier *= config?.uniqueFunction?.tradeValueMul || 1.12;

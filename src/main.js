@@ -556,6 +556,7 @@ class Game {
     this.systems.commerce.initNew();
     this.systems.army.initNew();
     this.systems.wildSites.initNew();
+    this.systems.quest.enable();
 
     // 初始化事件标记状态（新游戏 = 无已移除标记）
     store.setState({ removedEventMarkers: [] });
@@ -644,6 +645,8 @@ class Game {
     }
     if (saveData.quest) {
       this.systems.quest.restoreState(saveData.quest);
+    } else {
+      this.systems.quest.enable();
     }
     this.systems.army.restoreState(saveData.armyState);
     if (saveData.wildSites) this.systems.wildSites.restoreState(saveData.wildSites);

@@ -52,6 +52,7 @@ export class HeroSystem {
           trigger: heroClass === 'military' ? 'battle_phase' : 'assignment_tick', effects: hero.bonuses || {}
         }],
         icon: hero.iconAsset || (String(hero.icon || '').includes('/') ? hero.icon : `assets/historical-icons/heroes/${hero.id}.svg`),
+        portrait: hero.portrait || `assets/hero-portraits/${hero.id}.png`,
         cost: hero.cost || hero.recruitCost || []
       };
     };
@@ -153,7 +154,10 @@ export class HeroSystem {
     return { ok: true };
   }
 
-  getAssignmentLimit() { return (this._settings.baseAssignmentSlots || 2) + (this._cultureSystem?.getHeroSlotsBonus?.() || 0); }
+  getAssignmentLimit() {
+    const legacySlots = store.getState('worldConsequenceModifiers')?.heroAssignmentSlots || 0;
+    return (this._settings.baseAssignmentSlots || 2) + (this._cultureSystem?.getHeroSlotsBonus?.() || 0) + legacySlots;
+  }
 
   assignHero(id, assignment) {
     const entry = this._recruited[id];
@@ -167,6 +171,7 @@ export class HeroSystem {
     if (assignment && activeCount >= this.getAssignmentLimit()) return { ok: false, reason: '人物任命席位已满' };
     entry.assignment = assignment || null;
     this._notify();
+    if (assignment) eventBus.emit('heroAssigned', { heroId: id, assignment: structuredClone(assignment) });
     return { ok: true };
   }
 

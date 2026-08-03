@@ -32,6 +32,7 @@ class ConfigRegistry {
       'enemies': 'config/enemies.json',
       'culture': 'config/culture.json',
       'quests': 'config/quests.json',
+      'strategicQuests': 'config/strategic_quests.json',
       'colonies': 'config/colonies.json',
       'doctrines': 'config/doctrines.json',
       'territory': 'config/territory.json',
@@ -167,6 +168,18 @@ class ConfigRegistry {
     apply(this._configs.eventsHistorical, 'events');
     apply(this._configs.eaIntegration?.heroes, 'heroes');
     apply(this._configs.eaIntegration?.outposts, 'outposts');
+
+    for (const unit of this._configs.enemies?.units || []) {
+      if (!unit?.id) continue;
+      unit.cardArt ||= `assets/unit-cards/${unit.id}.png`;
+    }
+    for (const hero of [
+      ...(this._configs.eaIntegration?.heroes || []),
+      ...(this._configs.historicalContent?.heroes || [])
+    ]) {
+      if (!hero?.id) continue;
+      hero.portrait ||= `assets/hero-portraits/${hero.id}.png`;
+    }
   }
 
   /**
@@ -369,6 +382,7 @@ class ConfigRegistry {
       console.log(`[ConfigRegistry] 合成配方继承完成: ${mergedCount} 个配方已合并`);
     }
   }
+
 }
 
 // 全局单例

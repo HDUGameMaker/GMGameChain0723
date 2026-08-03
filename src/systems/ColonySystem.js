@@ -92,7 +92,7 @@ export class ColonySystem {
       gridX: target.gridX,
       gridY: target.gridY,
       domain: target.domain,
-      dailyIncome: this._normalizeIncome(target.dailyIncome),
+      dailyIncome: this._applyIncomeLegacy(this._normalizeIncome(target.dailyIncome)),
       defense: 0,
       occupiedDay: store.getState('timeDay') || 1,
       compliance,
@@ -159,11 +159,12 @@ export class ColonySystem {
       tribute: { compliance: -1, unrest: 2 },
       integration: { compliance: 2, unrest: -1 }
     };
+    const legacy = store.getState('worldConsequenceModifiers') || {};
     for (const colony of Object.values(this._occupied)) {
       if (colony.legacyOffmap) continue;
       const delta = deltas[colony.policy] || deltas.autonomy;
-      const compliance = Math.max(0, Math.min(100, (colony.compliance ?? 50) + delta.compliance));
-      const unrest = Math.max(0, Math.min(100, (colony.unrest ?? 50) + delta.unrest));
+      const compliance = Math.max(0, Math.min(100, (colony.compliance ?? 50) + delta.compliance + (legacy.colonyCompliancePerDay || 0)));
+      const unrest = Math.max(0, Math.min(100, (colony.unrest ?? 50) + delta.unrest + (legacy.colonyUnrestPerDay || 0)));
       if (compliance !== colony.compliance || unrest !== colony.unrest) changed = true;
       colony.compliance = compliance;
       colony.unrest = unrest;
@@ -302,7 +303,7 @@ export class ColonySystem {
       gridX: colony.gridX,
       gridY: colony.gridY,
       domain: colony.domain,
-      dailyIncome: this._normalizeIncome(colony.dailyIncome),
+      dailyIncome: this._applyIncomeLegacy(this._normalizeIncome(colony.dailyIncome)),
       defense: loss.defenseGain,
       occupiedDay: store.getState('timeDay') || 1,
       compliance: 40,
@@ -393,6 +394,17 @@ export class ColonySystem {
       resources: (src.resources || [])
         .filter(r => r && r.resourceId && (r.amount || 0) > 0)
         .map(r => ({ resourceId: r.resourceId, amount: Math.floor(r.amount) }))
+    };
+  }
+
+  _applyIncomeLegacy(income) {
+    const multiplier = store.getState('worldConsequenceModifiers')?.colonyIncomeMul || 1;
+    return {
+      population: Math.round(income.population * multiplier),
+      resources: income.resources.map(resource => ({
+        ...resource,
+        amount: Math.round(resource.amount * multiplier)
+      }))
     };
   }
 

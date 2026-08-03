@@ -6,6 +6,12 @@ import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
 
+const STRATEGIC_EVENTS = [
+  'wildSiteBattleResolved', 'armyBattleResolved', 'outpostBattleResolved',
+  'diplomacyAction', 'luxuryTraded', 'colonyEstablished', 'heroRecruited',
+  'heroAssigned', 'techResearched', 'cultureResearched', 'eraAdvanced'
+];
+
 export class QuestSystem {
   constructor() {
     this._quests = [];
@@ -14,6 +20,12 @@ export class QuestSystem {
     this._buildingSystem = null;
     this._roadSystem = null;
     this._enabled = false;
+    this._strategicChapters = [];
+    this._strategicChapterIndex = 0;
+    this._strategicStageIndex = 0;
+    this._strategicProgress = 0;
+    this._awaitingOutcome = false;
+    this._worldConsequences = [];
     this._snapshot = {}; // 任务激活时的基线数据
 
     eventBus.on('roadBuilt', ({ constructing }) => {
@@ -27,6 +39,9 @@ export class QuestSystem {
     eventBus.on('fullscreenToggled', () => this._onAction('toggle_fullscreen'));
     eventBus.on('techResearched', () => this._onAction('research_tech'));
     eventBus.on('cultureResearched', () => this._onAction('research_culture'));
+    for (const eventName of STRATEGIC_EVENTS) {
+      eventBus.on(eventName, payload => this._onStrategicEvent(eventName, payload));
+    }
   }
 
   setBuildingSystem(bs) { this._buildingSystem = bs; }
@@ -35,6 +50,7 @@ export class QuestSystem {
   init() {
     const questsData = configRegistry.get('quests');
     this._quests = questsData?.tutorial || [];
+    this._strategicChapters = configRegistry.get('strategicQuests')?.chapters || [];
     console.log('[QuestSystem] Loaded', this._quests.length, 'tutorial quests');
   }
 
@@ -44,10 +60,52 @@ export class QuestSystem {
   toggle() { if (this._enabled) this.disable(); else this.enable(); }
 
   getActiveQuest() {
-    if (!this._enabled || this._activeIndex < 0 || this._activeIndex >= this._quests.length) return null;
-    const q = this._quests[this._activeIndex];
-    const progress = this._getProgress(q);
-    return { ...q, progress };
+    if (!this._enabled) return null;
+    if (this._activeIndex >= 0 && this._activeIndex < this._quests.length) {
+      const q = this._quests[this._activeIndex];
+      return { ...q, category: 'tutorial', progress: this._getProgress(q) };
+    }
+    return this.getStrategicQuest();
+  }
+
+  getStrategicQuest() {
+    const cursor = this._getStrategicCursor();
+    if (!cursor) return null;
+    const { chapter, stage } = cursor;
+    return {
+      ...stage,
+      category: 'strategic',
+      chapterId: chapter.id,
+      chapterName: chapter.name,
+      chapterDescription: chapter.description || '',
+      progress: { current: this._strategicProgress, target: stage.count || 1 },
+      awaitingOutcome: this._awaitingOutcome,
+      outcomes: this._awaitingOutcome ? (stage.outcomes || []) : [],
+      consequences: this.getWorldConsequences()
+    };
+  }
+
+  getWorldConsequences() { return structuredClone(this._worldConsequences); }
+
+  chooseStrategicOutcome(outcomeId) {
+    const cursor = this._getStrategicCursor();
+    if (!cursor || !this._awaitingOutcome) return { ok: false, reason: 'no_outcome_pending' };
+    const outcome = (cursor.stage.outcomes || []).find(candidate => candidate.id === outcomeId);
+    if (!outcome) return { ok: false, reason: 'unknown_outcome' };
+    this._worldConsequences.push({
+      chapterId: cursor.chapter.id,
+      stageId: cursor.stage.id,
+      outcomeId: outcome.id,
+      name: outcome.name,
+      effects: structuredClone(outcome.effects || {})
+    });
+    this._publishConsequences();
+    eventBus.emit('strategicOutcomeChosen', {
+      chapterId: cursor.chapter.id, stageId: cursor.stage.id, outcomeId: outcome.id,
+      effects: structuredClone(outcome.effects || {})
+    });
+    this._advanceStrategicStage();
+    return { ok: true, consequence: this._worldConsequences.at(-1) };
   }
 
   /** 记录动作（非当前任务类型则忽略） */
@@ -119,10 +177,66 @@ export class QuestSystem {
     this._completed.add(q.id);
     eventBus.emit('questCompleted', { questId: q.id, name: q.name });
     this._startNextQuest();
-    if (this._activeIndex >= 0) {
-      const next = this._quests[this._activeIndex];
-      eventBus.emit('questNewActive', { quest: { ...next, progress: this._getProgress(next) } });
+    const next = this.getActiveQuest();
+    if (next) eventBus.emit('questNewActive', { quest: next });
+  }
+
+  _getStrategicCursor() {
+    const chapter = this._strategicChapters[this._strategicChapterIndex];
+    const stage = chapter?.stages?.[this._strategicStageIndex];
+    return chapter && stage ? { chapter, stage } : null;
+  }
+
+  _matchesWhere(payload, where = {}) {
+    return Object.entries(where).every(([key, expected]) => payload?.[key] === expected);
+  }
+
+  _onStrategicEvent(eventName, payload) {
+    if (!this._enabled || this._awaitingOutcome) return;
+    const cursor = this._getStrategicCursor();
+    if (!cursor || cursor.stage.event !== eventName || !this._matchesWhere(payload, cursor.stage.where)) return;
+    this._strategicProgress += 1;
+    if (this._strategicProgress >= (cursor.stage.count || 1)) {
+      if (cursor.stage.outcomes?.length) {
+        this._awaitingOutcome = true;
+        eventBus.emit('questOutcomeRequired', { quest: this.getStrategicQuest() });
+      } else {
+        eventBus.emit('questCompleted', { questId: cursor.stage.id, name: cursor.stage.name, chapterId: cursor.chapter.id });
+        this._advanceStrategicStage();
+        return;
+      }
     }
+    this._notify();
+  }
+
+  _advanceStrategicStage() {
+    const chapter = this._strategicChapters[this._strategicChapterIndex];
+    this._strategicStageIndex += 1;
+    if (!chapter || this._strategicStageIndex >= (chapter.stages || []).length) {
+      this._strategicChapterIndex += 1;
+      this._strategicStageIndex = 0;
+    }
+    this._strategicProgress = 0;
+    this._awaitingOutcome = false;
+    const next = this.getStrategicQuest();
+    this._notify();
+    if (next) eventBus.emit('questNewActive', { quest: next });
+    else eventBus.emit('strategicCampaignCompleted', { consequences: this.getWorldConsequences() });
+  }
+
+  _publishConsequences() {
+    const modifiers = {};
+    for (const consequence of this._worldConsequences) {
+      for (const [key, value] of Object.entries(consequence.effects || {})) {
+        if (key.endsWith('Mul')) modifiers[key] = (modifiers[key] ?? 1) * value;
+        else modifiers[key] = (modifiers[key] || 0) + value;
+      }
+    }
+    store.setState({
+      worldConsequences: this.getWorldConsequences(),
+      worldConsequenceModifiers: modifiers,
+      questVersion: Date.now()
+    });
   }
 
   _getProgress(q) {
@@ -226,7 +340,14 @@ export class QuestSystem {
       activeIndex: this._activeIndex,
       completed: [...this._completed],
       expeditionCount: store.getState('questExpeditionCount') || 0,
-      snapshot: this._snapshot
+      snapshot: this._snapshot,
+      strategic: {
+        chapterIndex: this._strategicChapterIndex,
+        stageIndex: this._strategicStageIndex,
+        progress: this._strategicProgress,
+        awaitingOutcome: this._awaitingOutcome,
+        consequences: this.getWorldConsequences()
+      }
     };
   }
 
@@ -236,6 +357,12 @@ export class QuestSystem {
     this._activeIndex = state.activeIndex ?? -1;
     this._completed = new Set(state.completed || []);
     this._snapshot = state.snapshot || {};
+    this._strategicChapterIndex = Math.max(0, state.strategic?.chapterIndex || 0);
+    this._strategicStageIndex = Math.max(0, state.strategic?.stageIndex || 0);
+    this._strategicProgress = Math.max(0, state.strategic?.progress || 0);
+    this._awaitingOutcome = Boolean(state.strategic?.awaitingOutcome);
+    this._worldConsequences = structuredClone(state.strategic?.consequences || []);
+    this._publishConsequences();
     store.setState({ questExpeditionCount: state.expeditionCount || 0 });
     const active = this._quests[this._activeIndex];
     if (this._enabled && active && this._checkCompletion(active)) {
