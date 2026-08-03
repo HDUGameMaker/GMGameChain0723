@@ -1,0 +1,167 @@
+[
+  {
+    "slug": "logging_camp",
+    "source": "assets/source-boards/core-buildings-board.png",
+    "output": "assets/buildings/overhaul/logging_camp.png",
+    "box": {
+      "x": 0,
+      "y": 0,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "stope",
+    "source": "assets/source-boards/core-buildings-board.png",
+    "output": "assets/buildings/overhaul/stope.png",
+    "box": {
+      "x": 314,
+      "y": 0,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "farm",
+    "source": "assets/source-boards/core-buildings-board.png",
+    "output": "assets/buildings/overhaul/farm.png",
+    "box": {
+      "x": 627,
+      "y": 0,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "gold_mint",
+    "source": "assets/source-boards/core-buildings-board.png",
+    "output": "assets/buildings/overhaul/gold_mint.png",
+    "box": {
+      "x": 940,
+      "y": 0,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "warehouse",
+    "source": "assets/source-boards/core-buildings-board.png",
+    "output": "assets/buildings/overhaul/warehouse.png",
+    "box": {
+      "x": 0,
+      "y": 314,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "supply_post",
+    "source": "assets/source-boards/core-buildings-board.png",
+    "output": "assets/buildings/overhaul/supply_post.png",
+    "box": {
+      "x": 314,
+      "y": 314,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "strategy_archive",
+    "source": "assets/source-boards/core-buildings-board.png",
+    "output": "assets/buildings/overhaul/strategy_archive.png",
+    "box": {
+      "x": 627,
+      "y": 314,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "logging_camp_t2",
+    "source": "assets/source-boards/core-buildings-board.png",
+    "output": "assets/buildings/overhaul/logging_camp_t2.png",
+    "box": {
+      "x": 940,
+      "y": 314,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "stope_t2",
+    "source": "assets/source-boards/core-buildings-board.png",
+    "output": "assets/buildings/overhaul/stope_t2.png",
+    "box": {
+      "x": 0,
+      "y": 627,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "farm_t2",
+    "source": "assets/source-boards/core-buildings-board.png",
+    "output": "assets/buildings/overhaul/farm_t2.png",
+    "box": {
+      "x": 314,
+      "y": 627,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "gold_mint_t2",
+    "source": "assets/source-boards/core-buildings-board.png",
+    "output": "assets/buildings/overhaul/gold_mint_t2.png",
+    "box": {
+      "x": 627,
+      "y": 627,
+      "width": 313,
+      "height": 313
+    }
+  },
+  {
+    "slug": "dock",
+    "source": "assets/source-boards/core-buildings-board.png",
+    "output": "assets/buildings/overhaul/dock.png",
+    "box": {
+      "x": 940,
+      "y": 627,
+      "width": 314,
+      "height": 313
+    }
+  },
+  {
+    "slug": "shipyard",
+    "source": "assets/source-boards/core-buildings-board.png",
+    "output": "assets/buildings/overhaul/shipyard.png",
+    "box": {
+      "x": 0,
+      "y": 940,
+      "width": 314,
+      "height": 314
+    }
+  },
+  {
+    "slug": "coastal_watch",
+    "source": "assets/source-boards/core-buildings-board.png",
+    "output": "assets/buildings/overhaul/coastal_watch.png",
+    "box": {
+      "x": 314,
+      "y": 940,
+      "width": 313,
+      "height": 314
+    }
+  },
+  {
+    "slug": "tavern",
+    "source": "assets/source-boards/core-buildings-board.png",
+    "output": "assets/buildings/overhaul/tavern.png",
+    "box": {
+      "x": 627,
+      "y": 940,
+      "width": 313,
+      "height": 314
+    }
+  }
+]

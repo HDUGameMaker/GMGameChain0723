@@ -18,6 +18,7 @@ log/*
 .playwright-cli/
 node_modules/
 .codex-tools/
+tmp/imagegen/
 assets/generated/
 test-results/
 playwright-report/

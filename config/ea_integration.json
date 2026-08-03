@@ -230,12 +230,13 @@
   "buildings": [
     {
       "id": "dock",
+      "imageDetail": "assets/buildings/overhaul/dock.png",
+      "mapIcon": "assets/buildings/overhaul/dock.png",
       "category": "naval",
       "eraId": "primitive",
       "name": "码头",
       "description": "建在水面并连接陆路，是训练和部署早期海军的基础设施。",
       "icon": "",
-      "mapIcon": "",
       "footprint": {
         "width": 2,
         "height": 2
@@ -281,12 +282,13 @@
     },
     {
       "id": "shipyard",
+      "imageDetail": "assets/buildings/overhaul/shipyard.png",
+      "mapIcon": "assets/buildings/overhaul/shipyard.png",
       "category": "naval",
       "eraId": "classical",
       "name": "造船厂",
       "description": "大型港口工场，提供更高海军容量和重型舰艇训练能力。",
       "icon": "",
-      "mapIcon": "",
       "footprint": {
         "width": 3,
         "height": 2
@@ -333,12 +335,13 @@
     },
     {
       "id": "coastal_watch",
+      "imageDetail": "assets/buildings/overhaul/coastal_watch.png",
+      "mapIcon": "assets/buildings/overhaul/coastal_watch.png",
       "category": "defense",
       "eraId": "primitive",
       "name": "海防哨塔",
       "description": "监视近岸水域，提前发现海盗与海兽。",
       "icon": "",
-      "mapIcon": "",
       "footprint": {
         "width": 1,
         "height": 1
@@ -379,12 +382,13 @@
     },
     {
       "id": "tavern",
+      "imageDetail": "assets/buildings/overhaul/tavern.png",
+      "mapIcon": "assets/buildings/overhaul/tavern.png",
       "category": "civic",
       "eraId": "primitive",
       "name": "酒馆",
       "description": "汇聚传闻、使者和传奇人物；建成后可招募并任命历史英雄。",
       "icon": "",
-      "mapIcon": "",
       "footprint": {
         "width": 2,
         "height": 2

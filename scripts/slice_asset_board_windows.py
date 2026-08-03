@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -20,7 +21,56 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--grid', required=True, help='COLSxROWS')
     parser.add_argument('--names', required=True, help='comma-separated slugs')
     parser.add_argument('--contact-sheet', action='store_true')
+    parser.add_argument('--chroma-key', help='hex RGB key removed with a soft alpha matte')
+    parser.add_argument('--require-alpha', action='store_true')
+    parser.add_argument('--reject-checkerboard', action='store_true')
     return parser.parse_args()
+
+
+def remove_chroma(asset: Image.Image, hex_color: str) -> Image.Image:
+    key = tuple(int(hex_color.lstrip('#')[offset:offset + 2], 16) for offset in (0, 2, 4))
+    if len(key) != 3:
+        raise SystemExit('--chroma-key must be a six-digit RGB hex color')
+    result = asset.convert('RGBA')
+    pixels = []
+    for red, green, blue, alpha in result.get_flattened_data():
+        distance = math.sqrt((red - key[0]) ** 2 + (green - key[1]) ** 2 + (blue - key[2]) ** 2)
+        matte = max(0.0, min(1.0, (distance - 54.0) / 76.0))
+        if matte <= 0.0:
+            pixels.append((0, 0, 0, 0))
+            continue
+        if matte < 1.0:
+            red = round(max(0, min(255, (red - (1.0 - matte) * key[0]) / matte)))
+            green = round(max(0, min(255, (green - (1.0 - matte) * key[1]) / matte)))
+            blue = round(max(0, min(255, (blue - (1.0 - matte) * key[2]) / matte)))
+        pixels.append((red, green, blue, round(alpha * matte)))
+    result.putdata(pixels)
+    return result
+
+
+def looks_like_baked_checkerboard(asset: Image.Image) -> bool:
+    rgb = asset.convert('RGB')
+    width, height = rgb.size
+    samples = [rgb.getpixel((x, y)) for y in range(0, height, max(1, height // 12))
+               for x in range(0, width, max(1, width // 12))]
+    neutral_bright = [pixel for pixel in samples if max(pixel) - min(pixel) < 7 and min(pixel) > 205]
+    buckets = {tuple(round(channel / 8) * 8 for channel in pixel) for pixel in neutral_bright}
+    return len(neutral_bright) > len(samples) * 0.45 and len(buckets) >= 2
+
+
+def validate_asset(asset: Image.Image, name: str, require_alpha: bool, reject_checkerboard: bool) -> None:
+    rgba = asset.convert('RGBA')
+    width, height = rgba.size
+    alphas = rgba.getchannel('A')
+    opaque = sum(1 for alpha in alphas.get_flattened_data() if alpha >= 24)
+    coverage = opaque / (width * height)
+    if require_alpha:
+        corners = [alphas.getpixel((0, 0)), alphas.getpixel((width - 1, 0)),
+                   alphas.getpixel((0, height - 1)), alphas.getpixel((width - 1, height - 1))]
+        if max(corners) > 12 or not 0.04 <= coverage <= 0.88:
+            raise SystemExit(f'{name}: invalid alpha matte (coverage={coverage:.3f}, corners={corners})')
+    if reject_checkerboard and looks_like_baked_checkerboard(asset):
+        raise SystemExit(f'{name}: probable baked checkerboard background')
 
 
 def main() -> int:
@@ -43,6 +93,9 @@ def main() -> int:
         row, col = divmod(index, cols)
         box = (x_edges[col], y_edges[row], x_edges[col + 1], y_edges[row + 1])
         asset = source.crop(box)
+        if args.chroma_key:
+            asset = remove_chroma(asset, args.chroma_key)
+        validate_asset(asset, name, args.require_alpha, args.reject_checkerboard)
         destination = output_dir / f'{name}.png'
         asset.save(destination, optimize=True)
         manifest.append({

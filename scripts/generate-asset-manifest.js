@@ -1,88 +1,59 @@
-/**
- * generate-asset-manifest.js
- * 递归扫描 assets/ 目录，生成 assets/manifest.json
- * 用法: node scripts/generate-asset-manifest.js
- *
- * 浏览器端 JavaScript 无法直接扫描文件系统，
- * 通过此脚本生成清单文件供游戏/编辑器在运行时读取。
- */
-
+#!/usr/bin/env node
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { auditRuntimeArt } from './audit-runtime-art.mjs';
 
-const ASSETS_DIR = path.join(__dirname, '..', 'assets');
-const OUTPUT_FILE = path.join(ASSETS_DIR, 'manifest.json');
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const assetsDirectory = path.join(projectRoot, 'assets');
+const outputFile = path.join(assetsDirectory, 'manifest.json');
+const imageExtensions = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.bmp']);
 
-// 支持的图片扩展名
-const IMAGE_EXTENSIONS = new Set([
-  '.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.bmp'
-]);
-
-/**
- * 递归扫描目录，返回所有文件路径（相对于 assets/ 根目录）
- */
-function scanDir(dir, baseDir, results = []) {
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      scanDir(fullPath, baseDir, results);
-    } else if (entry.isFile()) {
-      const ext = path.extname(entry.name).toLowerCase();
-      if (IMAGE_EXTENSIONS.has(ext)) {
-        // 存储相对于 assets/ 的路径
-        const relPath = path.relative(baseDir, fullPath).replace(/\\/g, '/');
-        results.push(relPath);
-      }
+function scanDirectory(directory, results = []) {
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const absolutePath = path.join(directory, entry.name);
+    if (entry.isDirectory()) scanDirectory(absolutePath, results);
+    else if (entry.isFile() && imageExtensions.has(path.extname(entry.name).toLowerCase())) {
+      results.push(path.relative(assetsDirectory, absolutePath).replaceAll('\\', '/'));
     }
   }
   return results;
 }
 
-/**
- * 按子目录分类
- */
 function categorize(files) {
   const categories = {};
-  for (const file of files) {
-    const dir = path.dirname(file) || '_root';
-    if (!categories[dir]) {
-      categories[dir] = [];
-    }
-    categories[dir].push(file);
-  }
+  for (const file of files) (categories[path.posix.dirname(file)] ||= []).push(file);
   return categories;
 }
 
-function generate() {
-  if (!fs.existsSync(ASSETS_DIR)) {
-    console.error(`❌ assets/ 目录不存在: ${ASSETS_DIR}`);
-    process.exit(1);
-  }
+function describeFile(relativePath) {
+  const absolutePath = path.join(assetsDirectory, relativePath);
+  const bytes = fs.readFileSync(absolutePath);
+  return {
+    path: relativePath,
+    bytes: bytes.length,
+    sha256: createHash('sha256').update(bytes).digest('hex')
+  };
+}
 
-  const allFiles = scanDir(ASSETS_DIR, ASSETS_DIR);
-  const categories = categorize(allFiles);
-
+async function generate() {
+  if (!fs.existsSync(assetsDirectory)) throw new Error(`assets directory does not exist: ${assetsDirectory}`);
+  const files = scanDirectory(assetsDirectory).sort();
+  const runtimeArt = await auditRuntimeArt();
   const manifest = {
     generated: new Date().toISOString(),
     basePath: 'assets/',
-    totalFiles: allFiles.length,
-    categories,
-    files: allFiles
+    totalFiles: files.length,
+    categories: categorize(files),
+    files,
+    integrity: files.map(describeFile),
+    runtimeArtSummary: runtimeArt.summary
   };
-
-  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(manifest, null, 2), 'utf-8');
-  console.log(`✅ 资源清单已生成: ${OUTPUT_FILE}`);
-  console.log(`   共 ${allFiles.length} 个图片文件`);
-  for (const [cat, files] of Object.entries(categories)) {
-    console.log(`   ${cat}/ — ${files.length} 个文件`);
-    for (const f of files) {
-      console.log(`     • ${f}`);
-    }
-  }
+  fs.writeFileSync(outputFile, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  console.log(`Asset manifest generated: ${outputFile}`);
+  console.log(`Images: ${files.length}; runtime art: ${JSON.stringify(runtimeArt.summary.statuses)}`);
 }
 
-generate();
+await generate();

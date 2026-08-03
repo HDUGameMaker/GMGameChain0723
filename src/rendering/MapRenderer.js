@@ -222,6 +222,12 @@ export class MapRenderer {
         }
       }
     }
+    for (const definition of Object.values(configRegistry.get('resourceNodes')?.types || {})) {
+      if (definition.mapArt) tasks.push(loadOne(definition.mapArt));
+    }
+    for (const building of configRegistry.get('buildings') || []) {
+      if (building.mapIcon) tasks.push(loadOne(building.mapIcon));
+    }
     if (tasks.length === 0) return;
 
     try {
@@ -540,14 +546,26 @@ export class MapRenderer {
       bg.circle(x + ts / 2, y + ts / 2, ts * 0.28);
       bg.stroke({ color: 0xf6e7b0, alpha: 0.9, width: 2 });
       container.addChild(bg);
-      const icon = new PIXI.Text({
-        text: definition.icon || '◆',
-        style: { fontSize: Math.max(16, ts * 0.38), fill: 0xffffff, align: 'center' }
-      });
-      icon.anchor.set(0.5);
-      icon.x = x + ts / 2;
-      icon.y = y + ts / 2;
-      container.addChild(icon);
+      const texture = definition.mapArt ? this._getTexture(definition.mapArt) : null;
+      if (texture?.width > 0 && texture?.height > 0) {
+        const sprite = new PIXI.Sprite(texture);
+        sprite.anchor.set(0.5);
+        sprite.x = x + ts / 2;
+        sprite.y = y + ts / 2;
+        const size = ts * 0.72;
+        sprite.scale.set(size / texture.width, size / texture.height);
+        sprite.alpha = memoryAlpha * (node.developedByBuildingId ? 0.52 : 1);
+        container.addChild(sprite);
+      } else {
+        const icon = new PIXI.Text({
+          text: definition.icon || '◆',
+          style: { fontSize: Math.max(16, ts * 0.38), fill: 0xffffff, align: 'center' }
+        });
+        icon.anchor.set(0.5);
+        icon.x = x + ts / 2;
+        icon.y = y + ts / 2;
+        container.addChild(icon);
+      }
       if (node.developedByBuildingId) {
         const marker = new PIXI.Text({ text: '⚒', style: { fontSize: Math.max(10, ts * 0.2), fill: 0xffef9d } });
         marker.anchor.set(0.5);

@@ -53,6 +53,8 @@
   },
   {
     "id": "logging_camp",
+    "imageDetail": "assets/buildings/overhaul/logging_camp.png",
+    "mapIcon": "assets/buildings/overhaul/logging_camp.png",
     "category": "gathering",
     "eraId": "primitive",
     "name": "伐木集散点",
@@ -82,6 +84,8 @@
   },
   {
     "id": "stope",
+    "imageDetail": "assets/buildings/overhaul/stope.png",
+    "mapIcon": "assets/buildings/overhaul/stope.png",
     "category": "gathering",
     "eraId": "primitive",
     "name": "采石场",
@@ -111,6 +115,8 @@
   },
   {
     "id": "farm",
+    "imageDetail": "assets/buildings/overhaul/farm.png",
+    "mapIcon": "assets/buildings/overhaul/farm.png",
     "category": "agriculture",
     "eraId": "primitive",
     "name": "农田",
@@ -139,6 +145,8 @@
   },
   {
     "id": "gold_mint",
+    "imageDetail": "assets/buildings/overhaul/gold_mint.png",
+    "mapIcon": "assets/buildings/overhaul/gold_mint.png",
     "category": "commerce",
     "eraId": "primitive",
     "name": "铸币所",
@@ -172,6 +180,8 @@
   },
   {
     "id": "warehouse",
+    "imageDetail": "assets/buildings/overhaul/warehouse.png",
+    "mapIcon": "assets/buildings/overhaul/warehouse.png",
     "category": "administration",
     "eraId": "primitive",
     "name": "大本营",
@@ -197,13 +207,13 @@
   },
   {
     "id": "supply_post",
+    "imageDetail": "assets/buildings/overhaul/supply_post.png",
+    "mapIcon": "assets/buildings/overhaul/supply_post.png",
     "category": "administration",
     "eraId": "primitive",
     "name": "补给站",
     "description": "物资调度点，为邻近的基础采集建筑提供产出加成。",
     "icon": "",
-    "mapIcon": "",
-    "imageDetail": "",
     "tags": ["logistics"],
     "mapIconLayout": { "scaleX": 1, "scaleY": 1, "offsetX": 0, "offsetY": 0 },
     "footprint": { "width": 1, "height": 1 },
@@ -224,6 +234,8 @@
   },
   {
     "id": "strategy_archive",
+    "imageDetail": "assets/buildings/overhaul/strategy_archive.png",
+    "mapIcon": "assets/buildings/overhaul/strategy_archive.png",
     "category": "research",
     "eraId": "primitive",
     "name": "战略档案馆",
@@ -247,6 +259,8 @@
   },
   {
     "id": "logging_camp_t2",
+    "imageDetail": "assets/buildings/overhaul/logging_camp_t2.png",
+    "mapIcon": "assets/buildings/overhaul/logging_camp_t2.png",
     "category": "gathering",
     "eraId": "primitive",
     "name": "伐木场",
@@ -278,6 +292,8 @@
   },
   {
     "id": "stope_t2",
+    "imageDetail": "assets/buildings/overhaul/stope_t2.png",
+    "mapIcon": "assets/buildings/overhaul/stope_t2.png",
     "category": "gathering",
     "eraId": "primitive",
     "name": "深矿",
@@ -309,6 +325,8 @@
   },
   {
     "id": "farm_t2",
+    "imageDetail": "assets/buildings/overhaul/farm_t2.png",
+    "mapIcon": "assets/buildings/overhaul/farm_t2.png",
     "category": "agriculture",
     "eraId": "primitive",
     "name": "灌溉农田",
@@ -339,6 +357,8 @@
   },
   {
     "id": "gold_mint_t2",
+    "imageDetail": "assets/buildings/overhaul/gold_mint_t2.png",
+    "mapIcon": "assets/buildings/overhaul/gold_mint_t2.png",
     "category": "commerce",
     "eraId": "primitive",
     "name": "精炼铸币所",

@@ -1,0 +1,46 @@
+[
+  {
+    "slug": "wood",
+    "source": "assets/source-boards/common-resource-nodes-board.png",
+    "output": "assets/resource-nodes/wood.png",
+    "box": {
+      "x": 0,
+      "y": 0,
+      "width": 627,
+      "height": 627
+    }
+  },
+  {
+    "slug": "stone",
+    "source": "assets/source-boards/common-resource-nodes-board.png",
+    "output": "assets/resource-nodes/stone.png",
+    "box": {
+      "x": 627,
+      "y": 0,
+      "width": 627,
+      "height": 627
+    }
+  },
+  {
+    "slug": "food",
+    "source": "assets/source-boards/common-resource-nodes-board.png",
+    "output": "assets/resource-nodes/food.png",
+    "box": {
+      "x": 0,
+      "y": 627,
+      "width": 627,
+      "height": 627
+    }
+  },
+  {
+    "slug": "gold",
+    "source": "assets/source-boards/common-resource-nodes-board.png",
+    "output": "assets/resource-nodes/gold.png",
+    "box": {
+      "x": 627,
+      "y": 627,
+      "width": 627,
+      "height": 627
+    }
+  }
+]
