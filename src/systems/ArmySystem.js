@@ -6,7 +6,7 @@ import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
 import { getArmyCombatPower } from '../utils/FormationUtils.js';
-import { resolvePhasedArmyBattle } from './CombatResolver.js';
+import { previewStrategicBattle, resolveStrategicBattle } from './CombatResolver.js';
 
 export class ArmySystem {
   constructor() {
@@ -14,6 +14,8 @@ export class ArmySystem {
     this._availableUnits = {};
     this._nextId = 1;
     this._battleHistory = [];
+    this._nextBattleId = 1;
+    this._resolvedBattleIds = new Set();
     this._building = null;
     this._hero = null;
     this._culture = null;
@@ -34,6 +36,8 @@ export class ArmySystem {
     this._availableUnits = {};
     this._nextId = 1;
     this._battleHistory = [];
+    this._nextBattleId = 1;
+    this._resolvedBattleIds = new Set();
     this._notify('init');
   }
 
@@ -69,6 +73,7 @@ export class ArmySystem {
     const start = position && Number.isFinite(position.x) && Number.isFinite(position.y) ? position : this._defaultPosition();
     const army = {
       id: `army_${this._nextId++}`,
+      ownerId: 'player',
       name: String(name || `第${this._armies.length + 1}军团`),
       unitIds: [],
       formationId: null,
@@ -80,7 +85,9 @@ export class ArmySystem {
       supply: 1,
       embarked: false,
       garrisonBuildingIndex: null,
-      movePath: []
+      movePath: [],
+      order: { type: 'hold' },
+      revision: 0
     };
     this._armies.push(army);
     this._notify('create');
@@ -140,6 +147,7 @@ export class ArmySystem {
     }
     for (let index = 0; index < count; index += 1) army.unitIds.push(unitId);
     this._availableUnits[unitId] -= count;
+    this._touch(army);
     this._notify('composition');
     return { ok: true, army: this._decorateArmy(army) };
   }
@@ -195,6 +203,7 @@ export class ArmySystem {
     if (!army) return { ok: false, reason: 'unknown_army' };
     if (tacticId && !this.getTactics().some(tactic => tactic.id === tacticId)) return { ok: false, reason: 'unknown_tactic' };
     army.tacticId = tacticId || null;
+    this._touch(army);
     this._notify('tactic');
     return { ok: true };
   }
@@ -336,6 +345,8 @@ export class ArmySystem {
     const path = this._findPath(army, targetX, targetY);
     if (!path.length && (army.gridX !== targetX || army.gridY !== targetY)) return { ok: false, reason: 'no_path' };
     army.movePath = path;
+    army.order = path.length ? { type: 'move', target: { x: targetX, y: targetY } } : { type: 'hold' };
+    this._touch(army);
     this._notify('move_order');
     return { ok: true, path: structuredClone(path) };
   }
@@ -347,6 +358,8 @@ export class ArmySystem {
       const next = army.movePath.shift();
       army.gridX = next.x;
       army.gridY = next.y;
+      if (!army.movePath.length) army.order = { type: 'hold' };
+      this._touch(army);
       changed = true;
       eventBus.emit('armyMoved', { armyId: army.id, gridX: army.gridX, gridY: army.gridY, remaining: army.movePath.length });
     }
@@ -417,45 +430,79 @@ export class ArmySystem {
     if (changed) this._notify('garrison_resupply');
   }
 
-  resolveEngagement(attackerId, defenderId, context = {}) {
+  previewEngagement(attackerId, defenderId, context = {}) {
     const attacker = this._findArmy(attackerId);
     const defender = this._findArmy(defenderId);
     if (!attacker || !defender) return { ok: false, reason: 'unknown_army' };
     if (!attacker.unitIds.length || !defender.unitIds.length) return { ok: false, reason: 'empty_army' };
-    const result = resolvePhasedArmyBattle(
+    const battleId = `battle_${this._nextBattleId}`;
+    const battleContext = {
+      ...structuredClone(context),
+      battleId,
+      campaignSeed: context.campaignSeed || 'campaign_default',
+      attackerDefenseMultiplier: this.getArmyDefenseMultiplier(attackerId),
+      defenderDefenseMultiplier: this.getArmyDefenseMultiplier(defenderId)
+    };
+    const preview = previewStrategicBattle(
       attacker,
       defender,
       configRegistry.get('enemies')?.units || [],
       this.getTactics(),
-      {
-        ...context,
-        attackerDefenseMultiplier: this.getArmyDefenseMultiplier(attackerId),
-        defenderDefenseMultiplier: this.getArmyDefenseMultiplier(defenderId)
-      }
+      battleContext
+    );
+    return {
+      ok: true,
+      battleId,
+      attackerId,
+      defenderId,
+      expectedRevisions: { attacker: attacker.revision, defender: defender.revision },
+      context: battleContext,
+      preview
+    };
+  }
+
+  commitEngagement(prepared) {
+    if (!prepared?.ok || !prepared.battleId) return { ok: false, reason: 'invalid_battle_preview' };
+    if (this._resolvedBattleIds.has(prepared.battleId)) return { ok: false, reason: 'battle_already_resolved' };
+    const attacker = this._findArmy(prepared.attackerId);
+    const defender = this._findArmy(prepared.defenderId);
+    if (!attacker || !defender) return { ok: false, reason: 'unknown_army' };
+    if (attacker.revision !== prepared.expectedRevisions?.attacker || defender.revision !== prepared.expectedRevisions?.defender) {
+      return { ok: false, reason: 'stale_army_revision' };
+    }
+    const result = resolveStrategicBattle(
+      structuredClone(attacker),
+      structuredClone(defender),
+      configRegistry.get('enemies')?.units || [],
+      this.getTactics(),
+      prepared.context
     );
     this._applyCasualties(attacker, result.casualties.attacker);
     this._applyCasualties(defender, result.casualties.defender);
-    attacker.supply = Math.max(0.25, attacker.supply - 0.15);
-    defender.supply = Math.max(0.25, defender.supply - 0.15);
-    if (result.winner === 'attacker') {
-      attacker.morale = Math.min(100, attacker.morale + 4);
-      defender.morale = Math.max(0, defender.morale - 20);
-    } else if (result.winner === 'defender') {
-      defender.morale = Math.min(100, defender.morale + 4);
-      attacker.morale = Math.max(0, attacker.morale - 20);
-    } else {
-      attacker.morale = Math.max(0, attacker.morale - 10);
-      defender.morale = Math.max(0, defender.morale - 10);
-    }
+    attacker.supply = Math.max(0.25, Math.min(1.25, attacker.supply + result.supplyDelta.attacker));
+    defender.supply = Math.max(0.25, Math.min(1.25, defender.supply + result.supplyDelta.defender));
+    attacker.morale = Math.max(0, Math.min(100, attacker.morale + result.moraleDelta.attacker));
+    defender.morale = Math.max(0, Math.min(100, defender.morale + result.moraleDelta.defender));
+    attacker.order = result.retreat.attacker ? { type: 'return' } : { type: 'hold' };
+    defender.order = result.retreat.defender ? { type: 'return' } : { type: 'hold' };
+    this._touch(attacker);
+    this._touch(defender);
     if (!attacker.unitIds.length && attacker.heroId) this._hero?.injureHero?.(attacker.heroId);
     if (!defender.unitIds.length && defender.heroId) this._hero?.injureHero?.(defender.heroId);
-    const record = { id: `battle_${Date.now()}_${this._battleHistory.length}`, attackerId, defenderId, ...result };
+    const record = { id: prepared.battleId, attackerId: attacker.id, defenderId: defender.id, ...result };
     this._battleHistory.push(record);
     this._battleHistory = this._battleHistory.slice(-20);
+    this._resolvedBattleIds.add(prepared.battleId);
+    this._nextBattleId += 1;
     this._notify('battle');
     eventBus.emit('armyBattleResolved', structuredClone(record));
     eventBus.emit('combatBroadcast', { message: `⚔️ ${attacker.name}与${defender.name}交战：${result.winner === 'attacker' ? attacker.name + '获胜' : result.winner === 'defender' ? defender.name + '获胜' : '双方战平'}` });
     return { ok: true, ...structuredClone(record) };
+  }
+
+  resolveEngagement(attackerId, defenderId, context = {}) {
+    const prepared = this.previewEngagement(attackerId, defenderId, context);
+    return prepared.ok ? this.commitEngagement(prepared) : prepared;
   }
 
   _applyCasualties(army, count) {
@@ -515,7 +562,8 @@ export class ArmySystem {
       nextId: this._nextId,
       armies: structuredClone(this._armies),
       availableUnits: { ...this._availableUnits },
-      battleHistory: structuredClone(this._battleHistory)
+      battleHistory: structuredClone(this._battleHistory),
+      nextBattleId: this._nextBattleId
     };
   }
 
@@ -523,6 +571,7 @@ export class ArmySystem {
     const validUnits = new Set((configRegistry.get('enemies')?.units || []).map(unit => unit.id));
     this._armies = (state?.armies || []).map((army, index) => ({
       id: String(army.id || `army_${index + 1}`),
+      ownerId: String(army.ownerId || 'player'),
       name: String(army.name || `第${index + 1}军团`),
       unitIds: (army.unitIds || []).filter(id => validUnits.has(id)),
       formationId: army.formationId || null,
@@ -534,12 +583,20 @@ export class ArmySystem {
       supply: Math.max(0, Math.min(1.25, Number(army.supply) || 1)),
       embarked: army.embarked === true,
       garrisonBuildingIndex: Number.isInteger(army.garrisonBuildingIndex) ? army.garrisonBuildingIndex : null,
-      movePath: Array.isArray(army.movePath) ? structuredClone(army.movePath) : []
+      movePath: Array.isArray(army.movePath) ? structuredClone(army.movePath) : [],
+      order: army.order && typeof army.order === 'object' ? structuredClone(army.order) : { type: 'hold' },
+      revision: Math.max(0, Math.floor(Number(army.revision) || 0))
     }));
     this._availableUnits = Object.fromEntries(Object.entries(state?.availableUnits || {}).filter(([id]) => validUnits.has(id)).map(([id, count]) => [id, Math.max(0, Math.floor(Number(count) || 0))]));
     this._nextId = Math.max(1, Math.floor(state?.nextId || this._armies.length + 1));
     this._battleHistory = Array.isArray(state?.battleHistory) ? structuredClone(state.battleHistory).slice(-20) : [];
+    this._nextBattleId = Math.max(1, Math.floor(Number(state?.nextBattleId) || this._battleHistory.length + 1));
+    this._resolvedBattleIds = new Set(this._battleHistory.map(record => record.id));
     this._notify('restore');
+  }
+
+  _touch(army) {
+    army.revision = Math.max(0, Math.floor(Number(army.revision) || 0)) + 1;
   }
 
   _notify(reason) {

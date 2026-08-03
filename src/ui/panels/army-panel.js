@@ -339,14 +339,19 @@ export function renderArmyPanel(data, body, pm) {
         opponentSelect.appendChild(option);
       }
       const battleButton = document.createElement('button');
-      battleButton.textContent = '开始交战';
+      battleButton.textContent = '预估并交战';
       battleButton.style.cssText = 'padding:4px 9px;border:1px solid #9a5555;border-radius:5px;background:#612f35;color:#ffe8e8;cursor:pointer;';
       battleButton.addEventListener('click', async () => {
-        if (!await pm.confirm('交战会造成真实伤亡、士气与补给损失，是否继续？')) return;
-        const result = _armySystem()?.resolveEngagement?.(army.id, opponentSelect.value);
+        const prepared = _armySystem()?.previewEngagement?.(army.id, opponentSelect.value);
+        if (!prepared?.ok) return pm.alert(prepared?.reason || '无法推演');
+        const preview = prepared.preview;
+        const outlook = preview.outlook === 'attacker_advantage' ? '我方占优' : preview.outlook === 'defender_advantage' ? '对方占优' : '胜负接近';
+        const casualtyText = `预计伤亡：我方 ${preview.casualtyRanges.attacker.join('–')}，对方 ${preview.casualtyRanges.defender.join('–')}`;
+        if (!await pm.confirm(`${outlook}（战力 ${preview.attackerPower} / ${preview.defenderPower}）\n${casualtyText}\n交战会真实写回伤亡、士气与补给，是否继续？`)) return;
+        const result = _armySystem()?.commitEngagement?.(prepared);
         if (!result?.ok) return pm.alert(result?.reason || '无法交战');
-        const phaseLines = result.phases.map(phase => `${phase.name}：${phase.attackerPower} / ${phase.defenderPower}`).join('\n');
-        await pm.alert(`${result.winner === 'attacker' ? army.name + '获胜' : result.winner === 'defender' ? '对方获胜' : '双方战平'}\n${phaseLines}\n伤亡：我方 ${result.casualties.attacker}，对方 ${result.casualties.defender}`);
+        const headline = result.winner === 'attacker' ? `${army.name}获胜` : result.winner === 'defender' ? '对方获胜' : '双方战平';
+        await pm.alert(`${headline}\n最终战力：${result.finalPower.attacker} / ${result.finalPower.defender}\n伤亡：我方 ${result.casualties.attacker}，对方 ${result.casualties.defender}\n${result.report.decisiveReason}`);
         renderArmyPanel(data, body, pm);
       });
       battleRow.append(opponentSelect, battleButton);

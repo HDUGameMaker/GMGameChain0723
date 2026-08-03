@@ -1,9 +1,13 @@
+import { hashSeedParts } from '../core/RandomService.js';
+
 const STRONG_BONUS = 0.35;
 const WEAK_PENALTY = 0.25;
 const MIN_MULTIPLIER = 0.45;
 const MAX_MULTIPLIER = 1.65;
 
 const intersects = (tags = [], targets = []) => targets.some(target => tags.includes(target));
+const round = (value, digits = 2) => Number(value.toFixed(digits));
+const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
 
 export function isDomainCompatible(domain = 'land', groundType = 'G') {
   return domain === 'naval' ? ['S', 'W'].includes(groundType) : !['S', 'W'].includes(groundType);
@@ -15,7 +19,7 @@ export function getMatchupMultiplier(attacker, defender) {
   let multiplier = 1;
   if (intersects(defender.roleTags, attacker.strongAgainst)) multiplier += STRONG_BONUS;
   if (intersects(defender.roleTags, attacker.weakAgainst)) multiplier -= WEAK_PENALTY;
-  return Math.max(MIN_MULTIPLIER, Math.min(MAX_MULTIPLIER, multiplier));
+  return clamp(multiplier, MIN_MULTIPLIER, MAX_MULTIPLIER);
 }
 
 export function getCounterAdjustedArmyPower(unitIds, unitConfigs, opponents = [], basePowerOverride = null) {
@@ -34,11 +38,7 @@ export function getCounterAdjustedArmyPower(unitIds, unitConfigs, opponents = []
   }
   const counterMultiplier = rawPower > 0 ? adjustedPower / rawPower : 1;
   const scaledPower = basePowerOverride == null ? adjustedPower : basePowerOverride * counterMultiplier;
-  return {
-    rawPower: Math.round(rawPower * 100) / 100,
-    adjustedPower: Math.round(scaledPower * 100) / 100,
-    counterMultiplier: Math.round(counterMultiplier * 1000) / 1000
-  };
+  return { rawPower: round(rawPower), adjustedPower: round(scaledPower), counterMultiplier: round(counterMultiplier, 3) };
 }
 
 export function describeCounter(multiplier) {
@@ -48,9 +48,8 @@ export function describeCounter(multiplier) {
 }
 
 export function resolveBattleLines(attackerIds, defenderIds, unitConfigs, context = {}) {
-  const configById = new Map((unitConfigs || []).map(unit => [unit.id, unit]));
-  const attackers = (attackerIds || []).map(id => configById.get(id)).filter(Boolean);
-  const defenders = (defenderIds || []).map(id => configById.get(id)).filter(Boolean);
+  const unitMap = new Map((unitConfigs || []).map(unit => [unit.id, unit]));
+  const attackers = (attackerIds || []).map(id => unitMap.get(id)).filter(Boolean);
   const laneNames = ['front', 'rear', 'flank', 'siege', 'support', 'naval'];
   const lines = Object.fromEntries(laneNames.map(name => [name, { count: 0, rawPower: 0 }]));
   for (const unit of attackers) {
@@ -58,105 +57,145 @@ export function resolveBattleLines(attackerIds, defenderIds, unitConfigs, contex
     lines[lane].count += 1;
     lines[lane].rawPower += unit.combatPower || unit.attack || 1;
   }
-
-  const counter = getCounterAdjustedArmyPower(attackerIds, unitConfigs, defenders);
-  const morale = Math.max(0, Math.min(100, context.morale ?? 100));
-  const supply = Math.max(0.25, Math.min(1.25, context.supply ?? 1));
-  const moraleMultiplier = 0.5 + morale / 200;
-  const terrainMultiplier = context.terrain === 'M' ? 0.85 : (context.terrain === 'F' ? 0.92 : 1);
-  const adjustedPower = counter.adjustedPower * moraleMultiplier * supply * terrainMultiplier;
+  const counter = getCounterAdjustedArmyPower(attackerIds, unitConfigs, (defenderIds || []).map(id => unitMap.get(id)).filter(Boolean));
+  const moraleMultiplier = 0.5 + clamp(context.morale ?? 100, 0, 100) / 200;
+  const supplyMultiplier = clamp(context.supply ?? 1, 0.25, 1.25);
+  const terrainMultiplier = ['M', 'F'].includes(context.terrain) ? (context.terrain === 'M' ? 0.85 : 0.92) : 1;
   return {
     lines,
     rawPower: counter.rawPower,
     counterAdjustedPower: counter.adjustedPower,
     counterMultiplier: counter.counterMultiplier,
-    moraleMultiplier: Math.round(moraleMultiplier * 1000) / 1000,
-    supplyMultiplier: supply,
+    moraleMultiplier: round(moraleMultiplier, 3),
+    supplyMultiplier,
     terrainMultiplier,
-    adjustedPower: Math.round(adjustedPower * 100) / 100
+    adjustedPower: round(counter.adjustedPower * moraleMultiplier * supplyMultiplier * terrainMultiplier)
   };
 }
 
-const BATTLE_PHASES = [
-  { id: 'reconnaissance', name: '侦察接敌', weights: { flank: 0.55, support: 0.5, rear: 0.18, front: 0.1, siege: 0.05, naval: 0.3 } },
-  { id: 'ranged', name: '远程交锋', weights: { rear: 1, siege: 0.6, naval: 0.65, support: 0.3, front: 0.12, flank: 0.15 } },
-  { id: 'charge', name: '冲锋与反冲锋', weights: { flank: 1, front: 0.42, support: 0.18, rear: 0.08, siege: 0.03, naval: 0.35 } },
-  { id: 'melee', name: '近战主战线', weights: { front: 1, flank: 0.58, support: 0.3, rear: 0.16, siege: 0.08, naval: 0.7 } },
-  { id: 'siege', name: '攻坚与舰炮', weights: { siege: 1, naval: 0.9, rear: 0.2, support: 0.15, front: 0.08, flank: 0.05 } },
-  { id: 'pursuit', name: '追击与撤收', weights: { flank: 0.85, naval: 0.55, front: 0.3, rear: 0.22, support: 0.2, siege: 0.04 } }
-];
-
-function battleTactic(tactics, id) {
-  return (tactics || []).find(tactic => tactic.id === id) || (tactics || []).find(tactic => tactic.id === 'steady_advance') || { phaseModifiers: {} };
+function tacticMultiplier(tactics, tacticId) {
+  const tactic = (tactics || []).find(item => item.id === tacticId);
+  if (!tactic) return { id: tacticId || null, multiplier: 1 };
+  const values = Object.values(tactic.phaseModifiers || {}).filter(Number.isFinite);
+  const phaseAverage = values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 1;
+  const multiplier = phaseAverage * (tactic.attackMultiplier || 1) * Math.sqrt(tactic.navalMultiplier || 1);
+  return { id: tactic.id, multiplier: clamp(multiplier, 0.8, 1.25) };
 }
 
-function phasePower(unitIds, opponents, unitMap, phase, tactic, army, context = {}) {
-  const morale = Math.max(0, Math.min(100, army.morale ?? 100));
-  const supplyPenalty = Number(context.enemySupplyPenalty) || 0;
-  const supply = Math.max(0.25, Math.min(1.25, (army.supply ?? 1) - supplyPenalty));
-  const contextual = (0.5 + morale / 200) * supply * (context.defenseMultiplier || 1);
-  const phaseModifier = tactic.phaseModifiers?.[phase.id] || 1;
-  let total = 0;
-  for (const unitId of unitIds || []) {
-    const unit = unitMap.get(unitId);
-    if (!unit) continue;
-    const lane = unit.lane || (unit.domain === 'naval' ? 'naval' : 'front');
-    const laneWeight = phase.weights[lane] || 0.05;
-    const matchup = opponents.length
-      ? opponents.reduce((sum, opponent) => sum + getMatchupMultiplier(unit, opponent), 0) / opponents.length
-      : 1;
-    const naval = unit.domain === 'naval' ? (tactic.navalMultiplier || 1) : 1;
-    total += (unit.combatPower || unit.attack || 1) * laneWeight * matchup * naval;
-  }
-  return total * contextual * phaseModifier;
+function terrainMultipliers(terrain) {
+  if (terrain === 'F') return { attacker: 0.94, defender: 1.06, label: '森林地形' };
+  if (terrain === 'M' || terrain === 'B') return { attacker: 0.88, defender: 1.12, label: '山地地形' };
+  if (terrain === 'D') return { attacker: 0.97, defender: 1.02, label: '荒地地形' };
+  if (terrain === 'S' || terrain === 'W') return { attacker: 1, defender: 1.04, label: '水域地形' };
+  return { attacker: 1, defender: 1, label: '开阔地形' };
 }
 
-/**
- * 军团级分阶段战斗。结果完全由编成、克制、士气、补给、阵型外部倍率与战术决定，便于回放和测试。
- */
-export function resolvePhasedArmyBattle(attackerArmy, defenderArmy, unitConfigs, tactics = [], context = {}) {
+function calculateSide(army, opponents, unitConfigs, tactics, context, side) {
   const unitMap = new Map((unitConfigs || []).map(unit => [unit.id, unit]));
-  const attackers = (attackerArmy?.unitIds || []).map(id => unitMap.get(id)).filter(Boolean);
-  const defenders = (defenderArmy?.unitIds || []).map(id => unitMap.get(id)).filter(Boolean);
-  const attackerTactic = battleTactic(tactics, attackerArmy?.tacticId);
-  const defenderTactic = battleTactic(tactics, defenderArmy?.tacticId);
-  const attackerContext = {
-    defenseMultiplier: context.attackerDefenseMultiplier || attackerTactic.defenseMultiplier || 1,
-    enemySupplyPenalty: defenderTactic.enemySupplyPenalty || 0
+  const opponentUnits = (opponents.unitIds || []).map(id => unitMap.get(id)).filter(Boolean);
+  const counter = getCounterAdjustedArmyPower(army.unitIds, unitConfigs, opponentUnits);
+  const morale = clamp(army.morale ?? 100, 0, 100);
+  const supply = clamp(army.supply ?? 1, 0.25, 1.25);
+  const moraleMultiplier = 0.5 + morale / 200;
+  const tactic = tacticMultiplier(tactics, army.tacticId);
+  const terrain = terrainMultipliers(context.terrain);
+  const terrainMultiplier = terrain[side];
+  const heroMultiplier = clamp(context[`${side}HeroMultiplier`] || 1, 0.75, 1.5);
+  const fortificationMultiplier = clamp(context[`${side}DefenseMultiplier`] || 1, 0.75, 2);
+  const power = counter.adjustedPower * moraleMultiplier * supply * tactic.multiplier
+    * terrainMultiplier * heroMultiplier * fortificationMultiplier;
+  return {
+    power: round(power),
+    count: army.unitIds?.length || 0,
+    modifiers: [
+      { side, id: 'counter', label: describeCounter(counter.counterMultiplier), multiplier: counter.counterMultiplier },
+      { side, id: 'morale', label: `士气 ${Math.round(morale)}`, multiplier: round(moraleMultiplier, 3) },
+      { side, id: 'supply', label: `补给 ${Math.round(supply * 100)}%`, multiplier: round(supply, 3) },
+      { side, id: 'tactic', label: tactic.id ? `战术 ${tactic.id}` : '标准战术', multiplier: round(tactic.multiplier, 3) },
+      { side, id: 'terrain', label: terrain.label, multiplier: terrainMultiplier },
+      ...(heroMultiplier !== 1 ? [{ side, id: 'hero', label: '英雄指挥', multiplier: heroMultiplier }] : []),
+      ...(fortificationMultiplier !== 1 ? [{ side, id: 'fortification', label: '防御工事', multiplier: fortificationMultiplier }] : [])
+    ]
   };
-  const defenderContext = {
-    defenseMultiplier: context.defenderDefenseMultiplier || defenderTactic.defenseMultiplier || 1,
-    enemySupplyPenalty: attackerTactic.enemySupplyPenalty || 0
+}
+
+function casualtyRange(ownCount, ownPower, enemyPower) {
+  if (ownCount <= 0) return [0, 0];
+  const disadvantage = enemyPower / Math.max(1, ownPower + enemyPower);
+  const minimum = Math.min(ownCount, Math.max(0, Math.floor(ownCount * (0.12 + disadvantage * 0.2))));
+  const maximum = Math.min(ownCount, Math.max(minimum, Math.ceil(ownCount * (0.24 + disadvantage * 0.35))));
+  return [minimum, maximum];
+}
+
+export function previewStrategicBattle(attackerArmy, defenderArmy, unitConfigs, tactics = [], context = {}) {
+  const attacker = calculateSide(attackerArmy || {}, defenderArmy || {}, unitConfigs, tactics, context, 'attacker');
+  const defender = calculateSide(defenderArmy || {}, attackerArmy || {}, unitConfigs, tactics, context, 'defender');
+  const ratio = attacker.power / Math.max(1, defender.power);
+  return {
+    attackerPower: attacker.power,
+    defenderPower: defender.power,
+    outlook: ratio > 1.15 ? 'attacker_advantage' : ratio < 1 / 1.15 ? 'defender_advantage' : 'even',
+    casualtyRanges: {
+      attacker: casualtyRange(attacker.count, attacker.power, defender.power),
+      defender: casualtyRange(defender.count, defender.power, attacker.power)
+    },
+    retreatRisk: {
+      attacker: round(clamp((50 - (attackerArmy?.morale ?? 100)) / 100 + (1 - (attackerArmy?.supply ?? 1)) * 0.4, 0, 0.9), 3),
+      defender: round(clamp((50 - (defenderArmy?.morale ?? 100)) / 100 + (1 - (defenderArmy?.supply ?? 1)) * 0.4, 0, 0.9), 3)
+    },
+    modifiers: [...attacker.modifiers, ...defender.modifiers]
   };
-  const phases = BATTLE_PHASES.map(phase => {
-    const attackerPower = phasePower(attackerArmy?.unitIds, defenders, unitMap, phase, attackerTactic, attackerArmy || {}, attackerContext);
-    const defenderPower = phasePower(defenderArmy?.unitIds, attackers, unitMap, phase, defenderTactic, defenderArmy || {}, defenderContext);
-    return {
-      id: phase.id,
-      name: phase.name,
-      attackerPower: Math.round(attackerPower * 100) / 100,
-      defenderPower: Math.round(defenderPower * 100) / 100,
-      advantage: attackerPower > defenderPower * 1.05 ? 'attacker' : defenderPower > attackerPower * 1.05 ? 'defender' : 'draw'
-    };
-  });
-  const attackerScore = phases.reduce((sum, phase) => sum + phase.attackerPower, 0);
-  const defenderScore = phases.reduce((sum, phase) => sum + phase.defenderPower, 0);
+}
+
+function deterministicVariance(campaignSeed, battleId, side) {
+  const hash = hashSeedParts([String(campaignSeed || 'campaign_default'), String(battleId), side]);
+  return 0.94 + (hash / 0xffffffff) * 0.12;
+}
+
+function chooseDecisiveReason(preview, winner) {
+  const side = winner === 'defender' ? 'defender' : 'attacker';
+  const ranked = preview.modifiers
+    .filter(item => item.side === side)
+    .sort((left, right) => Math.abs(right.multiplier - 1) - Math.abs(left.multiplier - 1));
+  const strongest = ranked[0];
+  if (!strongest || Math.abs(strongest.multiplier - 1) < 0.03) return '基础战力与兵力规模决定了结果';
+  if (strongest.id === 'counter') return `${strongest.label}成为决定性因素`;
+  return `${strongest.label}带来的战力修正成为决定性因素`;
+}
+
+export function resolveStrategicBattle(attackerArmy, defenderArmy, unitConfigs, tactics = [], context = {}) {
+  if (!context.battleId) throw new TypeError('battle_id_required');
+  const preview = previewStrategicBattle(attackerArmy, defenderArmy, unitConfigs, tactics, context);
+  const attackerScore = preview.attackerPower * deterministicVariance(context.campaignSeed, context.battleId, 'attacker');
+  const defenderScore = preview.defenderPower * deterministicVariance(context.campaignSeed, context.battleId, 'defender');
   const winner = attackerScore > defenderScore * 1.05 ? 'attacker' : defenderScore > attackerScore * 1.05 ? 'defender' : 'draw';
-  const ratio = Math.max(attackerScore, defenderScore) / Math.max(1, Math.min(attackerScore, defenderScore));
-  const attackerCount = attackers.length;
-  const defenderCount = defenders.length;
-  const attackerLossRate = winner === 'attacker' ? Math.min(0.35, 0.18 + 0.1 / ratio) : winner === 'defender' ? Math.min(0.75, 0.48 + ratio * 0.06) : 0.35;
-  const defenderLossRate = winner === 'defender' ? Math.min(0.35, 0.18 + 0.1 / ratio) : winner === 'attacker' ? Math.min(0.75, 0.48 + ratio * 0.06) : 0.35;
-  const casualtyCount = (count, rate) => count <= 0 ? 0 : Math.min(count, Math.max(1, Math.round(count * rate)));
+  const selectCasualties = (range, side) => {
+    const [minimum, maximum] = range;
+    const roll = deterministicVariance(context.campaignSeed, context.battleId, `casualties.${side}`);
+    return Math.min(maximum, minimum + Math.floor(((roll - 0.94) / 0.12) * (maximum - minimum + 1)));
+  };
+  const casualties = {
+    attacker: selectCasualties(preview.casualtyRanges.attacker, 'attacker'),
+    defender: selectCasualties(preview.casualtyRanges.defender, 'defender')
+  };
+  const moraleDelta = winner === 'attacker'
+    ? { attacker: 4, defender: -20 }
+    : winner === 'defender' ? { attacker: -20, defender: 4 } : { attacker: -10, defender: -10 };
+  const retreat = {
+    attacker: winner === 'defender' && (attackerArmy?.morale ?? 100) + moraleDelta.attacker < 25,
+    defender: winner === 'attacker' && (defenderArmy?.morale ?? 100) + moraleDelta.defender < 25
+  };
   return {
     winner,
-    attackerScore: Math.round(attackerScore * 100) / 100,
-    defenderScore: Math.round(defenderScore * 100) / 100,
-    phases,
-    casualties: {
-      attacker: casualtyCount(attackerCount, attackerLossRate),
-      defender: casualtyCount(defenderCount, defenderLossRate)
-    },
-    tactics: { attacker: attackerTactic.id || null, defender: defenderTactic.id || null }
+    finalPower: { attacker: round(attackerScore), defender: round(defenderScore) },
+    casualties,
+    moraleDelta,
+    supplyDelta: { attacker: -0.15, defender: -0.15 },
+    retreat,
+    modifiers: preview.modifiers,
+    report: {
+      decisiveReason: chooseDecisiveReason(preview, winner),
+      summary: `${winner === 'attacker' ? '进攻方获胜' : winner === 'defender' ? '防守方获胜' : '双方战平'}；进攻方损失 ${casualties.attacker}，防守方损失 ${casualties.defender}`
+    }
   };
 }
