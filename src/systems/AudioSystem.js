@@ -13,6 +13,7 @@ import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
 import { gameLoop } from '../GameLoop.js';
+import { getEraTrackId } from './EraMusic.js';
 
 export class AudioSystem {
   constructor() {
@@ -182,6 +183,9 @@ export class AudioSystem {
     }
 
     this._currentBGM = { id, element };
+    if (bgmConfig.eraId) {
+      store.setState({ eraMusic: { currentEraId: bgmConfig.eraId, currentTrackId: id } });
+    }
     this._fadeIn(element, 500);
     this._notifyChange();
   }
@@ -441,6 +445,10 @@ export class AudioSystem {
             if (!payload || !payload.period) return;
             if (!binding.periods.includes(payload.period)) return;
           }
+          if (binding.eraIds && Array.isArray(binding.eraIds) && binding.eraIds.length > 0) {
+            if (!payload || !payload.eraId) return;
+            if (!binding.eraIds.includes(payload.eraId)) return;
+          }
 
           this.playBGM(binding.bgm);
         });
@@ -562,11 +570,9 @@ export class AudioSystem {
     }
 
     this._pendingInitialBGM = false;
-    const period = store.getState('timePeriod') || 'morning';
-    const nightPeriods = configRegistry.get('global')?.NIGHT_PERIODS || [];
-    const isNight = nightPeriods.includes(period);
-    const targetId = this._getBGMConfig('bgm_night') && isNight ? 'bgm_night' : 'bgm_main';
-    this.playBGM(targetId);
+    const currentEraId = store.getState('eraCurrentId') || store.getState('eraMusic')?.currentEraId || 'primitive';
+    const targetId = getEraTrackId(this._config, currentEraId);
+    if (targetId) this.playBGM(targetId);
   }
 
   /**

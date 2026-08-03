@@ -128,9 +128,12 @@ export function renderTrainingPanel(data, body, pm) {
 
     /* 名称 & 属性 */
     const top = document.createElement('div');
-    top.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:10px;';
-    top.innerHTML = '<img src="' + u.icon + '" alt="" style="width:42px;height:42px;object-fit:contain;border-radius:8px"><span style="font-size:15px;font-weight:600;color:#ececf0;">' + (_isUnitUnlocked(u) ? '' : '🔒 ') + u.name + '</span>' +
-      '<span style="font-size:12px;color:#808098;">' + ((u.domain === 'naval') ? '海军' : '陆军') + ' · ⚔️' + u.combatPower + ' · CP' + (u.commandPoints||1) + '</span>';
+    top.style.cssText = 'display:flex;align-items:center;gap:14px;margin-bottom:10px;';
+    top.innerHTML = '<div style="position:relative;flex:0 0 112px;width:112px;height:112px;overflow:hidden;border-radius:11px;background:radial-gradient(circle at 50% 35%,rgba(214,176,103,.17),rgba(13,17,24,.92));border:1px solid rgba(214,176,103,.28)">' +
+      '<img data-testid="unit-card-art" src="' + (u.cardArt || u.icon) + '" alt="' + u.name + ' 招募立绘" loading="lazy" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 7px 7px rgba(0,0,0,.5))">' +
+      '<img src="' + u.icon + '" alt="" style="position:absolute;right:6px;bottom:6px;width:28px;height:28px;object-fit:contain;border-radius:6px;background:rgba(8,12,18,.88);border:1px solid rgba(255,255,255,.22);padding:3px"></div>' +
+      '<div style="min-width:0"><span style="display:block;font-size:16px;font-weight:700;color:#ececf0;margin-bottom:6px;">' + (_isUnitUnlocked(u) ? '' : '🔒 ') + u.name + '</span>' +
+      '<span style="display:block;font-size:12px;color:#808098;line-height:1.7;">' + ((u.domain === 'naval') ? '海军' : '陆军') + '<br>⚔️ 战力 ' + u.combatPower + ' · 指挥点 ' + (u.commandPoints||1) + '</span></div>';
     card.appendChild(top);
 
     const counters = document.createElement('div');

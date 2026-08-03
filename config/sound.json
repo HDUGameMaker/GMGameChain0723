@@ -4,17 +4,59 @@
   "sfxVolume": 0.8,
   "bgm": [
     {
-      "id": "bgm_main",
-      "name": "主界面背景音乐",
-      "file": "assets/audio/bgm/main.mp3",
-      "volume": 1,
+      "id": "bgm_era_primitive",
+      "eraId": "primitive",
+      "name": "初火黎明",
+      "file": "assets/audio/bgm/era-primitive.wav",
+      "volume": 0.86,
       "loop": true
     },
     {
-      "id": "bgm_night",
-      "name": "夜晚背景音乐",
-      "file": "assets/audio/bgm/night.mp3",
-      "volume": 0.9,
+      "id": "bgm_era_ancient",
+      "eraId": "ancient",
+      "name": "青铜河冠",
+      "file": "assets/audio/bgm/era-ancient.wav",
+      "volume": 0.82,
+      "loop": true
+    },
+    {
+      "id": "bgm_era_classical",
+      "eraId": "classical",
+      "name": "大理石与铁之路",
+      "file": "assets/audio/bgm/era-classical.wav",
+      "volume": 0.82,
+      "loop": true
+    },
+    {
+      "id": "bgm_era_medieval",
+      "eraId": "medieval",
+      "name": "城垒之外的旗帜",
+      "file": "assets/audio/bgm/era-medieval.wav",
+      "volume": 0.84,
+      "loop": true
+    },
+    {
+      "id": "bgm_era_exploration",
+      "eraId": "exploration",
+      "name": "驶向未绘之海",
+      "file": "assets/audio/bgm/era-exploration.wav",
+      "volume": 0.8,
+      "loop": true
+    },
+    {
+      "id": "bgm_era_early_modern",
+      "eraId": "early_modern",
+      "name": "旌旗下的引擎",
+      "file": "assets/audio/bgm/era-early_modern.wav",
+      "volume": 0.78,
+      "loop": true
+    },
+    {
+      "id": "bgm_era_modern",
+      "eraId": "modern",
+      "name": "流动的世界",
+      "file": "assets/audio/bgm/era-modern.wav",
+      "volume": 0.78,
       "loop": true
     }
   ],
@@ -166,20 +208,39 @@
   ],
   "bgmBindings": [
     {
-      "event": "periodChange",
-      "bgm": "bgm_main",
-      "periods": [
-        "morning",
-        "afternoon"
-      ]
+      "event": "eraAdvanced",
+      "bgm": "bgm_era_primitive",
+      "eraIds": ["primitive"]
     },
     {
-      "event": "periodChange",
-      "bgm": "bgm_night",
-      "periods": [
-        "evening",
-        "night"
-      ]
+      "event": "eraAdvanced",
+      "bgm": "bgm_era_ancient",
+      "eraIds": ["ancient"]
+    },
+    {
+      "event": "eraAdvanced",
+      "bgm": "bgm_era_classical",
+      "eraIds": ["classical"]
+    },
+    {
+      "event": "eraAdvanced",
+      "bgm": "bgm_era_medieval",
+      "eraIds": ["medieval"]
+    },
+    {
+      "event": "eraAdvanced",
+      "bgm": "bgm_era_exploration",
+      "eraIds": ["exploration"]
+    },
+    {
+      "event": "eraAdvanced",
+      "bgm": "bgm_era_early_modern",
+      "eraIds": ["early_modern"]
+    },
+    {
+      "event": "eraAdvanced",
+      "bgm": "bgm_era_modern",
+      "eraIds": ["modern"]
     }
   ],
   "eventBindings": [

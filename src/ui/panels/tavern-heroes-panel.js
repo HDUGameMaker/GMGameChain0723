@@ -12,9 +12,12 @@ function bonusText(bonuses = {}) {
   }).join(' · ');
 }
 
-function portrait(hero) {
-  return hero.icon?.includes('/')
-    ? `<img src="${hero.icon}" alt="" style="width:42px;height:42px;border-radius:8px;background:#262a39">`
+function portrait(hero, compact = false) {
+  const width = compact ? 54 : 88;
+  const height = compact ? 62 : 104;
+  const source = hero.portrait || hero.icon;
+  return source?.includes('/')
+    ? `<img data-testid="hero-portrait" src="${source}" alt="${hero.name} 肖像" loading="lazy" style="width:${width}px;height:${height}px;object-fit:cover;object-position:center top;border-radius:9px;background:#262a39;border:1px solid rgba(214,168,75,.28);box-shadow:0 7px 16px rgba(0,0,0,.28)">`
     : `<span style="font-size:32px">${hero.icon || '👤'}</span>`;
 }
 
@@ -57,7 +60,7 @@ export function renderTavernHeroesPanel(data, body, pm) {
     const injured = hero.status === 'injured';
     const row = document.createElement('div');
     row.style.cssText = `display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;margin-bottom:7px;border-radius:8px;background:${injured ? 'rgba(140,52,52,.10)' : 'rgba(255,255,255,.035)'};border:1px solid ${injured ? 'rgba(220,95,95,.25)' : 'rgba(255,255,255,.07)'};`;
-    row.innerHTML = `<div style="display:flex;gap:9px;align-items:center">${portrait(hero)}<div><b style="color:#ececf0">${hero.name}</b>${injured ? `<span style="font-size:10px;color:#ef8b8b;margin-left:7px">休养至第 ${hero.injuredUntilDay} 天</span>` : ''}<div style="font-size:10px;color:#64c987;margin-top:3px">${bonusText(hero.bonuses)}</div></div></div>`;
+    row.innerHTML = `<div style="display:flex;gap:9px;align-items:center">${portrait(hero, true)}<div><b style="color:#ececf0">${hero.name}</b>${injured ? `<span style="font-size:10px;color:#ef8b8b;margin-left:7px">休养至第 ${hero.injuredUntilDay} 天</span>` : ''}<div style="font-size:10px;color:#64c987;margin-top:3px">${bonusText(hero.bonuses)}</div></div></div>`;
     const select = document.createElement('select');
     select.disabled = injured;
     select.style.cssText = 'padding:6px 8px;border-radius:6px;background:#25253a;color:#dfe8ff;border:1px solid #4a4a66;';

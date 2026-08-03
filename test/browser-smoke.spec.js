@@ -29,9 +29,34 @@ test('new game opens economy panels without browser errors', async ({ page }) =>
   await expect(page.getByText('军队管理')).toBeVisible();
   await closeVisiblePopup(page);
   await page.getByRole('button', { name: /世界/ }).click();
-  await expect(page.getByText(/城邦势力（12）/)).toBeVisible();
+  await expect(page.getByText(/城邦势力（24）/)).toBeVisible();
   await expect(page.getByText(/野外营地、守军与海盗/)).toBeVisible();
   await closeVisiblePopup(page);
+
+  await page.setViewportSize({ width: 1024, height: 700 });
+  await page.locator('#btn-training').click();
+  const unitArt = page.locator('[data-testid="unit-card-art"]').first();
+  await expect(unitArt).toBeVisible();
+  expect(await unitArt.evaluate(image => image.complete && image.naturalWidth >= 200)).toBe(true);
+  const trainingBox = await page.locator('#popup-container').boundingBox();
+  expect(trainingBox.x).toBeGreaterThanOrEqual(0);
+  expect(trainingBox.y).toBeGreaterThanOrEqual(0);
+  expect(trainingBox.x + trainingBox.width).toBeLessThanOrEqual(1024);
+  expect(trainingBox.y + trainingBox.height).toBeLessThanOrEqual(700);
+  await closeVisiblePopup(page);
+
+  await page.evaluate(() => {
+    const game = window.__game;
+    game.systems.era._currentEraIndex = 1;
+    game.systems.era._updateStore();
+    game.systems.hero.initNew();
+    game.popupManager.open('tavern_heroes', {});
+  });
+  const heroPortrait = page.locator('[data-testid="hero-portrait"]').first();
+  await expect(heroPortrait).toBeVisible();
+  expect(await heroPortrait.evaluate(image => image.complete && image.naturalWidth >= 200)).toBe(true);
+  await closeVisiblePopup(page);
+  await page.setViewportSize({ width: 1280, height: 720 });
 
   const buildingPoint = await page.evaluate(() => {
     const game = window.__game;

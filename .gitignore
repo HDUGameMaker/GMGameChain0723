@@ -17,6 +17,8 @@ log/*
 !log/.gitkeep
 .playwright-cli/
 node_modules/
+.codex-tools/
+assets/generated/
 test-results/
 playwright-report/
 
@@ -28,3 +30,6 @@ playwright-report/
 
 # 第九棒开发者本地身份信息文件（仅本地参考，不入库）
 第九棒开发者身份信息.md
+
+# 第十棒开发者本地身份信息文件（仅本地参考，不入库）
+第十棒开发者身份信息.md
