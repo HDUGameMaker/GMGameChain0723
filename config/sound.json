@@ -61,6 +61,18 @@
     }
   ],
   "sfx": [
+    { "id": "sfx_ui_confirm", "name": "界面确认", "file": "assets/audio/sfx/strategic/ui-confirm.wav", "volume": 0.48 },
+    { "id": "sfx_construction", "name": "工程开工", "file": "assets/audio/sfx/strategic/construction.wav", "volume": 0.68 },
+    { "id": "sfx_training", "name": "部队训练完成", "file": "assets/audio/sfx/strategic/training.wav", "volume": 0.68 },
+    { "id": "sfx_research", "name": "研究完成", "file": "assets/audio/sfx/strategic/research.wav", "volume": 0.60 },
+    { "id": "sfx_era_fanfare", "name": "时代推进", "file": "assets/audio/sfx/strategic/era-fanfare.wav", "volume": 0.72 },
+    { "id": "sfx_diplomacy", "name": "外交行动", "file": "assets/audio/sfx/strategic/diplomacy.wav", "volume": 0.58 },
+    { "id": "sfx_trade", "name": "商业与贸易", "file": "assets/audio/sfx/strategic/trade.wav", "volume": 0.56 },
+    { "id": "sfx_colony", "name": "殖民建立", "file": "assets/audio/sfx/strategic/colony.wav", "volume": 0.68 },
+    { "id": "sfx_wild_victory", "name": "野外目标完成", "file": "assets/audio/sfx/strategic/wild-victory.wav", "volume": 0.66 },
+    { "id": "sfx_battle_resolve", "name": "战斗结算", "file": "assets/audio/sfx/strategic/battle-resolve.wav", "volume": 0.72 },
+    { "id": "sfx_hero_recruit", "name": "英雄招募", "file": "assets/audio/sfx/strategic/hero-recruit.wav", "volume": 0.66 },
+    { "id": "sfx_quest_consequence", "name": "任务长期后果", "file": "assets/audio/sfx/strategic/quest-consequence.wav", "volume": 0.64 },
     {
       "id": "sfx_build",
       "name": "默认建造音效",
@@ -246,7 +258,7 @@
   "eventBindings": [
     {
       "event": "buildingPlaced",
-      "sound": "sfx_build",
+      "sound": "sfx_construction",
       "category": "build"
     },
     {
@@ -259,25 +271,25 @@
     },
     {
       "event": "buildingClicked",
-      "sound": "sfx_click",
+      "sound": "sfx_ui_confirm",
       "category": "ui"
     },
     {
       "event": "buildingDemolished",
       "sound": "sfx_demolish"
     },
-    { "event": "unitTrained", "sound": "sfx_complete", "category": "train" },
-    { "event": "techResearched", "sound": "sfx_synthesis", "category": "research" },
-    { "event": "cultureResearched", "sound": "sfx_synthesis", "category": "research" },
-    { "event": "eraAdvanced", "sound": "sfx_period_change", "category": "era" },
-    { "event": "diplomacyAction", "sound": "sfx_click", "category": "diplomacy" },
-    { "event": "luxuryTraded", "sound": "sfx_resource", "category": "trade" },
-    { "event": "commerceChanged", "sound": "sfx_resource", "category": "trade" },
-    { "event": "colonyEstablished", "sound": "sfx_complete", "category": "colony" },
-    { "event": "wildSiteBattleResolved", "sound": "sfx_expedition_complete", "category": "wild" },
-    { "event": "armyBattleResolved", "sound": "sfx_complete", "category": "combat" },
-    { "event": "heroRecruited", "sound": "sfx_complete", "category": "hero" },
-    { "event": "questConsequenceFired", "sound": "sfx_period_change", "category": "quest" },
+    { "event": "unitTrained", "sound": "sfx_training", "category": "train" },
+    { "event": "techResearched", "sound": "sfx_research", "category": "research" },
+    { "event": "cultureResearched", "sound": "sfx_research", "category": "research" },
+    { "event": "eraAdvanced", "sound": "sfx_era_fanfare", "category": "era" },
+    { "event": "diplomacyAction", "sound": "sfx_diplomacy", "category": "diplomacy" },
+    { "event": "luxuryTraded", "sound": "sfx_trade", "category": "trade" },
+    { "event": "commerceChanged", "sound": "sfx_trade", "category": "trade" },
+    { "event": "colonyEstablished", "sound": "sfx_colony", "category": "colony" },
+    { "event": "wildSiteBattleResolved", "sound": "sfx_wild_victory", "category": "wild" },
+    { "event": "armyBattleResolved", "sound": "sfx_battle_resolve", "category": "combat" },
+    { "event": "heroRecruited", "sound": "sfx_hero_recruit", "category": "hero" },
+    { "event": "questConsequenceFired", "sound": "sfx_quest_consequence", "category": "quest" },
     {
       "event": "resourceChanged",
       "sound": null
