@@ -138,7 +138,7 @@ test('v8 migration preserves era stars and marks abstract occupied colonies as l
   assert.deepEqual(migrated.commerce.factions, source.factions);
 });
 
-test('already-v9 payloads remain canonical without mutating the input', () => {
+test('already-v9 payloads gain overhaul defaults without mutating the input', () => {
   const source = {
     version: 9,
     world: { schemaVersion: 1, source: 'procedural', mapId: 'world_7' },
@@ -151,6 +151,11 @@ test('already-v9 payloads remain canonical without mutating the input', () => {
   const migrated = SaveManager.migrate(source);
 
   assert.deepEqual(source, before);
-  assert.deepEqual(migrated, source);
+  assert.deepEqual(migrated, {
+    ...source,
+    buildings: [],
+    resourceNodes: { nodes: [] },
+    fogOfWar: { width: 384, height: 384, exploredRle: [384 * 384] }
+  });
   assert.notEqual(migrated, source);
 });

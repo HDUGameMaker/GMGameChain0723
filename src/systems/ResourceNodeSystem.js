@@ -103,7 +103,12 @@ export class ResourceNodeSystem {
   restoreState(state) {
     const records = Array.isArray(state) ? state : state?.nodes;
     if (!Array.isArray(records)) return this.initNew();
-    this.initFromManifest(records);
+    const manifest = configRegistry.get('map')?.spawnManifest?.resourceNodes || [];
+    if (manifest.length === 0) return this.initFromManifest(records);
+    const saved = new Map(records.map(node => [node.id, node]));
+    const merged = manifest.map(node => ({ ...node, ...(saved.get(node.id) || {}) }));
+    for (const node of records) if (!manifest.some(base => base.id === node.id)) merged.push(node);
+    this.initFromManifest(merged);
   }
 
   _notify() {

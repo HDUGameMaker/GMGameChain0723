@@ -43,6 +43,38 @@ function canonicalV9Violation(payload) {
   const factions = commerce.factions;
   if (!isRecord(factions) || !isRecord(factions.states) || !isRecord(factions.relations)
       || !Number.isInteger(factions.lastSyncDay) || factions.lastSyncDay < 0) return 'commerce.factions';
+
+  if (!Array.isArray(payload.buildings)) return 'buildings';
+  const buildingIds = new Set();
+  for (const building of payload.buildings) {
+    if (!isRecord(building) || typeof building.instanceId !== 'string' || !/^building_\d+$/.test(building.instanceId)
+        || buildingIds.has(building.instanceId) || typeof building.buildingId !== 'string' || !building.buildingId
+        || !Number.isInteger(building.gridX) || !Number.isInteger(building.gridY)
+        || building.gridX < 0 || building.gridY < 0 || building.gridX >= 512 || building.gridY >= 512
+        || (building.cropId !== null && typeof building.cropId !== 'string')
+        || (building.pendingCropId !== null && typeof building.pendingCropId !== 'string')
+        || (building.resourceNodeId !== null && typeof building.resourceNodeId !== 'string')) return 'buildings.record';
+    buildingIds.add(building.instanceId);
+  }
+
+  const resourceNodes = payload.resourceNodes;
+  if (!isRecord(resourceNodes) || !Array.isArray(resourceNodes.nodes)) return 'resourceNodes';
+  const nodeIds = new Set();
+  for (const node of resourceNodes.nodes) {
+    if (!isRecord(node) || typeof node.id !== 'string' || !node.id || nodeIds.has(node.id)
+        || typeof node.type !== 'string' || !node.type
+        || !Number.isInteger(node.gridX) || !Number.isInteger(node.gridY)
+        || node.gridX < 0 || node.gridY < 0 || node.gridX >= 512 || node.gridY >= 512
+        || (node.developedByBuildingId !== null && typeof node.developedByBuildingId !== 'string')) return 'resourceNodes.record';
+    nodeIds.add(node.id);
+  }
+
+  const fog = payload.fogOfWar;
+  if (!isRecord(fog) || !Number.isInteger(fog.width) || !Number.isInteger(fog.height)
+      || fog.width <= 0 || fog.height <= 0 || fog.width > 512 || fog.height > 512
+      || !Array.isArray(fog.exploredRle)
+      || fog.exploredRle.some(run => !Number.isInteger(run) || run < 0)
+      || fog.exploredRle.reduce((sum, run) => sum + run, 0) !== fog.width * fog.height) return 'fogOfWar';
   return null;
 }
 
@@ -132,6 +164,8 @@ export class SaveManager {
         state.version = 9;
         history.push(9);
       }
+
+      if (state.version === 9) SaveManager._normalizeV9OverhaulState(state);
 
       state.migrationHistory = [...new Set(history)];
       if (canonicalV9Violation(state)) return null;
@@ -263,6 +297,34 @@ export class SaveManager {
     delete state.factions;
   }
 
+  static _normalizeV9OverhaulState(state) {
+    const farmIds = new Set(['farm', 'farm_t2', 'grain_farm']);
+    state.buildings = (Array.isArray(state.buildings) ? state.buildings : []).map((building, index) => ({
+      ...building,
+      instanceId: building?.instanceId || `building_${index + 1}`,
+      gridX: building?.gridX ?? 0,
+      gridY: building?.gridY ?? 0,
+      resourceNodeId: building?.resourceNodeId ?? null,
+      cropId: building?.cropId ?? (farmIds.has(building?.buildingId) ? 'grain' : null),
+      pendingCropId: building?.pendingCropId ?? null
+    }));
+    state.resourceNodes = isRecord(state.resourceNodes) && Array.isArray(state.resourceNodes.nodes)
+      ? { ...state.resourceNodes, nodes: state.resourceNodes.nodes.map(node => ({
+        ...node,
+        rarity: node?.rarity === 'rare' ? 'rare' : 'common',
+        capacity: node?.capacity ?? null,
+        remaining: node?.remaining ?? null,
+        recoveryDays: node?.recoveryDays ?? null,
+        recoveryDay: node?.recoveryDay ?? null,
+        developedByBuildingId: node?.developedByBuildingId ?? null,
+        discovered: node?.discovered !== false
+      })) }
+      : { nodes: [] };
+    state.fogOfWar = isRecord(state.fogOfWar)
+      ? state.fogOfWar
+      : { width: 384, height: 384, exploredRle: [384 * 384] };
+  }
+
   static _assertCanonicalV9(payload) {
     canonicalizePayload(payload);
     const violation = canonicalV9Violation(payload);
@@ -293,8 +355,11 @@ export class SaveManager {
 
   static async _candidateEnvelope(candidate) {
     if (candidate?.format === 'gmgc-save-envelope') {
-      const verification = await SaveManager.verifyEnvelope(candidate);
-      return verification.ok ? candidate : null;
+      const verification = await verifyEnvelopeRecord(candidate);
+      if (!verification.ok) return null;
+      const payload = SaveManager.migrate(candidate.payload);
+      if (!payload) return null;
+      return canonicalV9Violation(candidate.payload) ? SaveManager.createEnvelope(payload) : candidate;
     }
     const payload = SaveManager.migrate(candidate);
     return payload ? SaveManager.createEnvelope(payload) : null;
