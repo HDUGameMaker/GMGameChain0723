@@ -16,7 +16,7 @@
 - Keep wood, stone, food and gold as the only four main resources.
 - Keep native ES Modules and PixiJS; do not add React, Vue, Angular or a bundler migration.
 - Upgrade the save schema to exactly version `9`; v5, v6, v7 and v8 must migrate without silent loss.
-- Default generated maps are exactly `320×320`; official presets are `256×256`, `320×320` and `384×384`.
+- Default generated maps are exactly `384×384`; official presets are `256×256`, `320×320` and `384×384`.
 - The generated world, AI decisions, combat, trade risk, tavern and narrative randomness must never call `Math.random()` directly.
 - `WorldMapSystem`, `TerritorySystem`, `ArmySystem`, `FactionSystem`, `DiplomacySystem`, `CommerceSystem`, `WildSiteSystem`, `ColonySystem`, `EraSystem`, `HeroSystem`, `QuestSystem` and `EventSystem` each write only their owned state.
 - `Store`, UI, `EventBus` listeners and `MapRenderer` never mutate authoritative domain state.
@@ -285,11 +285,11 @@ function differenceRatio(left, right) {
   return changed / total;
 }
 
-test('official presets have exact approved dimensions and the large preset is default', () => {
+test('official presets have exact approved dimensions and the huge preset is default', () => {
   assert.deepEqual(config.presets.standard, { width: 256, height: 256, cityStateCount: 14 });
   assert.deepEqual(config.presets.large, { width: 320, height: 320, cityStateCount: 18 });
   assert.deepEqual(config.presets.huge, { width: 384, height: 384, cityStateCount: 24 });
-  assert.equal(config.defaultPreset, 'large');
+  assert.equal(config.defaultPreset, 'huge');
 });
 
 test('terrain generation is replayable and satisfies large-map topology budgets', () => {
@@ -328,7 +328,7 @@ Create `config/world-generation.json` with these values:
 ```json
 {
   "generatorVersion": 1,
-  "defaultPreset": "large",
+  "defaultPreset": "huge",
   "tileSize": 60,
   "customSize": { "min": 192, "max": 512, "multiple": 32, "maxCells": 262144 },
   "presets": {
@@ -927,7 +927,7 @@ Expected: FAIL because map-consuming systems do not yet expose `setWorldMapSyste
 
 Add `ConfigRegistry.getWorldGenerationConfig()` as a frozen read-only configuration getter; leave authored map data available only for `legacy_static/base_map_v1` restoration. Add a `_worldMap` field plus `setWorldMapSystem()` to each listed system. Each setter validates the exact query methods its consumer needs. Replace every runtime `configRegistry.getMapConfig()` lookup in those consumers with a `_worldMap` query. Do not copy the grid into system-owned state.
 
-In `Game.init()`, load and migrate the save immediately after configuration loading and before constructing map consumers. `initializeWorld()` must construct one `WorldMapSystem`, restore `migratedSave.world` when present, otherwise call `initNew({ seedText: worldSeed ?? crypto.randomUUID(), preset: mapPreset ?? 'large' })`, and register it as `this.systems.worldMap`. Inject that instance into map consumers before their `init()` calls. A legacy static map remains available only because the v9 migrator emits `{ source: 'legacy_static', mapId: 'base_map_v1' }`.
+In `Game.init()`, load and migrate the save immediately after configuration loading and before constructing map consumers. `initializeWorld()` must construct one `WorldMapSystem`, restore `migratedSave.world` when present, otherwise call `initNew({ seedText: worldSeed ?? crypto.randomUUID(), preset: mapPreset ?? 'huge' })`, and register it as `this.systems.worldMap`. Inject that instance into map consumers before their `init()` calls. A legacy static map remains available only because the v9 migrator emits `{ source: 'legacy_static', mapId: 'base_map_v1' }`.
 
 Update `MapRenderer` to consume `worldMap.getMapView()` and `getSpawnManifest()` and to retain only rendering projections. Update `Game.getSaveData()` to write one `world` payload. Task 8 has already made `armyState` canonical before this task runs; preserve that exact payload and its creation-id idempotency data, and do not reintroduce any v8 army mirror key.
 
@@ -1055,7 +1055,7 @@ In `MapRenderer`, create pooled Pixi containers for `terrain`, `fog`, `territory
 
 At `zoom <= 0.65`, aggregate wild sites, city states and armies by chunk and render one count marker per type/chunk. Above that threshold render only markers within the padded visible bounds. `MapPresentation.createMapTokenModels()` must stay pure and return aggregation keys; it must not inspect Pixi containers. Count only managed map display objects in `getRenderStats()` and expose `setCameraForTest()` and `renderFrameForTest()` only when the URL has an `e2eWorldSeed` parameter.
 
-Change `playwright.config.js` from the single smoke filename to `testMatch: ['browser-smoke.spec.js', 'map-strategy.spec.js']`. The application must read the two e2e query parameters only as new-game defaults; production new games still use `crypto.randomUUID()` and preset `large`.
+Change `playwright.config.js` from the single smoke filename to `testMatch: ['browser-smoke.spec.js', 'map-strategy.spec.js']`. The application must read the two e2e query parameters only as new-game defaults; production new games still use `crypto.randomUUID()` and preset `huge`.
 
 - [ ] **Step 4: Run GREEN, visual smoke and full regression**
 

@@ -16,7 +16,7 @@
 - Keep wood, stone, food and gold as the only four main resources.
 - Keep native ES Modules and PixiJS; do not add React, Vue, Angular or a bundler migration.
 - Upgrade the save schema to exactly version `9`; v5, v6, v7 and v8 migrate without silent loss.
-- Default generated maps are exactly `320×320`; official presets are `256×256`, `320×320` and `384×384`; custom dimensions are `192–512` in multiples of `32`.
+- Default generated maps are exactly `384×384`; official presets are `256×256`, `320×320` and `384×384`; custom dimensions are `192–512` in multiples of `32`.
 - Generated world, AI, combat, trade risk, tavern and narrative randomness never call `Math.random()` directly.
 - `WorldMapSystem`, `TerritorySystem`, `ArmySystem`, `FactionSystem`, `DiplomacySystem`, `CommerceSystem`, `WildSiteSystem`, `ColonySystem`, `EraSystem`, `HeroSystem`, `QuestSystem` and `EventSystem` each write only their owned state.
 - `Store`, UI, `EventBus` listeners and renderers never mutate authoritative domain state.
@@ -192,7 +192,7 @@ For each of the 35 tasks:
 - [ ] `npm.cmd run verify` passes from the exact target directory.
 - [ ] All named Playwright journeys pass in a repository-supported browser without modifying the sibling project.
 - [ ] Same seed plus same commands reproduces world, AI, combat, narrative, save restore and ending; different seeds materially change world topology and placements.
-- [ ] A new 320×320 campaign exposes 24 city-state profiles, deterministic dense wild objectives, map-native armies and real city-state colony targets.
+- [ ] A new default 384×384 campaign exposes 24 city-state profiles, deterministic dense wild objectives, map-native armies and real city-state colony targets.
 - [ ] Exact content audits pass for 57 civilizations, 138 units, 111 buildings, 72 heroes, 108 relationships, 36 combos, 72 hero missions, 84 era scenarios, 57 civilization chains, 72 hero chains and 24 city-state chains.
 - [ ] Visual QA passes at 360/768/1280/1920 widths and DPR 1/2; no required control is inaccessible by keyboard and reduced motion is respected.
 - [ ] Art paths, dimensions, compression and atlases pass their budgets; representative biomes, units, heroes, civilizations and city emblems pass human visual inspection.

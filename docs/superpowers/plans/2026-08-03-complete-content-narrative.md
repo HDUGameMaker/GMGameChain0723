@@ -16,7 +16,7 @@
 - Keep wood, stone, food and gold as the only four main resources.
 - Keep native ES Modules and PixiJS; do not add React, Vue, Angular or a bundler migration.
 - Upgrade the save schema to exactly version `9`; v5, v6, v7 and v8 must migrate without silent loss.
-- Default generated maps are exactly `320×320`; official presets are `256×256`, `320×320` and `384×384`.
+- Default generated maps are exactly `384×384`; official presets are `256×256`, `320×320` and `384×384`.
 - The generated world, AI decisions, combat, trade risk, tavern and narrative randomness must never call `Math.random()` directly.
 - `WorldMapSystem`, `TerritorySystem`, `ArmySystem`, `FactionSystem`, `DiplomacySystem`, `CommerceSystem`, `WildSiteSystem`, `ColonySystem`, `EraSystem`, `HeroSystem`, `QuestSystem` and `EventSystem` each write only their owned state.
 - `Store`, UI, `EventBus` listeners and `MapRenderer` never mutate authoritative domain state.
