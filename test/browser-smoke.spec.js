@@ -31,30 +31,45 @@ test('new game opens economy panels without browser errors', async ({ page }) =>
     const game = window.__game;
     const renderer = game.mapRenderer;
     const map = game.configRegistry.get('map');
+    const stoneNodes = game.systems.resourceNodes.getNodes().filter(node => node.type === 'stone');
     let target = null;
-    for (let row = 2; row < map.gridHeight - 2 && !target; row += 1) {
-      for (let col = 2; col < map.gridWidth - 2; col += 1) {
-        if (map.grid[row][col] !== 'M') continue;
-        let neighbors = 0;
-        for (let dy = -1; dy <= 1; dy += 1) {
-          for (let dx = -1; dx <= 1; dx += 1) {
-            if (map.grid[row + dy]?.[col + dx] === 'M') neighbors += 1;
-          }
+    let bestMountainCount = -1;
+    for (const node of stoneNodes) {
+      let mountainCount = 0;
+      for (let dy = -5; dy <= 5; dy += 1) {
+        for (let dx = -8; dx <= 8; dx += 1) {
+          if (map.grid[node.gridY + dy]?.[node.gridX + dx] === 'M') mountainCount += 1;
         }
-        if (neighbors >= 7) { target = { col, row }; break; }
+      }
+      if (mountainCount > bestMountainCount) {
+        bestMountainCount = mountainCount;
+        target = node;
       }
     }
-    if (!target) return false;
+    if (!target) return null;
+    target.discovered = true;
     window.__qaCameraState = renderer.getCameraState();
     renderer.setCameraState(
-      target.col * renderer.tileSize - renderer.screenW / 3,
-      target.row * renderer.tileSize - renderer.screenH / 3,
+      target.gridX * renderer.tileSize - renderer.screenW / 3,
+      target.gridY * renderer.tileSize - renderer.screenH / 3,
       1.35
     );
     renderer.fogContainer.visible = false;
-    return Boolean(renderer._mountainRockGraphics);
+    const texturePaths = [...renderer._textureCache.keys()];
+    return {
+      mountainSprites: renderer._mountainRockLayer?.children?.length || 0,
+      mountainTexturesLoaded: texturePaths.filter(path => /^assets\/map\/mountains\/mountain_0[1-6]\.png$/.test(path)).length,
+      legacyRockTexturesLoaded: ['assets/map/rock.png', 'assets/map/rock1.png', 'assets/map/stone.png', 'assets/map/stone1.png']
+        .filter(path => renderer._textureCache.get(path)?.width > 0).length,
+      stoneArtLoaded: renderer._textureCache.get('assets/resource-nodes/stone.png')?.width > 0,
+      bestMountainCount
+    };
   });
-  expect(mountainPreview).toBe(true);
+  expect(mountainPreview.mountainSprites).toBeGreaterThan(0);
+  expect(mountainPreview.mountainTexturesLoaded).toBe(6);
+  expect(mountainPreview.legacyRockTexturesLoaded).toBe(4);
+  expect(mountainPreview.stoneArtLoaded).toBe(true);
+  expect(mountainPreview.bestMountainCount).toBeGreaterThan(0);
   await page.screenshot({ path: 'test-results/qa-mountain-rock-piles.png' });
   await page.evaluate(() => {
     const renderer = window.__game.mapRenderer;

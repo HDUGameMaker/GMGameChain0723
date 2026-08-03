@@ -4,7 +4,7 @@ import {
   createArmySelectionModel,
   createBuildingHoverDetails,
   createMapTokenModels,
-  getMountainRockShapes,
+  getMountainRockSpriteModel,
   getTerrainFillColor,
   getTopDownShoreEdges
 } from '../../src/rendering/MapPresentation.js';
@@ -110,7 +110,15 @@ test('mountain terrain keeps a readable square foundation without contour bands'
   for (const color of [foothill, edge, center]) assert.ok(color > 0x202020, `terrain color ${color.toString(16)} is too dark`);
 });
 
-test('mountains are deterministic piles of varied trapezoid rocks', () => {
+test('exposed mining rock uses a warm reference-style foundation instead of white', () => {
+  const map = {
+    groundTypes: { R: { colorHint: '#dedede' } },
+    grid: ['R']
+  };
+  assert.equal(getTerrainFillColor(map, 0, 0), 0x756b5e);
+});
+
+test('mountains use stable reference-style sprites contained inside their grid cells', () => {
   const map = {
     grid: ['GBMG', 'GMMG', 'GGGG'],
     groundTypes: {
@@ -120,26 +128,28 @@ test('mountains are deterministic piles of varied trapezoid rocks', () => {
     }
   };
 
-  assert.deepEqual(getMountainRockShapes(map, 0, 0, 60), []);
-  const foothill = getMountainRockShapes(map, 1, 0, 60);
-  const ridge = getMountainRockShapes(map, 2, 0, 60);
-  assert.ok(foothill.length >= 1 && foothill.length <= 2);
-  assert.ok(ridge.length >= 2 && ridge.length <= 3);
-  assert.deepEqual(ridge, getMountainRockShapes(map, 2, 0, 60));
+  assert.equal(getMountainRockSpriteModel(map, 0, 0, 60), null);
+  const foothill = getMountainRockSpriteModel(map, 1, 0, 60);
+  const ridge = getMountainRockSpriteModel(map, 2, 0, 60);
+  assert.deepEqual(ridge, getMountainRockSpriteModel(map, 2, 0, 60));
 
-  for (const rock of [...foothill, ...ridge]) {
+  for (const rock of [foothill, ridge]) {
+    assert.match(rock.texture, /^assets\/map\/mountains\/mountain_0[1-6]\.png$/);
     assert.ok(rock.x >= 0 && rock.y >= 0);
     assert.ok(rock.x + rock.width <= 60);
     assert.ok(rock.y + rock.height <= 60);
-    assert.ok(rock.capHeight > 0 && rock.capHeight < rock.height);
-    assert.match(rock.variant, /^(slab|block|wedge|weathered)$/);
+    assert.equal(rock.anchor, 'bottom');
   }
+  assert.ok(ridge.height > foothill.height, 'ridge pillars should read taller than foothill rocks');
 
-  const neighboringRidge = getMountainRockShapes(map, 1, 1, 60);
-  const silhouettes = new Set([...ridge, ...neighboringRidge].map(rock => `${rock.variant}:${rock.width}:${rock.height}`));
-  const colors = new Set([...ridge, ...neighboringRidge].map(rock => rock.topColor));
-  assert.ok(silhouettes.size >= 4, 'rock silhouettes should vary across a mountain group');
-  assert.ok(colors.size >= 3, 'rock colors should vary across a mountain group');
+  const textures = new Set();
+  for (let row = 0; row < 12; row += 1) {
+    for (let col = 0; col < 12; col += 1) {
+      const model = getMountainRockSpriteModel({ grid: Array(12).fill('MMMMMMMMMMMM') }, col, row, 60);
+      textures.add(model.texture);
+    }
+  }
+  assert.equal(textures.size, 6, 'a mountain group should use all six visual variants');
 });
 
 test('top-down shoreline edges follow adjacent land without using side-view terrain sections', () => {

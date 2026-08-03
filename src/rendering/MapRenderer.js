@@ -10,7 +10,7 @@ import { gridToScreenTopLeft, screenToGrid } from '../utils/gridUtils.js';
 import { AnimatedSpriteHelper } from './AnimatedSpriteHelper.js';
 import { classifyArmyInteractionTarget } from '../domain/ArmyInteractionTarget.js';
 import { getStrategicFogStyle } from './FogPresentation.js';
-import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels, getMountainRockShapes, getTerrainFillColor, getTopDownShoreEdges, getVisibleTileBounds } from './MapPresentation.js';
+import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels, getMountainRockSpriteModel, getTerrainFillColor, getTopDownShoreEdges, getVisibleTileBounds, MOUNTAIN_ROCK_TEXTURES } from './MapPresentation.js';
 
 export class MapRenderer {
   constructor(app, buildingSystem, torchSystem, roadSystem, combatSystem, territorySystem) {
@@ -225,6 +225,7 @@ export class MapRenderer {
         }
       }
     }
+    for (const path of MOUNTAIN_ROCK_TEXTURES) tasks.push(loadOne(path));
     for (const definition of Object.values(configRegistry.get('resourceNodes')?.types || {})) {
       if (definition.mapArt) tasks.push(loadOne(definition.mapArt));
     }
@@ -1516,10 +1517,10 @@ export class MapRenderer {
   }
 
   _clearTerrainGraphics() {
-    if (this._mountainRockGraphics) {
-      this.terrainContainer.removeChild(this._mountainRockGraphics);
-      this._mountainRockGraphics.destroy();
-      this._mountainRockGraphics = null;
+    if (this._mountainRockLayer) {
+      this.terrainContainer.removeChild(this._mountainRockLayer);
+      this._mountainRockLayer.destroy({ children: true });
+      this._mountainRockLayer = null;
     }
     if (this._shorelineGraphics) {
       this.terrainContainer.removeChild(this._shorelineGraphics);
@@ -1535,60 +1536,25 @@ export class MapRenderer {
 
   _drawMountainRockLayer({ startCol, endCol, startRow, endRow }) {
     const ts = this.tileSize;
-    const rocks = new PIXI.Graphics();
-    const drawPolygon = (points, color, { alpha = 1, outline = null } = {}) => {
-      const trace = () => {
-        rocks.moveTo(points[0][0], points[0][1]);
-        for (let index = 1; index < points.length; index += 1) rocks.lineTo(points[index][0], points[index][1]);
-        rocks.lineTo(points[0][0], points[0][1]);
-      };
-      trace();
-      rocks.fill({ color, alpha });
-      if (outline !== null) {
-        trace();
-        rocks.stroke({ color: outline, alpha: 0.78, width: Math.max(1, ts * 0.018) });
-      }
-    };
+    const layer = new PIXI.Container();
 
     for (let row = startRow; row <= endRow; row += 1) {
       for (let col = startCol; col <= endCol; col += 1) {
-        const shapes = getMountainRockShapes(this.mapConfig, col, row, ts);
-        for (const shape of shapes) {
-          const x = col * ts - this.camX + shape.x;
-          const y = row * ts - this.camY + shape.y;
-          const width = shape.width;
-          const height = shape.height;
-          const cap = shape.variant === 'slab' ? shape.capHeight * 0.78 : shape.capHeight;
-          const insetLeft = shape.variant === 'wedge' ? shape.inset * 0.55 : shape.inset;
-          const insetRight = shape.variant === 'weathered' ? shape.inset * 1.45 : shape.inset;
-          const topLeft = [x + width * 0.28 + insetLeft * 0.12, y];
-          const topRight = [x + width * 0.72 - insetRight * 0.1, y + (shape.variant === 'wedge' ? cap * 0.2 : 0)];
-          const shoulderRight = [x + width * (shape.variant === 'weathered' ? 0.86 : 0.9), y + cap];
-          const shoulderLeft = [x + width * (shape.variant === 'wedge' ? 0.14 : 0.1), y + cap * (shape.variant === 'weathered' ? 1.12 : 1)];
-          const lowerRight = [x + width * 0.96, y + height * 0.68];
-          const bottomRight = [x + width * (shape.variant === 'wedge' ? 0.72 : 0.8), y + height];
-          const bottomLeft = [x + width * (shape.variant === 'weathered' ? 0.22 : 0.16), y + height];
-          const lowerLeft = [x + width * 0.04, y + height * 0.66];
-          const sideSplitTop = [x + width * 0.65, y + cap * 0.98];
-          const sideSplitLower = [x + width * 0.7, y + height * 0.72];
-          const sideSplitBottom = [x + width * 0.64, y + height];
-
-          drawPolygon([shoulderLeft, shoulderRight, lowerRight, bottomRight, bottomLeft, lowerLeft], shape.frontColor, { outline: shape.outlineColor });
-          drawPolygon([sideSplitTop, shoulderRight, lowerRight, bottomRight, sideSplitBottom, sideSplitLower], shape.sideColor, { alpha: 0.94 });
-          drawPolygon([topLeft, topRight, shoulderRight, shoulderLeft], shape.topColor, { outline: shape.outlineColor });
-
-          if (shape.variant === 'weathered') {
-            rocks.moveTo(x + width * 0.24, y + cap * 0.54);
-            rocks.lineTo(x + width * 0.48, y + cap * 0.78);
-            rocks.lineTo(x + width * 0.6, y + cap * 0.48);
-            rocks.stroke({ color: shape.outlineColor, alpha: 0.5, width: Math.max(1, ts * 0.013) });
-          }
-        }
+        const model = getMountainRockSpriteModel(this.mapConfig, col, row, ts);
+        if (!model) continue;
+        const texture = this._getTexture(model.texture);
+        if (!texture || texture.width <= 0 || texture.height <= 0) continue;
+        const sprite = new PIXI.Sprite(texture);
+        sprite.x = col * ts - this.camX + model.x;
+        sprite.y = row * ts - this.camY + model.y;
+        sprite.width = model.width;
+        sprite.height = model.height;
+        layer.addChild(sprite);
       }
     }
 
-    this.terrainContainer.addChild(rocks);
-    this._mountainRockGraphics = rocks;
+    this.terrainContainer.addChild(layer);
+    this._mountainRockLayer = layer;
   }
 
   /**
