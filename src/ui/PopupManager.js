@@ -359,7 +359,9 @@ export class PopupManager {
       'luxury_trade': '奢侈品与贸易',
       'strategy_cards': '历史策略',
       'economic_orders': '农业总览',
-      'commerce': '商业与贸易路线',
+      'commercial': '城市商业',
+      'trade': '城邦贸易',
+      'commerce': '城邦贸易',
       'world_factions': '世界势力与野外目标',
       'save_recovery': '存档恢复',
       'tutorial_prompt': '新手教程',
@@ -466,8 +468,12 @@ export class PopupManager {
     import('./panels/economic-orders-panel.js').then(m => {
       this.register('economic_orders', m.renderEconomicOrdersPanel);
     });
-    import('./panels/commerce-panel.js').then(m => {
-      this.register('commerce', m.renderCommercePanel);
+    import('./panels/commercial-overview-panel.js').then(m => {
+      this.register('commercial', m.renderCommercialOverviewPanel);
+    });
+    import('./panels/trade-panel.js').then(m => {
+      this.register('trade', m.renderTradePanel);
+      this.register('commerce', m.renderTradePanel);
     });
     import('./panels/world-factions-panel.js').then(m => {
       this.register('world_factions', m.renderWorldFactionsPanel);

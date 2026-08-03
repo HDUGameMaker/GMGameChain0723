@@ -3681,6 +3681,7 @@
     },
     {
       "id": "market_square",
+      "eraId": "primitive",
       "name": "市场",
       "category": "commerce",
       "description": "市场承担commerce体系中的独特职责。",
@@ -3729,6 +3730,7 @@
     },
     {
       "id": "trade_depot",
+      "eraId": "ancient",
       "name": "商栈",
       "category": "commerce",
       "description": "商栈承担commerce体系中的独特职责。",
@@ -3755,7 +3757,12 @@
         }
       ],
       "buildTime": 2,
-      "unlockConditions": [],
+      "unlockConditions": [
+        {
+          "type": "culture",
+          "cultureId": "civic_ancient_8"
+        }
+      ],
       "production": null,
       "housingCapacity": 0,
       "soldierCapacity": 0,
@@ -3777,6 +3784,7 @@
     },
     {
       "id": "luxury_workshop",
+      "eraId": "medieval",
       "name": "奢侈品工坊",
       "category": "commerce",
       "description": "奢侈品工坊承担commerce体系中的独特职责。",
@@ -3803,7 +3811,12 @@
         }
       ],
       "buildTime": 2,
-      "unlockConditions": [],
+      "unlockConditions": [
+        {
+          "type": "culture",
+          "cultureId": "civic_medieval_2"
+        }
+      ],
       "production": null,
       "housingCapacity": 0,
       "soldierCapacity": 0,

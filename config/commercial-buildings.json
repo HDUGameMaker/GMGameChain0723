@@ -1,0 +1,59 @@
+{
+  "buildings": [
+    {
+      "buildingId": "market_square",
+      "name": "市场",
+      "goldPerWorker": 1,
+      "buff": {
+        "id": "market_supply",
+        "name": "市场供给",
+        "description": "至少一名商人营业时，所有商业建筑黄金产出提高 5%。",
+        "effect": { "commercialGoldMul": 1.05 }
+      }
+    },
+    {
+      "buildingId": "trade_depot",
+      "name": "商馆",
+      "goldPerWorker": 1.2,
+      "buff": {
+        "id": "merchant_network",
+        "name": "商旅网络",
+        "description": "至少一名商人营业时，城邦贸易路线收益提高 8%。",
+        "effect": { "tradeValueMul": 1.08 }
+      }
+    },
+    {
+      "buildingId": "gold_mint",
+      "name": "钱庄",
+      "goldPerWorker": 1.5,
+      "buff": {
+        "id": "minted_currency",
+        "name": "统一钱币",
+        "description": "至少一名钱庄职员工作时，每个工作周期额外增加 0.5 黄金。",
+        "effect": { "commercialGoldFlat": 0.5 }
+      }
+    },
+    {
+      "buildingId": "gold_mint_t2",
+      "name": "大钱庄",
+      "goldPerWorker": 2.2,
+      "buff": {
+        "id": "minted_currency",
+        "name": "统一钱币",
+        "description": "至少一名钱庄职员工作时，每个工作周期额外增加 0.5 黄金；同名 Buff 不重复。",
+        "effect": { "commercialGoldFlat": 0.5 }
+      }
+    },
+    {
+      "buildingId": "luxury_workshop",
+      "name": "交易所",
+      "goldPerWorker": 1.3,
+      "buff": {
+        "id": "exchange_pricing",
+        "name": "集中定价",
+        "description": "至少一名交易员工作时，本地加工收益提高 12%。",
+        "effect": { "conversionValueMul": 1.12 }
+      }
+    }
+  ]
+}

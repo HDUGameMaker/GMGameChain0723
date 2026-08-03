@@ -1,4 +1,4 @@
-const RESOURCE_NAMES = { wood: '木材', stone: '石材', food: '食物', gold: '黄金' };
+const RESOURCE_NAMES = { wood: '木材', stone: '石头', food: '食物', gold: '黄金' };
 
 function recipeText(definition) {
   const side = items => (items || []).map(item => `${RESOURCE_NAMES[item.resourceId] || item.resourceId} ${item.amount}`).join(' + ');
@@ -26,14 +26,14 @@ function recipeSelect(definitions) {
   return select;
 }
 
-export function renderCommercePanel(data, body, pm) {
+export function renderTradePanel(data, body, pm) {
   const commerce = window.__game?.systems?.commerce;
   const diplomacy = window.__game?.systems?.diplomacy;
   if (!commerce || !diplomacy) return;
   const definitions = commerce.getDefinitions();
   const friendly = diplomacy.getVisibleOutposts().filter(outpost => ['friendly', 'allied'].includes(diplomacy.getOutpostState(outpost.id)?.status));
   body.style.cssText = 'padding:20px 24px;max-height:74vh;overflow:auto;color:#e5e9f0;';
-  body.innerHTML = `<div style="margin-bottom:15px"><b style="font-size:18px;color:#e7ca83">商业中心与自动贸易</b><div style="font-size:11px;color:#9ba6b5;margin-top:3px">市场工人于工作刻生产黄金；商栈扩大贸易容量并提高收益；工坊自动转换资源。</div></div>`;
+  body.innerHTML = '<div style="margin-bottom:15px"><b style="font-size:18px;color:#e7ca83">城邦贸易与资源加工</b><div style="font-size:11px;color:#9ba6b5;margin-top:3px">贸易只处理与其他地区的路线、资源交换、容量和停滞风险；城市内部商业请使用“商业”入口。</div></div>';
 
   const controls = document.createElement('div');
   controls.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:17px;';
@@ -60,7 +60,7 @@ export function renderCommercePanel(data, body, pm) {
   const conversionCard = document.createElement('section');
   conversionCard.style.cssText = tradeCard.style.cssText;
   const conversionRecipe = recipeSelect(definitions.conversionOrders);
-  conversionCard.innerHTML = `<b>安排工坊自动加工</b><span style="font-size:11px;color:#aab4c2">工坊 ${commerce.getConversionOrders().length}/${commerce.getConversionCapacity()}；每天自动执行一次</span>`;
+  conversionCard.innerHTML = `<b>安排本地加工</b><span style="font-size:11px;color:#aab4c2">加工 ${commerce.getConversionOrders().length}/${commerce.getConversionCapacity()}；每天自动执行一次</span>`;
   conversionCard.append(conversionRecipe, actionButton('启用转换', () => {
     const result = commerce.createConversionOrder(conversionRecipe.value);
     if (!result.ok) pm.alert(result.reason === 'conversion_capacity_full' ? '需要更多奢侈品工坊，或先撤销现有转换' : result.reason);
@@ -71,16 +71,13 @@ export function renderCommercePanel(data, body, pm) {
 
   const list = document.createElement('div');
   list.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
-  const records = [
-    ...commerce.getTradeRoutes().map(item => ({ ...item, kind: 'route' })),
-    ...commerce.getConversionOrders().map(item => ({ ...item, kind: 'conversion' }))
-  ];
-  if (!records.length) list.innerHTML = '<div style="padding:20px;text-align:center;border:1px dashed #4b5360;border-radius:8px;color:#7f8997">还没有自动贸易或转换任务。</div>';
+  const records = [...commerce.getTradeRoutes().map(item => ({ ...item, kind: 'route' })), ...commerce.getConversionOrders().map(item => ({ ...item, kind: 'conversion' }))];
+  if (!records.length) list.innerHTML = '<div style="padding:20px;text-align:center;border:1px dashed #4b5360;border-radius:8px;color:#7f8997">还没有自动贸易或加工任务。</div>';
   for (const record of records) {
     const row = document.createElement('article');
     row.style.cssText = 'display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:11px 13px;border:1px solid #465165;border-radius:8px;background:rgba(15,22,34,.66);';
     const outpost = record.kind === 'route' ? diplomacy.getOutpost(record.outpostId) : null;
-    row.innerHTML = `<div><b>${record.kind === 'route' ? '🛒' : '🏭'} ${record.definition?.name || record.recipeId}</b><span style="font-size:10px;color:#8da0b8;margin-left:8px">${outpost ? outpost.name : '本地工坊'}</span><div style="font-size:11px;color:#b6c0cd;margin-top:4px">${recipeText(record.definition)} · 已完成 ${record.completedCycles} 次${record.stalledDays ? ` · 停滞 ${record.stalledDays} 天` : ''}</div></div>`;
+    row.innerHTML = `<div><b>${record.kind === 'route' ? '🛒' : '🏭'} ${record.definition?.name || record.recipeId}</b><span style="font-size:10px;color:#8da0b8;margin-left:8px">${outpost ? outpost.name : '本地加工'}</span><div style="font-size:11px;color:#b6c0cd;margin-top:4px">${recipeText(record.definition)} · 已完成 ${record.completedCycles} 次${record.stalledDays ? ` · 停滞 ${record.stalledDays} 天` : ''}</div></div>`;
     row.appendChild(actionButton('撤销', () => {
       if (record.kind === 'route') commerce.removeTradeRoute(record.id);
       else commerce.removeConversionOrder(record.id);

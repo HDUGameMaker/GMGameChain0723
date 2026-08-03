@@ -225,6 +225,20 @@ export function renderBuildingDetailPanel(data, body, pm) {
     container.appendChild(cropSection);
   }
 
+  const commercialState = game.systems.commercialBuildings?.getBuildingState?.(buildingIndex);
+  if (commercialState) {
+    const commercialSection = section('商业经营', '🏪');
+    const definition = game.systems.commercialBuildings.getDefinitions().find(item => item.buildingId === building.buildingId);
+    commercialSection.innerHTML += `
+      <div style="display:grid;grid-template-columns:1fr auto;gap:7px;font-size:12px;color:#aeb8c5;">
+        <span>每名工人黄金</span><b style="color:#e3bd73">+${definition?.goldPerWorker || 0}/工作刻</b>
+        <span>当前黄金</span><b style="color:#e3bd73">+${commercialState.goldPerTick}/工作刻</b>
+        <span>唯一 Buff</span><b style="color:${commercialState.active ? '#79d89b' : '#e79a9a'}">${commercialState.buff?.name || '无'} · ${commercialState.active ? '生效' : '需至少 1 人'}</b>
+      </div>
+      <div style="font-size:11px;color:#8fa0b8;margin-top:9px;line-height:1.5">${definition?.buff?.description || ''}</div>`;
+    container.appendChild(commercialSection);
+  }
+
   // 建造进度注册到统一进度管理器
   if (building.status === 'constructing') {
     const progressFill = header.querySelector('.build-progress-fill');

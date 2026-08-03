@@ -137,7 +137,7 @@
   },
   {
     "id": "gold_mint",
-    "category": "industry",
+    "category": "commerce",
     "eraId": "primitive",
     "name": "铸币所",
     "description": "将基础资源转化为黄金的核心设施。消耗木材、石料与食物，支撑建设、贸易和军队维护。",
@@ -335,7 +335,7 @@
   },
   {
     "id": "gold_mint_t2",
-    "category": "industry",
+    "category": "commerce",
     "eraId": "primitive",
     "name": "精炼铸币所",
     "description": "升级版铸币所，黄金产出翻倍（同等原料）。由铸币所升级而来；需建筑科技树「精炼技术」解锁。",

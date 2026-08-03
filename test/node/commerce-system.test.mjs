@@ -12,7 +12,7 @@ const root = resolve(import.meta.dirname, '../..');
 const commerceConfig = JSON.parse(readFileSync(resolve(root, 'config/commerce.json'), 'utf8'));
 const adjacency = JSON.parse(readFileSync(resolve(root, 'config/adjacency-bonuses.json'), 'utf8'));
 
-function createScenario(status = 'friendly') {
+function createScenario(status = 'friendly', commercialEffects = {}) {
   eventBus.clear();
   configRegistry._configs = {
     commerce: commerceConfig,
@@ -39,15 +39,15 @@ function createScenario(status = 'friendly') {
     getOutpostState: id => id === 'free_market' ? { active: true, discovered: true, status, treaties: ['trade'] } : null
   };
   const commerce = new CommerceSystem();
-  commerce.setSystems({ resource, building, diplomacy });
+  commerce.setSystems({ resource, building, diplomacy, commercial: { getEffects: () => commercialEffects } });
   commerce.initNew();
   return { resource, commerce };
 }
 
-test('commercial centers generate staffed gold during work ticks', () => {
+test('trade route system does not generate internal commercial gold', () => {
   const { resource } = createScenario();
   eventBus.emit('workTick', {});
-  assert.equal(resource.getAmount('gold'), 102);
+  assert.equal(resource.getAmount('gold'), 100);
 });
 
 test('friendly city-state trade routes automatically exchange resources each day', () => {
@@ -57,7 +57,7 @@ test('friendly city-state trade routes automatically exchange resources each day
   assert.ok(route);
   eventBus.emit('dayStart', { day: 2 });
   assert.equal(resource.getAmount('food'), 90);
-  assert.equal(resource.getAmount('gold'), 109);
+  assert.equal(resource.getAmount('gold'), 108);
   assert.equal(commerce.getTradeRoutes()[0].completedCycles, 1);
 });
 
@@ -73,8 +73,15 @@ test('federation outcome permanently improves automatic city-state trade value',
   store.setState({ worldConsequenceModifiers: { tradeValueMul: 1.1 } });
   commerce.createTradeRoute('free_market', 'export_food');
   eventBus.emit('dayStart', { day: 2 });
-  assert.equal(resource.getAmount('gold'), 110);
+  assert.equal(resource.getAmount('gold'), 109);
   store.setState({ worldConsequenceModifiers: {} });
+});
+
+test('an active commercial buff improves trade value without worker-count stacking', () => {
+  const { resource, commerce } = createScenario('friendly', { tradeValueMul: 1.08 });
+  commerce.createTradeRoute('free_market', 'export_food');
+  eventBus.emit('dayStart', { day: 2 });
+  assert.equal(resource.getAmount('gold'), 109);
 });
 
 test('luxury workshops run configurable local conversion orders and restore them from saves', () => {

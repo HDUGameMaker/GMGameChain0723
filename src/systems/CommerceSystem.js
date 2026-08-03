@@ -13,19 +13,20 @@ export class CommerceSystem {
     this._building = null;
     this._diplomacy = null;
     this._era = null;
+    this._commercial = null;
     this._routes = [];
     this._conversions = [];
     this._nextId = 1;
     this._lastProcessedDay = 0;
-    eventBus.on('workTick', () => this._onWorkTick());
     eventBus.on('dayStart', ({ day } = {}) => this._onDayStart(day || 1));
   }
 
-  setSystems({ resource, building, diplomacy, era } = {}) {
+  setSystems({ resource, building, diplomacy, era, commercial } = {}) {
     this._resource = resource || null;
     this._building = building || null;
     this._diplomacy = diplomacy || null;
     this._era = era || null;
+    this._commercial = commercial || null;
   }
 
   initNew() {
@@ -122,11 +123,6 @@ export class CommerceSystem {
     return true;
   }
 
-  _onWorkTick() {
-    const gold = Math.max(0, Number(this._building?.getWorkforceOutputs?.().gold) || 0);
-    if (gold > 0) this._resource?.addClamped?.('gold', gold);
-  }
-
   _onDayStart(day) {
     if (!Number.isFinite(day) || day <= this._lastProcessedDay) return;
     this._lastProcessedDay = day;
@@ -144,7 +140,8 @@ export class CommerceSystem {
     for (const order of this._conversions) {
       const definition = this.getDefinitions().conversionOrders.find(item => item.id === order.recipeId);
       if (!order.enabled || !definition) continue;
-      changed = this._runRecipe(order, definition, 1) || changed;
+      const conversionMultiplier = this._commercial?.getEffects?.().conversionValueMul || 1;
+      changed = this._runRecipe(order, definition, conversionMultiplier) || changed;
     }
     if (changed) this._notify();
   }
@@ -152,12 +149,11 @@ export class CommerceSystem {
   _getTradeValueMultiplier() {
     const bonuses = this._era?.getBonuses?.() || {};
     const legacy = store.getState('worldConsequenceModifiers') || {};
-    let multiplier = (bonuses.tradeValueMul || 1) * (bonuses.civilizationYieldMul || 1) * (legacy.tradeValueMul || 1);
-    for (const depot of this._activeBuildings('trade_depot')) {
-      const config = configRegistry.getBuilding?.(depot.buildingId);
-      multiplier *= config?.uniqueFunction?.tradeValueMul || 1.12;
-    }
-    return multiplier;
+    const commercial = this._commercial?.getEffects?.() || {};
+    return (bonuses.tradeValueMul || 1)
+      * (bonuses.civilizationYieldMul || 1)
+      * (legacy.tradeValueMul || 1)
+      * (commercial.tradeValueMul || 1);
   }
 
   _runRecipe(record, definition, outputMultiplier) {

@@ -33,6 +33,7 @@ import { LuxurySystem } from './systems/LuxurySystem.js';
 import { StrategySystem } from './systems/StrategySystem.js';
 import { EconomyOrderSystem } from './systems/EconomyOrderSystem.js';
 import { CommerceSystem } from './systems/CommerceSystem.js';
+import { CommercialBuildingSystem } from './systems/CommercialBuildingSystem.js';
 import { ArmySystem } from './systems/ArmySystem.js';
 import { WildSiteSystem } from './systems/WildSiteSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
@@ -139,6 +140,7 @@ class Game {
     this.systems.strategy = new StrategySystem();
     this.systems.economyOrders = new EconomyOrderSystem();
     this.systems.commerce = new CommerceSystem();
+    this.systems.commercialBuildings = new CommercialBuildingSystem();
     this.systems.army = new ArmySystem();
     this.systems.wildSites = new WildSiteSystem();
 
@@ -242,7 +244,12 @@ class Game {
       resource: this.systems.resource,
       building: this.systems.building,
       diplomacy: this.systems.diplomacy,
-      era: this.systems.era
+      era: this.systems.era,
+      commercial: this.systems.commercialBuildings
+    });
+    this.systems.commercialBuildings.setSystems({
+      resource: this.systems.resource,
+      building: this.systems.building
     });
     this.systems.army.setSystems({
       building: this.systems.building,
