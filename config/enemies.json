@@ -36,6 +36,7 @@
     {
       "id": "warrior",
       "name": "战士",
+  "description": "手持简陋武器的民兵，是聚落武装的第一道防线。",
       "domain": "land",
       "branch": "infantry",
       "tier": 0,
@@ -63,6 +64,7 @@
     {
       "id": "swordsman",
       "name": "剑士",
+  "description": "经训练的职业剑士，剑刃与盾牌皆比民兵精良。",
       "domain": "land",
       "branch": "infantry",
       "tier": 1,
@@ -118,6 +120,7 @@
     {
       "id": "musketeer",
       "name": "火枪手",
+  "description": "装填火药的滑膛枪手，齐射的弹雨让旧式阵列土崩瓦解。",
       "domain": "land",
       "branch": "infantry",
       "tier": 2,
@@ -176,6 +179,7 @@
     {
       "id": "modern_infantry",
       "name": "现代步兵",
+  "description": "自动武器与制式装备武装的现代步兵，机动与火力兼备。",
       "domain": "land",
       "branch": "infantry",
       "tier": 3,
@@ -234,6 +238,7 @@
     {
       "id": "knight",
       "name": "骑士",
+  "description": "披甲执矛的马上骑士，冲锋是他们最熟悉的战场语言。",
       "domain": "land",
       "branch": "cavalry",
       "tier": 1,
@@ -285,6 +290,7 @@
     {
       "id": "armored_cavalry",
       "name": "重甲骑兵",
+  "description": "人马俱披重甲的冲击骑兵，是撕开阵线的铁刃。",
       "domain": "land",
       "branch": "cavalry",
       "tier": 2,
@@ -343,6 +349,7 @@
     {
       "id": "biplane",
       "name": "双翼机",
+  "description": "木骨布翼的早期飞机，首次让战争蔓延到天空。",
       "domain": "land",
       "branch": "cavalry",
       "tier": 3,
@@ -401,6 +408,7 @@
     {
       "id": "jet_fighter",
       "name": "喷气式战机",
+  "description": "喷气引擎驱动的战斗机，速度与火力都翻越了旧时代的边界。",
       "domain": "land",
       "branch": "cavalry",
       "tier": 4,
@@ -459,6 +467,7 @@
     {
       "id": "cannon",
       "name": "加农炮",
+  "description": "直射的青铜炮，一炮轰开城墙与阵线的缺口。",
       "domain": "land",
       "branch": "artillery",
       "tier": 1,
@@ -515,6 +524,7 @@
     {
       "id": "tank",
       "name": "坦克",
+  "description": "履带、装甲与主炮的结合体，陆地战争的钢铁堡垒。",
       "domain": "land",
       "branch": "artillery",
       "tier": 2,
@@ -574,6 +584,7 @@
     {
       "id": "rocket_artillery",
       "name": "火箭炮",
+  "description": "多管齐发的火箭炮，一片弹雨覆盖整个战场。",
       "domain": "land",
       "branch": "artillery",
       "tier": 3,
@@ -632,6 +643,7 @@
     {
       "id": "raft",
       "name": "木筏",
+  "description": "原木捆扎的简易水运工具，载着最早的河上战士。",
       "domain": "naval",
       "branch": "navy",
       "tier": 1,
@@ -679,6 +691,7 @@
     {
       "id": "sailing_ship",
       "name": "帆船",
+  "description": "风帆驱动的战船，是远洋与贸易的载体。",
       "domain": "naval",
       "branch": "navy",
       "tier": 2,
@@ -737,6 +750,7 @@
     {
       "id": "battleship",
       "name": "战列舰",
+  "description": "巨炮林立的钢铁巨舰，海洋霸权的象征。",
       "domain": "naval",
       "branch": "navy",
       "tier": 3,
@@ -795,6 +809,7 @@
     {
       "id": "missile_destroyer",
       "name": "导弹驱逐舰",
+  "description": "导弹武装的现代化战舰，海上的移动武库。",
       "domain": "naval",
       "branch": "navy",
       "tier": 4,

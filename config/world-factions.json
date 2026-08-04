@@ -764,6 +764,7 @@
     {
       "id": "wild_wood_1",
       "name": "盗木营地",
+  "description": "一群在林区盗伐的流民，木料与栅栏之间堆着他们的赃物。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 41,
@@ -783,6 +784,7 @@
     {
       "id": "wild_food_1",
       "name": "荒野猎团",
+  "description": "以狩猎为生的野人部落，猎获的兽肉晾晒在营火旁。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 123,
@@ -802,6 +804,7 @@
     {
       "id": "wild_gold_1",
       "name": "私铸窝点",
+  "description": "私自铸币的地下作坊，熔炉的火光映着假币与真金。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 207,
@@ -821,6 +824,7 @@
     {
       "id": "wild_bandit_1",
       "name": "林道匪寨",
+  "description": "盘踞林道的匪寨，专劫过往商旅，寨墙后堆满抢来的货物。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 290,
@@ -840,6 +844,7 @@
     {
       "id": "wild_food_2",
       "name": "野牛群地",
+  "description": "野牛群聚集的草场，看守者驱赶兽群，也守卫这片丰饶。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 373,
@@ -859,6 +864,7 @@
     {
       "id": "wild_stone_1",
       "name": "山贼石寨",
+  "description": "据山而守的贼寇，以石块和滚木封锁山路。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 92,
@@ -878,6 +884,7 @@
     {
       "id": "wild_nomad_1",
       "name": "流动掠骑",
+  "description": "逐水草而居的游牧劫掠者，马队来去无踪。",
       "category": "roaming_host",
       "domain": "land",
       "gridX": 175,
@@ -897,6 +904,7 @@
     {
       "id": "wild_mine_1",
       "name": "废弃矿坑守军",
+  "description": "占据废弃矿坑的守军，坑道深处或许藏着未采尽的矿脉。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 262,
@@ -916,6 +924,7 @@
     {
       "id": "wild_bandit_2",
       "name": "南道劫掠营",
+  "description": "盘踞南道要冲的劫掠营地，是过往车队的必经之险。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 341,
@@ -935,6 +944,7 @@
     {
       "id": "wild_ruin_1",
       "name": "古战场守卫",
+  "description": "古战场废墟中的守灵者，据说亡者的兵器仍埋在地下。",
       "category": "ruin_guard",
       "domain": "land",
       "gridX": 60,
@@ -954,6 +964,7 @@
     {
       "id": "wild_wood_2",
       "name": "密林盗猎团",
+  "description": "潜伏密林的盗猎者，陷阱遍布，猎物与行人皆入其网。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 143,
@@ -973,6 +984,7 @@
     {
       "id": "wild_fort_1",
       "name": "旧边塞叛军",
+  "description": "叛离旧主的边塞守军，占据废弃要塞自立为王。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 226,
@@ -992,6 +1004,7 @@
     {
       "id": "wild_food_3",
       "name": "丰饶谷地守卫",
+  "description": "看守丰饶谷地的武装，良田沃土是他们最硬的底气。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 309,
@@ -1011,6 +1024,7 @@
     {
       "id": "wild_mine_2",
       "name": "高地矿团",
+  "description": "盘踞高地矿脉的矿团，铁镐与刀剑随时准备切换。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 28,
@@ -1030,6 +1044,7 @@
     {
       "id": "wild_pirate_1",
       "name": "浅湾海盗",
+  "description": "藏身浅湾的海盗，帆影一起便扑向过路的商船。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 124,
@@ -1049,6 +1064,7 @@
     {
       "id": "wild_pirate_2",
       "name": "河口劫船团",
+  "description": "封锁河口的劫船团伙，扼住了水运的咽喉。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 230,
@@ -1068,6 +1084,7 @@
     {
       "id": "wild_pirate_3",
       "name": "外海私掠队",
+  "description": "活动于外海的私掠船队，挂着来历不明的旗号。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 259,
@@ -1087,6 +1104,7 @@
     {
       "id": "wild_pirate_4",
       "name": "北水道封锁舰",
+  "description": "封锁北水道的武装舰船，胆敢通行的船只都会被拦下。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 355,
@@ -1106,6 +1124,7 @@
     {
       "id": "wild_site_019",
       "name": "边地营寨·19",
+  "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 79,
@@ -1125,6 +1144,7 @@
     {
       "id": "wild_site_020",
       "name": "资源守卫·20",
+  "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 162,
@@ -1144,6 +1164,7 @@
     {
       "id": "wild_site_021",
       "name": "游荡军团·21",
+  "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
       "category": "roaming_host",
       "domain": "land",
       "gridX": 245,
@@ -1163,6 +1184,7 @@
     {
       "id": "wild_site_022",
       "name": "遗迹守卫·22",
+  "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
       "category": "ruin_guard",
       "domain": "land",
       "gridX": 328,
@@ -1182,6 +1204,7 @@
     {
       "id": "wild_site_023",
       "name": "海盗舰队·23",
+  "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 68,
@@ -1201,6 +1224,7 @@
     {
       "id": "wild_site_024",
       "name": "荒野兽群·24",
+  "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
       "category": "ancient_beast",
       "domain": "land",
       "gridX": 132,
@@ -1220,6 +1244,7 @@
     {
       "id": "wild_site_025",
       "name": "边地营寨·25",
+  "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 213,
@@ -1239,6 +1264,7 @@
     {
       "id": "wild_site_026",
       "name": "资源守卫·26",
+  "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 296,
@@ -1258,6 +1284,7 @@
     {
       "id": "wild_site_027",
       "name": "游荡军团·27",
+  "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
       "category": "roaming_host",
       "domain": "land",
       "gridX": 17,
@@ -1277,6 +1304,7 @@
     {
       "id": "wild_site_028",
       "name": "遗迹守卫·28",
+  "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
       "category": "ruin_guard",
       "domain": "land",
       "gridX": 98,
@@ -1296,6 +1324,7 @@
     {
       "id": "wild_site_029",
       "name": "海盗舰队·29",
+  "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 230,
@@ -1315,6 +1344,7 @@
     {
       "id": "wild_site_030",
       "name": "荒野兽群·30",
+  "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
       "category": "ancient_beast",
       "domain": "land",
       "gridX": 264,
@@ -1334,6 +1364,7 @@
     {
       "id": "wild_site_031",
       "name": "边地营寨·31",
+  "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 347,
@@ -1353,6 +1384,7 @@
     {
       "id": "wild_site_032",
       "name": "资源守卫·32",
+  "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 66,
@@ -1372,6 +1404,7 @@
     {
       "id": "wild_site_033",
       "name": "游荡军团·33",
+  "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
       "category": "roaming_host",
       "domain": "land",
       "gridX": 149,
@@ -1391,6 +1424,7 @@
     {
       "id": "wild_site_034",
       "name": "遗迹守卫·34",
+  "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
       "category": "ruin_guard",
       "domain": "naval",
       "gridX": 230,
@@ -1410,6 +1444,7 @@
     {
       "id": "wild_site_035",
       "name": "海盗舰队·35",
+  "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 286,
@@ -1429,6 +1464,7 @@
     {
       "id": "wild_site_036",
       "name": "荒野兽群·36",
+  "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
       "category": "ancient_beast",
       "domain": "land",
       "gridX": 34,
@@ -1448,6 +1484,7 @@
     {
       "id": "wild_site_037",
       "name": "边地营寨·37",
+  "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 117,
@@ -1467,6 +1504,7 @@
     {
       "id": "wild_site_038",
       "name": "资源守卫·38",
+  "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 200,
@@ -1486,6 +1524,7 @@
     {
       "id": "wild_site_039",
       "name": "游荡军团·39",
+  "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
       "category": "roaming_host",
       "domain": "land",
       "gridX": 283,
@@ -1505,6 +1544,7 @@
     {
       "id": "wild_site_040",
       "name": "遗迹守卫·40",
+  "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
       "category": "ruin_guard",
       "domain": "land",
       "gridX": 362,
@@ -1524,6 +1564,7 @@
     {
       "id": "wild_site_041",
       "name": "海盗舰队·41",
+  "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 83,
@@ -1543,6 +1584,7 @@
     {
       "id": "wild_site_042",
       "name": "荒野兽群·42",
+  "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
       "category": "ancient_beast",
       "domain": "land",
       "gridX": 167,
@@ -1562,6 +1604,7 @@
     {
       "id": "wild_site_043",
       "name": "边地营寨·43",
+  "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 243,
@@ -1581,6 +1624,7 @@
     {
       "id": "wild_site_044",
       "name": "资源守卫·44",
+  "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 334,
@@ -1600,6 +1644,7 @@
     {
       "id": "wild_site_045",
       "name": "游荡军团·45",
+  "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
       "category": "roaming_host",
       "domain": "naval",
       "gridX": 12,
@@ -1619,6 +1664,7 @@
     {
       "id": "wild_site_046",
       "name": "遗迹守卫·46",
+  "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
       "category": "ruin_guard",
       "domain": "land",
       "gridX": 137,
@@ -1638,6 +1684,7 @@
     {
       "id": "wild_site_047",
       "name": "海盗舰队·47",
+  "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 194,
@@ -1657,6 +1704,7 @@
     {
       "id": "wild_site_048",
       "name": "荒野兽群·48",
+  "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
       "category": "ancient_beast",
       "domain": "land",
       "gridX": 302,
@@ -1676,6 +1724,7 @@
     {
       "id": "wild_site_049",
       "name": "边地营寨·49",
+  "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 21,
@@ -1695,6 +1744,7 @@
     {
       "id": "wild_site_050",
       "name": "资源守卫·50",
+  "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 104,
@@ -1714,6 +1764,7 @@
     {
       "id": "wild_site_051",
       "name": "游荡军团·51",
+  "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
       "category": "roaming_host",
       "domain": "land",
       "gridX": 187,
@@ -1733,6 +1784,7 @@
     {
       "id": "wild_site_052",
       "name": "遗迹守卫·52",
+  "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
       "category": "ruin_guard",
       "domain": "land",
       "gridX": 270,
@@ -1752,6 +1804,7 @@
     {
       "id": "wild_site_053",
       "name": "海盗舰队·53",
+  "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 363,
@@ -1771,6 +1824,7 @@
     {
       "id": "wild_site_054",
       "name": "荒野兽群·54",
+  "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
       "category": "ancient_beast",
       "domain": "land",
       "gridX": 72,
@@ -1790,6 +1844,7 @@
     {
       "id": "wild_site_055",
       "name": "边地营寨·55",
+  "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 155,
@@ -1809,6 +1864,7 @@
     {
       "id": "wild_site_056",
       "name": "资源守卫·56",
+  "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
       "category": "resource_guard",
       "domain": "naval",
       "gridX": 230,
@@ -1828,6 +1884,7 @@
     {
       "id": "wild_site_057",
       "name": "游荡军团·57",
+  "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
       "category": "roaming_host",
       "domain": "land",
       "gridX": 321,
@@ -1847,6 +1904,7 @@
     {
       "id": "wild_site_058",
       "name": "遗迹守卫·58",
+  "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
       "category": "ruin_guard",
       "domain": "land",
       "gridX": 40,
@@ -1866,6 +1924,7 @@
     {
       "id": "wild_site_059",
       "name": "海盗舰队·59",
+  "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 123,
@@ -1885,6 +1944,7 @@
     {
       "id": "wild_site_060",
       "name": "荒野兽群·60",
+  "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
       "category": "ancient_beast",
       "domain": "land",
       "gridX": 206,
@@ -1904,6 +1964,7 @@
     {
       "id": "wild_site_061",
       "name": "边地营寨·61",
+  "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 289,
@@ -1923,6 +1984,7 @@
     {
       "id": "wild_site_062",
       "name": "资源守卫·62",
+  "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 372,
@@ -1942,6 +2004,7 @@
     {
       "id": "wild_site_063",
       "name": "游荡军团·63",
+  "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
       "category": "roaming_host",
       "domain": "land",
       "gridX": 91,
@@ -1961,6 +2024,7 @@
     {
       "id": "wild_site_064",
       "name": "遗迹守卫·64",
+  "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
       "category": "ruin_guard",
       "domain": "land",
       "gridX": 174,
@@ -1980,6 +2044,7 @@
     {
       "id": "wild_site_065",
       "name": "海盗舰队·65",
+  "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 257,
@@ -1999,6 +2064,7 @@
     {
       "id": "wild_site_066",
       "name": "荒野兽群·66",
+  "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
       "category": "ancient_beast",
       "domain": "land",
       "gridX": 340,
@@ -2018,6 +2084,7 @@
     {
       "id": "wild_site_067",
       "name": "边地营寨·67",
+  "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
       "category": "barbarian_camp",
       "domain": "naval",
       "gridX": 46,
@@ -2037,6 +2104,7 @@
     {
       "id": "wild_site_068",
       "name": "资源守卫·68",
+  "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 142,
@@ -2056,6 +2124,7 @@
     {
       "id": "wild_site_069",
       "name": "游荡军团·69",
+  "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
       "category": "roaming_host",
       "domain": "land",
       "gridX": 225,
@@ -2075,6 +2144,7 @@
     {
       "id": "wild_site_070",
       "name": "遗迹守卫·70",
+  "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
       "category": "ruin_guard",
       "domain": "land",
       "gridX": 308,
@@ -2094,6 +2164,7 @@
     {
       "id": "wild_site_071",
       "name": "海盗舰队·71",
+  "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 11,
@@ -2113,6 +2184,7 @@
     {
       "id": "wild_site_072",
       "name": "荒野兽群·72",
+  "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
       "category": "ancient_beast",
       "domain": "land",
       "gridX": 110,
@@ -2132,6 +2204,7 @@
     {
       "id": "wild_site_073",
       "name": "边地营寨·73",
+  "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 193,
@@ -2151,6 +2224,7 @@
     {
       "id": "wild_site_074",
       "name": "资源守卫·74",
+  "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 276,
@@ -2170,6 +2244,7 @@
     {
       "id": "wild_site_075",
       "name": "游荡军团·75",
+  "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
       "category": "roaming_host",
       "domain": "land",
       "gridX": 359,
@@ -2189,6 +2264,7 @@
     {
       "id": "wild_site_076",
       "name": "遗迹守卫·76",
+  "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
       "category": "ruin_guard",
       "domain": "land",
       "gridX": 78,
@@ -2208,6 +2284,7 @@
     {
       "id": "wild_site_077",
       "name": "海盗舰队·77",
+  "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 131,
@@ -2227,6 +2304,7 @@
     {
       "id": "wild_site_078",
       "name": "荒野兽群·78",
+  "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
       "category": "ancient_beast",
       "domain": "naval",
       "gridX": 244,
@@ -2246,6 +2324,7 @@
     {
       "id": "wild_site_079",
       "name": "边地营寨·79",
+  "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 327,
@@ -2265,6 +2344,7 @@
     {
       "id": "wild_site_080",
       "name": "资源守卫·80",
+  "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 46,
@@ -2284,6 +2364,7 @@
     {
       "id": "wild_site_081",
       "name": "游荡军团·81",
+  "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
       "category": "roaming_host",
       "domain": "land",
       "gridX": 123,
@@ -2303,6 +2384,7 @@
     {
       "id": "wild_site_082",
       "name": "遗迹守卫·82",
+  "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
       "category": "ruin_guard",
       "domain": "land",
       "gridX": 212,
@@ -2322,6 +2404,7 @@
     {
       "id": "wild_site_083",
       "name": "海盗舰队·83",
+  "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 290,
@@ -2341,6 +2424,7 @@
     {
       "id": "wild_site_084",
       "name": "荒野兽群·84",
+  "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
       "category": "ancient_beast",
       "domain": "land",
       "gridX": 14,
@@ -2360,6 +2444,7 @@
     {
       "id": "wild_site_085",
       "name": "边地营寨·85",
+  "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 97,
@@ -2379,6 +2464,7 @@
     {
       "id": "wild_site_086",
       "name": "资源守卫·86",
+  "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 180,
@@ -2398,6 +2484,7 @@
     {
       "id": "wild_site_087",
       "name": "游荡军团·87",
+  "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
       "category": "roaming_host",
       "domain": "land",
       "gridX": 263,
@@ -2417,6 +2504,7 @@
     {
       "id": "wild_site_088",
       "name": "遗迹守卫·88",
+  "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
       "category": "ruin_guard",
       "domain": "land",
       "gridX": 346,
@@ -2436,6 +2524,7 @@
     {
       "id": "wild_site_089",
       "name": "海盗舰队·89",
+  "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 68,
@@ -2455,6 +2544,7 @@
     {
       "id": "wild_site_090",
       "name": "荒野兽群·90",
+  "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
       "category": "ancient_beast",
       "domain": "land",
       "gridX": 148,
@@ -2474,6 +2564,7 @@
     {
       "id": "wild_site_091",
       "name": "边地营寨·91",
+  "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
       "category": "barbarian_camp",
       "domain": "land",
       "gridX": 231,
@@ -2493,6 +2584,7 @@
     {
       "id": "wild_site_092",
       "name": "资源守卫·92",
+  "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
       "category": "resource_guard",
       "domain": "land",
       "gridX": 314,
@@ -2512,6 +2604,7 @@
     {
       "id": "wild_site_093",
       "name": "游荡军团·93",
+  "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
       "category": "roaming_host",
       "domain": "land",
       "gridX": 33,
@@ -2531,6 +2624,7 @@
     {
       "id": "wild_site_094",
       "name": "遗迹守卫·94",
+  "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
       "category": "ruin_guard",
       "domain": "land",
       "gridX": 116,
@@ -2550,6 +2644,7 @@
     {
       "id": "wild_site_095",
       "name": "海盗舰队·95",
+  "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
       "category": "pirate_fleet",
       "domain": "naval",
       "gridX": 198,
@@ -2569,6 +2664,7 @@
     {
       "id": "wild_site_096",
       "name": "荒野兽群·96",
+  "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
       "category": "ancient_beast",
       "domain": "land",
       "gridX": 282,

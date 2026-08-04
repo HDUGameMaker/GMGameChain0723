@@ -436,6 +436,7 @@
     {
       "id": "spearman",
       "name": "长矛兵",
+  "description": "手持长矛的步兵，能有效迟滞骑兵的冲锋。",
       "domain": "land",
       "branch": "infantry",
       "tier": 0,
@@ -475,6 +476,7 @@
     {
       "id": "pikeman",
       "name": "重装枪兵",
+  "description": "数米长枪列成的枪阵，是骑兵的噩梦。",
       "domain": "land",
       "branch": "infantry",
       "tier": 1,
@@ -522,6 +524,7 @@
     {
       "id": "archer",
       "name": "弓箭手",
+  "description": "弯弓搭箭的射手，在阵后提供持续火力。",
       "domain": "land",
       "branch": "archer",
       "tier": 0,
@@ -561,6 +564,7 @@
     {
       "id": "crossbowman",
       "name": "弩兵",
+  "description": "上弦省力的弩手，穿透力远超普通弓箭。",
       "domain": "land",
       "branch": "archer",
       "tier": 1,
@@ -608,6 +612,7 @@
     {
       "id": "longbowman",
       "name": "长弓手",
+  "description": "射程极远的长弓射手，箭雨如乌云压顶。",
       "domain": "land",
       "branch": "archer",
       "tier": 2,
@@ -656,6 +661,7 @@
     {
       "id": "catapult",
       "name": "投石车",
+  "description": "抛射石弹的攻城器械，让城墙承受天降之灾。",
       "domain": "land",
       "branch": "siege",
       "tier": 1,
@@ -700,6 +706,7 @@
     {
       "id": "trebuchet",
       "name": "配重投石机",
+  "description": "配重杠杆抛石机，投出的石弹足以砸穿城垛。",
       "domain": "land",
       "branch": "siege",
       "tier": 2,
@@ -747,6 +754,7 @@
     {
       "id": "siege_tower",
       "name": "攻城塔",
+  "description": "与城墙齐高的木塔，士兵从塔顶涌入城头。",
       "domain": "land",
       "branch": "siege",
       "tier": 1,
@@ -787,6 +795,7 @@
     {
       "id": "galley",
       "name": "桨帆战船",
+  "description": "帆桨并用的战船，地中海海战的主力。",
       "domain": "naval",
       "branch": "navy",
       "tier": 1,
@@ -834,6 +843,7 @@
     {
       "id": "fire_ship",
       "name": "火船",
+  "description": "满载油脂的火攻船，冲入敌阵同归于尽。",
       "domain": "naval",
       "branch": "navy",
       "tier": 2,
@@ -887,6 +897,7 @@
     {
       "id": "wolf",
       "name": "野狼",
+  "description": "成群出没的掠食者，嗅到血腥便会围拢而来。",
       "icon": "🐺",
       "faction": "wildlife",
       "domain": "land",
@@ -909,6 +920,7 @@
     {
       "id": "boar",
       "name": "野猪",
+  "description": "暴怒的野猪横冲直撞，獠牙能挑翻粗心的猎手。",
       "icon": "🐗",
       "faction": "wildlife",
       "domain": "land",
@@ -931,6 +943,7 @@
     {
       "id": "bandit_raider",
       "name": "掠夺者",
+  "description": "落草为寇的强盗，专抢落单的商旅与车队。",
       "icon": "🗡️",
       "faction": "outpost",
       "domain": "land",
@@ -953,6 +966,7 @@
     {
       "id": "bandit_archer",
       "name": "盗匪弓手",
+  "description": "躲在树丛后放冷箭的匪徒，箭法刁钻。",
       "icon": "🏹",
       "faction": "outpost",
       "domain": "land",
@@ -976,6 +990,7 @@
     {
       "id": "outpost_guard",
       "name": "据点守卫",
+  "description": "据点里装备齐全的守卫，警惕任何靠近的人。",
       "icon": "🛡️",
       "faction": "outpost",
       "domain": "land",
@@ -998,6 +1013,7 @@
     {
       "id": "outpost_crossbow",
       "name": "据点弩手",
+  "description": "据点的弩箭射手，依托掩体射击精准。",
       "icon": "🎯",
       "faction": "outpost",
       "domain": "land",
@@ -1021,6 +1037,7 @@
     {
       "id": "corsair_galley",
       "name": "海盗桨船",
+  "description": "横行海上的海盗船，专劫商路。",
       "icon": "🏴‍☠️",
       "faction": "corsair",
       "domain": "naval",
@@ -1043,6 +1060,7 @@
     {
       "id": "sea_serpent",
       "name": "海蛇",
+  "description": "出没于深海的巨蛇，是水手的噩梦。",
       "icon": "🐉",
       "faction": "wildlife",
       "domain": "naval",
