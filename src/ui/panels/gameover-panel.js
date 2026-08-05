@@ -18,8 +18,6 @@ export function renderGameOverPanel(data, body, pm) {
   const total = ts ? ts.getClaimableCount() : 0;
   const owned = ts ? ts.getOwnedClaimableCount() : 0;
   const winPct = total > 0 ? (owned / total) * 100 : 0;
-  const enemyCount = ee ? ee.getCellCount() : 0;
-  const enemyPct = total > 0 ? (enemyCount / total) * 100 : 0;
   const totalCleared = ee ? ee.getTotalCleared() : 0;
   const buildingCount = bs ? bs.buildings.filter(b => b.status === 'active').length : 0;
   const gold = rs ? rs.getAmount('gold') : 0;
@@ -72,8 +70,6 @@ export function renderGameOverPanel(data, body, pm) {
       : '建筑与边境拓土已经控制过半土地，你的文明完成了历史征服。';
   } else if (data.reason === 'hqLost') {
     reason.textContent = '大本营被敌人占领，指挥中心沦陷……';
-  } else if (data.reason === 'overwhelmed') {
-    reason.textContent = '被敌人 x2 扩张淹没，领地沦陷……';
   } else {
     reason.textContent = '营地沦陷……';
   }
@@ -92,7 +88,6 @@ export function renderGameOverPanel(data, body, pm) {
   const statItems = [
     { label: '存活天数', value: `Day ${daysSurvived}` },
     { label: '我方占领', value: `${owned}/${total}（${winPct.toFixed(1)}%）` },
-    { label: '敌方占领', value: `${enemyCount}/${total}（${enemyPct.toFixed(1)}%）` },
     { label: '累计清敌', value: `${totalCleared}` },
     { label: '活跃建筑', value: `${buildingCount} 座` },
     { label: '士兵', value: `${soldierCount}` },

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { BlackMistSystem } from '../../src/systems/BlackMistSystem.js';
 import { eventBus } from '../../src/core/EventBus.js';
 
-test('eastern black mist expands one circular radius per day and exposes tile damage', () => {
+test('eastern black mist expands one circular radius every two days and exposes tile damage', () => {
   const calls = [];
   const mist = new BlackMistSystem();
   mist.setSystems({
@@ -13,6 +13,8 @@ test('eastern black mist expands one circular radius per day and exposes tile da
   mist.initNew();
   assert.equal(mist.radius, 5);
   eventBus.emit('dayStart', { day: 2 });
+  assert.equal(mist.radius, 5);
+  eventBus.emit('dayStart', { day: 3 });
   assert.equal(mist.radius, 6);
   assert.equal(mist.isCovered(26, 10), true);
   assert.equal(mist.isCovered(26, 11), false);

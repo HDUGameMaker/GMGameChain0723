@@ -28,11 +28,11 @@
   "inspirationPerPerson": 1,
   "foodPerPerson": 1,
   "cheats": {
-    "clearAllFog": false,
+    "clearAllFog": true,
     "unlimitedBasicResources": false,
     "extremeArmyMovementSpeed": false,
     "cityStatesAttackImmediately": false,
-    "grantAllLuxuries": false,
+    "grantAllLuxuries": true,
     "completeCurrentEraResearchHotkey": false,
     "increaseCurrentHeroAffinityHotkey": false,
     "fillEraMaterialsHotkey": false,

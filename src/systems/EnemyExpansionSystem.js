@@ -79,6 +79,7 @@ export class EnemyExpansionSystem {
       raidOutpostId: outpostId || null,
       raidTargetX: targetX,
       raidTargetY: targetY,
+      nonExpanding: true,
       ...(combatStats || {})
     });
     this._updateStore();
@@ -93,9 +94,13 @@ export class EnemyExpansionSystem {
       if (!Number.isFinite(cell.raidTargetX) || !Number.isFinite(cell.raidTargetY)) continue;
       const [x, y] = key.split(',').map(Number);
       if (Math.abs(x - cell.raidTargetX) + Math.abs(y - cell.raidTargetY) <= 1) continue;
-      const candidates = [];
-      if (x !== cell.raidTargetX) candidates.push([x + Math.sign(cell.raidTargetX - x), y]);
-      if (y !== cell.raidTargetY) candidates.push([x, y + Math.sign(cell.raidTargetY - y)]);
+      const candidates = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+        .map(([dx, dy]) => [x + dx, y + dy])
+        .sort((left, right) => (
+          Math.abs(left[0] - cell.raidTargetX) + Math.abs(left[1] - cell.raidTargetY)
+        ) - (
+          Math.abs(right[0] - cell.raidTargetX) + Math.abs(right[1] - cell.raidTargetY)
+        ));
       const next = candidates.find(([nx, ny]) => this._inBounds(nx, ny)
         && (this._armySystem?.isLandPassableAt?.(nx, ny) ?? !['S', 'W'].includes(this._mapConfig?.grid?.[ny]?.[nx]))
         && !this._cells.has(this._key(nx, ny))
@@ -158,20 +163,11 @@ export class EnemyExpansionSystem {
     return remaining <= 0;
   }
 
-  // ===== 日结：刷新 + 扩张 + 失败检查 =====
-  _onDayStart(data) {
-    const day = data?.day || store.getState('timeDay') || 1;
-    const spawned = this._maybeSpawn(day);
-    const expanded = this._expandStep(day);
+  // Random hostile spawning/territory expansion has been removed. This class
+  // now only hosts directed raid armies dispatched by settlements and waves.
+  _onDayStart() {
     this._attackArmiesInRange();
-    if (spawned || expanded) {
-      eventBus.emit('enemyExpansionChanged');
-      eventBus.emit('combatBroadcast', {
-        message: expanded ? `👾 敌人扩张！当前 ${this._cells.size} 格` : `👾 敌人刷新（${this._cells.size} 格）`
-      });
-    }
     this._updateStore();
-    this._checkFail();
   }
 
   _maybeSpawn(day) {
@@ -446,6 +442,19 @@ export class EnemyExpansionSystem {
   }
   getCellCount() { return this._cells.size; }
   getTotalCleared() { return this._totalCleared; }
+  removeRaidsByOutpost(outpostId) {
+    let removed = 0;
+    for (const [key, cell] of [...this._cells.entries()]) {
+      if (cell.raidOutpostId !== outpostId) continue;
+      this._cells.delete(key);
+      removed += 1;
+    }
+    if (removed > 0) {
+      this._updateStore();
+      eventBus.emit('enemyExpansionChanged');
+    }
+    return removed;
+  }
   getAllCells() {
     return Array.from(this._cells.entries()).map(([k, v]) => {
       const parts = k.split(',');
@@ -505,6 +514,7 @@ export class EnemyExpansionSystem {
     this._cells = new Map();
     this._totalCleared = state.totalCleared ?? 0;
     for (const c of (state.cells || [])) {
+      if (!Number.isFinite(c.raidTargetX) || !Number.isFinite(c.raidTargetY)) continue;
       const { x, y, name: _name, icon: _icon, faction: _faction, ...cell } = c;
       this._cells.set(this._key(x, y), { ...cell, enemyId: c.enemyId || null, hp: c.hp ?? c.maxHp ?? c.strength });
     }

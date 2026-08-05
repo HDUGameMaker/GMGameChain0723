@@ -1,5 +1,5 @@
 import { configRegistry } from '../../core/ConfigRegistry.js';
-import { formatResearchEffectsText } from '../../domain/ResearchEffectPresentation.js';
+import { formatResearchCostText, formatResearchEffectsText } from '../../domain/ResearchEffectPresentation.js';
 
 export function renderCultureTreePanel(data, body, pm) {
   const system = window.__game?.systems?.culture;
@@ -36,9 +36,10 @@ export function renderCultureTreePanel(data, body, pm) {
     const done = researched.has(node.id);
     const active = current?.id === node.id;
     const can = system.canStartResearch(node.id);
+    const resourceCost = formatResearchCostText(node.cost, Object.fromEntries((configRegistry.get('resources') || []).map(resource => [resource.id, resource.name])));
     const card = document.createElement('article');
     card.style.cssText = `min-height:230px;padding:10px;border-radius:10px;border:1px solid ${done ? '#5ba66f' : active ? '#ac75bd' : '#474a54'};background:${done ? 'rgba(54,105,68,.18)' : 'rgba(18,21,29,.88)'};display:flex;flex-direction:column;gap:6px;`;
-    card.innerHTML = `<img src="${node.icon || ''}" alt="${node.name}" style="width:42px;height:42px;object-fit:contain;align-self:center" onerror="this.style.visibility='hidden'"><b style="text-align:center;color:${done ? '#8ed39c' : '#ead8ae'}">${node.name}</b><span style="font-size:10px;color:#8f93a0;text-align:center">${node.pointCost} 人文点 · ${node.researchTime} tick</span><span style="font-size:11px;color:#c9c5b8">${node.description || ''}</span><span style="font-size:10px;color:#938d80">${node.history || ''}</span><span style="font-size:10px;color:#8fc59c">效果：${formatResearchEffectsText(node.effects)}</span><span style="font-size:10px;color:#aaa;flex:1">${done ? '已研究完成' : active ? `研究中 ${Math.floor(current.progressTicks || 0)}/${node.researchTime}` : can.reason || '可以研究'}</span>`;
+    card.innerHTML = `<img src="${node.icon || ''}" alt="${node.name}" style="width:42px;height:42px;object-fit:contain;align-self:center" onerror="this.style.visibility='hidden'"><b style="text-align:center;color:${done ? '#8ed39c' : '#ead8ae'}">${node.name}</b><span style="font-size:10px;color:#8f93a0;text-align:center">${node.pointCost} 人文点 · ${node.researchTime} tick</span><span style="font-size:10px;color:#e2b86d">研究物资：${resourceCost}</span><span style="font-size:11px;color:#c9c5b8">${node.description || ''}</span><span style="font-size:10px;color:#938d80">${node.history || ''}</span><span style="font-size:10px;color:#8fc59c">效果：${formatResearchEffectsText(node.effects)}</span><span style="font-size:10px;color:#aaa;flex:1">${done ? '已研究完成' : active ? `研究中 ${Math.floor(current.progressTicks || 0)}/${node.researchTime}` : can.reason || '可以研究'}</span>`;
     if (!done && !active) {
       const button = document.createElement('button');
       button.textContent = '开始研究';

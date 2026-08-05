@@ -23,6 +23,13 @@ export function renderEraCivilizationPanel(data, body, pm) {
   const container = el('div', 'era-civilization-panel');
   container.style.cssText = 'display:flex;flex-direction:column;gap:14px;color:#ece6d8;';
 
+  if (data?.briefing) {
+    const briefing = el('section', 'era-start-briefing');
+    briefing.style.cssText = 'padding:12px 14px;border:1px solid rgba(230,198,117,.55);border-radius:10px;background:rgba(107,77,27,.22);color:#f1dfb0;line-height:1.6;';
+    briefing.innerHTML = '<b>选择时代发展方向</b><div style="font-size:12px;margin-top:4px">你将从原始时代开始。请在下方选择本时代文明；文明选择后不可更改，其遗产会保留到后续时代。</div>';
+    container.appendChild(briefing);
+  }
+
   const header = el('section', 'era-summary');
   header.style.cssText = 'padding:14px;border:1px solid rgba(196,163,92,.4);border-radius:12px;background:linear-gradient(135deg,rgba(64,48,29,.9),rgba(25,29,38,.95));';
   header.innerHTML = `

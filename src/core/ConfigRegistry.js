@@ -1,3 +1,8 @@
+import { scaleCombatStatsToStrength } from '../domain/CombatStrength.js';
+
+const POINT_YIELD_BALANCED = Symbol('pointYieldBalanced');
+const ENEMY_STRENGTH_BALANCED = Symbol('enemyStrengthBalanced');
+
 /**
  * ConfigRegistry - 所有配置的注册中心
  * 负责加载和缓存所有 JSON 配置文件
@@ -77,6 +82,7 @@ class ConfigRegistry {
     this._applyExplorationBuildings();
     this._applyBuildingRuntimeOverrides();
     this._applyCivilizationBuildingOverrides();
+    this._applyGameplayBalanceOverrides();
     this._removeRoadDependencies();
     this._ensureContentIcons();
 
@@ -267,6 +273,56 @@ class ConfigRegistry {
         }
       };
     });
+  }
+
+  _applyGameplayBalanceOverrides() {
+    const content = this._configs.historicalContent || {};
+    const buildingCollections = [this._configs.buildings || [], content.buildings || []];
+    for (const buildings of buildingCollections) {
+      for (const building of buildings) {
+        if (!building) continue;
+        if (building.isHeadquarters === true) building.maxCount = 1;
+        const producesGold = building.uniqueFunction?.goldPerWorker > 0
+          || (building.production?.output || []).some(output => output.resourceId === 'gold' && Number(output.amount) > 0);
+        if (producesGold && !building.requiredResourceNode) {
+          building.maxCount = Math.min(Number.isFinite(building.maxCount) ? building.maxCount : 2, 2);
+        }
+        if (!building[POINT_YIELD_BALANCED]) {
+          const fn = building.uniqueFunction;
+          if (fn && Number(fn.sciencePerWorker) > 0) fn.sciencePerWorker = Number((Number(fn.sciencePerWorker) * 0.2).toFixed(4));
+          if (fn && Number(fn.civicPerWorker) > 0) fn.civicPerWorker = Number((Number(fn.civicPerWorker) * 0.2).toFixed(4));
+          Object.defineProperty(building, POINT_YIELD_BALANCED, { value: true });
+        }
+      }
+    }
+
+    for (const enemy of this._configs.enemies?.enemies || []) {
+      if (!enemy || enemy.id === 'eastern_ruin_guardian' || enemy.boss === true || enemy[ENEMY_STRENGTH_BALANCED]) continue;
+      Object.assign(enemy, scaleCombatStatsToStrength({ ...enemy, hp: enemy.maxHp }, 2));
+      delete enemy.hp;
+      Object.defineProperty(enemy, ENEMY_STRENGTH_BALANCED, { value: true });
+    }
+
+    const eraOrders = new Map((content.eras || []).map(era => [era.id, Number(era.order) || 0]));
+    const applyResearchFoodCosts = collections => {
+      const visited = new Set();
+      for (const nodes of collections) for (const node of nodes || []) {
+        if (!node || visited.has(node)) continue;
+        visited.add(node);
+        if (!node.eraId || !(Number(node.pointCost) > 0)) continue;
+        const eraOrder = eraOrders.get(node.eraId) || 0;
+        const foodAmount = Math.max(25, Math.round(Number(node.pointCost) * 1.35 + eraOrder * 20));
+        const costs = Array.isArray(node.cost) ? node.cost.map(cost => ({ ...cost })) : [];
+        const existing = costs.find(cost => cost.resourceId === 'food');
+        if (existing) existing.amount = Math.max(Number(existing.amount) || 0, foodAmount);
+        else costs.push({ resourceId: 'food', amount: foodAmount });
+        node.cost = costs;
+      }
+    };
+    applyResearchFoodCosts([
+      this._configs.techs || [], content.techs || [],
+      this._configs.culture || [], content.civics || []
+    ]);
   }
 
   _removeRoadDependencies() {

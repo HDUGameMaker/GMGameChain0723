@@ -21,7 +21,16 @@ export class LuxurySystem {
     if (systems.hero) this._heroSystem = systems.hero;
   }
 
-  getLuxuries() { return configRegistry.getHistoricalContent().luxuries || []; }
+  getLuxuries() {
+    return (configRegistry.getHistoricalContent().luxuries || []).map(luxury => ({
+      ...luxury,
+      effects: {
+        ...(luxury.effects || {}),
+        armyAttackMul: Number((((luxury.effects?.armyAttackMul) || 1) + 0.03).toFixed(4)),
+        armyHpMul: Number((((luxury.effects?.armyHpMul) || 1) + 0.03).toFixed(4))
+      }
+    }));
+  }
   getLuxury(id) { return this.getLuxuries().find(luxury => luxury.id === id) || null; }
 
   initNew() {
@@ -79,6 +88,7 @@ export class LuxurySystem {
       }
       result.satisfactionBonus = (result.satisfactionBonus || 0) + (luxury.satisfaction || 0);
     }
+    for (const key of Object.keys(result)) result[key] = Number(result[key].toFixed(4));
     return result;
   }
 

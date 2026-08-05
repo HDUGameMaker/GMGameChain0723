@@ -14,8 +14,17 @@
       }
     },
     "warehouse": {
-      "maxCount": null,
+      "maxCount": 1,
       "initialBuilding": true
+    },
+    "gold_mint": {
+      "maxCount": 1
+    },
+    "gold_mint_t2": {
+      "maxCount": 1
+    },
+    "market_square": {
+      "maxCount": 2
     }
   }
 }

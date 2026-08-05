@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { configRegistry } from '../../src/core/ConfigRegistry.js';
 import { eventBus } from '../../src/core/EventBus.js';
 import { EnemyExpansionSystem } from '../../src/systems/EnemyExpansionSystem.js';
+import { DiplomacySystem } from '../../src/systems/DiplomacySystem.js';
 
 test('city-state raids create real enemy cells and move toward the player every tick', () => {
   eventBus.clear();
@@ -19,4 +20,55 @@ test('city-state raids create real enemy cells and move toward the player every 
   eventBus.emit('tick', {});
   assert.equal(enemies.getAllCells()[0].x, 5);
   assert.equal(enemies.getAllCells()[0].raidOutpostId, 'city');
+});
+
+test('legacy hostile cells no longer expand or return from old saves', () => {
+  eventBus.clear();
+  configRegistry._configs = {
+    enemyExpansion: { countdownStart: 1, firstSpawnDay: 1, spawnCountBase: 5 },
+    enemies: { enemies: [{ id: 'raider', name: '袭击军', strategicOnly: true, maxHp: 20, attack: 4 }] },
+    map: { gridWidth: 6, gridHeight: 4, grid: Array.from({ length: 4 }, () => Array(6).fill('G')) }
+  };
+  const enemies = new EnemyExpansionSystem();
+  enemies.init();
+  enemies.restoreState({ cells: [{ x: 2, y: 2, strength: 20, countdown: 0 }] });
+  assert.equal(enemies.getCellCount(), 0);
+  eventBus.emit('dayStart', { day: 14 });
+  assert.equal(enemies.getCellCount(), 0);
+  eventBus.clear();
+});
+
+test('conquering a city-state grants materials and removes its whole deployment', () => {
+  eventBus.clear();
+  configRegistry._configs = {
+    map: {}, worldFactions: {}, eaIntegration: {}, resources: [],
+    historicalContent: { eras: [], buildings: [], units: [], luxuries: [{ id: 'silk', name: '丝绸' }] }
+  };
+  const diplomacy = new DiplomacySystem();
+  diplomacy._configCache = {
+    key: ':0x0::{}',
+    value: { actions: {}, settings: {}, outposts: [{ id: 'city', name: '测试城邦', gridX: 4, gridY: 4 }] }
+  };
+  diplomacy._states.city = {
+    active: true, status: 'hostile', hp: 50, maxHp: 50, level: 2,
+    buildings: [{ id: 'hq', x: 4, y: 4 }, { id: 'wall', x: 3, y: 4 }],
+    armies: [{ id: 'guard', x: 5, y: 4 }], controlledCells: [{ x: 4, y: 4 }], luxuryDeposits: []
+  };
+  const granted = [];
+  let removedRaidId = null;
+  diplomacy.setSystems({
+    resource: { addClamped: (resourceId, amount) => { granted.push({ resourceId, amount }); return amount; } },
+    era: { getCurrentEra: () => ({ id: 'primitive', order: 0 }) },
+    enemyExpansion: { removeRaidsByOutpost: outpostId => { removedRaidId = outpostId; } }
+  });
+  const result = diplomacy.attackOutpost('city', { power: 100 });
+  assert.equal(result.victory, true);
+  assert.deepEqual(result.materialDrops.map(drop => drop.resourceId), ['wood', 'stone']);
+  assert.equal(granted.length, 2);
+  assert.equal(diplomacy.getOutpostState('city').active, false);
+  assert.deepEqual(diplomacy.getOutpostState('city').buildings, []);
+  assert.deepEqual(diplomacy.getOutpostState('city').armies, []);
+  assert.equal(diplomacy.getVisibleOutposts().length, 0);
+  assert.equal(removedRaidId, 'city');
+  eventBus.clear();
 });

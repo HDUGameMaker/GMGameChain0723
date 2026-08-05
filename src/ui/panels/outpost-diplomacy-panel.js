@@ -35,7 +35,7 @@ export function renderOutpostDiplomacyPanel(data, body, pm) {
       <div style="padding:9px;background:rgba(255,255,255,.04);border-radius:7px">区域：${outpost.domain === 'naval' ? '水上' : '陆地'}</div>
       <div style="padding:9px;background:rgba(255,255,255,.04);border-radius:7px">防御：${summary.defense}</div>
       <div style="padding:9px;background:rgba(255,255,255,.04);border-radius:7px">控制格：${summary.controlledCellCount}/12</div>
-      <div style="padding:9px;background:rgba(255,255,255,.04);border-radius:7px">态势：${summary.expansionState === 'expanding' ? '有限扩张' : '停止扩张'}</div>
+      <div style="padding:9px;background:rgba(255,255,255,.04);border-radius:7px">态势：固定驻防</div>
     </div>
     <div style="font-size:12px;color:#a0a0ba;margin-bottom:8px">驻军：${garrison || '无'}。该势力是固定城邦，只拥有驻军与少量特殊设施，不使用玩家的完整发展循环。</div>
     <div style="font-size:11px;color:#8f97aa;margin-bottom:14px">现行协定：${summary.activeTreaties.length ? summary.activeTreaties.map(id => configRegistry.get('eaIntegration')?.outpostActions?.[id]?.name || id).join(' · ') : '无'}</div>

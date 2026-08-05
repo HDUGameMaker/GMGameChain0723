@@ -7,6 +7,7 @@ import { BuildingSystem } from '../../src/systems/BuildingSystem.js';
 import { EnemyExpansionSystem } from '../../src/systems/EnemyExpansionSystem.js';
 import { InvasionSystem } from '../../src/systems/InvasionSystem.js';
 import { getDevelopmentSummary } from '../../src/domain/DevelopmentSummary.js';
+import { calculateCombatStrength } from '../../src/domain/CombatStrength.js';
 
 const baseBuildings = [
   { id: 'hq', name: '大本营', maxHp: 1000, isHeadquarters: true, footprint: { width: 2, height: 2 }, uniqueFunction: { buildingHpMul: 1.2 } },
@@ -62,12 +63,20 @@ test('enemy attacks on buildings use battle preview and buildings never retaliat
   eventBus.clear();
 });
 
-test('ancient ruin waves warn one day early and spawn from the east every seven days with progress scaling', () => {
+test('ancient ruin waves warn one day early and scale to player armies from about twenty tiles east', () => {
   eventBus.clear();
   const grid = Array.from({ length: 12 }, () => Array(20).fill('G'));
   configRegistry._configs = { map: { gridWidth: 20, gridHeight: 12, grid }, enemies: { invasion: {} }, buildings: baseBuildings };
   const spawned = [];
   const invasion = new InvasionSystem();
+  invasion.setArmySystem({
+    getArmies: () => [
+      { id: 'army-a', ownerId: 'player', unitIds: ['warrior'], gridX: 2, gridY: 5 },
+      { id: 'army-b', ownerId: 'player', unitIds: ['warrior'], gridX: 3, gridY: 5 }
+    ],
+    getArmyStats: () => ({ hp: 100, maxHp: 100, attack: 20, speed: 2, attackRange: 1 }),
+    getArmyCpMax: () => 1
+  });
   invasion.setSystems({
     enemyExpansion: { spawnCityStateRaid: payload => { spawned.push(payload); return true; } },
     building: { buildings: [{ buildingId: 'hq', gridX: 2, gridY: 5 }] },
@@ -80,8 +89,10 @@ test('ancient ruin waves warn one day early and spawn from the east every seven 
   invasion._onDayStart({ day: 6 });
   invasion._onDayStart({ day: 7 });
   assert.equal(warnings[0].arrivalDay, 7);
-  assert.ok(spawned.length >= 3);
-  assert.ok(spawned.every(entry => entry.gridX >= 16 && entry.targetX === 2));
+  assert.equal(spawned.length, 4);
+  assert.ok(spawned.every(entry => entry.gridX >= 17 && entry.targetX === 2));
+  assert.ok(spawned.every(entry => entry.strength <= 5000));
+  assert.ok(spawned.every(entry => calculateCombatStrength(entry.combatStats) <= 5000));
   assert.ok(spawned.some(entry => entry.combatStats.attackRange === 3));
   assert.ok(spawned.some(entry => entry.combatStats.cp === 3));
   eventBus.clear();

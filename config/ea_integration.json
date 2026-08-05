@@ -189,7 +189,8 @@
         "naval_light"
       ],
       "weakAgainst": [
-        "naval_heavy"
+        "naval_heavy",
+        "fire_ship"
       ]
     },
     "battleship": {
@@ -202,6 +203,7 @@
         "fortification"
       ],
       "weakAgainst": [
+        "fire_ship",
         "air"
       ]
     },
@@ -268,65 +270,13 @@
         }
       ],
       "uniqueFunction": {}
-    },
-    {
-      "id": "tavern",
-      "imageDetail": "assets/buildings/overhaul/tavern.png",
-      "mapIcon": "assets/buildings/overhaul/tavern.png",
-      "category": "civic",
-      "eraId": "primitive",
-      "name": "酒馆",
-      "description": "汇聚传闻、使者和传奇人物；建成后可招募并任命历史英雄。",
-      "icon": "",
-      "footprint": {
-        "width": 2,
-        "height": 2
-      },
-      "maxCount": 1,
-      "initialBuilding": false,
-      "housingCapacity": 0,
-      "maxWorkers": 0,
-      "buildCost": [
-        {
-          "resourceId": "wood",
-          "amount": 55
-        },
-        {
-          "resourceId": "stone",
-          "amount": 25
-        },
-        {
-          "resourceId": "food",
-          "amount": 40
-        },
-        {
-          "resourceId": "gold",
-          "amount": 10
-        }
-      ],
-      "buildTime": 5,
-      "upgradesFrom": null,
-      "upgradesTo": null,
-      "production": null,
-      "synthesisRecipes": [],
-      "tags": [
-        "tavern",
-        "hero_recruitment"
-      ],
-      "unlockConditions": [
-        {
-          "type": "culture",
-          "cultureId": "new_policy"
-        }
-      ],
-      "uniqueFunction": {}
     }
   ],
   "units": [
     {
       "id": "spearman",
       "name": "长矛兵",
-      "description": "手持长矛的步兵，能有效迟滞骑兵的冲锋。【重装型：生命120，攻击50，速度1，射程1，CP 1】",
+      "description": "手持长矛的步兵，能有效迟滞骑兵的冲锋。【重装型：生命120，攻击50，速度1，射程1，CP 1】【重装型：生命120，攻击50，速度1，射程1，CP 1】【重装型：生命120，攻击50，速度1，射程1，CP 1】【重装型：生命120，攻击50，速度1，射程1，CP 1】【重装型：生命120，攻击50，速度1，射程1，CP 1】【重装型：生命120，攻击50，速度1，射程1，CP 1】",
       "domain": "land",
       "branch": "anti_cavalry",
       "tier": 0,
@@ -383,7 +333,7 @@
     {
       "id": "pikeman",
       "name": "重装枪兵",
-      "description": "数米长枪列成的枪阵，是骑兵的噩梦。【重装型：生命220，攻击95，速度1，射程1，CP 1】",
+      "description": "数米长枪列成的枪阵，是骑兵的噩梦。【重装型：生命220，攻击95，速度1，射程1，CP 1】【重装型：生命220，攻击95，速度1，射程1，CP 1】【重装型：生命220，攻击95，速度1，射程1，CP 1】【重装型：生命220，攻击95，速度1，射程1，CP 1】【重装型：生命220，攻击95，速度1，射程1，CP 1】【重装型：生命220，攻击95，速度1，射程1，CP 1】",
       "domain": "land",
       "branch": "anti_cavalry",
       "tier": 1,
@@ -448,7 +398,7 @@
     {
       "id": "archer",
       "name": "弓箭手",
-      "description": "弯弓搭箭的射手，在阵后提供持续火力。【远程型：生命70，攻击15，速度2，射程2，CP 1】",
+      "description": "弯弓搭箭的射手，在阵后提供持续火力。【远程型：生命70，攻击15，速度2，射程2，CP 1】【远程型：生命70，攻击15，速度2，射程2，CP 1】【远程型：生命70，攻击15，速度2，射程2，CP 1】【远程型：生命70，攻击15，速度2，射程2，CP 1】【远程型：生命70，攻击15，速度2，射程2，CP 1】【远程型：生命70，攻击15，速度2，射程2，CP 1】",
       "domain": "land",
       "branch": "ranged",
       "tier": 0,
@@ -505,7 +455,7 @@
     {
       "id": "crossbowman",
       "name": "弩兵",
-      "description": "上弦省力的弩手，穿透力远超普通弓箭。【远程型：生命135，攻击25，速度2，射程3，CP 1】【远程型：生命135，攻击30，速度2，射程3，CP 1】",
+      "description": "上弦省力的弩手，穿透力远超普通弓箭。【远程型：生命135，攻击25，速度2，射程3，CP 1】【远程型：生命135，攻击30，速度2，射程3，CP 1】【远程型：生命135，攻击30，速度2，射程3，CP 1】【远程型：生命135，攻击30，速度2，射程3，CP 1】【远程型：生命135，攻击30，速度2，射程3，CP 1】【远程型：生命135，攻击30，速度2，射程3，CP 1】",
       "domain": "land",
       "branch": "ranged",
       "tier": 1,
@@ -570,7 +520,7 @@
     {
       "id": "longbowman",
       "name": "长弓手",
-      "description": "射程极远的长弓射手，箭雨如乌云压顶。【远程型：生命135，攻击25，速度2，射程3，CP 1】【远程型：生命135，攻击30，速度2，射程3，CP 1】",
+      "description": "射程极远的长弓射手，箭雨如乌云压顶。【远程型：生命135，攻击25，速度2，射程3，CP 1】【远程型：生命135，攻击30，速度2，射程3，CP 1】【远程型：生命135，攻击30，速度2，射程3，CP 1】【远程型：生命135，攻击30，速度2，射程3，CP 1】【远程型：生命135，攻击30，速度2，射程3，CP 1】【远程型：生命135，攻击30，速度2，射程3，CP 1】",
       "domain": "land",
       "branch": "ranged",
       "tier": 2,

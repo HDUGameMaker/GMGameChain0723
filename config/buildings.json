@@ -272,7 +272,7 @@
       "width": 2,
       "height": 2
     },
-    "maxCount": null,
+    "maxCount": 1,
     "initialBuilding": false,
     "unlockConditions": [],
     "maxWorkers": 4,
@@ -340,7 +340,7 @@
       "width": 3,
       "height": 3
     },
-    "maxCount": null,
+    "maxCount": 1,
     "initialBuilding": true,
     "storageMultiplier": 1,
     "buildCost": [
@@ -623,7 +623,7 @@
       "width": 2,
       "height": 2
     },
-    "maxCount": null,
+    "maxCount": 1,
     "initialBuilding": false,
     "unlockConditions": [
       {

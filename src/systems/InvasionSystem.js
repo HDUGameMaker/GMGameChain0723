@@ -6,6 +6,7 @@ import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { getArmyCombatPower, getFormationStatusText } from '../utils/FormationUtils.js';
+import { calculateCombatStrength } from '../domain/CombatStrength.js';
 
 export class InvasionSystem {
  constructor() {
@@ -136,43 +137,82 @@ export class InvasionSystem {
     const map = configRegistry.get('map');
     if (!headquarters || !map) return false;
     this._ancientRuinWave += 1;
-    const era = this._eraSystem?.getCurrentEra?.();
-    const eraOrder = Math.max(0, Number(era?.order) || 0);
-    const techProgress = this._techSystem?.getEraProgress?.(era?.id) || 0;
-    const civicProgress = this._cultureSystem?.getEraProgress?.(era?.id) || 0;
-    const progress = eraOrder + (techProgress + civicProgress) / 2;
-    const count = Math.min(10, 2 + eraOrder + Math.floor(this._ancientRuinWave / 2));
-    const scale = 1 + progress * 0.7 + (this._ancientRuinWave - 1) * 0.22;
+    const playerArmies = (this._armySystem?.getArmies?.() || [])
+      .filter(army => (!army.ownerId || army.ownerId === 'player') && (army.unitIds?.length || army.heroId));
+    const count = Math.min(10, playerArmies.length * 2);
+    const strengths = playerArmies.map(army => {
+      const stats = this._armySystem?.getArmyStats?.(army.id) || army;
+      const cp = this._armySystem?.getArmyCpMax?.(army.id) || army.maxCp || army.cp || 1;
+      return calculateCombatStrength({ ...stats, cp });
+    }).filter(value => Number.isFinite(value) && value > 0);
+    const averagePlayerStrength = strengths.length
+      ? strengths.reduce((sum, value) => sum + value, 0) / strengths.length
+      : 1;
+    const targetStrength = Math.min(5000, Math.max(1, Math.round(averagePlayerStrength * 1.5)));
     const types = [
       { id: 'ancient_ruin_berserker', hp: 260, attack: 70, attackRange: 1, speed: 2, cp: 1 },
       { id: 'ancient_ruin_archer', hp: 170, attack: 48, attackRange: 3, speed: 3, cp: 1 },
       { id: 'ancient_ruin_overseer', hp: 210, attack: 42, attackRange: 2, speed: 2, cp: 3 }
     ];
-    let spawned = 0;
-    for (let index = 0; index < count; index += 1) {
-      const type = types[index % types.length];
-      const yBase = Math.floor((index + 1) * map.gridHeight / (count + 1));
-      let placed = false;
-      for (let offset = 0; offset < map.gridHeight && !placed; offset += 1) {
-        const y = (yBase + offset) % map.gridHeight;
-        for (const x of [map.gridWidth - 2, map.gridWidth - 3, map.gridWidth - 4]) {
-          if (['S', 'W'].includes(map.grid?.[y]?.[x])) continue;
-          placed = this._enemyExpansionSystem.spawnCityStateRaid({
-            outpostId: 'ancient_ruin', gridX: x, gridY: y,
-            targetX: headquarters.gridX, targetY: headquarters.gridY,
-            strength: Math.round((type.hp + type.attack * 1.2) * scale), enemyId: type.id,
-            combatStats: {
-              hp: Math.round(type.hp * scale), maxHp: Math.round(type.hp * scale),
-              attack: Math.round(type.attack * scale), attackRange: type.attackRange,
-              speed: type.speed, cp: type.cp, ancientRuinWave: this._ancientRuinWave
-            }
-          });
-          if (placed) spawned += 1;
+    const occupied = new Set([
+      ...(this._enemyExpansionSystem.getAllCells?.() || []).map(enemy => `${enemy.x},${enemy.y}`),
+      ...playerArmies.map(army => `${army.gridX},${army.gridY}`),
+      ...(this._buildingSystem.buildings || []).flatMap(building => {
+        const footprint = configRegistry.getBuilding(building.buildingId)?.footprint || { width: 1, height: 1 };
+        const cells = [];
+        for (let y = 0; y < (footprint.height || 1); y += 1) for (let x = 0; x < (footprint.width || 1); x += 1) cells.push(`${building.gridX + x},${building.gridY + y}`);
+        return cells;
+      })
+    ]);
+    const preferredX = Math.min(map.gridWidth - 1, headquarters.gridX + 20);
+    const preferredY = Math.max(0, Math.min(map.gridHeight - 1, headquarters.gridY + Math.floor((configRegistry.getBuilding(headquarters.buildingId)?.footprint?.height || 1) / 2)));
+    const spawnCells = [];
+    const radiusLimit = Math.max(map.gridWidth, map.gridHeight);
+    for (let radius = 0; radius <= radiusLimit && spawnCells.length < count; radius += 1) {
+      for (let dy = -radius; dy <= radius && spawnCells.length < count; dy += 1) {
+        for (let dx = -radius; dx <= radius && spawnCells.length < count; dx += 1) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue;
+          const x = preferredX + dx, y = preferredY + dy;
+          if (x < 0 || y < 0 || x >= map.gridWidth || y >= map.gridHeight) continue;
+          if (x <= headquarters.gridX || ['S', 'W'].includes(map.grid?.[y]?.[x]) || occupied.has(`${x},${y}`)) continue;
+          occupied.add(`${x},${y}`);
+          spawnCells.push({ x, y });
         }
       }
     }
-    eventBus.emit('ancientRuinWaveSpawned', { day, wave: this._ancientRuinWave, count: spawned, scale });
-    eventBus.emit('combatBroadcast', { message: `⚔️ 第${this._ancientRuinWave}波远古遗迹军队从东侧出现：${spawned}支敌军，强度倍率 ×${scale.toFixed(2)}！` });
+    let spawned = 0;
+    const actualStrengths = [];
+    for (let index = 0; index < spawnCells.length; index += 1) {
+      const type = types[index % types.length];
+      const fixedPower = (type.speed - 1) * 30 + (type.attackRange - 1) * 50;
+      const targetCore = targetStrength / (Math.max(1, type.cp) * 1.3);
+      const scale = Math.max(0.05, (targetCore - fixedPower) / Math.max(1, type.hp + type.attack * 1.2));
+      let hp = Math.max(1, Math.round(type.hp * scale));
+      let attack = Math.max(1, Math.round(type.attack * scale));
+      let actualStrength = calculateCombatStrength({ hp, attack, attackRange: type.attackRange, speed: type.speed, cp: type.cp });
+      if (actualStrength > 5000) {
+        const maxCore = 5000 / (Math.max(1, type.cp) * 1.3) - fixedPower;
+        attack = Math.max(1, Math.floor((maxCore - hp) / 1.2));
+        if (hp + attack * 1.2 > maxCore) hp = Math.max(1, Math.floor(maxCore - attack * 1.2));
+        actualStrength = calculateCombatStrength({ hp, attack, attackRange: type.attackRange, speed: type.speed, cp: type.cp });
+      }
+      const cell = spawnCells[index];
+      const placed = this._enemyExpansionSystem.spawnCityStateRaid({
+        outpostId: 'ancient_ruin', gridX: cell.x, gridY: cell.y,
+        targetX: headquarters.gridX, targetY: headquarters.gridY,
+        strength: actualStrength, enemyId: type.id,
+        combatStats: {
+          hp, maxHp: hp, attack, attackRange: type.attackRange,
+          speed: type.speed, cp: type.cp, ancientRuinWave: this._ancientRuinWave,
+          raidKind: 'seven_day_wave'
+        }
+      });
+      if (placed) { spawned += 1; actualStrengths.push(actualStrength); }
+    }
+    eventBus.emit('ancientRuinWaveSpawned', { day, wave: this._ancientRuinWave, count: spawned, requestedCount: count, targetStrength, averagePlayerStrength });
+    eventBus.emit('combatBroadcast', { message: spawned > 0
+      ? `⚔️ 第${this._ancientRuinWave}波远古遗迹军队从大本营东侧出现：${spawned}支敌军，单体综合强度约${Math.round(actualStrengths.reduce((sum, value) => sum + value, 0) / actualStrengths.length)}！`
+      : `⚠️ 第${this._ancientRuinWave}波来袭未生成敌军：当前没有可作为强度基准的玩家军队或东侧缺少合法地格。` });
     return spawned > 0;
   }
 

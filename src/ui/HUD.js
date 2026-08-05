@@ -167,18 +167,6 @@ export class HUD {
     this.gameProgressBar.style.display = 'none';
     this._updateGameProgress();
 
-    // 敌人压力 / 军队战力 状态条
-    this.enemyStatus = document.createElement('div');
-    this.enemyStatus.className = 'enemy-status';
-    this.enemyStatus.style.cssText = 'position:fixed;top:84px;left:50%;transform:translateX(-50%);z-index:50;background:rgba(40,16,16,0.72);padding:4px 14px;border-radius:8px;font-size:12px;color:#ccc;pointer-events:none;backdrop-filter:blur(4px);white-space:nowrap;';
-    document.body.appendChild(this.enemyStatus);
-    eventBus.on('enemyExpansionChanged', () => this._updateEnemyStatus());
-    eventBus.on('armyChanged', () => this._updateEnemyStatus());
-    store.subscribe('enemyExpansionVersion', () => this._updateEnemyStatus());
-    store.subscribe('availableUnits', () => this._updateEnemyStatus());
-    this._updateEnemyStatus();
-
-
     // 取消放置
     this.btnCancelPlace.addEventListener('click', () => {
       if (this.systems.combat?.isPlaceEnemyMode()) {
@@ -269,19 +257,7 @@ export class HUD {
   }
 
   _updateEnemyStatus() {
-    if (!this.enemyStatus) return;
-    const ee = this.systems.enemyExpansion;
-    if (!ee) { this.enemyStatus.style.display = 'none'; return; }
-    const count = ee.getCellCount();
-    const total = store.getState('enemyClaimableTotal') || 0;
-    const pct = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
-    const failRatioPct = (store.getState('enemyFailRatio') ?? 0.5) * 100;
-    const strength = ee.getStrengthForDay(store.getState('timeDay') || 1);
-    this.enemyStatus.style.display = 'block';
-    const danger = parseFloat(pct) >= failRatioPct * 0.6;
-    const pctColor = danger ? '#ff4444' : '#ff6b6b';
-    this.enemyStatus.innerHTML =
-      `👾 敌占 <b style="color:${pctColor}">${pct}%</b> (${count}格/危${failRatioPct.toFixed(0)}%) · 敌兵强度 ${strength}`;
+    // 敌对单位扩张玩法已移除；保留空方法兼容旧存档和旧事件监听。
     this._updateGameProgress();
   }
 

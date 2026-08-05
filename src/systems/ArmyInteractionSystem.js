@@ -79,6 +79,24 @@ export class ArmyInteractionSystem {
     return this._popupManager.confirm(message, { title, okText: '确认', cancelText: '取消' });
   }
 
+  async _showBattleRewards(result, title = '战利品结算') {
+    if (!result?.victory && !result?.enemyDefeated && !result?.destroyed) return;
+    const rewards = result.materialDrops || result.rewards || [];
+    const rows = rewards.filter(reward => Number(reward?.amount) > 0).map(reward => {
+      const resourceId = reward.resourceId || reward.id;
+      return `${configRegistry.getResource(resourceId)?.name || resourceId} ×${reward.amount}`;
+    });
+    const luxuryId = result.luxuryDrop;
+    if (luxuryId) {
+      const luxury = (configRegistry.getHistoricalContent?.().luxuries || []).find(item => item.id === luxuryId);
+      rows.push(`${luxury?.name || luxuryId} ×1`);
+    }
+    await this._popupManager?.alert?.(rows.length ? `获得：\n${rows.map(row => `• ${row}`).join('\n')}` : '本次战斗没有获得可存入仓库的物资。', {
+      title,
+      okText: '收下战利品'
+    });
+  }
+
   async request({ armyId, gridX, gridY, target = null } = {}) {
     const army = this._army?.getArmy?.(armyId)
       || this._army?.getArmies?.().find(item => item.id === armyId);
@@ -120,12 +138,32 @@ export class ArmyInteractionSystem {
 
     let result;
     if (classified.kind === 'wild_site') {
-      result = this._wildSites?.attackWithArmy?.(classified.siteId, armyId) || { ok: false, reason: 'unknown_site' };
+      const enemyModel = this._wildSites?.getSiteCombatProfile?.(classified.siteId) || classified.site || {};
+      const playerStats = this._army.getArmyStats?.(armyId) || {};
+      const playerModel = { ...army, ...playerStats, portrait: army.heroPortrait || army.heroIcon || army.icon };
+      const resolveBattle = () => this._wildSites?.attackWithArmy?.(classified.siteId, armyId) || { ok: false, reason: 'unknown_site' };
+      result = this._popupManager?.previewBattle
+        ? await this._popupManager.previewBattle({ enemy: enemyModel, player: playerModel, distance: Math.abs(army.gridX - classified.gridX) + Math.abs(army.gridY - classified.gridY), resolveBattle })
+        : resolveBattle();
+      await this._showBattleRewards(result, `${classified.site?.name || '野外据点'}战利品`);
     } else if (classified.kind === 'city_state') {
-      result = this._diplomacy?.attackOutpost?.(classified.cityStateId, {
+      const state = this._diplomacy?.getOutpostState?.(classified.cityStateId) || {};
+      const defense = this._diplomacy?.getOutpostDefense?.(classified.cityStateId) || state.maxHp || 1;
+      const enemyModel = {
+        name: classified.cityState?.name || '敌对城邦', faction: '敌对城邦',
+        icon: classified.cityState?.icon || '', hp: Math.max(1, Number(state.hp) || defense), maxHp: Math.max(1, Number(state.maxHp) || defense),
+        attack: Math.max(1, Math.round(defense * 0.25)), speed: 1, attackRange: 1, cp: 1
+      };
+      const playerStats = this._army.getArmyStats?.(armyId) || {};
+      const playerModel = { ...army, ...playerStats, portrait: army.heroPortrait || army.heroIcon || army.icon };
+      const resolveBattle = () => this._diplomacy?.attackOutpost?.(classified.cityStateId, {
         power: this._army.getArmyPower?.(armyId) || 0,
         armyId
       }) || { ok: false, reason: 'unknown_city_state' };
+      result = this._popupManager?.previewBattle
+        ? await this._popupManager.previewBattle({ enemy: enemyModel, player: playerModel, distance: Math.abs(army.gridX - classified.gridX) + Math.abs(army.gridY - classified.gridY), resolveBattle })
+        : resolveBattle();
+      await this._showBattleRewards(result, `${classified.cityState?.name || '城邦'}征服战利品`);
     } else if (classified.kind === 'garrison') {
       result = this._army.garrisonArmy?.(armyId, classified.buildingIndex) || { ok: false, reason: 'invalid_garrison' };
     } else if (classified.kind === 'ruin_stele') {
@@ -146,6 +184,7 @@ export class ArmyInteractionSystem {
         ? await this._popupManager.previewBattle({ enemy: enemyModel, player: playerModel, distance: Math.abs(army.gridX - classified.gridX) + Math.abs(army.gridY - classified.gridY), resolveBattle })
         : resolveBattle();
       if (result && result.ok == null) result = { ok: true, ...result };
+      if (classified.source === 'combat') await this._showBattleRewards(result, `${classified.enemy?.name || '野怪'}战利品`);
     } else {
       result = { ok: false, reason: 'invalid_target' };
     }

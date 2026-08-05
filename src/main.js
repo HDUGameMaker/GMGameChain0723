@@ -325,6 +325,7 @@ class Game {
     this.systems.combat.setCultureSystem(this.systems.culture);
     this.systems.combat.setHeroSystem(this.systems.hero);
     this.systems.combat.setArmySystem(this.systems.army);
+    this.systems.combat.setLuxurySystem(this.systems.luxury);
     this.systems.combat.init();
     this.systems.blackMist.setSystems({ combat: this.systems.combat, resourceNodes: this.systems.resourceNodes, wildSites: this.systems.wildSites, diplomacy: this.systems.diplomacy, enemyExpansion: this.systems.enemyExpansion });
     this.systems.building.setBlackMistSystem(this.systems.blackMist);
@@ -598,9 +599,14 @@ class Game {
     if (!saveData) {
       setTimeout(() => {
         eventBus.once('popupClosed', () => {
-          setTimeout(() => this.popupManager.open('tutorial_prompt', { questSystem: this.systems.quest }), 0);
+          setTimeout(() => {
+            eventBus.once('popupClosed', () => {
+              setTimeout(() => this.popupManager.open('tutorial_prompt', { questSystem: this.systems.quest }), 0);
+            });
+            this.popupManager.open('objective', { briefing: true, blocking: true });
+          }, 0);
         });
-        this.popupManager.open('objective', { briefing: true, blocking: true });
+        this.popupManager.open('era_civilization', { eraSystem: this.systems.era, briefing: true, blocking: true });
       }, 600);
     }
 

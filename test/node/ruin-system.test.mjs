@@ -38,6 +38,9 @@ test('fifteen spaced ruins scale level and guard count with spawn distance', () 
   const lowest = all.reduce((best, ruin) => ruin.level < best.level ? ruin : best);
   assert.ok(highest.guards[0].maxHp > lowest.guards[0].maxHp);
   assert.ok(highest.guards[0].attack > lowest.guards[0].attack);
+  const levelOne = ruins._createRuin({ x: 10, y: 10, distance: 0, maxDistance: 100, forceLevel: 1 }, 99).guards[0];
+  assert.equal(levelOne.maxHp, 520);
+  assert.equal(levelOne.attack, 86);
 });
 
 test('a fixed level-one ruin is placed west across the river from the player', () => {

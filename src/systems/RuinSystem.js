@@ -1,5 +1,6 @@
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
+import { scaleCombatStatsToStrength } from '../domain/CombatStrength.js';
 
 const RUIN_COUNT = 15;
 const GUARD_OFFSETS = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1]];
@@ -107,7 +108,7 @@ export class RuinSystem {
     const guards = GUARD_OFFSETS.slice(0, guardCount).map(([dx, dy], guardIndex) => {
       const maxHp = Math.round(220 * level * (1 + level * 0.18));
       const attack = Math.round(38 * level * (1 + level * 0.13));
-      return {
+      return scaleCombatStatsToStrength({
         id: `ruin_${index + 1}_guard_${guardIndex + 1}`,
         ruinId: `ruin_${index + 1}`,
         name: `${level}级遗迹守卫`, faction: '远古遗迹', icon: '🛡️',
@@ -116,7 +117,7 @@ export class RuinSystem {
         attackRange: Math.min(3, 1 + Math.floor(level / 2)),
         speed: Math.min(3, 1 + Math.floor((level - 1) / 2)),
         level, source: 'ruin_guard'
-      };
+      }, 2);
     });
     return {
       id: `ruin_${index + 1}`, name: `${level}级远古遗迹`, level,
@@ -192,7 +193,7 @@ export class RuinSystem {
     return { ok: true, ruinId, scienceMultiplier: this.getScienceMultiplier(), cultureMultiplier: this.getCultureMultiplier() };
   }
 
-  getState() { return { layoutVersion: 2, seed: this._seed, ruins: this.getRuins() }; }
+  getState() { return { layoutVersion: 2, combatBalanceVersion: 2, seed: this._seed, ruins: this.getRuins() }; }
   restoreState(state) {
     if (!Array.isArray(state?.ruins) || state.ruins.length === 0) return this.initNew();
     this._seed = Number(state.seed) || 0;
@@ -204,13 +205,21 @@ export class RuinSystem {
         return {
           ...ruin,
           activated: old.activated === true,
-          guards: ruin.guards.map((guard, index) => ({ ...guard, hp: Math.min(guard.maxHp, old.guards?.[index]?.hp ?? guard.hp) }))
+          guards: ruin.guards.map((guard, index) => {
+            const previousGuard = old.guards?.[index];
+            const hpRatio = previousGuard?.maxHp > 0 ? previousGuard.hp / previousGuard.maxHp : 1;
+            return { ...guard, hp: Math.max(0, Math.min(guard.maxHp, Math.round(guard.maxHp * hpRatio))) };
+          })
         };
       });
       this._notify('layout_migrated');
       return;
     }
-    this.ruins = state.ruins.map(ruin => ({ ...ruin, guards: (ruin.guards || []).map(guard => ({ ...guard })) }));
+    const migrateCombatBalance = Number(state.combatBalanceVersion) < 2;
+    this.ruins = state.ruins.map(ruin => ({
+      ...ruin,
+      guards: (ruin.guards || []).map(guard => migrateCombatBalance ? scaleCombatStatsToStrength(guard, 2) : { ...guard })
+    }));
     this._notify('restore');
   }
 

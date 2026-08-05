@@ -35,8 +35,10 @@ export class BlackMistSystem {
   onDayStart(day) {
     day = Math.max(1, Math.floor(Number(day) || 1));
     if (day <= this._lastDay) return;
-    this.radius += day - this._lastDay;
-    this._lastDay = day;
+    const expansionSteps = Math.floor((day - this._lastDay) / 2);
+    if (expansionSteps <= 0) return;
+    this.radius += expansionSteps;
+    this._lastDay += expansionSteps * 2;
     this._applyCorruption();
     this._notify();
   }

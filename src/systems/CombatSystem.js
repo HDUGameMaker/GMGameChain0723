@@ -6,6 +6,7 @@
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
+import { scaleCombatStatsToStrength } from '../domain/CombatStrength.js';
 import { getMatchupMultiplier, isDomainCompatible, resolveBattleLines } from './CombatResolver.js';
 
 export class CombatSystem {
@@ -43,6 +44,7 @@ export class CombatSystem {
   setAlchemySystem(as) { this._alchemySystem = as; }
   setHeroSystem(hs) { this._heroSystem = hs; }
   setArmySystem(system) { this._armySystem = system || null; }
+  setLuxurySystem(system) { this._luxurySystem = system || null; }
 
   damageEnemyAt(gridX, gridY, amount) {
     const enemy = this.getEnemyAt(gridX, gridY);
@@ -407,6 +409,8 @@ export class CombatSystem {
     const cp = this._armySystem.consumeAttackCp?.(armyId);
     if (cp && !cp.ok) return cp;
     const attacks = [];
+    const rewards = [];
+    let luxuryDrop = null;
     const playerAttack = (bonusStrike = false) => {
       if (!this.enemies.includes(enemy) || !this._armySystem.getArmy?.(armyId)) return false;
       const damage = Math.min(enemy.hp, army.attack);
@@ -416,6 +420,20 @@ export class CombatSystem {
       if (enemy.hp <= 0) {
         this.enemies = this.enemies.filter(candidate => candidate !== enemy);
         eventBus.emit('enemyKilled', { enemyId: enemy.id, enemyType: enemy.enemyId, armyId });
+        const configuredRewards = Array.isArray(enemy.rewards) && enemy.rewards.length
+          ? enemy.rewards
+          : [{ resourceId: 'food', amount: Math.max(2, Math.round((enemy.maxHp + enemy.attack * 1.2) * 0.08)) }];
+        for (const reward of configuredRewards) {
+          const amount = this._resourceSystem?.addClamped?.(reward.resourceId, Math.max(0, Number(reward.amount) || 0)) || 0;
+          if (amount > 0) rewards.push({ resourceId: reward.resourceId, amount });
+        }
+        const luxuries = configRegistry.getHistoricalContent?.().luxuries || [];
+        const seed = [...String(enemy.id)].reduce((sum, char) => sum + char.charCodeAt(0), 0) + (store.getState('timeDay') || 1) * 17;
+        if (luxuries.length && (seed % 100) < 3) {
+          const luxury = luxuries[seed % luxuries.length];
+          this._luxurySystem?.addLuxury?.(luxury.id, 1);
+          luxuryDrop = luxury.id;
+        }
         return true;
       }
       return false;
@@ -436,7 +454,7 @@ export class CombatSystem {
     const healed = this._armySystem.getArmy?.(armyId) ? (this._armySystem.healArmyAfterBattle?.(armyId)?.healed || 0) : 0;
     this._notify();
     eventBus.emit('enemyBattleResolved', { enemyId: enemy.id, armyId, attacks, healed, enemyHp: Math.max(0, enemy.hp) });
-    return { ok: true, enemyId: enemy.id, armyId, attacks, healed, enemyHp: Math.max(0, enemy.hp), destroyed: enemy.hp <= 0 };
+    return { ok: true, enemyId: enemy.id, armyId, attacks, healed, enemyHp: Math.max(0, enemy.hp), destroyed: enemy.hp <= 0, victory: enemy.hp <= 0, rewards, luxuryDrop };
   }
 
   _findSpawnPosition(config = {}) {
@@ -825,10 +843,15 @@ export class CombatSystem {
   _onPeriodChange(data) {}
 
   // ===== 存档 =====
-  getState() { return { enemies: this.enemies.map(e => ({ ...e })), units: this.units.map(u => ({ ...u })), tamed: this.tamed.map(t => ({ ...t })) }; }
+  getState() { return { combatBalanceVersion: 2, enemies: this.enemies.map(e => ({ ...e })), units: this.units.map(u => ({ ...u })), tamed: this.tamed.map(t => ({ ...t })) }; }
   restoreState(state) {
     const validEnemyIds = new Set((configRegistry.get('enemies')?.enemies || []).map(enemy => enemy.id));
-    this.enemies = (state?.enemies || []).filter(enemy => validEnemyIds.has(enemy.enemyId)).map(enemy => ({ ...enemy }));
+    const migrateCombatBalance = Number(state?.combatBalanceVersion) < 2;
+    this.enemies = (state?.enemies || []).filter(enemy => validEnemyIds.has(enemy.enemyId)).map(enemy => (
+      migrateCombatBalance && enemy.enemyId !== 'eastern_ruin_guardian' && enemy.boss !== true && enemy.cheatSpawned !== true
+        ? scaleCombatStatsToStrength(enemy, 2)
+        : { ...enemy }
+    ));
     if (!state?.units) { this.units = []; } else { this.units = state.units.map(u => ({ ...u })); }
     if (!state?.tamed) { this.tamed = []; } else { this.tamed = state.tamed.map(t => ({ ...t })); }
     this._ensureEasternRuinBoss();

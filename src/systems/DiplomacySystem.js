@@ -295,7 +295,7 @@ export class DiplomacySystem {
     if (day >= 10) {
       for (const outpost of this.getAllOutposts()) {
         const state = this._states[outpost.id] || this._makeInitialState(outpost);
-        if (!state.active) {
+        if (!state.active && !['defeated', 'corrupted'].includes(state.status)) {
           this._states[outpost.id] = {
             ...state,
             active: true,
@@ -305,9 +305,6 @@ export class DiplomacySystem {
           changed = true;
         }
       }
-    }
-    if (day >= 13 && (day - 10) % 3 === 0) {
-      for (const outpost of this.getAllOutposts()) changed = this._expandOutpost(outpost, day) || changed;
     }
     // Diplomacy was removed; do not maintain an O(n²) relation graph between
     // hundreds of hostile city-states.
@@ -322,7 +319,7 @@ export class DiplomacySystem {
   launchImmediateRaids(day = store.getState('timeDay') || 1) { return this._launchRaids(day, true); }
 
   getGarrisonArmies() {
-    return Object.entries(this._states).flatMap(([outpostId, state]) => state.status === 'defeated' ? [] : (state.armies || []).map(army => ({ ...army, id: army.id, enemyId: army.id, outpostId, gridX: army.x, gridY: army.y, source: 'city_state_garrison' })));
+    return Object.entries(this._states).flatMap(([outpostId, state]) => !state.active || state.status === 'defeated' ? [] : (state.armies || []).map(army => ({ ...army, id: army.id, enemyId: army.id, outpostId, gridX: army.x, gridY: army.y, source: 'city_state_garrison' })));
   }
 
   attackGarrison(garrisonId, playerArmyId) {
@@ -440,16 +437,32 @@ export class DiplomacySystem {
       if (!state?.active || state.status === 'defeated') continue;
       const roll = (([...outpost.id].reduce((sum, char) => sum + char.charCodeAt(0), 0) * 37 + day * 101) % 1000) / 1000;
       if (!force && roll >= (state.aggression || 0)) continue;
-      state.raidsLaunched = (state.raidsLaunched || 0) + 1;
-      state.lastRaid = { day, armyId: state.armies?.[0]?.id || null, targetX: playerSpawn.gridX, targetY: playerSpawn.gridY };
-      const spawned = this._enemyExpansionSystem?.spawnCityStateRaid?.({
-        outpostId: outpost.id,
-        gridX: outpost.gridX,
-        gridY: outpost.gridY,
-        targetX: playerSpawn.gridX,
-        targetY: playerSpawn.gridY,
-        strength: state.compositeStrength
-      }) === true;
+      const dispatchedArmy = state.armies?.[0] || null;
+      if (!dispatchedArmy) continue;
+      const stats = this._garrisonStats(dispatchedArmy);
+      const candidates = [
+        { x: dispatchedArmy.x, y: dispatchedArmy.y },
+        ...(state.controlledCells || []),
+        { x: outpost.gridX + 2, y: outpost.gridY + 1 },
+        { x: outpost.gridX - 1, y: outpost.gridY + 1 }
+      ].filter(cell => Number.isFinite(cell.x) && Number.isFinite(cell.y));
+      let spawned = false;
+      for (const cell of candidates) {
+        spawned = this._enemyExpansionSystem?.spawnCityStateRaid?.({
+          outpostId: outpost.id,
+          gridX: cell.x,
+          gridY: cell.y,
+          targetX: playerSpawn.gridX,
+          targetY: playerSpawn.gridY,
+          strength: Math.max(1, Number(dispatchedArmy.compositeStrength) || state.compositeStrength),
+          enemyId: dispatchedArmy.enemyId || null,
+          combatStats: { ...stats, hp: dispatchedArmy.hp || stats.maxHp, maxHp: stats.maxHp, cp: dispatchedArmy.cp || 1, raidKind: 'city_state' }
+        }) === true;
+        if (spawned) break;
+      }
+      state.raidsLaunched = (state.raidsLaunched || 0) + (spawned ? 1 : 0);
+      state.lastRaid = { day, armyId: dispatchedArmy.id, targetX: playerSpawn.gridX, targetY: playerSpawn.gridY };
+      if (spawned) state.armies = state.armies.filter(army => army.id !== dispatchedArmy.id);
       state.lastRaid.spawned = spawned;
       eventBus.emit('cityStateRaidLaunched', { outpostId: outpost.id, ...state.lastRaid, aggression: state.aggression, forced: force });
       eventBus.emit('combatBroadcast', { message: spawned ? `⚠️ ${outpost.name}派出军队向玩家领地进军。` : `⚠️ ${outpost.name}派军失败：出生位置无效。` });
@@ -656,15 +669,19 @@ export class DiplomacySystem {
         ...state,
         relation: -100,
         status: 'defeated',
-        active: true,
+        active: false,
         discovered: true,
         treaties: [],
         conqueredDay: store.getState('timeDay') || this._lastProcessedDay || 1,
         conqueredByArmyId: force.armyId || null
         ,headquartersDestroyed: true,
         hp: 0,
+        buildings: [],
+        armies: [],
+        controlledCells: [],
         luxuryDeposits: (state.luxuryDeposits || []).map(deposit => ({ ...deposit, locked: false }))
       };
+      this._enemyExpansionSystem?.removeRaidsByOutpost?.(outpostId);
       this._resourceNodeSystem?.unlockCityStateNodes?.(outpostId);
       for (const deposit of this._states[outpostId].luxuryDeposits || []) {
         this._luxurySystem?.discoverDeposit?.({ ...deposit, gridX: deposit.x, gridY: deposit.y });

@@ -2753,12 +2753,6 @@ export class MapRenderer {
         return;
       }
 
-      // 敌人扩张格：派兵清敌
-      if (this._enemyExpansion && this._enemyExpansion.getCellAt(gridPos.col, gridPos.row)) {
-        this._enemyExpansion.clearEnemyCell(gridPos.col, gridPos.row);
-        return;
-      }
-
       // 检查是否点击了友方单位（查看血量）
       if (this._combatSystem) {
         const unit = this._combatSystem.getUnitAt(gridPos.col, gridPos.row);

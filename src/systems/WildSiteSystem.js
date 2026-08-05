@@ -1,7 +1,7 @@
 import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
-import { calculateCombatStrength } from '../domain/CombatStrength.js';
+import { calculateCombatStrength, scaleCombatStatsToStrength } from '../domain/CombatStrength.js';
 
 /** 普通野外敌人与资源守军。它们没有外交、科技树或城市发展。 */
 export class WildSiteSystem {
@@ -60,9 +60,9 @@ export class WildSiteSystem {
     const maxHp = Math.max(1, Math.round((Number(site.maxHp) || base * 0.7) * scale));
     const speed = Math.max(1, Number(site.speed) || 1);
     const attackRange = Math.max(1, Math.floor(Number(site.attackRange) || 1));
-    const profile = {
+    const profile = scaleCombatStatsToStrength({
       ...site, faction: site.faction || '野外敌对势力', attack, maxHp, hp: maxHp, speed, attackRange
-    };
+    }, 2);
     return { ...profile, combatStrength: calculateCombatStrength(profile) };
   }
 
