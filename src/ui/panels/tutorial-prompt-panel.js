@@ -17,7 +17,7 @@ export function renderTutorialPromptPanel(data, body, pm) {
   title.style.cssText = 'font-size:20px;font-weight:700;color:#ececf0;line-height:1.35;';
 
   const desc = document.createElement('div');
-  desc.textContent = '教程会用任务面板引导基础建设、道路和资源操作。跳过后仍可在设置中重新启动。';
+  desc.textContent = '教程会用任务面板引导基础建设、资源与军团操作。跳过后仍可在设置中重新启动。';
   desc.style.cssText = 'font-size:13px;color:#a0a0ba;line-height:1.8;';
 
   intro.appendChild(title);

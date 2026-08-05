@@ -25,11 +25,13 @@ export class ArmySystem {
     this._resource = null;
     this._population = null;
     this._tech = null;
-    eventBus.on('tick', () => this._advanceMovement());
+    this._movementSpeedMultiplier = 1;
+    this._cityStateSystem = null;
+    eventBus.on('tick', () => { this.restoreArmyCp(); this._tickHeroSkillCooldowns(); this._healArmiesPerTick(); this._applyBlackMistDamage(); this._advanceMovement(); });
     eventBus.on('dayStart', () => this._resupplyGarrisons());
   }
 
-  setSystems({ building, hero, culture, era, resource, population, tech } = {}) {
+  setSystems({ building, hero, culture, era, resource, population, tech, enemyExpansion, ruins, luxury, combat } = {}) {
     this._building = building || null;
     this._hero = hero || null;
     this._culture = culture || null;
@@ -37,6 +39,10 @@ export class ArmySystem {
     this._resource = resource || null;
     this._population = population || null;
     this._tech = tech || null;
+    this._enemyExpansion = enemyExpansion || null;
+    this._ruinSystem = ruins || null;
+    this._luxury = luxury || null;
+    this._combat = combat || null;
   }
 
   initNew() {
@@ -62,23 +68,41 @@ export class ArmySystem {
     return capacity;
   }
 
-  getCommandPointLimit() {
-    let limit = 20 + Math.max(0, this._culture?.getCommandPointsBonus?.() || 0);
-    for (const building of this._activeBuildings()) {
-      const config = configRegistry.getBuilding?.(building.buildingId);
-      limit += Math.max(0, config?.uniqueFunction?.commandPointsBonus || 0);
-    }
-    return limit;
-  }
-
   _defaultPosition() {
     const building = this._activeBuildings().find(item => Number.isFinite(item.gridX) && Number.isFinite(item.gridY));
     return { x: building?.gridX || 0, y: building?.gridY || 0 };
   }
 
+  getArmyUnitCapacity() {
+    const techBonus = Math.max(0, Number(this._tech?.getEffects?.().armyUnitCapacityBonus) || 0);
+    const cultureBonus = Math.max(0, Number(this._culture?.getEffects?.().armyUnitCapacityBonus) || 0);
+    return Math.min(10, 5 + Math.floor(techBonus + cultureBonus));
+  }
+
+  _isArmyTileOccupied(x, y, exceptId = null) {
+    return this._armies.some(army => army.id !== exceptId && army.garrisonBuildingIndex == null && army.gridX === x && army.gridY === y)
+      || (this._cityStateSystem?.getGarrisonArmies?.() || []).some(army => army.id !== exceptId && army.gridX === x && army.gridY === y)
+      || Boolean(this._enemyExpansion?.getCellAt?.(x, y))
+      || (this._ruinSystem?.getGuards?.() || []).some(guard => guard.gridX === x && guard.gridY === y)
+      || (this._ruinSystem?.getRuins?.() || []).some(ruin => ruin.gridX === x && ruin.gridY === y);
+  }
+
+  _findOpenArmyTile(start, exceptId = null) {
+    const map = this._getMap();
+    for (let radius = 0; radius <= 12; radius += 1) for (let dy = -radius; dy <= radius; dy += 1) for (let dx = -radius; dx <= radius; dx += 1) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue;
+      const x = Math.floor(start.x) + dx, y = Math.floor(start.y) + dy;
+      if (map && (x < 0 || y < 0 || x >= map.gridWidth || y >= map.gridHeight)) continue;
+      if (!this._isArmyTileOccupied(x, y, exceptId)) return { x, y };
+    }
+    return null;
+  }
+
   createArmy(name, position = null) {
     if (this._armies.length >= this.getArmyCapacity()) return { ok: false, reason: 'army_capacity_full' };
     const start = position && Number.isFinite(position.x) && Number.isFinite(position.y) ? position : this._defaultPosition();
+    const openTile = this._findOpenArmyTile(start);
+    if (!openTile) return { ok: false, reason: 'no_deployment_tile' };
     const army = {
       id: `army_${this._nextId++}`,
       ownerId: 'player',
@@ -87,18 +111,70 @@ export class ArmySystem {
       formationId: null,
       tacticId: null,
       heroId: null,
-      gridX: Math.floor(start.x),
-      gridY: Math.floor(start.y),
-      morale: 100,
+      gridX: openTile.x,
+      gridY: openTile.y,
       supply: 1,
       embarked: false,
       garrisonBuildingIndex: null,
       movePath: [],
       order: { type: 'hold' },
-      revision: 0
+      revision: 0,
+      hpDamage: 0,
+      movementProgress: 0
     };
     this._armies.push(army);
     this._notify('create');
+    return { ok: true, army: this._decorateArmy(army) };
+  }
+
+  spawnCheatHestiaArmyNearHeadquarters() {
+    const headquarters = this._activeBuildings().find(building =>
+      configRegistry.getBuilding(building.buildingId)?.isHeadquarters
+    );
+    const start = headquarters || this._defaultPosition();
+    const origin = { x: start.gridX ?? start.x, y: start.gridY ?? start.y };
+    const map = this._getMap();
+    let openTile = null;
+    for (let radius = 1; radius <= 10 && !openTile; radius += 1) {
+      for (let dy = -radius; dy <= radius && !openTile; dy += 1) for (let dx = -radius; dx <= radius; dx += 1) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue;
+        const x = origin.x + dx, y = origin.y + dy;
+        if (map && (x < 0 || y < 0 || x >= map.gridWidth || y >= map.gridHeight)) continue;
+        if (this._isArmyTileOccupied(x, y)) continue;
+        const blockedByBuilding = this._activeBuildings().some(building => {
+          const footprint = configRegistry.getBuilding(building.buildingId)?.footprint || { width: 1, height: 1 };
+          return x >= building.gridX && x < building.gridX + footprint.width
+            && y >= building.gridY && y < building.gridY + footprint.height;
+        });
+        if (!blockedByBuilding) openTile = { x, y };
+      }
+    }
+    if (!openTile) return { ok: false, reason: 'no_deployment_tile' };
+    const army = {
+      id: `army_${this._nextId++}`, ownerId: 'player', name: '赫斯提亚测试军团',
+      unitIds: ['primitive_healer'], formationId: null, tacticId: null, heroId: 'Hestia',
+      gridX: openTile.x, gridY: openTile.y, supply: 1, embarked: false,
+      garrisonBuildingIndex: null, movePath: [], order: { type: 'hold' },
+      revision: 0, hpDamage: 0, movementProgress: 0, currentCp: 1,
+      cheatStats: { hp: 50, maxHp: 50, attack: 20, attackRange: 1, speed: 6, cp: 1, healingAfterBattle: 10 }
+    };
+    this._armies.push(army);
+    this._notify('cheat_spawn');
+    eventBus.emit('armyDeployed', { armyId: army.id, unitCount: 0, cheat: true });
+    return { ok: true, army: this._decorateArmy(army) };
+  }
+
+  spawnCheatSuperArmyNearHeadquarters() {
+    const result = this.spawnCheatHestiaArmyNearHeadquarters();
+    if (!result.ok) return result;
+    const army = this._findArmy(result.army.id);
+    army.name = '超级测试军团';
+    army.heroId = null;
+    army.unitIds = ['primitive_infantry_1'];
+    army.currentCp = 10;
+    army.cheatStats = { hp: 10000, maxHp: 10000, attack: 10000, attackRange: 1, speed: 10, cp: 10 };
+    this._touch(army);
+    this._notify('cheat_spawn_super_army');
     return { ok: true, army: this._decorateArmy(army) };
   }
 
@@ -188,17 +264,15 @@ export class ArmySystem {
     if (requestedUnits.some(item => (this._availableUnits[item.unitId] || 0) < item.count)) {
       return { ok: false, reason: 'insufficient_reserve' };
     }
+    if (requestedUnits.reduce((sum, item) => sum + item.count, 0) > this.getArmyUnitCapacity()) {
+      return { ok: false, reason: 'army_unit_capacity_full', capacity: this.getArmyUnitCapacity() };
+    }
 
     const domains = new Set(requestedUnits.map(item => item.config.domain === 'naval' ? 'naval' : 'land'));
     if (domains.size !== 1) return { ok: false, reason: 'mixed_unit_domains' };
     const [domain] = domains;
     if (!assembly.domains.includes(domain)) return { ok: false, reason: 'assembly_domain_not_supported' };
 
-    const usedCommandPoints = requestedUnits.reduce(
-      (sum, item) => sum + this._unitCommandPoints(item.unitId) * item.count,
-      0
-    );
-    if (usedCommandPoints > this.getCommandPointLimit()) return { ok: false, reason: 'command_points_full' };
     if (this._armies.length >= this.getArmyCapacity()) return { ok: false, reason: 'army_capacity_full' };
 
     const map = this._getMap();
@@ -232,13 +306,14 @@ export class ArmySystem {
       heroId: null,
       gridX: deploymentTile.x,
       gridY: deploymentTile.y,
-      morale: 100,
       supply: 1,
       embarked: false,
       garrisonBuildingIndex: null,
       movePath: [],
       order: { type: 'hold' },
-      revision: 0
+      revision: 0,
+      hpDamage: 0,
+      movementProgress: 0
     };
 
     for (const item of requestedUnits) {
@@ -248,6 +323,7 @@ export class ArmySystem {
     this._nextId += 1;
     this._armies.push(army);
     this._notify('deploy');
+    eventBus.emit('armyDeployed', { armyId: army.id, unitCount: unitIds.length, buildingIndex });
     return { ok: true, army: this._decorateArmy(army), direction: deploymentTile.direction };
   }
 
@@ -326,10 +402,216 @@ export class ArmySystem {
     return { ok: true, reserve: this._availableUnits[unitId] };
   }
 
-  _unitCommandPoints(unitId) { return this._unitConfig(unitId)?.commandPoints || 1; }
+  /**
+   * 军团攻击距离 = 所有兵种攻击距离按数量加权平均后向下取整。
+   * unitIds 中每一项代表一名兵，因此天然包含数量权重。
+   */
+  getArmyAttackRange(armyId) {
+    const army = this._findArmy(armyId);
+    if (!army) return 0;
+    if (army.cheatStats) return Math.max(0, Math.floor(Number(army.cheatStats.attackRange) || 0));
+    const ranges = army.unitIds.map(unitId => {
+      const configured = Number(this._unitConfig(unitId)?.attackRange);
+      return Number.isFinite(configured) && configured >= 0 ? configured : 1;
+    });
+    const heroStats = this._heroStats(army);
+    if (heroStats) ranges.push(Math.max(0, Number(heroStats.attackRange) || 0));
+    return ranges.length ? Math.floor(ranges.reduce((sum, value) => sum + value, 0) / ranges.length) : 0;
+  }
 
-  _usedCommandPoints(army) {
-    return (army?.unitIds || []).reduce((sum, unitId) => sum + this._unitCommandPoints(unitId), 0);
+  _calculateArmyCp(army) {
+    if (army?.cheatStats) return Math.max(1, Math.floor(Number(army.cheatStats.cp) || 1));
+    const values = (army?.unitIds || []).map(unitId => Math.max(1, Number(this._unitConfig(unitId)?.cp) || 1));
+    if (army?.heroId) values.push(Math.max(1, Number(this._heroStats(army)?.cp) || 1));
+    return values.length ? Math.max(1, Math.floor(values.reduce((sum, value) => sum + value, 0) / values.length)) : 1;
+  }
+
+  getArmyCpMax(armyId) { return this._calculateArmyCp(this._findArmy(armyId)); }
+
+  getArmyCp(armyId) {
+    const army = this._findArmy(armyId);
+    return army ? Math.max(0, Math.min(this._calculateArmyCp(army), Number.isFinite(army.currentCp) ? army.currentCp : this._calculateArmyCp(army))) : 0;
+  }
+
+  consumeAttackCp(armyId) {
+    const army = this._findArmy(armyId);
+    if (!army) return { ok: false, reason: 'unknown_army' };
+    const current = this.getArmyCp(armyId);
+    if (current < 1) return { ok: false, reason: 'insufficient_cp', currentCp: current, maxCp: this.getArmyCpMax(armyId) };
+    army.currentCp = current - 1;
+    this._touch(army);
+    this._notify('cp_spent');
+    return { ok: true, currentCp: army.currentCp, maxCp: this.getArmyCpMax(armyId) };
+  }
+
+  restoreArmyCp() {
+    let changed = false;
+    for (const army of this._armies) {
+      const maxCp = this._calculateArmyCp(army);
+      if (army.currentCp === maxCp) continue;
+      army.currentCp = maxCp;
+      changed = true;
+    }
+    if (changed) this._notify('cp_restored');
+    return changed;
+  }
+
+  setMovementSpeedMultiplier(multiplier = 1) {
+    this._movementSpeedMultiplier = Math.max(1, Number(multiplier) || 1);
+  }
+
+  setCityStateSystem(system) { this._cityStateSystem = system || null; }
+  setBlackMistSystem(system) { this._blackMistSystem = system || null; }
+
+  _healArmiesPerTick() {
+    let changed = false;
+    for (const army of this._armies) {
+      const amount = this.getArmyPostBattleHealing(army.id) / 2;
+      if (amount <= 0 || !(army.hpDamage > 0)) continue;
+      const healed = Math.min(army.hpDamage, amount); army.hpDamage -= healed; changed = true;
+      eventBus.emit('armyHealed', { armyId: army.id, healed, source: 'healer_tick' });
+    }
+    if (changed) this._notify('healer_tick');
+  }
+
+  _applyBlackMistDamage() {
+    for (const army of [...this._armies]) if (this._blackMistSystem?.isCovered?.(army.gridX, army.gridY)) this.applyDamage(army.id, 30);
+  }
+
+  _tickHeroSkillCooldowns() {
+    let changed = false;
+    for (const army of this._armies) if ((army.heroSkillCooldown || 0) > 0) { army.heroSkillCooldown -= 1; changed = true; }
+    if (changed) this._notify('hero_skill_cooldown');
+  }
+
+  useHeroActiveSkill(armyId, direction) {
+    const army = this._findArmy(armyId);
+    if (!army || army.heroId !== 'Hestia') return { ok: false, reason: '需要赫斯提亚担任领队' };
+    if ((army.heroSkillCooldown || 0) > 0) return { ok: false, reason: '技能尚在冷却', cooldown: army.heroSkillCooldown };
+    if (this.getArmyCp(armyId) < 1) return { ok: false, reason: 'CP不足' };
+    const vector = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[direction];
+    if (!vector) return { ok: false, reason: '方向无效' };
+    const [dx, dy] = vector, endX = army.gridX + dx * 4, endY = army.gridY + dy * 4;
+    if (!this.isLandPassableAt(endX, endY) || this._isArmyTileOccupied(endX, endY, army.id)) return { ok: false, reason: '突刺终点受到阻挡' };
+    const activeSkill = this._hero?.getHeroAbilityProfile?.('Hestia')?.activeSkill || {};
+    const damage = this.getArmyStats(armyId).attack * Math.max(0, Number(activeSkill.damageMultiplier) || 2);
+    const hitIds = [];
+    let totalDamageDealt = 0;
+    for (let step = 1; step <= 4; step += 1) {
+      const x = army.gridX + dx * step, y = army.gridY + dy * step;
+      const target = this._armies.find(candidate => candidate.ownerId !== 'player' && candidate.gridX === x && candidate.gridY === y);
+      if (target) { hitIds.push(target.id); this.applyDamage(target.id, damage); totalDamageDealt += damage; }
+      const combatHit = this._combat?.damageEnemyAt?.(x, y, damage);
+      if (combatHit?.ok) { hitIds.push(combatHit.enemyId); totalDamageDealt += damage; }
+      const expansionHit = this._enemyExpansion?.damageCellAt?.(x, y, damage);
+      if (expansionHit?.ok) { hitIds.push(`expansion:${x},${y}`); totalDamageDealt += damage; }
+    }
+    const healed = this._applyHeroActiveAttackLifesteal(armyId, totalDamageDealt);
+    this.consumeAttackCp(armyId);
+    const cooldown = Math.max(1, Math.floor(Number(this._hero?.getHero?.('Hestia')?.activeSkill?.cooldownTicks) || 12));
+    army.gridX = endX; army.gridY = endY; army.heroSkillCooldown = cooldown; army.movePath = [];
+    this._touch(army); this._notify('hero_active_skill');
+    eventBus.emit('heroActiveSkillUsed', { heroId: 'Hestia', armyId, skillId: 'hestia_moonlight', direction, damage, hitIds, healed, endX, endY });
+    return { ok: true, damage, hitIds, healed, endX, endY, cooldown };
+  }
+
+  _heroProfile(army) {
+    if (!army?.heroId) return null;
+    const recruited = (this._hero?.getRecruitedHeroes?.() || []).find(entry => (entry.heroId || entry.id) === army.heroId);
+    const ability = this._hero?.getHeroAbilityProfile?.(army.heroId);
+    if (recruited) return { ...recruited, ability };
+    if (army.cheatStats) {
+      const configured = this._hero?.getHero?.(army.heroId);
+      return configured ? { ...configured, heroId: configured.id, ability: { stats: army.cheatStats } } : null;
+    }
+    return null;
+  }
+
+  _heroStats(army) { return this._heroProfile(army)?.ability?.stats || null; }
+
+  getArmyStats(armyId) {
+    const army = this._findArmy(armyId);
+    if (!army) return { attack: 0, maxHp: 0, hp: 0, attackRange: 0, speed: 0 };
+    if (army.cheatStats) {
+      const maxHp = Math.max(1, Number(army.cheatStats.maxHp ?? army.cheatStats.hp) || 1);
+      return {
+        attack: Math.max(0, Number(army.cheatStats.attack) || 0), maxHp,
+        hp: Math.max(0, maxHp - Math.max(0, Number(army.hpDamage) || 0)),
+        attackRange: Math.max(0, Math.floor(Number(army.cheatStats.attackRange) || 0)),
+        speed: Math.max(0, Number(army.cheatStats.speed) || 0)
+      };
+    }
+    const configs = army.unitIds.map(unitId => this._unitConfig(unitId)).filter(Boolean);
+    const heroStats = this._heroStats(army);
+    if (heroStats) configs.push(heroStats);
+    const multipliers = this.getArmyStatMultipliers();
+    const attack = configs.reduce((sum, unit) => sum + Math.max(0, Number(unit.attack) || Number(unit.combatPower) || 1), 0) * multipliers.attack;
+    const maxHp = configs.reduce((sum, unit) => sum + Math.max(1, Number(unit.hp) || Number(unit.combatPower) || 1), 0) * multipliers.hp;
+    let speed = configs.length
+      ? configs.reduce((sum, unit) => sum + Math.max(0, Number(unit.speed) || 1), 0) / configs.length
+      : 0;
+    if (army.heroId === 'Hestia') speed += 1;
+    return {
+      attack: Math.round(attack * 100) / 100,
+      maxHp: Math.round(maxHp * 100) / 100,
+      hp: Math.round(Math.max(0, maxHp - Math.max(0, Number(army.hpDamage) || 0)) * 100) / 100,
+      attackRange: this.getArmyAttackRange(armyId),
+      speed: Math.round(speed * 100) / 100
+    };
+  }
+
+  getArmyStatMultipliers() {
+    const culture = this._culture?.getEffects?.() || {};
+    const tech = this._tech?.getEffects?.() || {};
+    const era = this._era?.getBonuses?.() || {};
+    const hero = this._hero?.getBonuses?.() || {};
+    const luxury = this._luxury?.getBonuses?.() || {};
+    let buildingAttackBonus = 0;
+    let buildingHpBonus = 0;
+    for (const building of this._building?.buildings || []) {
+      if (building.status !== 'active' || building._invalid) continue;
+      const effect = this._buildingConfig?.(building.buildingId)?.uniqueFunction
+        || configRegistry.getBuilding(building.buildingId)?.uniqueFunction || {};
+      buildingAttackBonus += (effect.armyAttackMul || effect.meleePowerMul || 1) - 1;
+      buildingHpBonus += (effect.armyHpMul || 1) - 1;
+    }
+    const buildingAttack = 1 + buildingAttackBonus;
+    const buildingHp = 1 + buildingHpBonus;
+    const legacyArmyPower = era.armyPowerMul || 1;
+    return {
+      attack: (culture.meleeDamageMul || 1) * (tech.armyAttackMul || 1) * (era.armyAttackMul || 1) * legacyArmyPower * (hero.armyAttackMul || hero.meleeDamageMul || 1) * (luxury.armyAttackMul || 1) * buildingAttack,
+      hp: (culture.unitHpMul || 1) * (tech.armyHpMul || tech.unitHpMul || 1) * (era.armyHpMul || 1) * legacyArmyPower * (hero.armyHpMul || hero.unitHpMul || 1) * (luxury.armyHpMul || 1) * buildingHp,
+      speed: luxury.armySpeedMul || 1
+    };
+  }
+
+  applyDamage(armyId, amount) {
+    const army = this._findArmy(armyId);
+    if (!army) return { ok: false, reason: 'unknown_army' };
+    army.hpDamage = Math.max(0, (Number(army.hpDamage) || 0) + Math.max(0, Number(amount) || 0));
+    const stats = this.getArmyStats(armyId);
+    if (stats.hp <= 0) {
+      if (army.heroId) this._hero?.injureHero?.(army.heroId);
+      this._armies = this._armies.filter(item => item.id !== armyId);
+      eventBus.emit('armyDestroyed', { armyId, ownerId: army.ownerId || 'player', gridX: army.gridX, gridY: army.gridY });
+    } else {
+      this._touch(army);
+    }
+    this._notify('damage');
+    return { ok: true, destroyed: stats.hp <= 0, damage: Math.max(0, Number(amount) || 0), hp: stats.hp };
+  }
+
+  canAttackTarget(armyId, targetX, targetY) {
+    const army = this._findArmy(armyId);
+    if (!army) return { ok: false, reason: 'unknown_army' };
+    if (!army.unitIds.length && !army.heroId) return { ok: false, reason: 'empty_army' };
+    if (this.getArmyCp(armyId) < 1) return { ok: false, reason: 'insufficient_cp', currentCp: 0, maxCp: this.getArmyCpMax(armyId) };
+    if (!Number.isFinite(targetX) || !Number.isFinite(targetY)) return { ok: false, reason: 'invalid_target' };
+    const distance = Math.abs(army.gridX - targetX) + Math.abs(army.gridY - targetY);
+    const attackRange = this.getArmyAttackRange(armyId);
+    return distance <= attackRange
+      ? { ok: true, distance, attackRange }
+      : { ok: false, reason: 'target_out_of_range', distance, attackRange };
   }
 
   addUnit(armyId, unitId, count = 1) {
@@ -338,8 +620,8 @@ export class ArmySystem {
     if (!army || !config) return { ok: false, reason: 'unknown_unit_or_army' };
     if (!Number.isInteger(count) || count <= 0) return { ok: false, reason: 'invalid_count' };
     if ((this._availableUnits[unitId] || 0) < count) return { ok: false, reason: 'insufficient_reserve' };
-    if (this._usedCommandPoints(army) + this._unitCommandPoints(unitId) * count > this.getCommandPointLimit()) {
-      return { ok: false, reason: 'command_points_full' };
+    if (army.unitIds.length + count > this.getArmyUnitCapacity()) {
+      return { ok: false, reason: 'army_unit_capacity_full', capacity: this.getArmyUnitCapacity() };
     }
     for (let index = 0; index < count; index += 1) army.unitIds.push(unitId);
     this._availableUnits[unitId] -= count;
@@ -404,9 +686,68 @@ export class ArmySystem {
     return { ok: true };
   }
 
+  getArmyPostBattleHealing(armyId) {
+    const army = this._findArmy(armyId);
+    if (!army) return 0;
+    if (army.cheatStats) return Math.max(0, Number(army.cheatStats.healingAfterBattle) || 0);
+    return army.unitIds.reduce((sum, unitId) => {
+      const unit = this._unitConfig(unitId);
+      return sum + (unit?.roleTags?.includes('healer') ? Math.max(0, Number(unit.healingAfterBattle) || Number(unit.attack) || 0) : 0);
+    }, 0);
+  }
+
+  healArmyAfterBattle(armyId) {
+    const army = this._findArmy(armyId);
+    const amount = this.getArmyPostBattleHealing(armyId);
+    if (!army || amount <= 0 || !(army.hpDamage > 0)) return { healed: 0 };
+    const healed = Math.min(army.hpDamage, amount);
+    army.hpDamage -= healed;
+    this._touch(army);
+    this._notify('post_battle_healing');
+    eventBus.emit('armyHealedAfterBattle', { armyId, healed });
+    return { healed };
+  }
+
+  _applyHeroActiveAttackLifesteal(armyId, damageDealt) {
+    const army = this._findArmy(armyId);
+    if (!army?.heroId || !(army.hpDamage > 0) || !(damageDealt > 0)) return 0;
+    const ability = this._hero?.getHeroAbilityProfile?.(army.heroId)?.activeSkill || {};
+    const ratio = Math.max(0, Number(ability.activeAttackLifeSteal ?? ability.lifeSteal) || 0);
+    const healed = Math.min(army.hpDamage, damageDealt * ratio);
+    if (healed <= 0) return 0;
+    army.hpDamage -= healed;
+    this._touch(army);
+    eventBus.emit('armyHealed', { armyId, healed, source: 'hero_active_attack_lifesteal' });
+    return healed;
+  }
+
+  getHeroChangeStatus(armyId) {
+    const army = this._findArmy(armyId);
+    if (!army) return { ok: false, reason: '军团不存在' };
+    const stats = this.getArmyStats(armyId);
+    if (stats.hp < stats.maxHp) return { ok: false, reason: '军团生命值未满，无法设置或更换英雄' };
+    const currentCp = this.getArmyCp(armyId), maxCp = this.getArmyCpMax(armyId);
+    if (currentCp < maxCp) return { ok: false, reason: '军团CP未满，无法设置或更换英雄' };
+    return { ok: true };
+  }
+
+  canAssignHero(armyId, heroId) {
+    const targetStatus = this.getHeroChangeStatus(armyId);
+    if (!targetStatus.ok) return targetStatus;
+    const source = this._armies.find(item => item.id !== armyId && item.heroId === heroId);
+    if (source) {
+      const sourceStatus = this.getHeroChangeStatus(source.id);
+      if (!sourceStatus.ok) return { ok: false, reason: '该英雄当前率领的军团生命值或CP未满，无法切换部队' };
+      return { ok: false, reason: '该英雄已经率领其他军团' };
+    }
+    return { ok: true };
+  }
+
   assignHero(armyId, heroId) {
     const army = this._findArmy(armyId);
     if (!army) return { ok: false, reason: 'unknown_army' };
+    const changeStatus = this.canAssignHero(armyId, heroId);
+    if (!changeStatus.ok) return changeStatus;
     const hero = (this._hero?.getRecruitedHeroes?.() || []).find(entry => (entry.heroId || entry.id) === heroId);
     if (!hero || hero.status === 'injured') return { ok: false, reason: 'hero_unavailable' };
     if (hero.role !== 'commander' && hero.heroClass !== 'military') return { ok: false, reason: 'hero_not_military' };
@@ -415,6 +756,7 @@ export class ArmySystem {
     if (!result.ok) return result;
     if (army.heroId && army.heroId !== heroId) this._hero?.assignHero?.(army.heroId, null);
     army.heroId = heroId;
+    army.hpDamage = Math.min(army.hpDamage || 0, Math.max(0, this.getArmyStats(armyId).maxHp - 1));
     this._notify('hero');
     return { ok: true };
   }
@@ -422,6 +764,7 @@ export class ArmySystem {
   unassignHero(armyId) {
     const army = this._findArmy(armyId);
     if (!army) return false;
+    if (!this.getHeroChangeStatus(armyId).ok) return false;
     if (army.heroId) this._hero?.assignHero?.(army.heroId, null);
     army.heroId = null;
     this._notify('hero');
@@ -432,7 +775,18 @@ export class ArmySystem {
 
   _groundAt(x, y) { return this._getMap()?.grid?.[y]?.[x] || null; }
 
-  _isWater(x, y) { return ['S', 'W'].includes(this._groundAt(x, y)); }
+  _hasPassableBridge(x, y) {
+    return (this._building?.buildings || []).some(building => {
+      const config = configRegistry.getBuilding?.(building.buildingId);
+      return config?.passable === true && building.gridX === x && building.gridY === y;
+    });
+  }
+
+  _isWater(x, y) { return ['S', 'W'].includes(this._groundAt(x, y)) && !this._hasPassableBridge(x, y); }
+
+  isLandPassableAt(x, y) {
+    return Boolean(this._groundAt(x, y)) && !this._isWater(x, y) && !this.isTileOccupiedByBuilding(x, y);
+  }
 
   _armyIsNaval(army) {
     return army.unitIds.length > 0 && army.unitIds.every(unitId => (this._unitConfig(unitId)?.domain || 'land') === 'naval');
@@ -443,9 +797,11 @@ export class ArmySystem {
   }
 
   isTileOccupiedByBuilding(x, y, { allowGarrisonIndex = null } = {}) {
+    if (this._cityStateSystem?.isHostileBuildingAt?.(x, y)) return true;
     return (this._building?.buildings || []).some((building, buildingIndex) => {
       if (buildingIndex === allowGarrisonIndex) return false;
       const config = configRegistry.getBuilding?.(building.buildingId);
+      if (config?.passable === true) return false;
       const width = Math.max(1, Math.floor(Number(config?.footprint?.width) || 1));
       const height = Math.max(1, Math.floor(Number(config?.footprint?.height) || 1));
       return x >= building.gridX && x < building.gridX + width
@@ -560,13 +916,49 @@ export class ArmySystem {
     return { ok: true, path: structuredClone(path) };
   }
 
+  teleportArmyNear(armyId, targetX, targetY) {
+    const army = this._findArmy(armyId);
+    if (!army) return { ok: false, reason: 'unknown_army' };
+    if (army.garrisonBuildingIndex != null) return { ok: false, reason: 'army_garrisoned' };
+    if (army.embarked || this._armyIsNaval(army)) return { ok: false, reason: 'land_army_required' };
+    const destinations = [[0, -1], [1, 0], [0, 1], [-1, 0], [1, -1], [1, 1], [-1, 1], [-1, -1]];
+    const destination = destinations.map(([dx, dy]) => ({ x: targetX + dx, y: targetY + dy })).find(point => (
+      this._groundAt(point.x, point.y)
+      && !this._isWater(point.x, point.y)
+      && !this.isTileOccupiedByBuilding(point.x, point.y)
+      && !this._isArmyTileOccupied(point.x, point.y, army.id)
+    ));
+    if (!destination) return { ok: false, reason: 'teleport_destination_blocked' };
+    army.gridX = destination.x;
+    army.gridY = destination.y;
+    army.movePath = [];
+    army.order = { type: 'hold' };
+    army.movementProgress = 0;
+    this._touch(army);
+    this._notify('teleport');
+    eventBus.emit('armyTeleported', { armyId, gridX: army.gridX, gridY: army.gridY });
+    return { ok: true, gridX: army.gridX, gridY: army.gridY };
+  }
+
   _advanceMovement() {
     let changed = false;
     for (const army of this._armies) {
       if (army.garrisonBuildingIndex != null || !army.movePath?.length) continue;
-      const next = army.movePath.shift();
-      army.gridX = next.x;
-      army.gridY = next.y;
+      const speed = (this.getArmyStats(army.id).speed || 1) * this._movementSpeedMultiplier * (this._luxury?.getBonuses?.().armySpeedMul || 1);
+      army.movementProgress = (Number(army.movementProgress) || 0) + speed;
+      let steps = Math.floor(army.movementProgress);
+      if (steps <= 0) continue;
+      army.movementProgress -= steps;
+      while (steps-- > 0 && army.movePath.length) {
+        const next = army.movePath[0];
+        if (this._isArmyTileOccupied(next.x, next.y, army.id)) {
+          army.movementProgress = 0;
+          break;
+        }
+        army.movePath.shift();
+        army.gridX = next.x;
+        army.gridY = next.y;
+      }
       if (!army.movePath.length) army.order = { type: 'hold' };
       this._touch(army);
       changed = true;
@@ -653,10 +1045,8 @@ export class ArmySystem {
       if (army.garrisonBuildingIndex == null) continue;
       const effects = this.getFortificationEffects(army.id);
       const supply = Math.min(1, army.supply + effects.supplyRecovery);
-      const morale = Math.min(100, army.morale + effects.moraleRecovery);
-      if (supply !== army.supply || morale !== army.morale) changed = true;
+      if (supply !== army.supply) changed = true;
       army.supply = Math.round(supply * 1000) / 1000;
-      army.morale = Math.round(morale * 1000) / 1000;
     }
     if (changed) this._notify('garrison_resupply');
   }
@@ -666,6 +1056,8 @@ export class ArmySystem {
     const defender = this._findArmy(defenderId);
     if (!attacker || !defender) return { ok: false, reason: 'unknown_army' };
     if (!attacker.unitIds.length || !defender.unitIds.length) return { ok: false, reason: 'empty_army' };
+    const rangeCheck = this.canAttackTarget(attackerId, defender.gridX, defender.gridY);
+    if (!rangeCheck.ok) return rangeCheck;
     const battleId = `battle_${this._nextBattleId}`;
     const battleContext = {
       ...structuredClone(context),
@@ -712,8 +1104,6 @@ export class ArmySystem {
     this._applyCasualties(defender, result.casualties.defender);
     attacker.supply = Math.max(0.25, Math.min(1.25, attacker.supply + result.supplyDelta.attacker));
     defender.supply = Math.max(0.25, Math.min(1.25, defender.supply + result.supplyDelta.defender));
-    attacker.morale = Math.max(0, Math.min(100, attacker.morale + result.moraleDelta.attacker));
-    defender.morale = Math.max(0, Math.min(100, defender.morale + result.moraleDelta.defender));
     attacker.order = result.retreat.attacker ? { type: 'return' } : { type: 'hold' };
     defender.order = result.retreat.defender ? { type: 'return' } : { type: 'hold' };
     this._touch(attacker);
@@ -732,8 +1122,46 @@ export class ArmySystem {
   }
 
   resolveEngagement(attackerId, defenderId, context = {}) {
-    const prepared = this.previewEngagement(attackerId, defenderId, context);
-    return prepared.ok ? this.commitEngagement(prepared) : prepared;
+    const attacker = this._findArmy(attackerId);
+    const defender = this._findArmy(defenderId);
+    if (!attacker || !defender) return { ok: false, reason: 'unknown_army' };
+    const rangeCheck = this.canAttackTarget(attackerId, defender.gridX, defender.gridY);
+    if (!rangeCheck.ok) return rangeCheck;
+    const distance = rangeCheck.distance;
+    const attackerStats = this.getArmyStats(attackerId);
+    const defenderStats = this.getArmyStats(defenderId);
+    const defenderCanAttack = distance <= defenderStats.attackRange;
+    const order = defenderCanAttack && defenderStats.speed > attackerStats.speed
+      ? [{ id: defenderId, targetId: attackerId, stats: defenderStats }, { id: attackerId, targetId: defenderId, stats: attackerStats }]
+      : [{ id: attackerId, targetId: defenderId, stats: attackerStats }, ...(defenderCanAttack ? [{ id: defenderId, targetId: attackerId, stats: defenderStats }] : [])];
+    const attacks = [];
+    for (const turn of order) {
+      if (!this._findArmy(turn.id)?.unitIds.length || !this._findArmy(turn.targetId)?.unitIds.length) continue;
+      if (!this.consumeAttackCp(turn.id).ok) continue;
+      const targetHpBefore = this.getArmyStats(turn.targetId).hp;
+      const damage = this.applyDamage(turn.targetId, turn.stats.attack);
+      attacks.push({ attackerId: turn.id, defenderId: turn.targetId, damage: turn.stats.attack, destroyed: damage.destroyed });
+      if (turn.id === attackerId) this._applyHeroActiveAttackLifesteal(turn.id, Math.min(targetHpBefore, turn.stats.attack));
+      if (damage.destroyed) break;
+    }
+    const defenderRetaliated = attacks.some(attack => attack.attackerId === defenderId && attack.defenderId === attackerId);
+    if (this._findArmy(attackerId) && this._findArmy(defenderId) && defenderRetaliated && attackerStats.speed - defenderStats.speed >= 2) {
+      const targetHpBefore = this.getArmyStats(defenderId).hp;
+      const bonus = this.applyDamage(defenderId, attackerStats.attack);
+      attacks.push({ attackerId, defenderId, damage: attackerStats.attack, destroyed: bonus.destroyed, bonusStrike: true });
+      this._applyHeroActiveAttackLifesteal(attackerId, Math.min(targetHpBefore, attackerStats.attack));
+    }
+    const attackerRetaliated = attacks.some(attack => attack.attackerId === attackerId && attack.defenderId === defenderId);
+    if (this._findArmy(attackerId) && this._findArmy(defenderId) && attackerRetaliated && defenderStats.speed - attackerStats.speed >= 2) {
+      const bonus = this.applyDamage(attackerId, defenderStats.attack);
+      attacks.push({ attackerId: defenderId, defenderId: attackerId, damage: defenderStats.attack, destroyed: bonus.destroyed, bonusStrike: true });
+    }
+    const healing = {
+      attacker: this.healArmyAfterBattle(attackerId).healed,
+      defender: this.healArmyAfterBattle(defenderId).healed
+    };
+    eventBus.emit('combatBroadcast', { message: `⚔️ ${attacker.name}向${defender.name}发动攻击${defenderCanAttack ? '，双方完成交锋' : '，敌军射程不足无法反击'}` });
+    return { ok: true, attackerId, defenderId, distance, attacks, healing };
   }
 
   _applyCasualties(army, count) {
@@ -750,7 +1178,6 @@ export class ArmySystem {
     if (!army) return { ok: false, reason: 'unknown_army' };
     const casualties = army.unitIds.length ? Math.min(army.unitIds.length, Math.max(0, Math.round(army.unitIds.length * casualtyRate))) : 0;
     this._applyCasualties(army, casualties);
-    army.morale = Math.max(0, Math.min(100, army.morale + moraleDelta));
     army.supply = Math.max(0.25, Math.min(1.25, army.supply + supplyDelta));
     if (!army.unitIds.length && army.heroId) this._hero?.injureHero?.(army.heroId);
     this._notify('attrition');
@@ -773,11 +1200,18 @@ export class ArmySystem {
   _findArmy(armyId) { return this._armies.find(army => army.id === armyId) || null; }
 
   _decorateArmy(army) {
+    const hero = this._heroProfile(army);
     return {
       ...structuredClone(army),
-      usedCommandPoints: this._usedCommandPoints(army),
-      commandPointLimit: this.getCommandPointLimit(),
-      power: this.getArmyPower(army.id)
+      heroName: hero?.name || null,
+      heroIcon: hero?.icon || hero?.portrait || '',
+      heroPortrait: hero?.portrait || hero?.icon || '',
+      cp: this.getArmyCp(army.id),
+      maxCp: this.getArmyCpMax(army.id),
+      healingAfterBattle: this.getArmyPostBattleHealing(army.id),
+      healingPerTick: this.getArmyPostBattleHealing(army.id) / 2,
+      unitCapacity: this.getArmyUnitCapacity(),
+      ...this.getArmyStats(army.id)
     };
   }
 
@@ -810,13 +1244,17 @@ export class ArmySystem {
       heroId: army.heroId || null,
       gridX: Math.floor(Number(army.gridX) || 0),
       gridY: Math.floor(Number(army.gridY) || 0),
-      morale: Math.max(0, Math.min(100, Number(army.morale) || 100)),
       supply: Math.max(0, Math.min(1.25, Number(army.supply) || 1)),
       embarked: army.embarked === true,
       garrisonBuildingIndex: Number.isInteger(army.garrisonBuildingIndex) ? army.garrisonBuildingIndex : null,
       movePath: Array.isArray(army.movePath) ? structuredClone(army.movePath) : [],
       order: army.order && typeof army.order === 'object' ? structuredClone(army.order) : { type: 'hold' },
-      revision: Math.max(0, Math.floor(Number(army.revision) || 0))
+      revision: Math.max(0, Math.floor(Number(army.revision) || 0)),
+      hpDamage: Math.max(0, Number(army.hpDamage) || 0),
+      movementProgress: Math.max(0, Number(army.movementProgress) || 0) % 1,
+      currentCp: Math.max(0, Math.floor(Number.isFinite(army.currentCp) ? army.currentCp : 1)),
+      heroSkillCooldown: Math.max(0, Math.floor(Number(army.heroSkillCooldown) || 0)),
+      cheatStats: army.cheatStats && typeof army.cheatStats === 'object' ? structuredClone(army.cheatStats) : null
     }));
     this._availableUnits = Object.fromEntries(Object.entries(state?.availableUnits || {}).filter(([id]) => validUnits.has(id)).map(([id, count]) => [id, Math.max(0, Math.floor(Number(count) || 0))]));
     this._nextId = Math.max(1, Math.floor(state?.nextId || this._armies.length + 1));

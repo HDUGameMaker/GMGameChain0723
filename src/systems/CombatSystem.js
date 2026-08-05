@@ -23,6 +23,7 @@ export class CombatSystem {
     this._alchemySystem = null;
     this._mapConfig = null;
     this._editMode = null;
+    this._armySystem = null;
 
     eventBus.on('tick', (data) => this._onTick(data));
     eventBus.on('dayStart', (data) => this._onDayStart(data));
@@ -34,7 +35,6 @@ export class CombatSystem {
   get _unitConfigs() { return configRegistry.get('enemies')?.units || []; }
   get _globalConfig() { return configRegistry.get('enemies')?.global || { humanHp: 2, clickAttack: 1 }; }
   get _humanHp() { return this._globalConfig.humanHp; }
-  get _clickAttack() { return this._globalConfig.clickAttack; }
 
   setBuildingSystem(bs) { this._buildingSystem = bs; }
   setPopulationSystem(ps) { this._populationSystem = ps; }
@@ -42,6 +42,23 @@ export class CombatSystem {
   setCultureSystem(cs) { this._cultureSystem = cs; }
   setAlchemySystem(as) { this._alchemySystem = as; }
   setHeroSystem(hs) { this._heroSystem = hs; }
+  setArmySystem(system) { this._armySystem = system || null; }
+
+  damageEnemyAt(gridX, gridY, amount) {
+    const enemy = this.getEnemyAt(gridX, gridY);
+    if (!enemy || enemy.enemyId === 'eastern_ruin_guardian' && enemy.neutral && !enemy.hostile) return { ok: false };
+    enemy.hp = Math.max(0, enemy.hp - Math.max(0, Number(amount) || 0));
+    if (enemy.hp <= 0) {
+      this.enemies = this.enemies.filter(item => item.id !== enemy.id);
+      eventBus.emit('enemyKilled', { enemyId: enemy.id, enemyType: enemy.enemyId, cause: 'hero_skill' });
+      if (enemy.boss || enemy.enemyId === 'eastern_ruin_guardian') {
+        eventBus.emit('easternRuinBossDefeated', { cause: 'hero_skill' });
+        eventBus.emit('gameOver', { win: true, reason: 'easternBossDefeated' });
+      }
+    }
+    this._notify?.();
+    return { ok: true, enemyId: enemy.id, destroyed: enemy.hp <= 0 };
+  }
 
   /**
    * 友方单位被移除（阵亡/解散）时，归还其占用的建造工人池名额。
@@ -53,7 +70,10 @@ export class CombatSystem {
     this._populationSystem.releaseFromConstruction(1);
   }
 
-  init() { this._mapConfig = configRegistry.get('map'); }
+  init() {
+    this._mapConfig = configRegistry.get('map');
+    this._ensureEasternRuinBoss();
+  }
 
   enterPlaceEnemyMode(enemyId) { this._editMode = enemyId; this._deployMode = null; store.setState({ combatPlaceMode: enemyId, deployTamedMode: false }); eventBus.emit('combatPlaceModeChanged', { enabled: true, enemyId }); }
   exitPlaceEnemyMode() { this._editMode = null; store.setState({ combatPlaceMode: false }); eventBus.emit('combatPlaceModeChanged', { enabled: false }); }
@@ -118,9 +138,28 @@ export class CombatSystem {
 
   getEnemyConfig(enemyId) { return this._enemyConfigs.find(e => e.id === enemyId) || null; }
   _getUnitConfig(type) { return this._unitConfigs.find(u => u.id === type) || null; }
-  getAllEnemies() { return [...this.enemies]; }
+  getAllEnemies() {
+    return this.enemies.map(enemy => {
+      const config = this.getEnemyConfig(enemy.enemyId) || {};
+      return {
+        ...enemy,
+        name: config.name || enemy.name || '敌方单位',
+        icon: config.icon || enemy.icon || '',
+        faction: config.faction || enemy.faction || '敌对势力',
+        attack: enemy.attack ?? config.attack ?? 1,
+        attackRange: enemy.attackRange ?? config.attackRange ?? 1,
+        speed: enemy.speed ?? config.speed ?? 1
+      };
+    });
+  }
   getAllUnits() { return [...this.units]; }
-  getEnemyAt(gridX, gridY) { return this.enemies.find(e => e.gridX === gridX && e.gridY === gridY) || null; }
+  getEnemyAt(gridX, gridY) {
+    return this.enemies.find(enemy => {
+      const width = Math.max(1, Number(enemy.footprint?.width) || 1);
+      const height = Math.max(1, Number(enemy.footprint?.height) || 1);
+      return gridX >= enemy.gridX && gridX < enemy.gridX + width && gridY >= enemy.gridY && gridY < enemy.gridY + height;
+    }) || null;
+  }
   getUnitAt(gridX, gridY) { return this.units.find(u => u.gridX === gridX && u.gridY === gridY) || null; }
 
   previewBattleLines(attackerIds, defenderIds, context = {}) {
@@ -198,6 +237,7 @@ export class CombatSystem {
   // ===== 自然生成敌方 =====
   _onDayStart(data) {
     for (const cfg of this._enemyConfigs) {
+      if (cfg.strategicOnly) continue;
       if (data.day < (cfg.spawnConditions?.minDay || 1)) continue;
       if (Math.random() > 0.15) continue;
       const pos = this._findSpawnPosition(cfg);
@@ -219,12 +259,184 @@ export class CombatSystem {
       id: 'enemy_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
       enemyId, gridX, gridY,
       hp: cfg.maxHp || 5, maxHp: cfg.maxHp || 5,
+      attack: cfg.attack || 1,
+      attackRange: cfg.attackRange || 1,
+      speed: cfg.speed || 1,
       spawnDay: store.getState('timeDay') || 1
     });
     this._notify();
     eventBus.emit('enemySpawned', { enemyId, gridX, gridY, name: cfg.name });
     this._broadcast(`⚠️ 发现 ${cfg.name}！`);
     return true;
+  }
+
+  spawnCheatEnemyNearHeadquarters() {
+    const headquarters = this._buildingSystem?.buildings?.find(building =>
+      configRegistry.getBuilding(building.buildingId)?.isHeadquarters
+    );
+    const origin = headquarters || this._mapConfig?.initialBuildings?.[0];
+    if (!origin || !this._mapConfig) return { ok: false, reason: 'headquarters_not_found' };
+    for (let radius = 1; radius <= 10; radius += 1) {
+      for (let dy = -radius; dy <= radius; dy += 1) for (let dx = -radius; dx <= radius; dx += 1) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue;
+        const gridX = origin.gridX + dx, gridY = origin.gridY + dy;
+        if (gridX < 0 || gridY < 0 || gridX >= this._mapConfig.gridWidth || gridY >= this._mapConfig.gridHeight) continue;
+        if (!isDomainCompatible('land', this._mapConfig.grid?.[gridY]?.[gridX])) continue;
+        if (this.getEnemyAt(gridX, gridY) || (this._armySystem?.getArmies?.() || []).some(army => army.gridX === gridX && army.gridY === gridY)) continue;
+        if (this._buildingSystem.buildings.some(building => {
+          const footprint = configRegistry.getBuilding(building.buildingId)?.footprint || { width: 1, height: 1 };
+          return gridX >= building.gridX && gridX < building.gridX + footprint.width
+            && gridY >= building.gridY && gridY < building.gridY + footprint.height;
+        })) continue;
+        const enemy = {
+          id: `cheat_enemy_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          enemyId: 'enemy_expansion_force', gridX, gridY,
+          name: '金手指测试敌人', faction: '敌对势力',
+          hp: 50, maxHp: 50, attack: 20, attackRange: 1,
+          cp: 1, currentCp: 1, speed: 1, spawnDay: store.getState('timeDay') || 1,
+          cheatSpawned: true
+        };
+        this.enemies.push(enemy);
+        this._notify();
+        eventBus.emit('enemySpawned', { enemyId: enemy.enemyId, gridX, gridY, name: enemy.name });
+        return { ok: true, enemy };
+      }
+    }
+    return { ok: false, reason: 'no_spawn_tile' };
+  }
+
+  _ensureEasternRuinBoss() {
+    const config = this.getEnemyConfig('eastern_ruin_guardian');
+    if (!config || this.enemies.some(enemy => enemy.enemyId === config.id) || !this._mapConfig) return;
+    const position = this._findEasternRuinPosition(config.footprint || { width: 2, height: 2 });
+    if (!position) return;
+    this.enemies.push({
+      id: 'boss_eastern_ruin', enemyId: config.id,
+      gridX: position.x, gridY: position.y,
+      originX: position.x, originY: position.y,
+      hp: config.maxHp, maxHp: config.maxHp,
+      attack: config.attack, attackRange: config.attackRange, speed: config.speed,
+      footprint: structuredClone(config.footprint),
+      alertRange: config.alertRange, homeHealPerTick: config.homeHealPerTick,
+      neutral: true, hostile: false, boss: true, ruinRadius: 4
+    });
+    this._notify();
+  }
+
+  _findEasternRuinPosition(footprint) {
+    const width = Math.max(2, Number(footprint.width) || 2);
+    const height = Math.max(2, Number(footprint.height) || 2);
+    const mapWidth = this._mapConfig.gridWidth;
+    const mapHeight = this._mapConfig.gridHeight;
+    const centerY = Math.floor(mapHeight / 2);
+    for (let x = mapWidth - width - 4; x >= Math.floor(mapWidth * 0.68); x -= 1) {
+      for (let offset = 0; offset < mapHeight / 2; offset += 1) {
+        for (const y of [centerY + offset, centerY - offset]) {
+          if (y < 3 || y + height >= mapHeight - 3) continue;
+          let valid = true;
+          for (let dy = 0; dy < height && valid; dy += 1) for (let dx = 0; dx < width; dx += 1) {
+            if (!isDomainCompatible('land', this._mapConfig.grid[y + dy]?.[x + dx])) valid = false;
+          }
+          if (valid) return { x, y };
+        }
+      }
+    }
+    return null;
+  }
+
+  _distanceToEnemyFootprint(x, y, enemy) {
+    const width = Math.max(1, Number(enemy.footprint?.width) || 1);
+    const height = Math.max(1, Number(enemy.footprint?.height) || 1);
+    const dx = Math.max(0, enemy.gridX - x, x - (enemy.gridX + width - 1));
+    const dy = Math.max(0, enemy.gridY - y, y - (enemy.gridY + height - 1));
+    return dx + dy;
+  }
+
+  attackBossWithArmy(enemyId, armyId) {
+    const boss = this.enemies.find(enemy => enemy.id === enemyId || enemy.enemyId === enemyId);
+    const army = this._armySystem?.getArmy?.(armyId);
+    if (!boss?.boss || !army) return { ok: false, reason: 'enemy_unavailable' };
+    const distance = this._distanceToEnemyFootprint(army.gridX, army.gridY, boss);
+    if (distance > army.attackRange) return { ok: false, reason: 'target_out_of_range', distance, attackRange: army.attackRange };
+    const cp = this._armySystem.consumeAttackCp?.(armyId);
+    if (cp && !cp.ok) return cp;
+    boss.neutral = false;
+    boss.hostile = true;
+    const attacks = [];
+    const playerFirst = army.speed >= boss.speed;
+    const playerAttack = () => {
+      if (!this.enemies.includes(boss)) return;
+      const damage = Math.min(boss.hp, army.attack);
+      boss.hp = Math.max(0, boss.hp - army.attack);
+      attacks.push({ side: 'player', damage, hp: boss.hp });
+      this._armySystem._applyHeroActiveAttackLifesteal?.(armyId, damage);
+      if (boss.hp <= 0) {
+        this.enemies = this.enemies.filter(enemy => enemy !== boss);
+        eventBus.emit('easternRuinBossDefeated', { armyId });
+        eventBus.emit('gameOver', { win: true, reason: 'easternBossDefeated', armyId });
+      }
+    };
+    const bossAttack = () => {
+      if (!this.enemies.includes(boss) || distance > boss.attackRange) return;
+      const damage = this._armySystem.applyDamage?.(armyId, boss.attack);
+      attacks.push({ side: 'boss', damage: boss.attack, destroyed: damage?.destroyed === true });
+    };
+    if (playerFirst) {
+      playerAttack();
+      if (this.enemies.includes(boss)) bossAttack();
+      if (this.enemies.includes(boss) && this._armySystem.getArmy?.(armyId) && army.speed - boss.speed >= 2) playerAttack();
+    } else {
+      bossAttack();
+      if (this._armySystem.getArmy?.(armyId)) playerAttack();
+      if (this.enemies.includes(boss) && this._armySystem.getArmy?.(armyId) && boss.speed - army.speed >= 2 && distance <= boss.attackRange) bossAttack();
+    }
+    const healed = this._armySystem.healArmyAfterBattle?.(armyId)?.healed || 0;
+    this._notify();
+    eventBus.emit('bossBattleResolved', { bossId: boss.id, armyId, attacks, healed, bossHp: boss.hp });
+    return { ok: true, bossId: boss.id, armyId, attacks, healed, bossHp: boss.hp, hostile: boss.hostile };
+  }
+
+  attackEnemyWithArmy(enemyId, armyId) {
+    const enemy = this.enemies.find(candidate => candidate.id === enemyId || candidate.enemyId === enemyId);
+    if (!enemy) return { ok: false, reason: 'enemy_unavailable' };
+    if (enemy.boss) return this.attackBossWithArmy(enemy.id, armyId);
+    const army = this._armySystem?.getArmy?.(armyId);
+    if (!army) return { ok: false, reason: 'unknown_army' };
+    const distance = this._distanceToEnemyFootprint(army.gridX, army.gridY, enemy);
+    if (distance > army.attackRange) return { ok: false, reason: 'target_out_of_range', distance, attackRange: army.attackRange };
+    const cp = this._armySystem.consumeAttackCp?.(armyId);
+    if (cp && !cp.ok) return cp;
+    const attacks = [];
+    const playerAttack = (bonusStrike = false) => {
+      if (!this.enemies.includes(enemy) || !this._armySystem.getArmy?.(armyId)) return false;
+      const damage = Math.min(enemy.hp, army.attack);
+      enemy.hp = Math.max(0, enemy.hp - army.attack);
+      attacks.push({ side: 'player', damage, hp: enemy.hp, bonusStrike });
+      this._armySystem._applyHeroActiveAttackLifesteal?.(armyId, damage);
+      if (enemy.hp <= 0) {
+        this.enemies = this.enemies.filter(candidate => candidate !== enemy);
+        eventBus.emit('enemyKilled', { enemyId: enemy.id, enemyType: enemy.enemyId, armyId });
+        return true;
+      }
+      return false;
+    };
+    const enemyAttack = () => {
+      if (!this.enemies.includes(enemy) || distance > (enemy.attackRange || 1)) return false;
+      const result = this._armySystem.applyDamage?.(armyId, enemy.attack || 1);
+      attacks.push({ side: 'enemy', damage: enemy.attack || 1, destroyed: result?.destroyed === true });
+      return result?.destroyed === true;
+    };
+    const playerFirst = army.speed >= (enemy.speed || 1);
+    if (playerFirst) {
+      if (!playerAttack() && !enemyAttack() && army.speed - (enemy.speed || 1) >= 2) playerAttack(true);
+    } else if (!enemyAttack()) {
+      const enemySurvived = !playerAttack();
+      if (enemySurvived && this._armySystem.getArmy?.(armyId) && (enemy.speed || 1) - army.speed >= 2 && distance <= (enemy.attackRange || 1)) enemyAttack();
+    }
+    const healed = this._armySystem.getArmy?.(armyId) ? (this._armySystem.healArmyAfterBattle?.(armyId)?.healed || 0) : 0;
+    this._notify();
+    eventBus.emit('enemyBattleResolved', { enemyId: enemy.id, armyId, attacks, healed, enemyHp: Math.max(0, enemy.hp) });
+    return { ok: true, enemyId: enemy.id, armyId, attacks, healed, enemyHp: Math.max(0, enemy.hp), destroyed: enemy.hp <= 0 };
   }
 
   _findSpawnPosition(config = {}) {
@@ -341,6 +553,10 @@ export class CombatSystem {
     for (const enemy of this.enemies) {
       const cfg = this.getEnemyConfig(enemy.enemyId);
       if (!cfg) continue;
+      if (enemy.boss) {
+        if (this._updateEasternRuinBoss(enemy, cfg)) changed = true;
+        continue;
+      }
 
       // 先找最近的友方单位
       let nearestUnit = null, nearDist = Infinity;
@@ -451,9 +667,62 @@ export class CombatSystem {
     if (changed) this._notify();
   }
 
+  _updateEasternRuinBoss(boss, config) {
+    if (!boss.hostile || !this._armySystem) return false;
+    const armies = this._armySystem.getArmies?.() || [];
+    let target = null;
+    let targetDistance = Infinity;
+    for (const army of armies) {
+      const distance = this._distanceToEnemyFootprint(army.gridX, army.gridY, boss);
+      if (distance <= (boss.alertRange || 4) && distance < targetDistance) {
+        target = army;
+        targetDistance = distance;
+      }
+    }
+    if (target) {
+      if (targetDistance <= (boss.attackRange || 3)) {
+        this._armySystem.applyDamage?.(target.id, boss.attack || config.attack || 1500);
+        return true;
+      }
+      return this._moveBossToward(boss, target.gridX, target.gridY, boss.speed || 3);
+    }
+    const atHome = boss.gridX === boss.originX && boss.gridY === boss.originY;
+    if (!atHome) return this._moveBossToward(boss, boss.originX, boss.originY, boss.speed || 3);
+    const previousHp = boss.hp;
+    boss.hp = Math.min(boss.maxHp, boss.hp + (boss.homeHealPerTick || 200));
+    return boss.hp !== previousHp;
+  }
+
+  _moveBossToward(boss, targetX, targetY, steps) {
+    let moved = false;
+    for (let step = 0; step < Math.max(1, Math.floor(steps)); step += 1) {
+      const dx = Math.sign(targetX - boss.gridX);
+      const dy = Math.sign(targetY - boss.gridY);
+      const candidates = Math.abs(targetX - boss.gridX) >= Math.abs(targetY - boss.gridY)
+        ? [{ x: boss.gridX + dx, y: boss.gridY }, { x: boss.gridX, y: boss.gridY + dy }]
+        : [{ x: boss.gridX, y: boss.gridY + dy }, { x: boss.gridX + dx, y: boss.gridY }];
+      const next = candidates.find(position => this._canBossOccupy(position.x, position.y, boss));
+      if (!next) break;
+      boss.gridX = next.x;
+      boss.gridY = next.y;
+      moved = true;
+    }
+    return moved;
+  }
+
+  _canBossOccupy(x, y, boss) {
+    const width = Math.max(2, Number(boss.footprint?.width) || 2);
+    const height = Math.max(2, Number(boss.footprint?.height) || 2);
+    for (let dy = 0; dy < height; dy += 1) for (let dx = 0; dx < width; dx += 1) {
+      if (!isDomainCompatible('land', this._mapConfig?.grid[y + dy]?.[x + dx])) return false;
+    }
+    return x >= 0 && y >= 0 && x + width <= this._mapConfig.gridWidth && y + height <= this._mapConfig.gridHeight;
+  }
+
   _findNearestEnemy(ex, ey) {
     let best = null, bestDist = Infinity;
     for (const e of this.enemies) {
+      if (e.neutral === true && e.hostile !== true) continue;
       const d = Math.abs(ex - e.gridX) + Math.abs(ey - e.gridY);
       if (d < bestDist) { bestDist = d; best = e; }
     }
@@ -550,59 +819,6 @@ export class CombatSystem {
     eventBus.emit('populationChanged', { current: this._populationSystem.current, direction: 'enemy' });
   }
 
-  // ===== 玩家反击 =====
-  playerAttack(gridX, gridY) {
-    const idx = this.enemies.findIndex(e => e.gridX === gridX && e.gridY === gridY);
-    if (idx === -1) return null;
-    const enemy = this.enemies[idx];
-    const cfg = this.getEnemyConfig(enemy.enemyId);
-    if (!cfg) return null;
-    enemy.hp -= this._clickAttack;
-    if (enemy.hp <= 0) {
-      this.enemies.splice(idx, 1);
-      this._notify();
-      this._broadcast(`⚔️ 成功击杀 ${cfg.name}！`);
-      // 掉落处理
-      if (cfg.drops) {
-        const resources = configRegistry.get('resources') || [];
-        for (const drop of cfg.drops) {
-          if (Math.random() < (drop.chance || 1)) {
-            this._resourceSystem?.add(drop.resourceId, drop.amount);
-            const resCfg = resources.find(r => r.id === drop.resourceId);
-            const resName = resCfg?.name || drop.resourceId;
-            this._broadcast(`📦 从 ${cfg.name} 获得 ${resName} ×${drop.amount}`);
-          }
-        }
-      }
-      // 驯化判定
-      const tameChance = cfg.tameChance || 0;
-      if (tameChance > 0 && Math.random() < tameChance) {
-        const tu = cfg.tamedUnit || {};
-        const tamedName = tu.name || cfg.name;
-        const tamedIcon = tu.icon || (enemy.enemyId.startsWith('robot') ? '🤖' : '🐺');
-        this.tamed.push({
-          id: 'tamed_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-          enemyId: enemy.enemyId,
-          name: tamedName,
-          icon: tamedIcon,
-          hp: tu.maxHp || cfg.maxHp || 5,
-          maxHp: tu.maxHp || cfg.maxHp || 5,
-          attack: tu.attack || cfg.attack || 1,
-          attackRange: tu.attackRange || 1,
-          attackCooldown: tu.attackCooldown || 2
-        });
-        this._broadcast(`🐾 成功驯服 ${tamedName}！已加入驯化池`);
-        eventBus.emit('tamedCreatureGained', { enemyId: enemy.enemyId, name: tamedName });
-      }
-      eventBus.emit('enemyKilled', { enemyId: enemy.enemyId, gridX, gridY });
-      return { killed: true, enemyId: enemy.enemyId };
-    } else {
-      this._broadcast(`⚔️ 反击！${cfg.name} 剩余 HP ${enemy.hp}/${cfg.maxHp}`);
-      this._notify();
-      return { killed: false, enemyId: enemy.enemyId, hp: enemy.hp };
-    }
-  }
-
   // ===== 广播 =====
   _broadcast(msg) { eventBus.emit('combatBroadcast', { message: msg }); console.log('[Combat] ' + msg); }
   _notify() { if (!this._version) this._version = 0; store.setState({ combatVersion: ++this._version }); }
@@ -611,9 +827,11 @@ export class CombatSystem {
   // ===== 存档 =====
   getState() { return { enemies: this.enemies.map(e => ({ ...e })), units: this.units.map(u => ({ ...u })), tamed: this.tamed.map(t => ({ ...t })) }; }
   restoreState(state) {
-    if (!state?.enemies) { this.enemies = []; } else { this.enemies = state.enemies.map(e => ({ ...e })); }
+    const validEnemyIds = new Set((configRegistry.get('enemies')?.enemies || []).map(enemy => enemy.id));
+    this.enemies = (state?.enemies || []).filter(enemy => validEnemyIds.has(enemy.enemyId)).map(enemy => ({ ...enemy }));
     if (!state?.units) { this.units = []; } else { this.units = state.units.map(u => ({ ...u })); }
     if (!state?.tamed) { this.tamed = []; } else { this.tamed = state.tamed.map(t => ({ ...t })); }
+    this._ensureEasternRuinBoss();
     this._notify();
   }
 }

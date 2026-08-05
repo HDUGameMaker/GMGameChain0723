@@ -85,7 +85,7 @@ test('restoring migrated legacy research also unlocks every unit granted by mapp
 
   for (const unitId of [
     'primitive_anti_cavalry_3', 'primitive_infantry_1', 'ancient_siege_5',
-    'ancient_infantry_1', 'early_modern_navy_7', 'exploration_navy_8'
+    'ancient_infantry_1', 'early_modern_navy_7'
   ]) {
     assert.equal(tech.isUnitUnlockedByTech(unitId), true, unitId);
   }
@@ -121,10 +121,10 @@ test('mapped historical nodes carry every former production bonus', () => {
     ...historicalContent.civics
   ].map(node => [node.id, node]));
 
-  assert.deepEqual(byId.get('tech_primitive_3').effects.resourceProductionMul, { wood: 1.4 });
-  assert.deepEqual(byId.get('tech_primitive_1').effects.resourceProductionMul, { stone: 1.4 });
+  assert.deepEqual(byId.get('tech_primitive_3').effects.resourceProductionMul, { wood: 1.8 });
+  assert.deepEqual(byId.get('tech_primitive_1').effects.resourceProductionMul, { stone: 1.8 });
   assert.deepEqual(byId.get('civic_primitive_5').effects.resourceProductionMul, { food: 1.4 });
   assert.deepEqual(byId.get('civic_primitive_6').effects.resourceProductionMul, { gold: 1.4 });
-  assert.equal(byId.get('tech_early_modern_7').effects.productionMul, 1.37);
-  assert.equal(byId.get('civic_early_modern_5').effects.productionMul, 1.3);
+  assert.equal(byId.get('tech_early_modern_7').effects.productionMul, 1.555);
+  assert.equal(byId.get('civic_early_modern_5').effects.productionMul, 1.45);
 });

@@ -24,27 +24,27 @@ function setup() {
   return { luxuries, diplomacy, wallet };
 }
 
-test('first copy activates the luxury effect while duplicate copies are tradeable', () => {
+test('first copy activates the luxury effect while duplicates do not stack or trade', () => {
   const { luxuries } = setup();
   assert.equal(luxuries.addLuxury('silk', 1), true);
   assert.equal(luxuries.getInventory().silk, 1);
-  assert.equal(luxuries.getBonuses().diplomacyMul, 1.08);
+  assert.equal(luxuries.getBonuses().goldProductionMul, 1.08);
   assert.equal(luxuries.canTrade('silk', 1).ok, false);
   luxuries.addLuxury('silk', 1);
-  assert.equal(luxuries.canTrade('silk', 1).ok, true);
-  assert.equal(luxuries.getBonuses().diplomacyMul, 1.08, 'duplicate does not stack first-copy effect');
+  assert.equal(luxuries.canTrade('silk', 1).ok, false);
+  assert.equal(luxuries.getBonuses().goldProductionMul, 1.08, 'duplicate does not stack first-copy effect');
 });
 
-test('market trade consumes only duplicate luxury, grants gold and improves outpost relation', () => {
+test('legacy market trade is disabled in favor of hero gifts', () => {
   const { luxuries, diplomacy, wallet } = setup();
   diplomacy.discoverOutpost('forest_camp');
   const before = diplomacy.getOutpostState('forest_camp').relation;
   luxuries.addLuxury('jade', 2);
   const result = luxuries.tradeWithOutpost('jade', 'forest_camp', 1);
-  assert.equal(result.ok, true);
-  assert.equal(luxuries.getInventory().jade, 1);
-  assert.ok(wallet.gold > 0);
-  assert.ok(diplomacy.getOutpostState('forest_camp').relation > before);
+  assert.equal(result.ok, false);
+  assert.equal(luxuries.getInventory().jade, 2);
+  assert.equal(wallet.gold, 0);
+  assert.equal(diplomacy.getOutpostState('forest_camp').relation, before);
 });
 
 test('luxury deposits, inventories and discoveries survive save restore', () => {

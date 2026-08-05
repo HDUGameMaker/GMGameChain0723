@@ -11,7 +11,17 @@ export class HeroSystem {
     this._resourceSystem = null;
     this._cultureSystem = null;
     this._eraSystem = null;
+    this._systemUnlocked = false;
+    this._arrivalPending = false;
+    this._tickCounter = 0;
     eventBus.on('dayStart', ({ day } = {}) => this._onDayStart(day || 1));
+    eventBus.on('tick', () => { this._tickCounter += 1; this.recoverInjuredHeroesByTick(); });
+    eventBus.on('dailySettlementOpened', ({ day } = {}) => {
+      if (!this._systemUnlocked && !this._arrivalPending && this.hasActiveTavern()) {
+        this._arrivalPending = true;
+        eventBus.emit('hestiaArrivalRequested', { day: day || 1, heroId: 'Hestia' });
+      }
+    });
   }
 
   setSystems(systems = {}) {
@@ -32,7 +42,7 @@ export class HeroSystem {
     const eras = historical.eras || [];
     const eraNames = Object.fromEntries(eras.map(era => [era.id, era.name]));
     const legacyEraIds = {
-      sun_tzu: 'ancient', zhuge_liang: 'classical', yue_fei: 'medieval', zheng_he: 'exploration',
+      sun_tzu: 'classical', zhuge_liang: 'classical', yue_fei: 'medieval', zheng_he: 'exploration',
       li_shizhen: 'exploration', shen_kuo: 'medieval', zhang_heng: 'classical', hua_mulan: 'medieval',
       saladin: 'medieval', hannibal: 'classical', leonardo: 'exploration', joan_of_arc: 'medieval'
     };
@@ -41,7 +51,9 @@ export class HeroSystem {
       const assignmentTargets = hero.assignmentTargets || (heroClass === 'military' ? ['army'] : this._civilTargets(hero.role));
       return {
         ...hero,
-        eraId: hero.eraId || legacyEraIds[hero.id] || 'ancient',
+        eraId: hero.eraId === 'ancient' ? 'classical'
+          : hero.eraId === 'early_modern' ? 'modern'
+            : (hero.eraId || legacyEraIds[hero.id] || 'classical'),
         heroClass,
         assignmentTargets,
         title: hero.title || (heroClass === 'military' ? '历史武将' : '历史文臣'),
@@ -53,7 +65,18 @@ export class HeroSystem {
         }],
         icon: hero.iconAsset || (String(hero.icon || '').includes('/') ? hero.icon : `assets/historical-icons/heroes/${hero.id}.svg`),
         portrait: hero.portrait || `assets/hero-portraits/${hero.id}.png`,
-        cost: hero.cost || hero.recruitCost || []
+        cost: hero.cost || hero.recruitCost || [],
+        initialAffinityLevel: Math.max(0, Math.min(10, Math.floor(hero.initialAffinityLevel || 0))),
+        initialAffinityProgress: Math.max(0, Math.min(99, Math.floor(hero.initialAffinityProgress || 0))),
+        unitStats: { hp: 10, attack: 2, speed: 1, attackRange: 1, ...(hero.unitStats || {}) },
+        affinityGrowth: { hp: 1, attack: 0.2, speed: 0.02, attackRange: 0, ...(hero.affinityGrowth || {}) },
+        specialEffects: Array.isArray(hero.specialEffects) ? hero.specialEffects : [],
+        activeSkill: hero.activeSkill || { id: `${hero.id}_active`, name: '待配置主动技能', description: '主动技能接口已预留。', basePower: 0, affinityPowerPerLevel: 0 },
+        dialogueDocument: (() => {
+          const document = hero.dialogueDocument || { start: 'intro', nodes: [{ id: 'intro', speaker: 'hero', text: `我是${hero.name}。`, end: true }] };
+          if (Array.isArray(document.daily)) return document;
+          return { daily: [{ id: 'legacy_daily', ...document }], affinityDaily: {}, affinitySpecial: {} };
+        })()
       };
     };
     const base = (integration.heroes || []).map(normalize);
@@ -113,8 +136,29 @@ export class HeroSystem {
   initNew() {
     this._availableIds = [];
     this._recruited = {};
+    this._systemUnlocked = false;
+    this._arrivalPending = false;
     this._refreshOffers(store.getState('timeDay') || 1);
+    for (const hero of this.getAllHeroes().filter(candidate => candidate.defaultSpawn && candidate.id !== 'Hestia')) {
+      this._recruited[hero.id] = this._createRecruitedEntry(hero, true);
+      this._availableIds = this._availableIds.filter(id => id !== hero.id);
+    }
     this._notify();
+  }
+
+  _createRecruitedEntry(hero, defaultSpawn = false) {
+    return {
+      heroId: hero.id,
+      recruitedDay: store.getState('timeDay') || 1,
+      assignment: null,
+      injuredUntilDay: null,
+      level: 1,
+      experience: 0,
+      affinityLevel: hero.initialAffinityLevel || 0,
+      affinityProgress: hero.initialAffinityProgress || 0,
+      dialogueProgress: { lastDailyDay: 0, seenLevelDaily: {}, seenSpecialLevels: [], pendingSpecialLevels: [] },
+      defaultSpawn
+    };
   }
 
   _eligibleHeroes() {
@@ -122,6 +166,7 @@ export class HeroSystem {
     const eraOrder = Object.fromEntries((historical.eras || []).map(era => [era.id, era.order]));
     const currentOrder = this._eraSystem?.getCurrentEra?.()?.order ?? 0;
     return this.getAllHeroes().filter(hero => {
+      if (hero.id === 'Hestia' && !this._systemUnlocked) return false;
       if (this._recruited[hero.id]) return false;
       return !hero.eraId || (eraOrder[hero.eraId] ?? 0) <= currentOrder;
     }).sort((left, right) => {
@@ -154,12 +199,31 @@ export class HeroSystem {
       ['tavern', 'tavern_hall'].includes(building.buildingId) && building.status === 'active');
   }
 
+  isSystemUnlocked() { return this._systemUnlocked; }
+
+  completeHestiaArrival() {
+    if (!this._recruited.Hestia) {
+      const hero = this.getHero('Hestia');
+      if (hero) this._recruited.Hestia = this._createRecruitedEntry(hero, true);
+    }
+    this._systemUnlocked = true;
+    this._arrivalPending = false;
+    this._notify();
+    eventBus.emit('heroSystemUnlocked');
+  }
+
+  hasCompletedDailyToday(id, day = store.getState('timeDay') || 1) {
+    const entry = this._recruited[id];
+    return Boolean(entry && this._dialogueProgress(entry).lastDailyDay === day);
+  }
+
   getAvailableHeroes() { return this._availableIds.map(id => this.getHero(id)).filter(Boolean); }
   getRecruitableHeroes() { return this._eligibleHeroes(); }
   getMilitaryHeroes() { return this.getAllHeroes().filter(hero => hero.heroClass === 'military'); }
   getCivilHeroes() { return this.getAllHeroes().filter(hero => hero.heroClass === 'civil'); }
   getRecruitedHeroes() {
     const day = store.getState('timeDay') || 1;
+    const affinityLevelCap = this.getAffinityLevelCap();
     return Object.values(this._recruited).map(entry => {
       const hero = this.getHero(entry.heroId);
       const level = entry.level || 1;
@@ -168,8 +232,11 @@ export class HeroSystem {
         ...entry,
         level,
         experience: entry.experience || 0,
+        affinityLevel: Math.max(0, Math.min(10, entry.affinityLevel || 0)),
+        affinityProgress: (entry.affinityLevel || 0) >= 10 ? 0 : Math.max(0, Math.min(99, entry.affinityProgress || 0)),
+        affinityLevelCap,
         unlockedSkills: (hero?.skills || []).filter(skill => (skill.unlockLevel || 1) <= level),
-        status: entry.injuredUntilDay && day < entry.injuredUntilDay ? 'injured' : 'active'
+        status: (entry.injuredUntilTick && this._tickCounter < entry.injuredUntilTick) || (entry.injuredUntilDay && day < entry.injuredUntilDay) ? 'injured' : 'active'
       };
     });
   }
@@ -182,7 +249,7 @@ export class HeroSystem {
     if (hero.cost?.length && (!this._resourceSystem || !this._resourceSystem.canAfford(hero.cost))) return { ok: false, reason: '招募资源不足' };
     if (hero.cost?.length) this._resourceSystem.consumeAll(hero.cost);
     store.setState({ inspiration: Math.max(0, (store.getState('inspiration') || 0) - (hero.inspirationCost || 0)) });
-    this._recruited[id] = { heroId: id, recruitedDay: store.getState('timeDay') || 1, assignment: null, injuredUntilDay: null, level: 1, experience: 0 };
+    this._recruited[id] = this._createRecruitedEntry(hero, false);
     this._availableIds = this._availableIds.filter(heroId => heroId !== id);
     this._notify();
     eventBus.emit('heroRecruited', { heroId: id, name: hero.name });
@@ -227,14 +294,163 @@ export class HeroSystem {
     return { ok: true, level, experience };
   }
 
+  adjustAffinity(id, amount) {
+    const entry = this._recruited[id];
+    if (!entry) return { ok: false, reason: 'hero_not_recruited' };
+    const levelCap = this.getAffinityLevelCap();
+    const totalCap = levelCap * 100;
+    const currentTotal = Math.max(0, Math.min(totalCap, (entry.affinityLevel || 0) * 100 + (entry.affinityProgress || 0)));
+    const total = Math.max(0, Math.min(totalCap, currentTotal + Math.trunc(Number(amount) || 0)));
+    const previousLevel = entry.affinityLevel || 0;
+    entry.affinityLevel = total >= totalCap ? levelCap : Math.floor(total / 100);
+    entry.affinityProgress = total >= totalCap ? 0 : total % 100;
+    entry.dialogueProgress ||= { lastDailyDay: 0, seenLevelDaily: {}, seenSpecialLevels: [], pendingSpecialLevels: [] };
+    entry.dialogueProgress.pendingSpecialLevels ||= [];
+    for (let level = previousLevel + 1; level <= entry.affinityLevel; level += 1) {
+      if (!entry.dialogueProgress.pendingSpecialLevels.includes(level)) entry.dialogueProgress.pendingSpecialLevels.push(level);
+    }
+    this._notify();
+    eventBus.emit('heroAffinityChanged', { heroId: id, level: entry.affinityLevel, progress: entry.affinityProgress, amount: total - currentTotal });
+    return { ok: true, level: entry.affinityLevel, progress: entry.affinityProgress };
+  }
+
+  getAffinityLevelCap() {
+    const order = Math.max(0, Math.floor(Number(this._eraSystem?.getCurrentEra?.()?.order) || 0));
+    return [3, 5, 7, 9, 10][Math.min(4, order)];
+  }
+
+  increaseAffinityLevel(id) {
+    const entry = this._recruited[id];
+    if (!entry) return { ok: false, reason: '英雄尚未加入' };
+    if ((entry.affinityLevel || 0) >= this.getAffinityLevelCap()) return { ok: false, reason: '当前时代的好感等级已达上限' };
+    return this.adjustAffinity(id, 100 - (entry.affinityProgress || 0));
+  }
+
+  _dialogueProgress(entry) {
+    entry.dialogueProgress ||= {};
+    entry.dialogueProgress.lastDailyDay = Math.max(0, Math.floor(entry.dialogueProgress.lastDailyDay || 0));
+    entry.dialogueProgress.seenLevelDaily ||= {};
+    entry.dialogueProgress.seenSpecialLevels ||= [];
+    entry.dialogueProgress.pendingSpecialLevels ||= [];
+    return entry.dialogueProgress;
+  }
+
+  beginDialogue(id, day = store.getState('timeDay') || 1) {
+    const hero = this.getHero(id), entry = this._recruited[id];
+    if (!hero || !entry) return { ok: false, reason: '英雄尚未加入' };
+    const document = hero.dialogueDocument || {};
+    const progress = this._dialogueProgress(entry);
+    const specials = document.affinitySpecial || {};
+    const pendingLevel = progress.pendingSpecialLevels.find(level => specials[level] && !progress.seenSpecialLevels.includes(level));
+    if (pendingLevel) return { ok: true, kind: 'special', level: pendingLevel, conversation: structuredClone(specials[pendingLevel]) };
+    if (progress.lastDailyDay === day) return { ok: false, reason: '今天已经进行过日常对话' };
+    const level = entry.affinityLevel || 0;
+    const levelPool = document.affinityDaily?.[level] || [];
+    const seen = new Set(progress.seenLevelDaily[level] || []);
+    const exclusive = levelPool.find(conversation => !seen.has(conversation.id));
+    const basePool = document.daily || [];
+    const conversation = exclusive || basePool[(day + basePool.length + Object.values(progress.seenLevelDaily).flat().length) % Math.max(1, basePool.length)];
+    if (!conversation) return { ok: false, reason: '尚未配置可用的日常对话' };
+    return { ok: true, kind: 'daily', level, levelExclusive: Boolean(exclusive), conversation: structuredClone(conversation) };
+  }
+
+  beginHint(id) {
+    const entry = this._recruited[id];
+    if (!entry) return { ok: false, reason: '英雄尚未加入' };
+    const hints = [
+      '什么，你想渡过河流？或许到了古典时代，你们就能找到建造桥梁的方法。',
+      '那些奇怪的石碑同样来自异界。激活它们，或许能获得超越自然法则的力量。',
+      '东方的黑暗造物并非这个世界的生命。集结足够多的满编军团后，再尝试靠近它。',
+      '驻军会追击进入视野的目标。利用射程与速度，把它们从防御设施旁引开。',
+      '重复的奢侈品不会让效果叠加。不过……如果你愿意，我可以替你保管一份。'
+    ];
+    const progress = this._dialogueProgress(entry);
+    const index = progress.hintCursor || 0;
+    progress.hintCursor = (index + 1) % hints.length;
+    this._notify();
+    return { ok: true, kind: 'hint', level: entry.affinityLevel || 0, conversation: { id: `hestia_hint_${index}`, start: 'hint', nodes: [{ id: 'hint', speaker: 'hero', text: hints[index], end: true }] } };
+  }
+
+  completeDialogue(id, session, day = store.getState('timeDay') || 1) {
+    const entry = this._recruited[id];
+    if (!entry || !session?.conversation?.id) return { ok: false, reason: '对话状态无效' };
+    const progress = this._dialogueProgress(entry);
+    if (session.kind === 'special') {
+      if (!progress.seenSpecialLevels.includes(session.level)) progress.seenSpecialLevels.push(session.level);
+      progress.pendingSpecialLevels = progress.pendingSpecialLevels.filter(level => level !== session.level);
+      this._notify();
+      return { ok: true, affinity: 0, special: true };
+    }
+    if (session.kind === 'hint') return { ok: true, affinity: 0, hint: true };
+    if (progress.lastDailyDay === day) return { ok: false, reason: '今天已经进行过日常对话' };
+    progress.lastDailyDay = day;
+    if (session.levelExclusive) {
+      progress.seenLevelDaily[session.level] ||= [];
+      if (!progress.seenLevelDaily[session.level].includes(session.conversation.id)) progress.seenLevelDaily[session.level].push(session.conversation.id);
+    }
+    const result = this.adjustAffinity(id, 30);
+    return { ...result, affinity: 30, daily: true };
+  }
+
+  getHeroAbilityProfile(id) {
+    const hero = this.getHero(id);
+    const entry = this._recruited[id];
+    if (!hero || !entry) return null;
+    const affinityLevel = Math.max(0, Math.min(10, entry.affinityLevel || 0));
+    const progression = Array.isArray(hero.affinityStatProgression) ? hero.affinityStatProgression : null;
+    const progressionBonus = { hp: 0, attack: 0, speed: 0, attackRange: 0 };
+    if (progression) for (let level = 1; level <= affinityLevel; level += 1) {
+      const gain = progression.find(tier => level >= tier.fromLevel && level <= tier.toLevel) || {};
+      for (const key of Object.keys(progressionBonus)) progressionBonus[key] += Number(gain[key]) || 0;
+    }
+    const milestones = Array.isArray(hero.affinityMilestones) ? hero.affinityMilestones : [];
+    for (const milestone of milestones.filter(item => affinityLevel >= item.level)) {
+      progressionBonus.speed += Number(milestone.personalSpeedBonus) || 0;
+    }
+    const stats = {};
+    for (const key of ['hp', 'attack', 'speed', 'attackRange']) {
+      const growth = progression ? progressionBonus[key] : (Number(hero.affinityGrowth?.[key]) || 0) * affinityLevel;
+      const value = (Number(hero.unitStats?.[key]) || 0) + growth;
+      stats[key] = key === 'attackRange' ? Math.floor(value) : Math.round(value * 100) / 100;
+    }
+    const activeLifeSteal = milestones.filter(item => affinityLevel >= item.level).reduce((sum, item) => sum + (Number(item.activeAttackLifeStealBonus) || 0), 0);
+    const activeDamageBonus = milestones.filter(item => affinityLevel >= item.level).reduce((sum, item) => sum + (Number(item.activeSkillDamageMultiplierBonus) || 0), 0);
+    const affinityEffects = [];
+    if (activeLifeSteal > 0) affinityEffects.push({ id: 'affinity_active_lifesteal', description: `月光命中敌人后，军队恢复造成伤害的 ${Math.round(activeLifeSteal * 100)}% 生命值。` });
+    if (affinityLevel >= 5) affinityEffects.push({ id: 'affinity_speed_5', description: '好感5级：赫斯提亚个人移动速度 +1。' });
+    if (affinityLevel >= 9) affinityEffects.push({ id: 'affinity_speed_9', description: '好感9级：赫斯提亚个人移动速度再 +1。' });
+    if (affinityLevel >= 10) affinityEffects.push({ id: 'affinity_active_damage_10', description: '好感10级：月光的伤害倍率额外 +100%。' });
+    return {
+      id: hero.id, name: hero.name, affinityLevel, affinityLevelCap: this.getAffinityLevelCap(), stats,
+      specialEffects: [...structuredClone(hero.specialEffects || []), ...affinityEffects],
+      activeSkill: {
+        ...structuredClone(hero.activeSkill || {}),
+        damageMultiplier: (Number(hero.activeSkill?.damageMultiplier) || 1) + activeDamageBonus,
+        lifeSteal: activeLifeSteal,
+        activeAttackLifeSteal: activeLifeSteal,
+        power: Math.round(((Number(hero.activeSkill?.basePower) || 0) + (Number(hero.activeSkill?.affinityPowerPerLevel) || 0) * affinityLevel) * 100) / 100
+      }
+    };
+  }
+
   injureHero(id, currentDay = store.getState('timeDay') || 1) {
     const entry = this._recruited[id];
     const hero = this.getHero(id);
     if (!entry || !hero) return { ok: false, reason: '人物尚未招募' };
-    entry.injuredUntilDay = currentDay + (hero.recoveryDays || 3);
+    entry.injuredUntilDay = null;
+    const recoveryTicks = Math.max(1, Math.floor(Number(hero.defeatRecoveryTicks) || 30));
+    entry.injuredUntilTick = this._tickCounter + recoveryTicks;
     this._notify();
-    eventBus.emit('heroInjured', { heroId: id, injuredUntilDay: entry.injuredUntilDay });
-    return { ok: true, injuredUntilDay: entry.injuredUntilDay };
+    eventBus.emit('heroInjured', { heroId: id, injuredUntilTick: entry.injuredUntilTick, cooldownTicks: recoveryTicks });
+    return { ok: true, injuredUntilTick: entry.injuredUntilTick, cooldownTicks: recoveryTicks };
+  }
+
+  recoverInjuredHeroesByTick() {
+    let recovered = false;
+    for (const entry of Object.values(this._recruited)) if (entry.injuredUntilTick && this._tickCounter >= entry.injuredUntilTick) {
+      entry.injuredUntilTick = null; recovered = true; eventBus.emit('heroRecovered', { heroId: entry.heroId });
+    }
+    if (recovered) this._notify();
   }
 
   recoverInjuredHeroes(day = store.getState('timeDay') || 1) {
@@ -295,18 +511,30 @@ export class HeroSystem {
   }
 
   getState() {
-    return { availableIds: [...this._availableIds], recruited: structuredClone(this._recruited), lastRefreshDay: this._lastRefreshDay };
+    return { availableIds: [...this._availableIds], recruited: structuredClone(this._recruited), lastRefreshDay: this._lastRefreshDay, systemUnlocked: this._systemUnlocked, arrivalPending: this._arrivalPending, tickCounter: this._tickCounter };
   }
 
   restoreState(state) {
+    const affinityLevelCap = this.getAffinityLevelCap();
     this._availableIds = (state?.availableIds || []).filter(id => this.getHero(id));
     this._recruited = Object.fromEntries(Object.entries(state?.recruited || {}).map(([id, entry]) => [id, {
       ...structuredClone(entry),
       heroId: entry.heroId || id,
       level: Math.max(1, Math.min(10, Math.floor(entry.level || 1))),
-      experience: Math.max(0, Math.floor(entry.experience || 0))
+      experience: Math.max(0, Math.floor(entry.experience || 0)),
+      affinityLevel: Math.max(0, Math.min(affinityLevelCap, Math.floor(entry.affinityLevel || 0))),
+      affinityProgress: Math.floor(entry.affinityLevel || 0) >= affinityLevelCap ? 0 : Math.max(0, Math.min(99, Math.floor(entry.affinityProgress || 0)))
     }]));
+    for (const entry of Object.values(this._recruited)) this._dialogueProgress(entry);
     this._lastRefreshDay = state?.lastRefreshDay || 0;
+    this._tickCounter = Math.max(0, Number(state?.tickCounter) || 0);
+    this._systemUnlocked = Boolean(state?.systemUnlocked);
+    if (!this._systemUnlocked) {
+      delete this._recruited.Hestia;
+      this._availableIds = this._availableIds.filter(id => id !== 'Hestia');
+    }
+    // 读档时若上次正停留在到访界面，允许下一次结算重新弹出，避免永久锁死。
+    this._arrivalPending = false;
     if (this._availableIds.length === 0) this._refreshOffers(store.getState('timeDay') || 1);
     this.recoverInjuredHeroes(store.getState('timeDay') || 1);
     this._notify();

@@ -30,6 +30,7 @@ export class TechSystem {
   setItemSystem(is) { this._itemSystem = is; }
   setCultureSystem(cs) { this._cultureSystem = cs; }
   setHeroSystem(hs) { this._heroSystem = hs; }
+  setRuinSystem(system) { this._ruinSystem = system || null; }
   setEraSystem(es) { this._eraSystem = es; }
 
   init() {
@@ -85,11 +86,13 @@ export class TechSystem {
     const workforce = this._buildingSystem?.getWorkforceOutputs?.().science || 0;
     const civilizationBonuses = this._eraSystem?.getBonuses?.() || {};
     const civilizationMultiplier = (civilizationBonuses.sciencePointMul || 1) * (civilizationBonuses.civilizationYieldMul || 1);
+    const ruinMultiplier = this._ruinSystem?.getScienceMultiplier?.() || 1;
     return {
       passive: PASSIVE_SCIENCE_PER_TICK,
       workforce,
       civilizationMultiplier,
-      total: (PASSIVE_SCIENCE_PER_TICK + workforce) * civilizationMultiplier
+      ruinMultiplier,
+      total: (PASSIVE_SCIENCE_PER_TICK + workforce) * civilizationMultiplier * ruinMultiplier
     };
   }
 
@@ -301,6 +304,18 @@ export class TechSystem {
 
   }
 
+  completeEraResearch(eraId) {
+    const nodes = this._getAllTechs().filter(tech => tech.eraId === eraId && !this._researched.has(tech.id));
+    for (const tech of nodes) {
+      this._researched.add(tech.id);
+      this._applyUnlocks(tech);
+      eventBus.emit('techResearched', { techId: tech.id, cheat: true });
+    }
+    if (this._currentResearch && nodes.some(tech => tech.id === this._currentResearch.techId)) this._currentResearch = null;
+    if (nodes.length) this._updateStore();
+    return nodes.length;
+  }
+
   /** 检查建筑是否被科技解锁 */
   isBuildingUnlockedByTech(buildingId) {
     const allTechs = this._getAllTechs();
@@ -341,8 +356,12 @@ export class TechSystem {
 
   restoreState(state) {
     if (!state) return;
-    this._researched = new Set(state.researched || []);
-    this._currentResearch = state.currentResearch || null;
+    const remap = id => id?.replace(/^tech_ancient_/, 'tech_classical_')
+      ?.replace(/^tech_early_modern_/, 'tech_modern_');
+    this._researched = new Set((state.researched || []).map(remap));
+    this._currentResearch = state.currentResearch
+      ? { ...state.currentResearch, techId: remap(state.currentResearch.techId) }
+      : null;
     this._unitResearch = new Set(state.unitResearch || []);
     for (const techId of this._researched) {
       for (const unitId of this.getTech(techId)?.unlocks?.units || []) {

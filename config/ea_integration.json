@@ -4,11 +4,6 @@
       "id": "archer",
       "name": "弓弩兵",
       "order": 2
-    },
-    {
-      "id": "siege",
-      "name": "攻城器械",
-      "order": 4
     }
   ],
   "unitProfiles": {
@@ -194,8 +189,7 @@
         "naval_light"
       ],
       "weakAgainst": [
-        "naval_heavy",
-        "fire_ship"
+        "naval_heavy"
       ]
     },
     "battleship": {
@@ -208,7 +202,6 @@
         "fortification"
       ],
       "weakAgainst": [
-        "fire_ship",
         "air"
       ]
     },
@@ -228,111 +221,6 @@
     }
   },
   "buildings": [
-    {
-      "id": "dock",
-      "imageDetail": "assets/buildings/overhaul/dock.png",
-      "mapIcon": "assets/buildings/overhaul/dock.png",
-      "category": "naval",
-      "eraId": "primitive",
-      "name": "码头",
-      "description": "建在水面并连接陆路，是训练和部署早期海军的基础设施。",
-      "icon": "",
-      "footprint": {
-        "width": 2,
-        "height": 2
-      },
-      "maxCount": 3,
-      "initialBuilding": false,
-      "housingCapacity": 0,
-      "soldierCapacity": 6,
-      "maxWorkers": 0,
-      "buildCost": [
-        {
-          "resourceId": "wood",
-          "amount": 80
-        },
-        {
-          "resourceId": "stone",
-          "amount": 40
-        },
-        {
-          "resourceId": "gold",
-          "amount": 15
-        }
-      ],
-      "buildTime": 5,
-      "upgradesFrom": null,
-      "upgradesTo": "shipyard",
-      "upgradeCost": null,
-      "production": null,
-      "synthesisRecipes": [],
-      "allowedGrounds": [
-        "W"
-      ],
-      "tags": [
-        "dock",
-        "naval_facility"
-      ],
-      "unlockConditions": [
-        {
-          "type": "tech",
-          "techId": "sail"
-        }
-      ]
-    },
-    {
-      "id": "shipyard",
-      "imageDetail": "assets/buildings/overhaul/shipyard.png",
-      "mapIcon": "assets/buildings/overhaul/shipyard.png",
-      "category": "naval",
-      "eraId": "classical",
-      "name": "造船厂",
-      "description": "大型港口工场，提供更高海军容量和重型舰艇训练能力。",
-      "icon": "",
-      "footprint": {
-        "width": 3,
-        "height": 2
-      },
-      "maxCount": 2,
-      "initialBuilding": false,
-      "housingCapacity": 0,
-      "soldierCapacity": 12,
-      "maxWorkers": 0,
-      "buildCost": [],
-      "upgradeCost": [
-        {
-          "resourceId": "wood",
-          "amount": 120
-        },
-        {
-          "resourceId": "stone",
-          "amount": 80
-        },
-        {
-          "resourceId": "gold",
-          "amount": 45
-        }
-      ],
-      "buildTime": 8,
-      "upgradesFrom": "dock",
-      "upgradesTo": null,
-      "production": null,
-      "synthesisRecipes": [],
-      "allowedGrounds": [
-        "W"
-      ],
-      "tags": [
-        "dock",
-        "shipyard",
-        "naval_facility"
-      ],
-      "unlockConditions": [
-        {
-          "type": "tech",
-          "techId": "steam_engine"
-        }
-      ]
-    },
     {
       "id": "coastal_watch",
       "imageDetail": "assets/buildings/overhaul/coastal_watch.png",
@@ -378,7 +266,8 @@
           "type": "tech",
           "techId": "sail"
         }
-      ]
+      ],
+      "uniqueFunction": {}
     },
     {
       "id": "tavern",
@@ -429,20 +318,21 @@
           "type": "culture",
           "cultureId": "new_policy"
         }
-      ]
+      ],
+      "uniqueFunction": {}
     }
   ],
   "units": [
     {
       "id": "spearman",
       "name": "长矛兵",
-  "description": "手持长矛的步兵，能有效迟滞骑兵的冲锋。",
+      "description": "手持长矛的步兵，能有效迟滞骑兵的冲锋。【重装型：生命120，攻击50，速度1，射程1，CP 1】",
       "domain": "land",
-      "branch": "infantry",
+      "branch": "anti_cavalry",
       "tier": 0,
-      "combatPower": 4,
-      "hp": 8,
-      "attack": 3,
+      "combatPower": 234,
+      "hp": 120,
+      "attack": 50,
       "attackRange": 1,
       "commandPoints": 2,
       "researchCost": 20,
@@ -471,18 +361,35 @@
       "weakAgainst": [
         "archer",
         "heavy_infantry"
+      ],
+      "eraId": "primitive",
+      "eraMaterialCostBalanced": true,
+      "speed": 1,
+      "cp": 1,
+      "comprehensiveStrength": 234,
+      "archetype": "heavy",
+      "healingAfterBattle": 0,
+      "unlockCost": [
+        {
+          "resourceId": "wood",
+          "amount": 6
+        },
+        {
+          "resourceId": "stone",
+          "amount": 4
+        }
       ]
     },
     {
       "id": "pikeman",
       "name": "重装枪兵",
-  "description": "数米长枪列成的枪阵，是骑兵的噩梦。",
+      "description": "数米长枪列成的枪阵，是骑兵的噩梦。【重装型：生命220，攻击95，速度1，射程1，CP 1】",
       "domain": "land",
-      "branch": "infantry",
+      "branch": "anti_cavalry",
       "tier": 1,
-      "combatPower": 9,
-      "hp": 13,
-      "attack": 5,
+      "combatPower": 434,
+      "hp": 220,
+      "attack": 95,
       "attackRange": 1,
       "commandPoints": 4,
       "researchCost": 55,
@@ -494,8 +401,8 @@
       ],
       "cost": [
         {
-          "resourceId": "stone",
-          "amount": 18
+          "resourceId": "reinforced_stone",
+          "amount": 12
         },
         {
           "resourceId": "food",
@@ -519,19 +426,36 @@
       "weakAgainst": [
         "archer",
         "artillery"
+      ],
+      "eraId": "medieval",
+      "eraMaterialCostBalanced": true,
+      "speed": 1,
+      "cp": 1,
+      "comprehensiveStrength": 434,
+      "archetype": "heavy",
+      "healingAfterBattle": 0,
+      "unlockCost": [
+        {
+          "resourceId": "hardwood_beam",
+          "amount": 16
+        },
+        {
+          "resourceId": "reinforced_stone",
+          "amount": 11
+        }
       ]
     },
     {
       "id": "archer",
       "name": "弓箭手",
-  "description": "弯弓搭箭的射手，在阵后提供持续火力。",
+      "description": "弯弓搭箭的射手，在阵后提供持续火力。【远程型：生命70，攻击15，速度2，射程2，CP 1】",
       "domain": "land",
-      "branch": "archer",
+      "branch": "ranged",
       "tier": 0,
-      "combatPower": 4,
-      "hp": 6,
-      "attack": 3,
-      "attackRange": 3,
+      "combatPower": 218,
+      "hp": 70,
+      "attack": 15,
+      "attackRange": 2,
       "commandPoints": 2,
       "researchCost": 20,
       "prerequisiteTechs": [
@@ -559,18 +483,35 @@
       "weakAgainst": [
         "mounted",
         "armored"
+      ],
+      "eraId": "primitive",
+      "eraMaterialCostBalanced": true,
+      "speed": 2,
+      "cp": 1,
+      "comprehensiveStrength": 218,
+      "archetype": "balanced",
+      "healingAfterBattle": 0,
+      "unlockCost": [
+        {
+          "resourceId": "wood",
+          "amount": 6
+        },
+        {
+          "resourceId": "stone",
+          "amount": 4
+        }
       ]
     },
     {
       "id": "crossbowman",
       "name": "弩兵",
-  "description": "上弦省力的弩手，穿透力远超普通弓箭。",
+      "description": "上弦省力的弩手，穿透力远超普通弓箭。【远程型：生命135，攻击25，速度2，射程3，CP 1】【远程型：生命135，攻击30，速度2，射程3，CP 1】",
       "domain": "land",
-      "branch": "archer",
+      "branch": "ranged",
       "tier": 1,
-      "combatPower": 8,
-      "hp": 7,
-      "attack": 6,
+      "combatPower": 391,
+      "hp": 135,
+      "attack": 30,
       "attackRange": 3,
       "commandPoints": 3,
       "researchCost": 55,
@@ -582,12 +523,12 @@
       ],
       "cost": [
         {
-          "resourceId": "wood",
-          "amount": 15
+          "resourceId": "hardwood_beam",
+          "amount": 10
         },
         {
-          "resourceId": "stone",
-          "amount": 10
+          "resourceId": "reinforced_stone",
+          "amount": 6
         },
         {
           "resourceId": "food",
@@ -607,19 +548,36 @@
       "weakAgainst": [
         "mounted",
         "siege"
+      ],
+      "eraId": "medieval",
+      "eraMaterialCostBalanced": true,
+      "speed": 2,
+      "cp": 1,
+      "comprehensiveStrength": 391,
+      "archetype": "balanced",
+      "healingAfterBattle": 0,
+      "unlockCost": [
+        {
+          "resourceId": "hardwood_beam",
+          "amount": 16
+        },
+        {
+          "resourceId": "reinforced_stone",
+          "amount": 11
+        }
       ]
     },
     {
       "id": "longbowman",
       "name": "长弓手",
-  "description": "射程极远的长弓射手，箭雨如乌云压顶。",
+      "description": "射程极远的长弓射手，箭雨如乌云压顶。【远程型：生命135，攻击25，速度2，射程3，CP 1】【远程型：生命135，攻击30，速度2，射程3，CP 1】",
       "domain": "land",
-      "branch": "archer",
+      "branch": "ranged",
       "tier": 2,
-      "combatPower": 14,
-      "hp": 8,
-      "attack": 9,
-      "attackRange": 5,
+      "combatPower": 391,
+      "hp": 135,
+      "attack": 30,
+      "attackRange": 3,
       "commandPoints": 5,
       "researchCost": 90,
       "prerequisiteUnits": [
@@ -630,8 +588,8 @@
       ],
       "cost": [
         {
-          "resourceId": "wood",
-          "amount": 24
+          "resourceId": "hardwood_beam",
+          "amount": 16
         },
         {
           "resourceId": "food",
@@ -656,240 +614,23 @@
       "weakAgainst": [
         "mounted",
         "armored"
-      ]
-    },
-    {
-      "id": "catapult",
-      "name": "投石车",
-  "description": "抛射石弹的攻城器械，让城墙承受天降之灾。",
-      "domain": "land",
-      "branch": "siege",
-      "tier": 1,
-      "combatPower": 11,
-      "hp": 11,
-      "attack": 9,
-      "attackRange": 4,
-      "commandPoints": 6,
-      "researchCost": 70,
-      "prerequisiteTechs": [
-        "mechanical_engineering"
       ],
-      "cost": [
+      "eraId": "medieval",
+      "eraMaterialCostBalanced": true,
+      "speed": 2,
+      "cp": 1,
+      "comprehensiveStrength": 391,
+      "archetype": "balanced",
+      "healingAfterBattle": 0,
+      "unlockCost": [
         {
-          "resourceId": "wood",
-          "amount": 35
+          "resourceId": "hardwood_beam",
+          "amount": 16
         },
         {
-          "resourceId": "stone",
-          "amount": 15
-        },
-        {
-          "resourceId": "gold",
-          "amount": 5
+          "resourceId": "reinforced_stone",
+          "amount": 11
         }
-      ],
-      "unlocked": false,
-      "roleTags": [
-        "siege",
-        "artillery",
-        "ranged"
-      ],
-      "strongAgainst": [
-        "fortification",
-        "clustered"
-      ],
-      "weakAgainst": [
-        "mounted",
-        "melee"
-      ]
-    },
-    {
-      "id": "trebuchet",
-      "name": "配重投石机",
-  "description": "配重杠杆抛石机，投出的石弹足以砸穿城垛。",
-      "domain": "land",
-      "branch": "siege",
-      "tier": 2,
-      "combatPower": 21,
-      "hp": 14,
-      "attack": 15,
-      "attackRange": 6,
-      "commandPoints": 9,
-      "researchCost": 120,
-      "prerequisiteUnits": [
-        "catapult"
-      ],
-      "prerequisiteTechs": [
-        "precision_manufacturing"
-      ],
-      "cost": [
-        {
-          "resourceId": "wood",
-          "amount": 55
-        },
-        {
-          "resourceId": "stone",
-          "amount": 25
-        },
-        {
-          "resourceId": "gold",
-          "amount": 12
-        }
-      ],
-      "unlocked": false,
-      "roleTags": [
-        "siege",
-        "artillery",
-        "long_range"
-      ],
-      "strongAgainst": [
-        "fortification",
-        "armored"
-      ],
-      "weakAgainst": [
-        "mounted",
-        "air"
-      ]
-    },
-    {
-      "id": "siege_tower",
-      "name": "攻城塔",
-  "description": "与城墙齐高的木塔，士兵从塔顶涌入城头。",
-      "domain": "land",
-      "branch": "siege",
-      "tier": 1,
-      "combatPower": 10,
-      "hp": 22,
-      "attack": 3,
-      "attackRange": 1,
-      "commandPoints": 7,
-      "researchCost": 75,
-      "prerequisiteTechs": [
-        "military_training"
-      ],
-      "cost": [
-        {
-          "resourceId": "wood",
-          "amount": 50
-        },
-        {
-          "resourceId": "stone",
-          "amount": 25
-        }
-      ],
-      "unlocked": false,
-      "roleTags": [
-        "siege",
-        "armored",
-        "transport"
-      ],
-      "strongAgainst": [
-        "fortification",
-        "archer"
-      ],
-      "weakAgainst": [
-        "fire",
-        "artillery"
-      ]
-    },
-    {
-      "id": "galley",
-      "name": "桨帆战船",
-  "description": "帆桨并用的战船，地中海海战的主力。",
-      "domain": "naval",
-      "branch": "navy",
-      "tier": 1,
-      "combatPower": 9,
-      "hp": 14,
-      "attack": 6,
-      "attackRange": 2,
-      "commandPoints": 5,
-      "researchCost": 55,
-      "prerequisiteTechs": [
-        "sail"
-      ],
-      "cost": [
-        {
-          "resourceId": "wood",
-          "amount": 45
-        },
-        {
-          "resourceId": "stone",
-          "amount": 10
-        },
-        {
-          "resourceId": "food",
-          "amount": 30
-        },
-        {
-          "resourceId": "gold",
-          "amount": 5
-        }
-      ],
-      "unlocked": false,
-      "roleTags": [
-        "naval_raider",
-        "naval_light"
-      ],
-      "strongAgainst": [
-        "naval_transport",
-        "naval_light"
-      ],
-      "weakAgainst": [
-        "naval_heavy",
-        "fire_ship"
-      ]
-    },
-    {
-      "id": "fire_ship",
-      "name": "火船",
-  "description": "满载油脂的火攻船，冲入敌阵同归于尽。",
-      "domain": "naval",
-      "branch": "navy",
-      "tier": 2,
-      "combatPower": 15,
-      "hp": 8,
-      "attack": 14,
-      "attackRange": 1,
-      "commandPoints": 5,
-      "researchCost": 85,
-      "prerequisiteUnits": [
-        "galley"
-      ],
-      "prerequisiteTechs": [
-        "gunpowder",
-        "sail"
-      ],
-      "cost": [
-        {
-          "resourceId": "wood",
-          "amount": 30
-        },
-        {
-          "resourceId": "stone",
-          "amount": 25
-        },
-        {
-          "resourceId": "food",
-          "amount": 18
-        },
-        {
-          "resourceId": "gold",
-          "amount": 8
-        }
-      ],
-      "unlocked": false,
-      "roleTags": [
-        "fire_ship",
-        "naval_swarm"
-      ],
-      "strongAgainst": [
-        "naval_heavy",
-        "naval_medium"
-      ],
-      "weakAgainst": [
-        "naval_light",
-        "ranged"
       ]
     }
   ],
@@ -897,7 +638,7 @@
     {
       "id": "wolf",
       "name": "野狼",
-  "description": "成群出没的掠食者，嗅到血腥便会围拢而来。",
+      "description": "成群出没的掠食者，嗅到血腥便会围拢而来。",
       "icon": "🐺",
       "faction": "wildlife",
       "domain": "land",
@@ -920,7 +661,7 @@
     {
       "id": "boar",
       "name": "野猪",
-  "description": "暴怒的野猪横冲直撞，獠牙能挑翻粗心的猎手。",
+      "description": "暴怒的野猪横冲直撞，獠牙能挑翻粗心的猎手。",
       "icon": "🐗",
       "faction": "wildlife",
       "domain": "land",
@@ -943,7 +684,7 @@
     {
       "id": "bandit_raider",
       "name": "掠夺者",
-  "description": "落草为寇的强盗，专抢落单的商旅与车队。",
+      "description": "落草为寇的强盗，专抢落单的商旅与车队。",
       "icon": "🗡️",
       "faction": "outpost",
       "domain": "land",
@@ -966,7 +707,7 @@
     {
       "id": "bandit_archer",
       "name": "盗匪弓手",
-  "description": "躲在树丛后放冷箭的匪徒，箭法刁钻。",
+      "description": "躲在树丛后放冷箭的匪徒，箭法刁钻。",
       "icon": "🏹",
       "faction": "outpost",
       "domain": "land",
@@ -990,7 +731,7 @@
     {
       "id": "outpost_guard",
       "name": "据点守卫",
-  "description": "据点里装备齐全的守卫，警惕任何靠近的人。",
+      "description": "据点里装备齐全的守卫，警惕任何靠近的人。",
       "icon": "🛡️",
       "faction": "outpost",
       "domain": "land",
@@ -1013,7 +754,7 @@
     {
       "id": "outpost_crossbow",
       "name": "据点弩手",
-  "description": "据点的弩箭射手，依托掩体射击精准。",
+      "description": "据点的弩箭射手，依托掩体射击精准。",
       "icon": "🎯",
       "faction": "outpost",
       "domain": "land",
@@ -1037,7 +778,7 @@
     {
       "id": "corsair_galley",
       "name": "海盗桨船",
-  "description": "横行海上的海盗船，专劫商路。",
+      "description": "横行海上的海盗船，专劫商路。",
       "icon": "🏴‍☠️",
       "faction": "corsair",
       "domain": "naval",
@@ -1060,7 +801,7 @@
     {
       "id": "sea_serpent",
       "name": "海蛇",
-  "description": "出没于深海的巨蛇，是水手的噩梦。",
+      "description": "出没于深海的巨蛇，是水手的噩梦。",
       "icon": "🐉",
       "faction": "wildlife",
       "domain": "naval",
@@ -1507,267 +1248,7 @@
     "offerCount": 4,
     "baseAssignmentSlots": 2
   },
-  "heroes": [
-    {
-      "id": "sun_tzu",
-      "name": "孙武",
-      "title": "兵法宗师",
-      "era": "春秋",
-      "role": "commander",
-      "icon": "🗡️",
-      "description": "擅长判断敌我态势、军阵与后勤。",
-      "inspirationCost": 80,
-      "cost": [
-        {
-          "resourceId": "food",
-          "amount": 60
-        }
-      ],
-      "bonuses": {
-        "combatPowerMul": 1.14,
-        "commandPointsBonus": 2
-      }
-    },
-    {
-      "id": "zhuge_liang",
-      "name": "诸葛亮",
-      "title": "丞相与军师",
-      "era": "三国",
-      "role": "scholar",
-      "icon": "🪶",
-      "description": "兼长治理、发明、后勤与战略规划。",
-      "inspirationCost": 95,
-      "cost": [
-        {
-          "resourceId": "food",
-          "amount": 50
-        },
-        {
-          "resourceId": "gold",
-          "amount": 12
-        }
-      ],
-      "bonuses": {
-        "researchSpeedMul": 1.12,
-        "productionMul": 1.06
-      }
-    },
-    {
-      "id": "yue_fei",
-      "name": "岳飞",
-      "title": "精忠统帅",
-      "era": "南宋",
-      "role": "commander",
-      "icon": "🏹",
-      "description": "以军纪、步骑协同和防御作战著称。",
-      "inspirationCost": 90,
-      "cost": [
-        {
-          "resourceId": "food",
-          "amount": 70
-        },
-        {
-          "resourceId": "gold",
-          "amount": 15
-        }
-      ],
-      "bonuses": {
-        "combatPowerMul": 1.12,
-        "unitHpMul": 1.1
-      }
-    },
-    {
-      "id": "zheng_he",
-      "name": "郑和",
-      "title": "远洋使者",
-      "era": "明代",
-      "role": "explorer",
-      "icon": "⛵",
-      "description": "组织大规模远航、海上补给与跨地域交流。",
-      "inspirationCost": 90,
-      "cost": [
-        {
-          "resourceId": "food",
-          "amount": 55
-        },
-        {
-          "resourceId": "gold",
-          "amount": 10
-        }
-      ],
-      "bonuses": {
-        "navalPowerMul": 1.15,
-        "expeditionYieldMul": 1.12
-      }
-    },
-    {
-      "id": "li_shizhen",
-      "name": "李时珍",
-      "title": "本草医家",
-      "era": "明代",
-      "role": "physician",
-      "icon": "🌿",
-      "description": "改善药材辨识、公共健康和伤员恢复。",
-      "inspirationCost": 75,
-      "cost": [
-        {
-          "resourceId": "food",
-          "amount": 45
-        }
-      ],
-      "bonuses": {
-        "healingRateBonus": 1,
-        "growthMul": 1.06
-      }
-    },
-    {
-      "id": "shen_kuo",
-      "name": "沈括",
-      "title": "博物学者",
-      "era": "北宋",
-      "role": "engineer",
-      "icon": "🧭",
-      "description": "在天文、地理、工程和制造方面皆有建树。",
-      "inspirationCost": 85,
-      "cost": [
-        {
-          "resourceId": "gold",
-          "amount": 12
-        }
-      ],
-      "bonuses": {
-        "researchSpeedMul": 1.1,
-        "buildCostMul": 0.94
-      }
-    },
-    {
-      "id": "zhang_heng",
-      "name": "张衡",
-      "title": "天文与机巧大师",
-      "era": "东汉",
-      "role": "scholar",
-      "icon": "🔭",
-      "description": "精通天文观测、数学与机械装置。",
-      "inspirationCost": 80,
-      "cost": [
-        {
-          "resourceId": "gold",
-          "amount": 10
-        }
-      ],
-      "bonuses": {
-        "researchSpeedMul": 1.13
-      }
-    },
-    {
-      "id": "hua_mulan",
-      "name": "花木兰",
-      "title": "边军英雄",
-      "era": "传说时代",
-      "role": "commander",
-      "icon": "⚔️",
-      "description": "象征机动、勇气与基层士兵的凝聚力。",
-      "inspirationCost": 70,
-      "cost": [
-        {
-          "resourceId": "food",
-          "amount": 50
-        }
-      ],
-      "bonuses": {
-        "combatPowerMul": 1.08,
-        "armySpeedMul": 1.12
-      }
-    },
-    {
-      "id": "saladin",
-      "name": "萨拉丁",
-      "title": "苏丹与外交家",
-      "era": "中世纪",
-      "role": "diplomat",
-      "icon": "🤝",
-      "description": "善于联盟、停战、纪律和跨文化治理。",
-      "inspirationCost": 95,
-      "cost": [
-        {
-          "resourceId": "food",
-          "amount": 75
-        },
-        {
-          "resourceId": "gold",
-          "amount": 10
-        }
-      ],
-      "bonuses": {
-        "diplomacyRelationBonus": 5,
-        "combatPowerMul": 1.06
-      }
-    },
-    {
-      "id": "hannibal",
-      "name": "汉尼拔",
-      "title": "远征统帅",
-      "era": "古典时代",
-      "role": "commander",
-      "icon": "🐘",
-      "description": "擅长长距离机动、包围和以弱胜强。",
-      "inspirationCost": 95,
-      "cost": [
-        {
-          "resourceId": "food",
-          "amount": 80
-        }
-      ],
-      "bonuses": {
-        "combatPowerMul": 1.15,
-        "expeditionYieldMul": 1.06
-      }
-    },
-    {
-      "id": "leonardo",
-      "name": "列奥纳多·达·芬奇",
-      "title": "博学工程师",
-      "era": "文艺复兴",
-      "role": "engineer",
-      "icon": "⚙️",
-      "description": "将观察、艺术和机械设计结合为新式工程。",
-      "inspirationCost": 100,
-      "cost": [
-        {
-          "resourceId": "gold",
-          "amount": 18
-        },
-        {
-          "resourceId": "wood",
-          "amount": 20
-        }
-      ],
-      "bonuses": {
-        "researchSpeedMul": 1.14,
-        "siegePowerMul": 1.15
-      }
-    },
-    {
-      "id": "joan_of_arc",
-      "name": "贞德",
-      "title": "奥尔良少女",
-      "era": "中世纪",
-      "role": "diplomat",
-      "icon": "🕊️",
-      "description": "以信念和号召力凝聚军民士气。",
-      "inspirationCost": 85,
-      "cost": [
-        {
-          "resourceId": "food",
-          "amount": 65
-        }
-      ],
-      "bonuses": {
-        "diplomacyRelationBonus": 4,
-        "unitHpMul": 1.08
-      }
-    }
-  ],
+  "heroes": [],
   "events": [
     {
       "id": "ea_caravan_bargain",

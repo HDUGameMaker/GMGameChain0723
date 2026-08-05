@@ -25,6 +25,49 @@ function validPayload(extra = {}) {
   return { ...SaveManager.migrate({ version: 8, resources: {}, buildings: [] }), ...extra };
 }
 
+test('real building snapshots may omit optional crop and resource-node fields', async () => {
+  const payload = validPayload({
+    buildings: [{ instanceId: 'building_1', buildingId: 'headquarters', gridX: 10, gridY: 10 }],
+    resourceNodes: { nodes: [{ id: 'wood_1', type: 'wood', gridX: 12, gridY: 10 }] }
+  });
+  const envelope = await SaveManager.createEnvelope(payload);
+  assert.equal((await SaveManager.verifyEnvelope(envelope)).ok, true);
+});
+
+test('localStorage quota failure does not invalidate the IndexedDB save', () => {
+  const previous = globalThis.localStorage;
+  globalThis.localStorage = {
+    setItem() { throw new DOMException('quota full', 'QuotaExceededError'); },
+    removeItem() { throw new DOMException('storage unavailable', 'SecurityError'); }
+  };
+  try {
+    assert.equal(SaveManager._writeLocalEmergency({ format: 'test' }), false);
+    assert.equal(SaveManager._writeLocalEmergency(null), false);
+  } finally {
+    if (previous === undefined) delete globalThis.localStorage;
+    else globalThis.localStorage = previous;
+  }
+});
+
+test('save diagnostics report the exact validation stage and schema code', async () => {
+  const progress = [];
+  const invalid = validPayload();
+  invalid.commerce = {};
+  assert.equal(await SaveManager.save(invalid, { onProgress: entry => progress.push(entry) }), false);
+  assert.equal(progress[0].stage, 'validate');
+  assert.deepEqual(progress.at(-1), {
+    stage: 'validate', status: 'failed', detail: 'commerce', timestamp: progress.at(-1).timestamp
+  });
+  assert.equal(SaveManager.getLastSaveDiagnostic().detail, 'commerce');
+});
+
+test('non-finite save diagnostics put the field path before the compact error', async () => {
+  const progress = [];
+  const invalid = validPayload({ camera: { camX: 1, camY: 2, zoom: Number.NaN } });
+  assert.equal(await SaveManager.save(invalid, { onProgress: entry => progress.push(entry) }), false);
+  assert.equal(progress.at(-1).detail, '$.camera.zoom / 非有限数字(NaN或Infinity)');
+});
+
 test('createEnvelope uses canonical payload JSON and a real SHA-256 digest', async () => {
   const payload = validPayload({
     nested: { z: 2, a: 1 },
@@ -161,6 +204,11 @@ test('createEnvelope rejects cycles, non-finite numbers, functions and unsupport
   for (const payload of invalidPayloads) {
     await assert.rejects(() => SaveManager.createEnvelope(payload), /canonical|unsupported|cycle|finite/i);
   }
+});
+
+test('canonical errors include the exact nested data path', async () => {
+  const payload = validPayload({ heroes: { recruited: [{ id: 'Hestia', runtime: new Map([['bad', true]]) }] } });
+  await assert.rejects(() => SaveManager.createEnvelope(payload), /\$\.heroes\.recruited\[0\]\.runtime \(Map\)/);
 });
 
 test('chooseRecovery keeps strict source priority and reports each rejected candidate', async () => {

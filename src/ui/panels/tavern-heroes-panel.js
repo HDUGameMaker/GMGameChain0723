@@ -67,7 +67,7 @@ export function renderTavernHeroesPanel(data, body, pm) {
     const injured = hero.status === 'injured';
     const row = document.createElement('div');
     row.style.cssText = `display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;margin-bottom:7px;border-radius:8px;background:${injured ? 'rgba(140,52,52,.10)' : 'rgba(255,255,255,.035)'};border:1px solid ${injured ? 'rgba(220,95,95,.25)' : 'rgba(255,255,255,.07)'};`;
-    row.innerHTML = `<div style="display:flex;gap:9px;align-items:center">${portrait(hero, true)}<div><b style="color:#ececf0">${hero.name}</b>${injured ? `<span style="font-size:10px;color:#ef8b8b;margin-left:7px">休养至第 ${hero.injuredUntilDay} 天</span>` : ''}<div style="font-size:10px;color:#64c987;margin-top:3px">${bonusText(hero.bonuses)}</div></div></div>`;
+    row.innerHTML = `<div style="display:flex;gap:9px;align-items:center">${portrait(hero, true)}<div><b style="color:#ececf0">${hero.name}</b>${injured ? `<span style="font-size:10px;color:#ef8b8b;margin-left:7px">历史酒馆休养中</span>` : ''}<div style="font-size:10px;color:#64c987;margin-top:3px">${bonusText(hero.bonuses)}</div></div></div>`;
     const detail = row.firstElementChild?.lastElementChild;
     detail?.insertAdjacentHTML('beforeend', `<div style="font-size:10px;color:#d5bd7d;margin-top:4px">等级 ${hero.level || 1} · 经验 ${hero.experience || 0}/100 · 已解锁技能 ${(hero.unlockedSkills || []).length}/${(hero.skills || []).length}</div>`);
     const select = document.createElement('select');

@@ -25,17 +25,19 @@ export class EnemyExpansionSystem {
     this._armySystem = null;
     this._spellSystem = null; // 炼金法术系统（减益：强度削减 / 倒计时冻结）
     this._totalCleared = 0;   // 累计清敌数（gameover 统计用）
+    this._pendingBattles = new Set();
 
-    this._strategySystem = null;
     eventBus.on('dayStart', (data) => this._onDayStart(data));
+    eventBus.on('tick', () => this._advanceCityStateRaids());
   }
 
   setTerritorySystem(ts) { this._territorySystem = ts; }
   setBuildingSystem(bs) { this._buildingSystem = bs; }
   setArmySystem(as) { this._armySystem = as; }
   setSpellSystem(ss) { this._spellSystem = ss; }
-  setStrategySystem(ss) { this._strategySystem = ss; }
   setHeroSystem(hs) { this._heroSystem = hs; }
+  setLuxurySystem(ls) { this._luxurySystem = ls; }
+  setBattlePreviewHandler(handler) { this._battlePreviewHandler = typeof handler === 'function' ? handler : null; }
 
   init() {
     this._config = configRegistry.get('enemyExpansion') || {};
@@ -50,6 +52,67 @@ export class EnemyExpansionSystem {
   }
 
   _key(x, y) { return x + ',' + y; }
+
+  _enemyProfile(cell = null) {
+    const profiles = configRegistry.get('enemies')?.enemies || [];
+    return profiles.find(profile => profile.id === cell?.enemyId) || profiles.find(profile => profile.strategicOnly) || profiles[0] || null;
+  }
+
+  _newEnemyCell(strength, countdown) {
+    const profile = this._enemyProfile();
+    return {
+      strength,
+      countdown,
+      enemyId: profile?.id || null,
+      hp: Math.max(1, Number(profile?.maxHp) || strength)
+    };
+  }
+
+  spawnCityStateRaid({ outpostId, gridX, gridY, targetX, targetY, strength, enemyId = null, combatStats = null } = {}) {
+    if (!this._inBounds(gridX, gridY) || !this._inBounds(targetX, targetY)) return false;
+    const key = this._key(gridX, gridY);
+    if (this._cells.has(key) || (this._armySystem?.getArmies?.() || []).some(army => army.gridX === gridX && army.gridY === gridY)) return false;
+    const profile = this._enemyProfile({ enemyId });
+    this._cells.set(key, {
+      ...this._newEnemyCell(Math.max(1, Number(strength) || 1), this._config?.countdownStart ?? 2),
+      enemyId: enemyId || profile?.id || null,
+      raidOutpostId: outpostId || null,
+      raidTargetX: targetX,
+      raidTargetY: targetY,
+      ...(combatStats || {})
+    });
+    this._updateStore();
+    eventBus.emit('enemyExpansionChanged');
+    return true;
+  }
+
+  _advanceCityStateRaids() {
+    if (this._attackArmiesInRange()) return true;
+    const moves = [];
+    for (const [key, cell] of this._cells) {
+      if (!Number.isFinite(cell.raidTargetX) || !Number.isFinite(cell.raidTargetY)) continue;
+      const [x, y] = key.split(',').map(Number);
+      if (Math.abs(x - cell.raidTargetX) + Math.abs(y - cell.raidTargetY) <= 1) continue;
+      const candidates = [];
+      if (x !== cell.raidTargetX) candidates.push([x + Math.sign(cell.raidTargetX - x), y]);
+      if (y !== cell.raidTargetY) candidates.push([x, y + Math.sign(cell.raidTargetY - y)]);
+      const next = candidates.find(([nx, ny]) => this._inBounds(nx, ny)
+        && (this._armySystem?.isLandPassableAt?.(nx, ny) ?? !['S', 'W'].includes(this._mapConfig?.grid?.[ny]?.[nx]))
+        && !this._cells.has(this._key(nx, ny))
+        && !(this._armySystem?.getArmies?.() || []).some(army => army.gridX === nx && army.gridY === ny));
+      if (next) moves.push({ key, next, cell });
+    }
+    if (!moves.length) return false;
+    for (const move of moves) {
+      if (!this._cells.has(move.key) || this._cells.has(this._key(...move.next))) continue;
+      this._cells.delete(move.key);
+      this._cells.set(this._key(...move.next), move.cell);
+    }
+    this._attackArmiesInRange();
+    this._updateStore();
+    eventBus.emit('enemyExpansionChanged');
+    return true;
+  }
 
   _inBounds(x, y) {
     if (!this._mapConfig) return false;
@@ -100,6 +163,7 @@ export class EnemyExpansionSystem {
     const day = data?.day || store.getState('timeDay') || 1;
     const spawned = this._maybeSpawn(day);
     const expanded = this._expandStep(day);
+    this._attackArmiesInRange();
     if (spawned || expanded) {
       eventBus.emit('enemyExpansionChanged');
       eventBus.emit('combatBroadcast', {
@@ -126,10 +190,7 @@ export class EnemyExpansionSystem {
       if (empties.length === 0) break;
       const idx = Math.floor(Math.random() * empties.length);
       const [x, y] = empties.splice(idx, 1)[0];
-      this._cells.set(this._key(x, y), {
-        strength: this.getStrengthForDay(day),
-        countdown: this._config?.countdownStart ?? 2
-      });
+      this._cells.set(this._key(x, y), this._newEnemyCell(this.getStrengthForDay(day), this._config?.countdownStart ?? 2));
       any = true;
     }
     return any;
@@ -155,10 +216,7 @@ export class EnemyExpansionSystem {
     const empties = this._emptyCellsForSpawn();
     if (empties.length === 0) return false;
     const [x, y] = empties[Math.floor(Math.random() * empties.length)];
-    this._cells.set(this._key(x, y), {
-      strength: this.getStrengthForDay(day),
-      countdown: this._config?.countdownStart ?? 2
-    });
+    this._cells.set(this._key(x, y), this._newEnemyCell(this.getStrengthForDay(day), this._config?.countdownStart ?? 2));
     return true;
   }
 
@@ -168,12 +226,6 @@ export class EnemyExpansionSystem {
     const expanding = [];
     for (const [key, cell] of this._cells) {
       // 炼金凝滞法术：区域内敌人扩张倒计时冻结
-      if (this._strategySystem) {
-        const parts = key.split(',');
-        const cx = parseInt(parts[0], 10);
-        const cy = parseInt(parts[1], 10);
-        if (this._strategySystem.isCountdownFrozen(cx, cy)) continue;
-      }
       cell.countdown -= 1;
       if (cell.countdown <= 0) expanding.push(key);
     }
@@ -222,10 +274,7 @@ export class EnemyExpansionSystem {
         }
       }
     }
-    this._cells.set(this._key(target.x, target.y), {
-      strength,
-      countdown: this._config?.countdownStart ?? 2
-    });
+    this._cells.set(this._key(target.x, target.y), this._newEnemyCell(strength, this._config?.countdownStart ?? 2));
     return true;
   }
 
@@ -234,8 +283,7 @@ export class EnemyExpansionSystem {
     const cell = this._cells.get(this._key(x, y));
     if (!cell) return false;
     // 炼金减益法术：区域内敌人强度被削减
-    const penalty = this._strategySystem ? this._strategySystem.getStrengthPenaltyAt(x, y, cell.strength) : 0;
-    const effStrength = Math.max(1, cell.strength - penalty);
+    const effStrength = Math.max(1, cell.strength);
     const opponents = cell.roleTags ? [{ domain: cell.domain || 'land', roleTags: cell.roleTags }] : [];
     const power = this.getArmyPower(opponents);
     if (power < effStrength) {
@@ -252,15 +300,176 @@ export class EnemyExpansionSystem {
     return true;
   }
 
+  clearEnemyCellWithArmy(x, y, armyId) {
+    const cell = this._cells.get(this._key(x, y));
+    if (!cell) return { ok: false, reason: 'enemy_unavailable' };
+    const army = this._armySystem?.getArmy?.(armyId);
+    if (!army) return { ok: false, reason: 'unknown_army' };
+    const cp = this._armySystem?.consumeAttackCp?.(armyId);
+    if (cp && !cp.ok) return cp;
+    return this._resolveCellBattle(x, y, armyId, false);
+  }
+
+  _resolveCellBattle(x, y, armyId, enemyInitiated) {
+    const cell = this._cells.get(this._key(x, y));
+    const army = this._armySystem?.getArmy?.(armyId);
+    if (!cell) return { ok: false, reason: 'enemy_unavailable' };
+    if (!army?.unitIds?.length) return { ok: false, reason: 'unknown_army' };
+    const profile = this._enemyProfile(cell) || {};
+    const armyStats = this._armySystem.getArmyStats?.(armyId) || army;
+    const enemyStats = {
+      attack: Math.max(0, Number(cell.attack) || Number(profile.attack) || cell.strength || 1),
+      attackRange: Math.max(0, Math.floor(Number(cell.attackRange) || Number(profile.attackRange) || 1)),
+      speed: Math.max(0, Number(cell.speed) || Number(profile.speed) || 1),
+      cp: Math.max(1, Math.floor(Number(cell.cp) || Number(profile.cp) || 1))
+    };
+    const distance = Math.abs(army.gridX - x) + Math.abs(army.gridY - y);
+    const playerCanAttack = distance <= (armyStats.attackRange || 0);
+    const enemyCanAttack = distance <= enemyStats.attackRange;
+    if ((!enemyInitiated && !playerCanAttack) || (enemyInitiated && !enemyCanAttack)) {
+      return { ok: false, reason: 'target_out_of_range', distance, attackRange: enemyInitiated ? enemyStats.attackRange : armyStats.attackRange };
+    }
+    const turns = playerCanAttack && enemyCanAttack
+      ? (enemyStats.speed > armyStats.speed ? ['enemy', 'player'] : ['player', 'enemy'])
+      : (playerCanAttack ? ['player'] : ['enemy']);
+    const attacks = [];
+    for (const side of turns) {
+      if (side === 'player') {
+        if (!this._armySystem.getArmy?.(armyId)?.unitIds?.length || cell.hp <= 0) continue;
+        const damage = Math.min(cell.hp, Math.max(0, Number(armyStats.attack) || 0));
+        cell.hp -= damage;
+        attacks.push({ side, damage });
+        this._armySystem._applyHeroActiveAttackLifesteal?.(armyId, damage);
+        if (cell.hp <= 0) break;
+      } else {
+        if (cell.hp <= 0 || !this._armySystem.getArmy?.(armyId)?.unitIds?.length) continue;
+        const damage = this._armySystem.applyDamage?.(armyId, enemyStats.attack);
+        attacks.push({ side, damage: enemyStats.attack });
+        if (damage?.destroyed) break;
+      }
+    }
+    if (playerCanAttack && enemyCanAttack && cell.hp > 0 && this._armySystem.getArmy?.(armyId)?.unitIds?.length) {
+      if (armyStats.speed - enemyStats.speed >= 2) {
+        const damage = Math.min(cell.hp, Math.max(0, Number(armyStats.attack) || 0));
+        cell.hp -= damage;
+        attacks.push({ side: 'player', damage, bonusStrike: true });
+        this._armySystem._applyHeroActiveAttackLifesteal?.(armyId, damage);
+      } else if (enemyStats.speed - armyStats.speed >= 2) {
+        const damage = this._armySystem.applyDamage?.(armyId, enemyStats.attack);
+        attacks.push({ side: 'enemy', damage: enemyStats.attack, bonusStrike: true });
+        if (damage?.destroyed) cell.hp = Math.max(0, cell.hp);
+      }
+    }
+    const enemyDefeated = cell.hp <= 0;
+    if (enemyDefeated) {
+      this._cells.delete(this._key(x, y));
+      this._totalCleared += 1;
+      eventBus.emit('enemyDefeated', { x, y, enemyId: cell.enemyId || cell.profileId || null });
+      const luxuries = configRegistry.getHistoricalContent?.().luxuries || [];
+      const roll = ((x * 31 + y * 17 + this._totalCleared * 13) % 100) / 100;
+      const luxury = roll < 0.05 ? luxuries[(x * 7 + y * 11) % Math.max(1, luxuries.length)] : null;
+      if (luxury) this._luxurySystem?.addLuxury?.(luxury.id, 1);
+      if (luxury) eventBus.emit('combatBroadcast', { message: `战利品：获得 ${luxury.name || luxury.id} ×1` });
+    }
+    const healed = this._armySystem.getArmy?.(armyId) ? (this._armySystem.healArmyAfterBattle?.(armyId)?.healed || 0) : 0;
+    this._updateStore();
+    eventBus.emit('enemyExpansionChanged');
+    eventBus.emit('combatBroadcast', { message: enemyDefeated ? `⚔️ ${army.name || '军团'}击败${profile.name || '敌军'}` : `⚔️ ${army.name || '军团'}与${profile.name || '敌军'}交锋` });
+    return { ok: true, enemyDefeated, enemyHp: Math.max(0, cell.hp), attacks, healed, distance };
+  }
+
+  _attackArmiesInRange() {
+    const armies = (this._armySystem?.getArmies?.() || []).filter(army => army.ownerId === 'player' && army.unitIds?.length);
+    for (const enemy of this.getAllCells()) {
+      const range = Math.max(0, Math.floor(Number(enemy.attackRange) || 1));
+      const target = armies
+        .map(army => ({ army, distance: Math.abs(army.gridX - enemy.x) + Math.abs(army.gridY - enemy.y) }))
+        .filter(entry => entry.distance <= range)
+        .sort((left, right) => left.distance - right.distance)[0];
+      if (target) {
+        const key = `${enemy.x},${enemy.y}:${target.army.id}`;
+        if (this._pendingBattles.has(key)) continue;
+        if (!this._battlePreviewHandler) this._resolveCellBattle(enemy.x, enemy.y, target.army.id, true);
+        else {
+          this._pendingBattles.add(key);
+          const playerStats = this._armySystem.getArmyStats?.(target.army.id) || {};
+          Promise.resolve(this._battlePreviewHandler({
+            enemy,
+            player: { ...target.army, ...playerStats, portrait: target.army.heroPortrait || target.army.heroIcon || target.army.icon },
+            distance: target.distance,
+            resolveBattle: () => this._resolveCellBattle(enemy.x, enemy.y, target.army.id, true)
+          })).finally(() => this._pendingBattles.delete(key));
+          return true;
+        }
+        return true;
+      }
+
+      const buildingTargets = (this._buildingSystem?.buildings || []).map((building, buildingIndex) => {
+        const config = configRegistry.getBuilding(building.buildingId);
+        const right = building.gridX + (config?.footprint?.width || 1) - 1;
+        const bottom = building.gridY + (config?.footprint?.height || 1) - 1;
+        const dx = Math.max(0, building.gridX - enemy.x, enemy.x - right);
+        const dy = Math.max(0, building.gridY - enemy.y, enemy.y - bottom);
+        return { building, buildingIndex, distance: dx + dy };
+      }).filter(entry => entry.building.status === 'active' && entry.distance <= range)
+        .sort((left, right) => left.distance - right.distance);
+      const targetBuilding = buildingTargets[0];
+      if (!targetBuilding) continue;
+      const key = `${enemy.x},${enemy.y}:building:${targetBuilding.building.instanceId}`;
+      if (this._pendingBattles.has(key)) continue;
+      const playerModel = this._buildingSystem.getBuildingCombatModel?.(targetBuilding.buildingIndex);
+      const resolveBattle = () => {
+        const currentIndex = this._buildingSystem.buildings.findIndex(item => item.instanceId === targetBuilding.building.instanceId);
+        if (currentIndex < 0) return { ok: false, reason: 'building_unavailable' };
+        return this._buildingSystem.damageBuilding(currentIndex, Math.max(0, Number(enemy.attack) || 0));
+      };
+      if (!this._battlePreviewHandler) resolveBattle();
+      else {
+        this._pendingBattles.add(key);
+        Promise.resolve(this._battlePreviewHandler({ enemy, player: playerModel, distance: targetBuilding.distance, buildingDefense: true, resolveBattle }))
+          .finally(() => this._pendingBattles.delete(key));
+      }
+      return true;
+    }
+    return false;
+  }
+
   // ===== 查询 =====
   getCellAt(x, y) { return this._cells.get(this._key(x, y)) || null; }
+  damageCellAt(x, y, amount) {
+    const key = this._key(x, y), cell = this._cells.get(key);
+    if (!cell) return { ok: false };
+    cell.hp = Math.max(0, (cell.hp ?? cell.strength) - Math.max(0, Number(amount) || 0));
+    if (cell.hp <= 0) this._cells.delete(key);
+    this._updateStore(); eventBus.emit('enemyExpansionChanged');
+    return { ok: true, destroyed: cell.hp <= 0, hp: cell.hp };
+  }
   getCellCount() { return this._cells.size; }
   getTotalCleared() { return this._totalCleared; }
   getAllCells() {
     return Array.from(this._cells.entries()).map(([k, v]) => {
       const parts = k.split(',');
-      return { x: parseInt(parts[0], 10), y: parseInt(parts[1], 10), ...v };
+      const profile = this._enemyProfile(v) || {};
+      return {
+        x: parseInt(parts[0], 10), y: parseInt(parts[1], 10), ...v,
+        name: profile.name || '敌方部队', icon: profile.icon || '', faction: profile.faction || '敌对势力',
+        maxHp: Math.max(1, Number(v.maxHp) || Number(profile.maxHp) || v.strength || 1),
+        hp: Math.max(0, Number.isFinite(Number(v.hp)) ? Number(v.hp) : (Number(v.maxHp) || Number(profile.maxHp) || v.strength || 1)),
+        attack: Math.max(0, Number(v.attack) || Number(profile.attack) || v.strength || 1),
+        attackRange: Math.max(0, Math.floor(Number(v.attackRange) || Number(profile.attackRange) || 1)),
+        speed: Math.max(0, Number(v.speed) || Number(profile.speed) || 1), cp: Math.max(1, Math.floor(Number(v.cp) || Number(profile.cp) || 1))
+      };
     });
+  }
+
+  corruptCovered(predicate) {
+    let changed = false;
+    for (const key of [...this._cells.keys()]) {
+      const [x, y] = key.split(',').map(Number);
+      if (!predicate(x, y)) continue;
+      this._cells.delete(key); changed = true;
+    }
+    if (changed) { this._updateStore(); eventBus.emit('enemyExpansionChanged'); }
   }
 
   _checkFail() {
@@ -296,7 +505,8 @@ export class EnemyExpansionSystem {
     this._cells = new Map();
     this._totalCleared = state.totalCleared ?? 0;
     for (const c of (state.cells || [])) {
-      this._cells.set(this._key(c.x, c.y), { strength: c.strength, countdown: c.countdown });
+      const { x, y, name: _name, icon: _icon, faction: _faction, ...cell } = c;
+      this._cells.set(this._key(x, y), { ...cell, enemyId: c.enemyId || null, hp: c.hp ?? c.maxHp ?? c.strength });
     }
     this._updateStore();
   }

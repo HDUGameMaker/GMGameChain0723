@@ -5,6 +5,33 @@
 import { configRegistry } from '../../core/ConfigRegistry.js';
 import { eventBus } from '../../core/EventBus.js';
 import { BUILDING_CATEGORIES } from '../../domain/BuildingPresentation.js';
+import { getBuildingPrimaryFunctionRows } from '../../domain/BuildingPresentation.js';
+import { getBuildingResourceNodeRequirement } from '../../domain/ResourceNodePresentation.js';
+
+export function isBuildingVisibleForEra(building, currentEra, eras = []) {
+  if (!building?.eraId || !currentEra?.id) return true;
+  const currentIndex = eras.findIndex(era => era.id === currentEra.id);
+  const buildingIndex = eras.findIndex(era => era.id === building.eraId);
+  return buildingIndex < 0 || (currentIndex >= 0 && buildingIndex <= currentIndex);
+}
+
+export function getBuildingCivilizationIds(building) {
+  return [...new Set([
+    building?.civilizationId,
+    ...(building?.civilizationIds || []),
+    ...(building?.unlockConditions || []).filter(condition => condition.type === 'civilization').map(condition => condition.civilizationId)
+  ].filter(Boolean))];
+}
+
+export function isBuildingVisibleForCivilization(building, eraSystem) {
+  const restrictedIds = getBuildingCivilizationIds(building);
+  if (!restrictedIds.length) return true;
+  const ownedIds = new Set([
+    ...(eraSystem?.getLegacyCivilizationIds?.() || []),
+    eraSystem?.getSelectedCivilization?.()?.id
+  ].filter(Boolean));
+  return restrictedIds.some(id => ownedIds.has(id));
+}
 
 export function renderBuildingSelectPanel(data, body, pm) {
   const game = window.__game;
@@ -16,11 +43,17 @@ export function renderBuildingSelectPanel(data, body, pm) {
   const buildings = configRegistry.get('buildings') || [];
   const resourceSystem = game.systems.resource;
   const buildingSystem = game.systems.building;
+  const eraSystem = game.systems.era;
+  const eras = eraSystem?.getEras?.() || configRegistry.getHistoricalContent().eras || [];
+  const currentEra = eraSystem?.getCurrentEra?.() || eras[0] || null;
+  const resourceNodeDefinitions = configRegistry.get('resourceNodes')?.types || {};
 
   const newlyUnlocked = buildingSystem.getNewlyUnlocked();
 
   // 升级目标与地图专用建筑不进入建造菜单；未解锁建筑保留并显示原因。
   const buildable = buildings.filter(b => {
+    if (!isBuildingVisibleForEra(b, currentEra, eras)) return false;
+    if (!isBuildingVisibleForCivilization(b, eraSystem)) return false;
     if (b.upgradesFrom) return false; // 升级目标不直接建造
     if (!b.buildCost || b.buildCost.length === 0) return false; // 无建造成本 = 地图专用
     return true;
@@ -47,8 +80,8 @@ export function renderBuildingSelectPanel(data, body, pm) {
   hint.textContent = '选择建筑后点击地图放置';
   body.appendChild(hint);
 
-  // 建筑数量上限 + 升级（黄金去向之一）
-  const territory = game.systems.territory;
+  // 拓土与其建筑上限升级界面已移除。
+  const territory = null;
   if (territory) {
     const cap = territory.getBuildingCap();
     const bCount = buildingSystem.buildings.length;
@@ -148,11 +181,15 @@ export function renderBuildingSelectPanel(data, body, pm) {
       }).join('  ');
 
     const tags = [];
+    const civilizationIds = getBuildingCivilizationIds(b);
+    const civilizationNames = civilizationIds.map(id => eraSystem?.getCivilizations?.().find(civilization => civilization.id === id)?.name || id);
+    const primaryFunctions = getBuildingPrimaryFunctionRows(b, resourceId => configRegistry.getResource(resourceId)?.name || resourceId);
+    const nodeRequirement = getBuildingResourceNodeRequirement(b, resourceNodeDefinitions);
     if (b.isTorch) tags.push('🔥 照明');
     if (b.maxWorkers) tags.push(`👷 ${b.maxWorkers}`);
+    if (Number.isFinite(b.maxCount)) tags.push(`🏗️ 建造数量 ${buildingSystem.getBuildingCount(b.id)}/${b.maxCount}`);
     if (b.soldierCapacity) tags.push(`⚔️ +${b.soldierCapacity} 士兵`);
     if (b.foodCapacity) tags.push(`🍞 +${b.foodCapacity}/天/工人`);
-    if (b.roadRequired) tags.push('🛤️ 道路依赖');
     const lockReasons = unlockStatus.conditions.filter(condition => !condition.met).map(condition => condition.desc);
     if (atCountLimit) lockReasons.push(`已达数量上限 ${b.maxCount}`);
 
@@ -161,7 +198,10 @@ export function renderBuildingSelectPanel(data, body, pm) {
         ${isNew ? '🆕 ' : ''}${b.name}
         <span style="font-size:11px;color:#888;margin-left:6px;font-weight:400;">${b.footprint.width}×${b.footprint.height}</span>
       </div>
+      ${primaryFunctions.length ? `<div style="font-size:12px;color:#8ed6a5;font-weight:650;margin:5px 0;line-height:1.55;">主要功能：${primaryFunctions.join('；')}</div>` : ''}
       <div style="font-size:12px;color:#888;margin-bottom:4px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${b.description || ''}</div>
+      ${civilizationNames.length ? `<div style="font-size:11px;color:#d8b86f;font-weight:700;margin:5px 0;">🏛️ 文明限定：${civilizationNames.join('、')}</div>` : ''}
+      ${nodeRequirement ? `<div style="font-size:12px;color:${nodeRequirement.color};font-weight:700;margin:5px 0;">📍 ${nodeRequirement.text}</div>` : ''}
       <div style="font-size:12px;color:${canAfford ? '#4ecb71' : '#ff6b6b'};font-weight:500;">${costText || '免费'}</div>
       ${lockReasons.length ? `<div style="font-size:11px;color:#e79a9a;margin-top:5px;">🔒 ${lockReasons.join('；')}</div>` : ''}
       ${tags.length > 0 ? `<div style="font-size:11px;color:#a0a0ba;margin-top:3px;display:flex;gap:8px;">${tags.map(t => `<span>${t}</span>`).join('')}</div>` : ''}

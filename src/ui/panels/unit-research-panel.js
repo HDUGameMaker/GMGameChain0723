@@ -9,6 +9,15 @@ function _tech() { return window.__game?.systems?.tech; }
 function _resource() { return window.__game?.systems?.resource; }
 function _combatConfig() { return configRegistry.get('enemies') || {}; }
 function _units() { return _combatConfig().units || []; }
+function _eraSystem() { return window.__game?.systems?.era; }
+
+function _isUnitInReachedEra(unit) {
+  if (!unit.eraId) return true;
+  const currentEra = _eraSystem()?.getCurrentEra?.();
+  const eras = configRegistry.getHistoricalContent()?.eras || [];
+  const unitEra = eras.find(era => era.id === unit.eraId);
+  return !unitEra || !currentEra || unitEra.order <= currentEra.order;
+}
 
 function _branchConfigs() {
   const configured = _combatConfig().unitBranches || [];
@@ -65,7 +74,7 @@ export function renderUnitResearchPanel(data, body, pm) {
   const resourceSys = _resource();
   const researched = techSystem.getUnitResearch();
   const units = _units()
-    .filter(u => u.branch)
+    .filter(u => u.branch && _isUnitInReachedEra(u))
     .sort((a, b) => {
       const bo = _branchOrder(a.branch) - _branchOrder(b.branch);
       if (bo !== 0) return bo;
@@ -123,7 +132,11 @@ export function renderUnitResearchPanel(data, body, pm) {
 
       const stats = document.createElement('div');
       stats.style.cssText = 'font-size:12px;color:#a0a0ba;line-height:1.4;';
-      stats.textContent = '战力 ' + unit.combatPower + ' · CP ' + (unit.commandPoints || 1);
+      const isHealer = unit.roleTags?.includes('healer');
+      const primaryStat = isHealer
+        ? `战后恢复 ${unit.healingAfterBattle || unit.attack || 0} · 每时段恢复 ${(unit.healingAfterBattle || unit.attack || 0) / 2}`
+        : `攻击 ${unit.attack || 0}`;
+      stats.textContent = `${primaryStat} · 生命 ${unit.hp || 0} · 射程 ${unit.attackRange || 1} · 速度 ${unit.speed || 1}`;
       card.appendChild(stats);
 
       const unitPrereq = document.createElement('div');

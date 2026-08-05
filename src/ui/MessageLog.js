@@ -166,6 +166,11 @@ export class MessageLog {
     const msgEl = document.createElement('div');
     msgEl.className = `msg-item ${side}`;
     msgEl.textContent = text;
+    msgEl.title = text;
+
+    // 存档故障信息包含精确的 $.field.path，必须完整展示并保留更久。
+    const isDiagnostic = /自动存档失败/.test(text);
+    if (isDiagnostic) msgEl.classList.add('diagnostic');
 
     // 添加到容器顶部
     container.insertBefore(msgEl, container.firstChild);
@@ -175,7 +180,7 @@ export class MessageLog {
       element: msgEl,
       timeout: setTimeout(() => {
         this._removeMessage(msgEl, side);
-      }, this.messageDuration)
+      }, isDiagnostic ? Math.max(this.messageDuration, 12000) : this.messageDuration)
     });
 
     // 限制最大消息数

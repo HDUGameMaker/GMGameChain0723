@@ -228,7 +228,6 @@ export function renderSettingsPanel(data, body, pm) {
     <div style="font-size:12px;color:#a0a0ba;line-height:1.8;">
       <div>🔬 <b style="color:#ececf0;">科技</b> — 在这里研究科技，解锁新的建筑</div>
       <div>📜 <b style="color:#ececf0;">人文</b> — 研究政策与政体，影响战斗/经济/人口</div>
-      <div>🛤️ <b style="color:#ececf0;">道路</b> — 要致富先修路，建筑只能沿道路建</div>
       <div>🏗️ <b style="color:#ececf0;">建造</b> — 选择建筑后点击地图放置</div>
       <div>🖱️ <b style="color:#ececf0;">移动建筑</b> — 按住左键拖动已建成的建筑到新位置</div>
       <div>⏩ <b style="color:#ececf0;">加速</b> — 切换 1× / 2× / 4× 速度</div>

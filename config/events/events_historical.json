@@ -298,11 +298,6 @@
             "type": "consume_resource",
             "resourceId": "gold",
             "amount": 12
-          },
-          {
-            "type": "add_strategy_card",
-            "strategyId": "false_intelligence",
-            "amount": 1
           }
         ]
       },
@@ -620,11 +615,6 @@
             "type": "consume_resource",
             "resourceId": "gold",
             "amount": 16
-          },
-          {
-            "type": "add_strategy_card",
-            "strategyId": "false_intelligence",
-            "amount": 1
           }
         ]
       },
@@ -1050,11 +1040,6 @@
             "type": "consume_resource",
             "resourceId": "gold",
             "amount": 24
-          },
-          {
-            "type": "add_strategy_card",
-            "strategyId": "forced_march",
-            "amount": 1
           }
         ]
       },
@@ -1372,11 +1357,6 @@
             "type": "consume_resource",
             "resourceId": "gold",
             "amount": 28
-          },
-          {
-            "type": "add_strategy_card",
-            "strategyId": "forced_march",
-            "amount": 1
           }
         ]
       },
@@ -1802,11 +1782,6 @@
             "type": "consume_resource",
             "resourceId": "gold",
             "amount": 32
-          },
-          {
-            "type": "add_strategy_card",
-            "strategyId": "fortify",
-            "amount": 1
           }
         ]
       },
@@ -2124,11 +2099,6 @@
             "type": "consume_resource",
             "resourceId": "gold",
             "amount": 36
-          },
-          {
-            "type": "add_strategy_card",
-            "strategyId": "fortify",
-            "amount": 1
           }
         ]
       },

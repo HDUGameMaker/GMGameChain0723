@@ -152,8 +152,8 @@ export class InvasionUI {
   _getIdleText() {
     const day = store.getState('timeDay') || 1;
     const nextDay = store.getState('invasionNextDay') || 0;
-    if (nextDay > day) return `🛡️ 营地安全，下一次入侵不早于第 ${nextDay} 日`;
-    return '🛡️ 营地安全，暂无入侵';
+    if (nextDay > day) return `🛡️ 暂时安全，下一波远古遗迹袭击将在第 ${nextDay} 日到达`;
+    return '🛡️ 暂时安全，远古遗迹军队尚未出现';
   }
 
   _showAlert(inv) {

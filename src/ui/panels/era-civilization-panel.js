@@ -1,3 +1,6 @@
+import { calculateCombatStrength } from '../../domain/CombatStrength.js';
+import { getBuildingPrimaryFunctionRows } from '../../domain/BuildingPresentation.js';
+
 function el(tag, className, text = '') {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -81,9 +84,18 @@ export function renderEraCivilizationPanel(data, body, pm) {
   }
 
   const grid = el('div', 'civilization-grid');
-  grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;';
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px;';
   for (const civ of system.getAvailableCivilizations()) {
     const uniqueUnit = system.getUnit?.(civ.uniqueUnitId);
+    const uniqueBuilding = system.getBuilding?.(civ.uniqueBuilding?.id);
+    const unitStats = uniqueUnit
+      ? `生命 ${uniqueUnit.hp} · 攻击 ${uniqueUnit.attack} · 速度 ${uniqueUnit.speed} · 射程 ${uniqueUnit.attackRange} · CP ${uniqueUnit.cp || 1} · 综合强度 ${calculateCombatStrength(uniqueUnit)}`
+      : '尚未配置兵种数值';
+    const buildingEffects = uniqueBuilding
+      ? getBuildingPrimaryFunctionRows(uniqueBuilding, id => ({ wood: '原木', stone: '石头', food: '食物', gold: '黄金' }[id] || id))
+        .filter(effect => !/^(所属文明|替代建筑|解锁系统)/.test(effect))
+        .slice(0, 6)
+      : [civ.uniqueBuilding?.description || '尚未配置建筑效果'];
     const card = el('article', 'civilization-card');
     card.style.cssText = `padding:12px;border:1px solid ${selected?.id === civ.id ? '#d8b55f' : 'rgba(255,255,255,.14)'};border-radius:10px;background:rgba(15,18,25,.78);`;
     card.innerHTML = `
@@ -91,7 +103,10 @@ export function renderEraCivilizationPanel(data, body, pm) {
       <div style="font-size:11px;color:#cdbb91;margin-top:7px">永久遗产：${civ.legacy.name}</div>
       <div style="font-size:11px;color:#aaa">${civ.legacy.description}</div>
       <div style="font-size:11px;color:#cdbb91;margin-top:5px">时代特色：${civ.trait.name}</div>
-      <div style="font-size:11px;color:#aaa">特色单位：${uniqueUnit?.name || '待解锁'} · 特色建筑：${civ.uniqueBuilding.name}</div>`;
+      <div style="font-size:11px;color:#e6c675;margin-top:8px">特色兵种：${uniqueUnit?.name || '待解锁'}</div>
+      <div data-testid="civilization-unique-unit-stats" style="font-size:11px;color:#c8d4e8;line-height:1.55">${unitStats}</div>
+      <div style="font-size:11px;color:#e6c675;margin-top:8px">特色建筑：${uniqueBuilding?.name || civ.uniqueBuilding.name}</div>
+      <div data-testid="civilization-unique-building-effects" style="font-size:11px;color:#b8c2d2;line-height:1.55">${buildingEffects.map(effect => `<div>• ${effect}</div>`).join('')}</div>`;
     if (!selected) {
       const button = el('button', '', `选择 ${civ.name}`);
       button.style.cssText = 'margin-top:10px;width:100%;padding:7px;border:1px solid #b18a42;border-radius:7px;background:#59431f;color:#f7e4b2;cursor:pointer;';
@@ -111,10 +126,21 @@ export function renderEraCivilizationPanel(data, body, pm) {
   advance.disabled = !check.ok;
   advance.title = check.ok ? '满足时代推进条件' : check.reason;
   advance.style.cssText = `padding:11px;border-radius:9px;border:1px solid #c9a653;background:${check.ok ? '#765824' : '#333'};color:${check.ok ? '#fff0c2' : '#888'};cursor:${check.ok ? 'pointer' : 'not-allowed'};`;
-  advance.addEventListener('click', () => {
+  advance.addEventListener('click', async () => {
     const result = system.advanceEra();
-    if (!result.ok) pm.alert(result.reason);
+    if (!result.ok) {
+      await pm.alert(result.reason);
+      return;
+    }
     pm.refresh({ eraSystem: system });
+    const unlocked = result.unlockedBuildings || [];
+    const buildingRows = unlocked.length
+      ? unlocked.map(building => `• ${building.name}`).join('\n')
+      : '本时代没有直接解锁的新建筑。';
+    await pm.alert(`已进入${result.era.name}\n\n本时代解锁建筑：\n${buildingRows}`, {
+      title: `${result.era.name}解锁内容`,
+      okText: '继续'
+    });
   });
   container.appendChild(advance);
 

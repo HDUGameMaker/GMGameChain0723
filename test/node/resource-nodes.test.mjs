@@ -102,7 +102,7 @@ test('common nodes never deplete while rare nodes recover and persist', () => {
 
 test('luxury deposits retain their luxury identity and map cue through save restore', () => {
   const nodes = makeNodeSystem([
-    { id: 'luxury_silk_1', type: 'luxury', luxuryId: 'silk', visualCue: 'silk_bales', gridX: 3, gridY: 4, rarity: 'common' }
+    { id: 'luxury_silk_1', type: 'luxury', luxuryId: 'silk', visualCue: 'silk_bales', gridX: 3, gridY: 4, rarity: 'common', cityStateGenerated: true, lockedByCityStateId: 'city', locked: false }
   ]);
   assert.equal(nodes.getNode('luxury_silk_1').luxuryId, 'silk');
   assert.equal(nodes.getNode('luxury_silk_1').visualCue, 'silk_bales');
@@ -184,7 +184,7 @@ test('a staffed trade post slowly gathers the luxury bound to its deposit', () =
     historicalContent: { eras: [], civilizations: [] }
   };
   const nodes = makeNodeSystem([
-    { id: 'luxury_tea_1', type: 'luxury', luxuryId: 'tea', gridX: 1, gridY: 1, rarity: 'common' }
+    { id: 'luxury_tea_1', type: 'luxury', luxuryId: 'tea', gridX: 1, gridY: 1, rarity: 'common', cityStateGenerated: true, lockedByCityStateId: 'city', locked: false }
   ]);
   const gathered = [];
   const buildings = new BuildingSystem();
@@ -199,4 +199,23 @@ test('a staffed trade post slowly gathers the luxury bound to its deposit', () =
   assert.deepEqual(gathered, []);
   buildings._processProduction(buildings.buildings[0]);
   assert.deepEqual(gathered, [['tea', 1]]);
+});
+test('static and city-state luxury deposits both remain on the map', () => {
+  const system = new ResourceNodeSystem();
+  system.initFromManifest([
+    { id: 'wild_luxury', type: 'luxury', luxuryId: 'silk', gridX: 1, gridY: 1 },
+    { id: 'wood', type: 'wood', gridX: 2, gridY: 2 }
+  ]);
+  system.setCityStateNodes([{ id: 'city_luxury', type: 'luxury', luxuryId: 'jade', gridX: 3, gridY: 3, locked: true, lockedByCityStateId: 'city' }]);
+  assert.deepEqual(system.getNodes().map(node => node.id).sort(), ['city_luxury', 'wild_luxury', 'wood']);
+});
+
+test('luxury deposits disappear permanently after yielding two copies', () => {
+  const system = makeNodeSystem([{ id: 'silk', type: 'luxury', luxuryId: 'silk', gridX: 1, gridY: 1 }]);
+  assert.equal(system.getNode('silk').remaining, 2);
+  assert.equal(system.consume('silk', 1).remaining, 1);
+  assert.equal(system.consume('silk', 1).remaining, 0);
+  assert.equal(system.getNodeAt(1, 1), null);
+  system.onDayStart(999);
+  assert.equal(system.getNodeAt(1, 1), null);
 });

@@ -12,7 +12,8 @@
   --sidebar-w: 200px; --topbar-h: 52px;
 }
 * { box-sizing: border-box; margin: 0; }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 -apple-system, "Microsoft YaHei", system-ui, sans-serif; display: grid; grid-template-columns: var(--sidebar-w) 1fr; grid-template-rows: var(--topbar-h) 1fr 28px; min-height: 100vh; }
+html, body { height: 100%; overflow: hidden; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 -apple-system, "Microsoft YaHei", system-ui, sans-serif; display: grid; grid-template-columns: var(--sidebar-w) 1fr; grid-template-rows: var(--topbar-h) minmax(0, 1fr) 28px; min-height: 0; }
 /* ── Sidebar ── */
 .sidebar { grid-row: 1 / -1; background: #141428; color: #c0c8d8; padding: 16px 0; display: flex; flex-direction: column; overflow-y: auto; }
 .sidebar .brand { font-weight: 700; font-size: 15px; padding: 0 16px 18px; color: #e8f0e9; letter-spacing: -0.01em; }
@@ -53,19 +54,24 @@ input.error, select.error, textarea.error { border-color: var(--bad); box-shadow
 textarea { resize: vertical; min-height: 48px; }
 label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; margin-bottom: 3px; }
 /* ── Main ── */
-main { grid-column: 2; display: flex; flex-direction: column; overflow: hidden; }
+main { grid-column: 2; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .toolbar { display: flex; align-items: center; gap: 6px; padding: 10px 24px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
 .toolbar .sep { width: 1px; height: 20px; background: var(--border); margin: 0 6px; }
 .toolbar input[type=search] { width: 200px; padding: 5px 10px; font-size: 12px; }
-.editor-wrap { display: flex; flex: 1; overflow: hidden; }
-.list-panel { width: 280px; flex-shrink: 0; border-right: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
+.editor-wrap { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+.list-panel { width: 280px; min-height: 0; flex-shrink: 0; border-right: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
 .list-panel .list-header { padding: 10px 14px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.list-panel .list-body { flex: 1; overflow-y: auto; }
+.list-panel .list-body { flex: 1; min-height: 0; overflow-y: scroll; overscroll-behavior: contain; scrollbar-gutter: stable; }
+.list-panel .list-body::-webkit-scrollbar { width: 10px; }
+.list-panel .list-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.12); }
+.list-panel .list-body::-webkit-scrollbar-thumb { background: var(--muted); border: 2px solid var(--surface); border-radius: 6px; }
+.list-panel .list-body::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 .list-panel .list-item { padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; display: flex; justify-content: space-between; align-items: center; }
 .list-panel .list-item:hover { background: var(--bg); }
 .list-panel .list-item.active { background: rgba(74,124,89,0.08); border-left: 3px solid var(--accent); padding-left: 11px; }
 .list-panel .list-item .name { font-size: 13px; font-weight: 500; }
 .list-panel .list-item .id { font-size: 11px; color: var(--muted); }
+.list-panel .category-group { position: sticky; top: 0; z-index: 1; padding: 7px 12px; background: #19192d; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); color: #d7c486; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; }
 .event-badge { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 999px; margin-left: 6px; font-weight: 500; vertical-align: middle; }
 .event-badge.base { background: rgba(74,124,89,0.12); color: #2f7d4a; }
 .event-badge.expedition { background: rgba(201,125,26,0.12); color: #b87a14; }
@@ -129,6 +135,7 @@ main { grid-column: 2; display: flex; flex-direction: column; overflow: hidden; 
   <nav>
     <div class="nav-label">游戏配置</div>
     <a data-tab="initial">🎯 初始配置</a>
+    <a data-tab="cheats">🛠️ 金手指</a>
     <a data-tab="tags">🏷️ 标签配置</a>
     <a data-tab="buildings" class="active">🏠 建筑配置</a>
     <a data-tab="resources">⛏️ 资源配置</a>
@@ -136,12 +143,13 @@ main { grid-column: 2; display: flex; flex-direction: column; overflow: hidden; 
     <a data-tab="events">📜 事件配置</a>
     <a data-tab="expeditions">🗺️ 探险配置</a>
     <a data-tab="map">🏔️ 地图配置</a>
-    <a data-tab="roads">🛤️ 道路配置</a>
+    <a data-tab="city_states">🏰 城邦生成</a>
     <a data-tab="techs">🔬 科技配置</a>
     <a data-tab="combat">⚔️ 战斗配置</a>
     <a data-tab="adjacency">🔗 相邻加成</a>
     <a data-tab="culture">📖 人文政策树</a>
     <a data-tab="units">⚔️ 兵种配置</a>
+    <a data-tab="heroes">🦸 英雄配置</a>
     <a data-tab="formations">🔱 阵型配置</a>
     <a data-tab="doctrines">📜 文化配置</a>
     <div class="nav-label">数值工具</div>
@@ -269,6 +277,11 @@ async function restoreDirHandle() {
 }
 const CONFIG_FILES = {
   buildings:   { path: 'buildings.json',              dir: '' },
+  historical_content: { path: 'historical_content.json', dir: '' },
+  ea_integration: { path: 'ea_integration.json',       dir: '' },
+  exploration_buildings: { path: 'exploration-buildings.json', dir: '' },
+  civilization_building_overrides: { path: 'civilization-building-overrides.json', dir: '' },
+  building_runtime_overrides: { path: 'building-runtime-overrides.json', dir: '' },
   resources:   { path: 'resources.json',              dir: '' },
   items:       { path: 'items.json',                  dir: '' },
   events_base: { path: 'events_base.json',            dir: 'events' },
@@ -285,6 +298,7 @@ const CONFIG_FILES = {
   doctrines:   { path: 'doctrines.json',              dir: '' },
   adjacency_bonuses: { path: 'adjacency-bonuses.json', dir: '' },
   culture:     { path: 'culture.json',                 dir: '' },
+  world_factions: { path: 'world-factions.json',       dir: '' },
 };
 
 async function selectDir() {
@@ -367,16 +381,164 @@ const state = {
   undoStack: [],
   redoStack: [],
   eventTypeFilter: 'all',  // 'all' | 'base' | 'expedition'
+  buildingFileSource: new WeakMap(),
+  unitFileSource: new WeakMap(),
+  heroFileSource: new WeakMap(),
 };
+
+function mergeRuntimeHeroes(eaContent, historicalContent) {
+  const merged = [];
+  const ids = new Set();
+  state.heroFileSource = new WeakMap();
+  for (const [source, heroes] of [['ea_integration', eaContent?.heroes], ['historical_content', historicalContent?.heroes]]) {
+    for (const hero of heroes || []) {
+      if (ids.has(hero.id)) continue;
+      ids.add(hero.id);
+      state.heroFileSource.set(hero, source);
+      merged.push(hero);
+    }
+  }
+  return merged;
+}
+
+function syncRuntimeHeroSources() {
+  const heroes = state.data.heroes || [];
+  state.data.ea_integration.heroes = heroes.filter(hero => state.heroFileSource.get(hero) === 'ea_integration');
+  state.data.historical_content.heroes = heroes.filter(hero => state.heroFileSource.get(hero) !== 'ea_integration');
+}
+
+const LEGACY_UNIT_METADATA = {
+  warrior: ['primitive', 'infantry'], spearman: ['primitive', 'anti_cavalry'], archer: ['primitive', 'ranged'],
+  swordsman: ['classical', 'infantry'],
+  knight: ['medieval', 'cavalry'], armored_cavalry: ['medieval', 'cavalry'], pikeman: ['medieval', 'anti_cavalry'], crossbowman: ['medieval', 'ranged'], longbowman: ['medieval', 'ranged'], trebuchet: ['medieval', 'siege'], siege_tower: ['medieval', 'siege'],
+  musketeer: ['exploration', 'ranged'],
+  cannon: ['early_modern', 'siege'], biplane: ['early_modern', 'special'], tank: ['early_modern', 'special'],
+  modern_infantry: ['modern', 'infantry'], jet_fighter: ['modern', 'special'],
+};
+
+function mergeRuntimeUnits(baseUnits, eaContent, historicalContent) {
+  const merged = [];
+  const ids = new Set();
+  state.unitFileSource = new WeakMap();
+  for (const [source, units] of [['enemies', baseUnits], ['ea_integration', eaContent?.units], ['historical_content', historicalContent?.units]]) {
+    for (const original of units || []) {
+      if (ids.has(original.id)) continue;
+      ids.add(original.id);
+      const profile = source === 'enemies' ? eaContent?.unitProfiles?.[original.id] : null;
+      const metadata = LEGACY_UNIT_METADATA[original.id];
+      const unit = { ...original, ...(profile || {}) };
+      if (metadata) {
+        unit.eraId ||= metadata[0];
+        unit.branch = metadata[1];
+      }
+      state.unitFileSource.set(unit, source);
+      merged.push(unit);
+    }
+  }
+  return merged;
+}
+
+function syncRuntimeUnitSources() {
+  const units = state.data.combat?.units || [];
+  state.data.base_units = units.filter(unit => (state.unitFileSource.get(unit) || 'enemies') === 'enemies');
+  state.data.ea_integration.units = units.filter(unit => state.unitFileSource.get(unit) === 'ea_integration');
+  state.data.historical_content.units = units.filter(unit => state.unitFileSource.get(unit) === 'historical_content');
+  state.data.combat.units = state.data.base_units;
+}
+
+function syncSelectedUnitProfile() {
+  if (state.tab !== 'units') return;
+  const unit = currentData()?.[state.selectedIdx];
+  const profile = unit && state.data.ea_integration?.unitProfiles?.[unit.id];
+  if (!profile) return;
+  for (const key of Object.keys(profile)) profile[key] = structuredClone(unit[key]);
+}
+
+function mergeRuntimeBuildings(sources) {
+  const merged = [];
+  const ids = new Set();
+  state.buildingFileSource = new WeakMap();
+  for (const [source, buildings] of sources) {
+    for (const building of buildings || []) {
+      state.buildingFileSource.set(building, source);
+      if (!ids.has(building.id)) {
+        ids.add(building.id);
+        merged.push(building);
+      }
+    }
+  }
+  return merged;
+}
+
+function getBuildingSourceArray(source) {
+  if (source === 'historical_content') return state.data.historical_content?.buildings;
+  if (source === 'ea_integration') return state.data.ea_integration?.buildings;
+  if (source === 'exploration_buildings') return state.data.exploration_buildings;
+  return state.data.base_buildings;
+}
+
+function applyEditorBuildingOverrides(buildings) {
+  const civilizationConfig = state.data.civilization_building_overrides;
+  const runtimeOverrides = state.data.building_runtime_overrides?.buildings || {};
+  for (const building of buildings) {
+    // ConfigRegistry applies runtime patches before civilization archetypes.
+    const runtimePatch = runtimeOverrides[building.id];
+    if (runtimePatch) {
+      const mergedUniqueFunction = { ...(building.uniqueFunction || {}), ...(runtimePatch.uniqueFunction || {}) };
+      Object.assign(building, runtimePatch);
+      building.uniqueFunction = mergedUniqueFunction;
+    }
+    if (building.civilizationId && civilizationConfig?.civilizations && civilizationConfig?.archetypes) {
+      const specific = civilizationConfig.civilizations[building.civilizationId];
+      const archetype = civilizationConfig.archetypes[specific?.archetype];
+      if (specific && archetype) {
+        const { archetype: _archetypeId, ...specificFields } = specific;
+        const mergedUniqueFunction = { ...(building.uniqueFunction || {}), ...(archetype.uniqueFunction || {}), ...(specific.uniqueFunction || {}) };
+        Object.assign(building, archetype, specificFields);
+        building.uniqueFunction = mergedUniqueFunction;
+      }
+    }
+  }
+}
+
+function syncSelectedBuildingOverrides() {
+  if (state.tab !== 'buildings') return;
+  const building = currentData()?.[state.selectedIdx];
+  if (!building) return;
+  const civilizationConfig = state.data.civilization_building_overrides;
+  const specific = civilizationConfig?.civilizations?.[building.civilizationId];
+  const archetype = civilizationConfig?.archetypes?.[specific?.archetype];
+  if (specific && archetype) {
+    // Values inherited from an archetype become a per-civilization override when edited.
+    // This keeps editing one unique building from changing every building of that archetype.
+    for (const key of Object.keys(archetype)) {
+      if (key === 'uniqueFunction') specific.uniqueFunction = structuredClone(building.uniqueFunction || {});
+      else specific[key] = structuredClone(building[key]);
+    }
+    for (const key of ['name', 'description', 'replaces']) {
+      if (building[key] !== undefined) specific[key] = structuredClone(building[key]);
+    }
+  }
+  const runtimePatch = state.data.building_runtime_overrides?.buildings?.[building.id];
+  if (runtimePatch) {
+    for (const key of Object.keys(runtimePatch)) runtimePatch[key] = structuredClone(building[key]);
+  }
+}
 
 /* ═══════════════════════════════════════════
    Data loading
    ═══════════════════════════════════════════ */
 async function loadAllData() {
   try {
-    const [buildings, resources, items, eventsBase, eventsExp, regions, expGlobal, tags, baseMap, initial, roads, techs, global, combat, adjacencyBonuses, culture, doctrines] =
+    const [buildings, historicalContent, eaIntegration, explorationBuildings, civilizationBuildingOverrides, buildingRuntimeOverrides, resources, items, eventsBase, eventsExp, regions, expGlobal, tags, baseMap, initial, roads, techs, global, combat, adjacencyBonuses, culture, doctrines, worldFactions] =
       await Promise.all([
-        readFile('buildings'), readFile('resources'), readFile('items'),
+        readFile('buildings'),
+        readFile('historical_content').catch(() => JSON.stringify({ buildings: [] })),
+        readFile('ea_integration').catch(() => JSON.stringify({ buildings: [] })),
+        readFile('exploration_buildings').catch(() => JSON.stringify([])),
+        readFile('civilization_building_overrides').catch(() => JSON.stringify({ schemaVersion: 1, archetypes: {}, civilizations: {} })),
+        readFile('building_runtime_overrides').catch(() => JSON.stringify({ schemaVersion: 1, buildings: {} })),
+        readFile('resources'), readFile('items'),
         readFile('events_base'), readFile('events_exp'),
         readFile('regions'), readFile('exp_global'),
         readFile('tags').catch(() => JSON.stringify([])),
@@ -389,8 +551,23 @@ async function loadAllData() {
         readFile('adjacency_bonuses').catch(() => JSON.stringify([])),
         readFile('culture').catch(() => JSON.stringify([])),
         readFile('doctrines').catch(() => JSON.stringify([])),
+        readFile('world_factions').catch(() => JSON.stringify({ cityStateGeneration: {}, cityStates: [] })),
       ]);
-    state.data.buildings = JSON.parse(buildings);
+    state.data.base_buildings = JSON.parse(buildings);
+    state.data.historical_content = JSON.parse(historicalContent);
+    state.data.ea_integration = JSON.parse(eaIntegration);
+    state.data.heroes = mergeRuntimeHeroes(state.data.ea_integration, state.data.historical_content);
+    state.data.exploration_buildings = JSON.parse(explorationBuildings);
+    state.data.civilization_building_overrides = JSON.parse(civilizationBuildingOverrides);
+    state.data.building_runtime_overrides = JSON.parse(buildingRuntimeOverrides);
+    // Match ConfigRegistry's runtime priority: base -> EA -> historical -> exploration.
+    state.data.buildings = mergeRuntimeBuildings([
+      ['buildings', state.data.base_buildings],
+      ['ea_integration', state.data.ea_integration.buildings],
+      ['historical_content', state.data.historical_content.buildings],
+      ['exploration_buildings', state.data.exploration_buildings],
+    ]);
+    applyEditorBuildingOverrides(state.data.buildings);
     state.data.resources = JSON.parse(resources);
     state.data.items = JSON.parse(items);
     const eb = JSON.parse(eventsBase);
@@ -407,7 +584,9 @@ async function loadAllData() {
     state.data.base_map = JSON.parse(baseMap);
     state.data.initial = JSON.parse(initial);
     state.data.roads = JSON.parse(roads);
-    state.data.techs = JSON.parse(techs);
+    state.data.base_techs = JSON.parse(techs);
+    // 游戏中的科技树直接展示 historical_content.techs，编辑器必须使用同一数据源。
+    state.data.techs = state.data.historical_content.techs || [];
     state.data.global = JSON.parse(global);
     // 归一化科技前置：保证 prerequisites 始终为数组
     if (Array.isArray(state.data.techs)) {
@@ -423,9 +602,14 @@ async function loadAllData() {
       }
     }
     state.data.combat = JSON.parse(combat);
+    state.data.base_units = state.data.combat.units || [];
+    state.data.combat.units = mergeRuntimeUnits(state.data.base_units, state.data.ea_integration, state.data.historical_content);
     state.data.adjacency_bonuses = JSON.parse(adjacencyBonuses);
-    state.data.culture = JSON.parse(culture);
+    state.data.base_culture = JSON.parse(culture);
+    // 游戏中的文化树直接展示 historical_content.civics。
+    state.data.culture = state.data.historical_content.civics || [];
     state.data.doctrines = JSON.parse(doctrines);
+    state.data.world_factions = JSON.parse(worldFactions);
     if (Array.isArray(state.data.culture)) {
       for (const p of state.data.culture) {
         const prereq = p.prerequisites;
@@ -460,6 +644,7 @@ async function loadAllData() {
 function currentData() {
   switch(state.tab) {
     case 'initial':   return [state.data.initial]; // 单例包装为数组
+    case 'cheats':    return [state.data.initial.cheats || (state.data.initial.cheats = { clearAllFog: false, unlimitedBasicResources: false, extremeArmyMovementSpeed: false, cityStatesAttackImmediately: false, grantAllLuxuries: false, completeCurrentEraResearchHotkey: false, increaseCurrentHeroAffinityHotkey: false, fillEraMaterialsHotkey: false, spawnTestEnemyHotkey: false, spawnHestiaArmyHotkey: false, spawnSuperArmyHotkey: false })];
     case 'buildings': return state.data.buildings;
     case 'resources': return state.data.resources;
     case 'items':     return state.data.items;
@@ -467,6 +652,7 @@ function currentData() {
     case 'expeditions': return state.data.regions;
     case 'tags':      return state.data.tags || []; // Tag 列表
     case 'map':       return [state.data.base_map]; // 单例包装为数组
+    case 'city_states': return [state.data.world_factions?.cityStateGeneration || {}];
     case 'roads':     return state.data.roads || [];
     case 'techs':     return state.data.techs || [];
     case 'combat':    return state.data.combat ? [state.data.combat] : [{ enemies: [], units: [], global: { humanHp: 2, clickAttack: 1 } }];
@@ -474,6 +660,7 @@ function currentData() {
     case 'adjacency': return adjacencyCurrentData() || [];
     case 'culture':   return state.data.culture || [];
     case 'units':     return state.data.combat?.units || [];
+    case 'heroes':    return state.data.heroes || [];
     case 'formations': return state.data.combat?.formations || [];
     case 'doctrines':  return state.data.doctrines || [];
     default: return [];
@@ -483,6 +670,7 @@ function currentData() {
 function currentFileKeys() {
   switch(state.tab) {
     case 'initial':   return ['initial'];
+    case 'cheats':    return ['initial'];
     case 'buildings': return ['buildings'];
     case 'resources': return ['resources'];
     case 'items':     return ['items'];
@@ -490,6 +678,7 @@ function currentFileKeys() {
     case 'expeditions': return ['regions', 'exp_global'];
     case 'tags':      return ['tags']; // Tag 配置文件
     case 'map':       return ['base_map'];
+    case 'city_states': return ['world_factions'];
     case 'roads':     return ['roads'];
     case 'techs':     return ['techs'];
     case 'combat':    return ['combat'];
@@ -497,6 +686,7 @@ function currentFileKeys() {
     case 'adjacency': return ['adjacency_bonuses'];
     case 'culture':   return ['culture'];
     case 'units':     return ['combat'];
+    case 'heroes':    return ['ea_integration', 'historical_content'];
     case 'formations': return ['combat'];
     case 'doctrines':  return ['doctrines'];
     default: return [];
@@ -506,6 +696,8 @@ function currentFileKeys() {
 function itemDisplayName(item) {
   // combat 是单例对象，显示固定名称
   if (state.tab === 'combat') return '⚔️ 敌对单位配置';
+  if (state.tab === 'city_states') return '🏰 城邦生成规则';
+  if (state.tab === 'cheats') return '🛠️ 金手指配置';
   return item.name || item.id || (item.gridWidth ? `地图 (${item.gridWidth}×${item.gridHeight})` : '(未命名)');
 }
 
@@ -600,6 +792,8 @@ function regionSelectForEntrance(entIdx, regIdx, val) {
    Save
    ═══════════════════════════════════════════ */
 function markDirty() {
+  syncSelectedBuildingOverrides();
+  syncSelectedUnitProfile();
   state.dirtyFiles.add(state.tab);
   if (state.autoSave) scheduleSave();
   updateSaveStatus();
@@ -638,15 +832,40 @@ async function doSave(options = {}) {
     } else if (state.tab === 'initial') {
       const key = keys[0];
       await writeFile(key, JSON.stringify(state.data.initial, null, 2));
+    } else if (state.tab === 'cheats') {
+      await writeFile('initial', JSON.stringify(state.data.initial, null, 2));
+    } else if (state.tab === 'city_states') {
+      await writeFile('world_factions', JSON.stringify(state.data.world_factions, null, 2));
     } else if (state.tab === 'combat') {
       // combat 是单例对象，保存整个 state.data.combat
       await writeFile('combat', JSON.stringify(state.data.combat, null, 2));
     } else if (state.tab === 'units') {
-      // units 也保存在 enemies.json 中
+      // 游戏兵种由 enemies、EA 与 historical_content 合并，按原始来源分别保存。
+      syncRuntimeUnitSources();
       await writeFile('combat', JSON.stringify(state.data.combat, null, 2));
+      await writeFile('ea_integration', JSON.stringify(state.data.ea_integration, null, 2));
+      await writeFile('historical_content', JSON.stringify(state.data.historical_content, null, 2));
+      state.data.combat.units = mergeRuntimeUnits(state.data.base_units, state.data.ea_integration, state.data.historical_content);
     } else if (state.tab === 'formations') {
       // formations 也保存在 enemies.json 中
       await writeFile('combat', JSON.stringify(state.data.combat, null, 2));
+    } else if (state.tab === 'heroes') {
+      syncRuntimeHeroSources();
+      await writeFile('ea_integration', JSON.stringify(state.data.ea_integration, null, 2));
+      await writeFile('historical_content', JSON.stringify(state.data.historical_content, null, 2));
+      state.data.heroes = mergeRuntimeHeroes(state.data.ea_integration, state.data.historical_content);
+    } else if (state.tab === 'buildings') {
+      await writeFile('buildings', JSON.stringify(state.data.base_buildings, null, 2));
+      await writeFile('historical_content', JSON.stringify(state.data.historical_content, null, 2));
+      await writeFile('ea_integration', JSON.stringify(state.data.ea_integration, null, 2));
+      await writeFile('exploration_buildings', JSON.stringify(state.data.exploration_buildings, null, 2));
+      await writeFile('civilization_building_overrides', JSON.stringify(state.data.civilization_building_overrides, null, 2));
+      await writeFile('building_runtime_overrides', JSON.stringify(state.data.building_runtime_overrides, null, 2));
+    } else if (state.tab === 'techs' || state.tab === 'culture') {
+      // 两棵游戏内树都来自 historical_content，保存回同一个真实来源。
+      state.data.historical_content.techs = state.data.techs;
+      state.data.historical_content.civics = state.data.culture;
+      await writeFile('historical_content', JSON.stringify(state.data.historical_content, null, 2));
     } else {
       const key = keys[0];
       await writeFile(key, JSON.stringify(currentData(), null, 2));
@@ -703,6 +922,25 @@ function refreshList() {
       return sortOrder === 'asc' ? cmp : -cmp;
     });
   }
+  if (state.tab === 'buildings' && filtered) {
+    const categoryOrder = ['housing','agriculture','gathering','industry','commerce','research','civic','military','defense','administration'];
+    filtered = [...filtered].sort((a, b) => {
+      const ai = categoryOrder.indexOf(a.category || 'administration');
+      const bi = categoryOrder.indexOf(b.category || 'administration');
+      return (ai < 0 ? categoryOrder.length : ai) - (bi < 0 ? categoryOrder.length : bi);
+    });
+  }
+  const eraGroupedTabs = ['techs', 'culture', 'units'];
+  const plannerEras = state.data.historical_content?.eras || [];
+  if (eraGroupedTabs.includes(state.tab) && filtered) {
+    const eraOrder = new Map(plannerEras.map((era, index) => [era.id, Number.isFinite(era.order) ? era.order : index]));
+    filtered = [...filtered].sort((a, b) => {
+      const leftOrder = eraOrder.has(a.eraId) ? eraOrder.get(a.eraId) : Number.MAX_SAFE_INTEGER;
+      const rightOrder = eraOrder.has(b.eraId) ? eraOrder.get(b.eraId) : Number.MAX_SAFE_INTEGER;
+      if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+      return String(a.name || a.id || '').localeCompare(String(b.name || b.id || ''), 'zh-CN');
+    });
+  }
 
   if (!data || data.length === 0) {
     body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">暂无数据</div>';
@@ -711,6 +949,8 @@ function refreshList() {
     return;
   }
 
+  let lastBuildingCategory = null;
+  let lastEraId = null;
   body.innerHTML = filtered.map((item, i) => {
     const origIdx = data.indexOf(item);
     const active = origIdx === state.selectedIdx ? ' active' : '';
@@ -720,7 +960,26 @@ function refreshList() {
       if (src === 'base') badge = '<span class="event-badge base">🏠 基地</span>';
       else if (src === 'expedition') badge = '<span class="event-badge expedition">🗺️ 探险</span>';
     }
-    return `<div class="list-item${active}" data-idx="${origIdx}">
+    let categoryHeader = '';
+    if (state.tab === 'buildings') {
+      const category = item.category || 'administration';
+      if (category !== lastBuildingCategory) {
+        lastBuildingCategory = category;
+        const labels = { housing:'住宅', agriculture:'农业', gathering:'采集', industry:'工业', commerce:'商业', research:'科研', civic:'人文', military:'军事', defense:'防御', administration:'行政' };
+        const count = filtered.filter(building => (building.category || 'administration') === category).length;
+        categoryHeader = `<div class="category-group">${labels[category] || category} · ${count}</div>`;
+      }
+    }
+    if (eraGroupedTabs.includes(state.tab)) {
+      const eraId = item.eraId || '__no_era__';
+      if (eraId !== lastEraId) {
+        lastEraId = eraId;
+        const era = plannerEras.find(candidate => candidate.id === item.eraId);
+        const count = filtered.filter(entry => (entry.eraId || '__no_era__') === eraId).length;
+        categoryHeader = `<div class="category-group">${era?.name || (item.eraId ? `未知时代 (${item.eraId})` : '无时代限制')} · ${count}</div>`;
+      }
+    }
+    return `${categoryHeader}<div class="list-item${active}" data-idx="${origIdx}">
       <div><div class="name">${itemDisplayName(item)}${badge}</div><div class="id">${item.id || ''}</div></div>
     </div>`;
   }).join('');
@@ -759,6 +1018,7 @@ function renderDetail() {
   let html = '';
     switch(state.tab) {
       case 'initial':   html = renderInitialForm(item); break;
+      case 'cheats':    html = renderCheatsForm(item); break;
       case 'buildings': html = renderBuildingForm(item); break;
       case 'resources': html = renderResourceForm(item); break;
       case 'items':     html = renderItemForm(item); break;
@@ -766,12 +1026,14 @@ function renderDetail() {
       case 'expeditions': html = renderRegionForm(item); break;
       case 'tags':      html = renderTagForm(item); break;
       case 'map':       html = renderMapForm(); break;
+      case 'city_states': html = renderCityStateGenerationForm(item); break;
       case 'roads':     html = renderRoadForm(item); break;
       case 'techs':     html = renderTechForm(item); break;
       case 'combat':    html = renderCombatForm(item); break;
       case 'adjacency': html = renderAdjacencyForm(item); break;
       case 'culture':   html = renderCultureForm(item); break;
       case 'units':     html = renderUnitForm(item); break;
+      case 'heroes':    html = renderHeroForm(item); break;
       case 'formations': html = renderFormationForm(item); break;
       case 'doctrines':  html = renderDoctrineForm(item); break;
       case 'analysis':  html = renderAnalysisPanel(); break;
@@ -828,6 +1090,82 @@ function getGlobalPeriodEntries() {
     icon: icons[id] || ''
   }));
 }
+
+const BUILDING_EFFECT_LABELS = {
+  administrationMul: '行政效率倍率', amount: '基础产量', armyAssemblyDomains: '可集结军团领域',
+  armyCapacityBonus: '军团容量加成', armyPowerMul: '军团战力倍率', blocksEnemyMovement: '阻挡敌军移动',
+  buildSpeedMul: '建造速度倍率', cavalryTrainingMul: '骑兵训练速度倍率', civicPerWorker: '每名工人人文产出',
+  civicPointMul: '人文点数倍率', civilizationId: '所属文明', civilizationYieldMul: '文明特色产出倍率',
+  commandPointsBonus: '指挥点加成', defensePower: '防御力', expeditionAccess: '允许组织探险',
+  foodStorageMul: '食物储存倍率', garrisonCapacity: '驻军容量', garrisonDefenseMul: '驻军防御倍率',
+  garrisonMoraleRecovery: '每日驻军士气恢复', garrisonSupplyRecovery: '每日驻军补给恢复',
+  goldPerWorker: '每名工人黄金产出', heroOfferBonus: '英雄候选数量加成', housingCapacity: '人口容量',
+  luxuryYieldBonus: '奢侈品产量加成', meleePowerMul: '近战战力倍率', navalPowerMul: '海军战力倍率',
+  navalSpeedMul: '海军移动速度倍率', navalSupply: '海军补给', navalTrainingMul: '海军训练速度倍率',
+  navalVisionRadius: '海上视野半径', productionMul: '生产倍率', rangedTrainingMul: '远程训练速度倍率',
+  relationGainBonus: '外交关系收益加成', repairMul: '维修效率倍率', replaces: '替代建筑',
+  researchSpeedMul: '研究速度倍率', resourceId: '资源类型', routeCapacity: '贸易路线容量',
+  routeCapacityBonus: '贸易路线容量加成', satisfactionBonus: '满意度加成', sciencePerWorker: '每名工人科研产出',
+  sciencePointMul: '科研点数倍率', siegePowerMul: '攻城战力倍率', soldierCapacity: '士兵容量',
+  spoilageMul: '食物腐坏倍率', storageMultiplier: '资源储存倍率', strategyCooldownMul: '策略冷却倍率',
+  territoryUpkeepMul: '领土维护费倍率', tradeValueMul: '贸易价值倍率', trainingSpeedMul: '训练速度倍率',
+  trainsBranches: '可训练兵种分支', transportCapacity: '运输容量', unlockEliteUnits: '解锁精锐单位',
+  unlockSystem: '解锁系统', visionRadius: '视野半径', workerRecruitment: '工人招募配置'
+};
+
+function renderBuildingEffectsEditor(b) {
+  const entries = Object.entries(b.uniqueFunction || {});
+  let html = '<div class="section-title">建筑效果与特殊作用</div>';
+  html += '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">界面使用中文效果名；括号内为配置字段。数组、对象请填写 JSON。</div><div class="sub-list">';
+  entries.forEach(([key, value], index) => {
+    const type = Array.isArray(value) ? 'array' : (value !== null ? typeof value : 'object');
+    const displayValue = (type === 'object' || type === 'array') ? JSON.stringify(value) : String(value);
+    const knownOptions = Object.entries(BUILDING_EFFECT_LABELS).map(([optionKey, label]) => `<option value="${escapeHTML(optionKey)}" ${optionKey === key ? 'selected' : ''}>${escapeHTML(label)}（${escapeHTML(optionKey)}）</option>`).join('');
+    const keyEditor = BUILDING_EFFECT_LABELS[key]
+      ? `<select onchange="changeBuildingEffectKey(${index},this.value)">${knownOptions}</select>`
+      : `<input value="${escapeHTML(key)}" placeholder="自定义效果字段" onchange="changeBuildingEffectKey(${index},this.value.trim())" onblur="changeBuildingEffectKey(${index},this.value.trim())" />`;
+    html += `<div class="sub-row" style="display:grid;grid-template-columns:minmax(220px,1.2fr) 90px minmax(180px,1fr) 34px">
+      ${keyEditor}
+      <select onchange="changeBuildingEffectType(${index},this.value)">${[['number','数字'],['boolean','开关'],['string','文本'],['array','数组'],['object','对象']].map(([id,label]) => `<option value="${id}" ${id===type?'selected':''}>${label}</option>`).join('')}</select>
+      <input value="${escapeHTML(displayValue)}" onchange="changeBuildingEffectValue(${index},this.value)" onblur="changeBuildingEffectValue(${index},this.value)" />
+      <button class="btn-icon btn-sm" title="删除效果" onclick="removeBuildingEffect(${index});return false;">×</button></div>`;
+  });
+  return html + '<div class="add-row"><button class="btn-secondary btn-sm" onclick="addBuildingEffect();return false;">+ 添加建筑效果</button></div></div>';
+}
+
+function renderCityStateGenerationForm(item) {
+  return `<div class="form-card">
+    <div class="section-title">城邦刷新与成长</div>
+    <div class="form-grid">
+      ${field('spawnDensity', '刷新密度（每个陆地格）', item.spawnDensity ?? 0.0006, { type: 'number' })}
+      ${field('maxCityStates', '城邦数量安全上限', item.maxCityStates ?? 256, { type: 'number' })}
+      ${field('maxLevel', '城邦最高等级', item.maxLevel ?? 5, { type: 'number' })}
+      ${field('minEnemyStrength', '最低等级敌人综合强度', item.minEnemyStrength ?? 20, { type: 'number' })}
+      ${field('maxEnemyStrength', '最高等级敌人综合强度', item.maxEnemyStrength ?? 180, { type: 'number' })}
+      ${field('minArea', '最低等级占地约面积（格）', item.minArea ?? 36, { type: 'number' })}
+      ${field('maxArea', '最高等级占地约面积（格）', item.maxArea ?? 144, { type: 'number' })}
+      ${field('eraStrengthMultiplier', '每跨一个时代强度倍率', item.eraStrengthMultiplier ?? 2.5, { type: 'number' })}
+      ${field('baseAggression', '基础攻击欲望（0～1）', item.baseAggression ?? 0.05, { type: 'number' })}
+      ${field('aggressionPerEra', '玩家每提升一个时代增加攻击欲望', item.aggressionPerEra ?? 0.08, { type: 'number' })}
+    </div>
+    <div class="section-title">综合强度公式</div>
+    <div class="hint-box">敌人综合强度 = 攻击力 + 生命值 +（速度 - 1）× 30 +（攻击距离 - 1）× 50。城邦等级由其与玩家出生地的距离决定，高级城邦可生成下一时代内容。</div>
+  </div>`;
+}
+
+function buildingEffectEntries(item) { return Object.entries(item.uniqueFunction || {}); }
+function storeBuildingEffectEntries(item, entries) { item.uniqueFunction = Object.fromEntries(entries.filter(([key]) => key)); }
+function parseBuildingEffectValue(raw, type) {
+  if (type === 'number') { const value = Number(raw); if (!Number.isFinite(value)) throw new Error('请输入有效数字'); return value; }
+  if (type === 'boolean') return raw === 'true' || raw === '1' || raw === '是';
+  if (type === 'array' || type === 'object') { const value = JSON.parse(raw); if (type === 'array' && !Array.isArray(value)) throw new Error('请输入 JSON 数组'); if (type === 'object' && (value === null || Array.isArray(value) || typeof value !== 'object')) throw new Error('请输入 JSON 对象'); return value; }
+  return raw;
+}
+function addBuildingEffect() { const item = getItem(); if (!item) return; const entries = buildingEffectEntries(item); let key = 'customEffect', n = 2; while (entries.some(([k]) => k === key)) key = `customEffect${n++}`; entries.push([key, 1]); storeBuildingEffectEntries(item, entries); markDirty(); renderDetail(); }
+function removeBuildingEffect(index) { const item = getItem(); if (!item) return; const entries = buildingEffectEntries(item); entries.splice(index, 1); storeBuildingEffectEntries(item, entries); markDirty(); renderDetail(); }
+function changeBuildingEffectKey(index, key) { const item = getItem(); if (!item) return; const entries = buildingEffectEntries(item); if (entries.some(([k], i) => i !== index && k === key)) { showToast('该效果已经存在', 'error'); renderDetail(); return; } entries[index][0] = key; storeBuildingEffectEntries(item, entries); markDirty(); renderDetail(); }
+function changeBuildingEffectType(index, type) { const item = getItem(); if (!item) return; const entries = buildingEffectEntries(item); entries[index][1] = ({ number: 1, boolean: true, string: '', array: [], object: {} })[type]; storeBuildingEffectEntries(item, entries); markDirty(); renderDetail(); }
+function changeBuildingEffectValue(index, raw) { const item = getItem(); if (!item) return; const entries = buildingEffectEntries(item); const old = entries[index]?.[1]; const type = Array.isArray(old) ? 'array' : (old !== null ? typeof old : 'object'); try { entries[index][1] = parseBuildingEffectValue(raw, type); storeBuildingEffectEntries(item, entries); markDirty(); } catch (error) { showToast('效果值格式错误：' + error.message, 'error'); } }
 
 function renderBuildingForm(b) {
   let html = '<div class="form-row span-3">';
@@ -903,6 +1241,7 @@ function renderBuildingForm(b) {
 
   html += '<div class="form-row span-3">';
   html += field('maxCount', '最大数量', b.maxCount, { type: 'number', placeholder: 'null=无限' });
+  html += field('maxHp', '建筑生命值', b.maxHp ?? 100, { type: 'number' });
   html += field('storageMultiplier', '存储倍率', b.storageMultiplier, { type: 'number', placeholder: '无' });
   html += '</div>';
 
@@ -910,6 +1249,20 @@ function renderBuildingForm(b) {
   html += field('upgradesFrom', '升级来源', b.upgradesFrom, { type: 'select', options: ['', ...state.data.buildings.map(bld => bld.id)], optionLabels: {'': '(无)', ...Object.fromEntries(state.data.buildings.map(bld => [bld.id, bld.name+' ('+bld.id+')']))} });
   html += field('upgradesTo', '升级目标', b.upgradesTo, { type: 'select', options: ['', ...state.data.buildings.map(bld => bld.id)], optionLabels: {'': '(无)', ...Object.fromEntries(state.data.buildings.map(bld => [bld.id, bld.name+' ('+bld.id+')']))} });
   html += field('allowedGrounds', '允许地形', (b.allowedGrounds || []).join(','), { placeholder: 'G,F' });
+  html += '</div>';
+
+  html += '<div class="section-title">游戏功能属性</div><div class="form-row span-3">';
+  html += field('category', '建筑类别', b.category || 'administration', { type: 'select', options: ['housing','agriculture','gathering','industry','commerce','research','civic','military','defense','administration'], optionLabels: { housing:'住宅', agriculture:'农业', gathering:'采集', industry:'工业', commerce:'商业', research:'科研', civic:'人文', military:'军事', defense:'防御', administration:'行政' } });
+  html += field('eraId', '所属时代', b.eraId || 'primitive', { type: 'select', options: ['primitive','ancient','classical','medieval','exploration','early_modern','industrial','modern'], optionLabels: { primitive:'原始时代', ancient:'古代', classical:'古典时代', medieval:'中世纪', exploration:'大航海时代', early_modern:'近世时代', industrial:'工业时代', modern:'现代' } });
+  html += field('jobType', '岗位类型', b.jobType || '', { placeholder: '留空则使用建筑类别' });
+  html += '</div><div class="form-row span-3">';
+  html += field('soldierCapacity', '士兵容量', b.soldierCapacity ?? 0, { type: 'number' });
+  html += field('territoryRadius', '领土半径', b.territoryRadius ?? 0, { type: 'number' });
+  html += field('requiredResourceNode', '所需资源点', b.requiredResourceNode || '', { placeholder: 'wood / stone / food / gold' });
+  html += '</div><div class="form-row span-3">';
+  html += field('boundLuxuryYield', '奢侈品采集量', b.boundLuxuryYield ?? 0, { type: 'number' });
+  html += field('requiredExpeditionEntrance', '所需探险入口', b.requiredExpeditionEntrance || '', { placeholder: '入口 ID' });
+  html += field('isHeadquarters', '总部建筑', !!b.isHeadquarters, { type: 'checkbox' });
   html += '</div>';
 
   html += renderAdjacentRequirementGroups(b);
@@ -947,6 +1300,8 @@ function renderBuildingForm(b) {
 
   // Synthesis recipes - 始终显示，支持增删
   html += '<div class="section-title">合成配方</div>';
+  html += renderBuildingEffectsEditor(b);
+
   const recipes = b.synthesisRecipes || [];
   recipes.forEach((r, ri) => {
     html += `<div style="border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px">`;
@@ -1216,8 +1571,17 @@ function renderTechForm(t) {
   html += field('name', '名称', t.name, { placeholder: '炼钢技术' });
   html += field('tier', '层级', t.tier, { type: 'number' });
   html += field('researchTime', '研究时间(tick)', t.researchTime, { type: 'number' });
+  html += field('pointCost', '科技点消耗', t.pointCost, { type: 'number' });
+  html += field('eraId', '所属时代ID', t.eraId, { placeholder: 'stone_age' });
+  html += field('icon', '图标路径', t.icon, { placeholder: 'assets/...' });
   html += field('description', '描述', t.description, { type: 'textarea', rows: 2 });
+  html += field('history', '历史说明', t.history, { type: 'textarea', rows: 2 });
   html += '</div>';
+
+  html += '<div class="section-title">游戏效果</div>';
+  html += '<div class="form-group full">';
+  html += '<textarea id="f_research_effects_json" data-field="research_effects_json" rows="5" placeholder=\'{"productionMul":1.05,"resourceProductionMul":{"wood":1.1}}\'>' + escapeHTML(JSON.stringify(t.effects || {}, null, 2)) + '</textarea>';
+  html += '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">支持：全局生产倍率、各资源产出倍率等游戏实际效果；游戏中会自动显示为中文。</div></div>';
   html += '<div class="form-row span-2">';
   html += field('pos_x', '位置X', t.pos?.x ?? 0, { type: 'number' });
   html += field('pos_y', '位置Y', t.pos?.y ?? 0, { type: 'number' });
@@ -1278,9 +1642,16 @@ function renderCombatForm(c) {
     html += `<div class="sub-row" data-subidx="${i}">
       <input class="amount" data-subidx="${i}" data-key="id" value="${e.id||''}" placeholder="ID" style="width:120px" />
       <input class="amount" data-subidx="${i}" data-key="name" value="${e.name||''}" placeholder="名称" style="width:80px" />
+      <input class="amount" data-subidx="${i}" data-key="icon" value="${e.icon||''}" placeholder="图标路径" style="width:120px" />
+      <input class="amount" data-subidx="${i}" data-key="faction" value="${e.faction||''}" placeholder="势力" style="width:80px" />
       <input class="amount" data-subidx="${i}" data-key="maxHp" type="number" value="${e.maxHp||5}" placeholder="HP" style="width:50px" />
       <input class="amount" data-subidx="${i}" data-key="attack" type="number" value="${e.attack||1}" placeholder="攻击" style="width:50px" />
+      <input class="amount" data-subidx="${i}" data-key="attackRange" type="number" value="${e.attackRange??1}" placeholder="射程" style="width:50px" />
+      <input class="amount" data-subidx="${i}" data-key="speed" type="number" step="0.1" value="${e.speed??1}" placeholder="速度" style="width:55px" />
+      <input class="amount" data-subidx="${i}" data-key="cp" type="number" value="${e.cp??1}" placeholder="CP" style="width:50px" />
+      <label style="display:flex;align-items:center;gap:3px"><input data-subidx="${i}" data-key="strategicOnly" type="checkbox" ${e.strategicOnly!==false?'checked':''}>战略敌军</label>
       <select data-subidx="${i}" data-key="attackTarget">
+        <option value="army" ${e.attackTarget==='army'?'selected':''}>军团</option>
         <option value="population" ${e.attackTarget==='population'?'selected':''}>人口</option>
         <option value="both" ${e.attackTarget==='both'?'selected':''}>建筑+人口</option>
         <option value="building" ${e.attackTarget==='building'?'selected':''}>建筑</option>
@@ -1336,9 +1707,17 @@ function renderUnitForm(u) {
   let html = '<div class="form-row span-3">';
   html += field('id', '单位ID', u.id, { placeholder: 'warrior' });
   html += field('name', '名称', u.name, { placeholder: '战士' });
+  html += field('description', '说明', u.description, { type: 'textarea', rows: 2 });
+  html += field('eraId', '生产所需时代ID', u.eraId, { placeholder: 'primitive' });
+  html += field('icon', '图标路径', u.icon, { placeholder: 'assets/...' });
+  html += field('cardArt', '兵种立绘路径', u.cardArt, { placeholder: 'assets/...' });
  html += field('combatPower', '战斗力', u.combatPower, { type: 'number' });
+ html += field('hp', '生命值', u.hp, { type: 'number' });
+ html += field('attack', '攻击力', u.attack, { type: 'number' });
+ html += field('attackRange', '攻击距离', u.attackRange, { type: 'number' });
+ html += field('cp', 'CP', u.cp ?? 1, { type: 'number' });
+ html += field('speed', '移动/战斗速度', u.speed ?? 1, { type: 'number', step: '0.1' });
  html += field('populationRequired', '需求人口', u.populationRequired, { type: 'number' });
-  html += field('commandPoints', '指挥点', u.commandPoints, { type: 'number' });
   html += field('weight', '权重', u.weight, { type: 'number' });
  html += field('unlocked', '是否解锁', u.unlocked, { type: 'checkbox' });
   html += '</div>';
@@ -1346,11 +1725,16 @@ function renderUnitForm(u) {
   html += field('domain', '军种领域', u.domain, { type: 'select', options: getUnitDomainConfigs().map(d => d.id), optionLabels: Object.fromEntries(getUnitDomainConfigs().map(d => [d.id, `${d.name || d.id} (${d.id})`])) });
   html += field('branch', '兵种类型', u.branch, { type: 'select', options: getUnitBranchConfigs().map(b => b.id), optionLabels: Object.fromEntries(getUnitBranchConfigs().map(b => [b.id, `${b.name || b.id} (${b.id})`])) });
   html += field('tier', '时代层级', u.tier ?? 0, { type: 'number' });
+  html += field('lane', '战线位置', u.lane, { type: 'select', options: ['front', 'rear'], optionLabels: { front: '前排', rear: '后排' } });
+  html += field('trainingBuildingId', '训练建筑ID', u.trainingBuildingId, { placeholder: 'barracks_hall' });
   html += '</div>';
   html += '<div class="form-row span-3">';
   html += field('researchCost', '研发灵感', u.researchCost ?? 0, { type: 'number' });
   html += field('prerequisiteUnits', '前置兵种', (u.prerequisiteUnits || []).join(','), { placeholder: 'warrior,swordsman' });
   html += field('prerequisiteTechs', '前置科技', (u.prerequisiteTechs || []).join(','), { placeholder: 'smelting,military_training' });
+  html += field('roleTags', '角色标签', (u.roleTags || []).join(','), { placeholder: 'melee,shield' });
+  html += field('strongAgainst', '克制标签', (u.strongAgainst || []).join(','), { placeholder: 'cavalry,armored' });
+  html += field('weakAgainst', '受制标签', (u.weakAgainst || []).join(','), { placeholder: 'ranged,siege' });
   html += '</div>';
 
   // 消耗资源
@@ -1364,7 +1748,62 @@ function renderUnitForm(u) {
 }
 
 function getUnitDefaultItem() {
- return { id: 'new_unit', name: '新兵种', domain: getUnitDomainConfigs()[0]?.id || '', branch: getUnitBranchConfigs()[0]?.id || '', tier: 0, combatPower: 1, populationRequired: 0, commandPoints: 1, weight: 10, researchCost: 0, prerequisiteUnits: [], prerequisiteTechs: [], cost: [], unlocked: true };
+ return { id: 'new_unit', name: '新兵种', description: '', eraId: 'primitive', domain: getUnitDomainConfigs()[0]?.id || '', branch: getUnitBranchConfigs()[0]?.id || '', lane: 'front', tier: 0, combatPower: 1, hp: 1, attack: 1, attackRange: 1, cp: 1, speed: 1, populationRequired: 1, weight: 10, researchCost: 0, prerequisiteUnits: [], prerequisiteTechs: [], roleTags: [], strongAgainst: [], weakAgainst: [], cost: [], unlocked: true };
+}
+
+/* ═══════════════════════════════════════════
+   英雄配置 — 渲染
+   ═══════════════════════════════════════════ */
+function getHeroDefaultItem() {
+  return {
+    id: 'new_hero', name: '新英雄', title: '', description: '', eraId: 'classical', role: 'commander', heroClass: 'military',
+    portrait: '', icon: '', defaultSpawn: false, initialAffinityLevel: 0, initialAffinityProgress: 0, defeatRecoveryTicks: 30,
+    unitStats: { hp: 10, attack: 2, speed: 1, attackRange: 1 },
+    affinityGrowth: { hp: 1, attack: 0.2, speed: 0.02, attackRange: 0 },
+    specialEffects: [],
+    activeSkill: { id: 'new_hero_active', name: '待配置主动技能', description: '主动技能接口已预留。', basePower: 0, affinityPowerPerLevel: 0, cooldownTicks: 12 },
+    dialogueDocument: { version: 2, daily: [{ id: 'daily_01', start: 'intro', nodes: [{ id: 'intro', speaker: 'hero', text: '很高兴见到你。', choices: [{ text: '我也是。', next: 'end' }, { text: '今天过得如何？', next: 'end' }] }, { id: 'end', speaker: 'hero', text: '下次再聊。', end: true }] }], affinityDaily: {}, affinitySpecial: {} }
+  };
+}
+
+function renderHeroForm(h) {
+  const stats = { hp: 10, attack: 2, speed: 1, attackRange: 1, ...(h.unitStats || {}) };
+  const growth = { hp: 1, attack: 0.2, speed: 0.02, attackRange: 0, ...(h.affinityGrowth || {}) };
+  let html = '<div class="form-row span-3">';
+  html += field('id', '英雄ID', h.id, { placeholder: 'fu_hao' });
+  html += field('name', '名称', h.name, { placeholder: '妇好' });
+  html += field('title', '称号', h.title, { placeholder: '商代女将' });
+  html += field('eraId', '所属时代ID', h.eraId, { placeholder: 'ancient' });
+  html += field('role', '定位', h.role, { placeholder: 'commander' });
+  html += field('heroClass', '英雄类型', h.heroClass, { type: 'select', options: ['military', 'civil'], optionLabels: { military: '军事', civil: '文职' } });
+  html += field('portrait', '角色立绘路径', h.portrait, { placeholder: 'assets/hero-portraits/...' });
+  html += field('icon', '图标路径', h.icon, { placeholder: 'assets/historical-icons/...' });
+  html += field('defaultSpawn', '开局默认生成', h.defaultSpawn, { type: 'checkbox' });
+  html += field('description', '说明', h.description, { type: 'textarea', rows: 2, full: true });
+  html += '</div>';
+  html += '<div class="section-title">初始好感</div><div class="form-row span-3">';
+  html += field('initialAffinityLevel', '初始好感等级（0—10）', h.initialAffinityLevel ?? 0, { type: 'number' });
+  html += field('initialAffinityProgress', '初始好感进度（0—99）', h.initialAffinityProgress ?? 0, { type: 'number' });
+  html += field('defeatRecoveryTicks', '战败恢复时段（tick）', h.defeatRecoveryTicks ?? 30, { type: 'number' });
+  html += field('hero_active_cooldown_ticks', '主动技能冷却（tick）', h.activeSkill?.cooldownTicks ?? 12, { type: 'number' });
+  html += '</div>';
+  html += '<div class="section-title">作为兵种的基础属性</div><div class="form-row span-3">';
+  html += field('hero_unit_hp', '生命值', stats.hp, { type: 'number' });
+  html += field('hero_unit_attack', '攻击力', stats.attack, { type: 'number' });
+  html += field('hero_unit_speed', '速度', stats.speed, { type: 'number' });
+  html += field('hero_unit_attackRange', '射程', stats.attackRange, { type: 'number' });
+  html += '</div>';
+  html += '<div class="section-title">每级好感增加属性</div><div class="form-row span-3">';
+  html += field('hero_growth_hp', '每级生命值', growth.hp, { type: 'number' });
+  html += field('hero_growth_attack', '每级攻击力', growth.attack, { type: 'number' });
+  html += field('hero_growth_speed', '每级速度', growth.speed, { type: 'number' });
+  html += field('hero_growth_attackRange', '每级射程', growth.attackRange, { type: 'number' });
+  html += '</div>';
+  html += field('hero_special_effects_json', '特殊效果接口（JSON数组）', JSON.stringify(h.specialEffects || [], null, 2), { type: 'textarea', rows: 6, full: true });
+  html += field('hero_active_skill_json', '主动技能接口（JSON对象）', JSON.stringify(h.activeSkill || {}, null, 2), { type: 'textarea', rows: 7, full: true });
+  html += field('hero_dialogue_document_json', '对话文档（JSON）', JSON.stringify(h.dialogueDocument || {}, null, 2), { type: 'textarea', rows: 16, full: true });
+  html += '<div class="form-group full" style="font-size:12px;color:var(--muted)">对话节点支持逐句显示、二选一及 affinity 正负好感变化。完整格式见 docs/HERO_DIALOGUE_FORMAT.md。</div>';
+  return html;
 }
 
 /* ═══════════════════════════════════════════
@@ -1753,6 +2192,9 @@ function renderCultureForm(item) {
   html += field('name', '名称', item.name, { placeholder: '生存信条' });
   html += field('tier', '层级', item.tier, { type: 'number' });
   html += field('researchTime', '研究时间(tick)', item.researchTime, { type: 'number' });
+  html += field('pointCost', '人文点消耗', item.pointCost, { type: 'number' });
+  html += field('eraId', '所属时代ID', item.eraId, { placeholder: 'stone_age' });
+  html += field('icon', '图标路径', item.icon, { placeholder: 'assets/...' });
   html += '</div>';
   html += '<div class="form-row">';
   html += field('policyType', '政策类型', item.policyType, { type: 'select', options: ['policy', 'government', 'doctrine'], optionLabels: { policy: '政策', government: '政体', doctrine: '信条' } });
@@ -1785,7 +2227,7 @@ function renderCultureForm(item) {
   html += '<div class="section-title">效果 (JSON)</div>';
   html += '<div class="form-group full">';
   html += '<textarea id="f_effects_json" data-field="effects_json" rows="4" placeholder=\'{"economy": {"productionMul": 1.05}}\'>' + escapeHTML(JSON.stringify(item.effects || {}, null, 2)) + '</textarea>';
-  html += '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">直接编辑JSON，格式: {"类别": {"属性": 数值}}</div></div>';
+  html += '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">支持：productionMul（生产倍率）、resourceProductionMul（资源产出倍率）、diplomacyMul（外交收益）、satisfactionBonus（满意度）。游戏中会显示中文名称。</div></div>';
   return html;
 }
 
@@ -2040,6 +2482,26 @@ function renderInitialForm(i) {
   html += '<p style="font-size:11px;color:var(--muted);margin-bottom:8px">💡 食物日消耗 = 1 × 现有人口数（受人文/炼金影响）</p>';
 
   return html;
+}
+
+function renderCheatsForm(cheats) {
+  return `<div class="form-card">
+    <div class="section-title">地图金手指</div>
+    <div class="form-row span-3">
+      ${field('clearAllFog', '清除所有迷雾', cheats.clearAllFog === true, { type: 'checkbox' })}
+      ${field('unlimitedBasicResources', '无限基础资源', cheats.unlimitedBasicResources === true, { type: 'checkbox' })}
+      ${field('extremeArmyMovementSpeed', '极大提高军队移动速度', cheats.extremeArmyMovementSpeed === true, { type: 'checkbox' })}
+      ${field('cityStatesAttackImmediately', '城邦立刻派遣敌人攻击玩家', cheats.cityStatesAttackImmediately === true, { type: 'checkbox' })}
+      ${field('grantAllLuxuries', '获得所有奢侈品各1份', cheats.grantAllLuxuries === true, { type: 'checkbox' })}
+      ${field('completeCurrentEraResearchHotkey', '按1键完成当前时代全部科技和人文', cheats.completeCurrentEraResearchHotkey === true, { type: 'checkbox' })}
+      ${field('increaseCurrentHeroAffinityHotkey', '按2键使当前对话英雄的好感等级提升1级', cheats.increaseCurrentHeroAffinityHotkey === true, { type: 'checkbox' })}
+      ${field('fillEraMaterialsHotkey', '按3键补满当前及以前时代的特殊材料', cheats.fillEraMaterialsHotkey === true, { type: 'checkbox' })}
+      ${field('spawnTestEnemyHotkey', '按4键在大本营附近生成测试敌人（50血/20攻/1CP/1移动）', cheats.spawnTestEnemyHotkey === true, { type: 'checkbox' })}
+      ${field('spawnHestiaArmyHotkey', '按5键在大本营附近生成赫斯提亚军团（50血/20攻/1CP/6移动）', cheats.spawnHestiaArmyHotkey === true, { type: 'checkbox' })}
+      ${field('spawnSuperArmyHotkey', '按6键在大本营附近生成超级军团（10000血/10000攻/10CP/10移动）', cheats.spawnSuperArmyHotkey === true, { type: 'checkbox' })}
+    </div>
+    <div style="font-size:12px;color:var(--muted);padding:8px 0;">所有选项默认关闭。“无限基础资源”会在进入游戏时把木材、石材、食物、金子等非稀有资源补至当前容量上限；军队高速模式为10倍地图移动速度。</div>
+  </div>`;
 }
 
 function renderMapForm() {
@@ -2525,7 +2987,14 @@ function applyFieldChange(el) {
   if (el.type === 'number') value = value === '' ? null : parseFloat(value);
 
   // Handle nested fields
-  if (fieldName === 'footprintWidth') {
+  if (fieldName === 'research_effects_json') {
+    try {
+      item.effects = value ? JSON.parse(value) : {};
+    } catch (e) {
+      showToast('科技效果 JSON 格式错误: ' + e.message, 'error');
+      return;
+    }
+  } else if (fieldName === 'footprintWidth') {
     if (!item.footprint) item.footprint = { width: 1, height: 1 };
     item.footprint.width = parseInt(value) || 1;
   } else if (fieldName === 'footprintHeight') {
@@ -2662,7 +3131,44 @@ function applyFieldChange(el) {
       showToast('按资源产出倍率 JSON 格式错误: ' + e.message, 'error');
       return;
     }
-  } else if (fieldName === 'prerequisiteUnits' || fieldName === 'prerequisiteTechs') {
+  } else if (fieldName.startsWith('hero_unit_')) {
+    item.unitStats ||= {};
+    item.unitStats[fieldName.slice('hero_unit_'.length)] = Number(value) || 0;
+  } else if (fieldName.startsWith('hero_growth_')) {
+    item.affinityGrowth ||= {};
+    item.affinityGrowth[fieldName.slice('hero_growth_'.length)] = Number(value) || 0;
+  } else if (fieldName === 'hero_active_cooldown_ticks') {
+    item.activeSkill ||= {};
+    item.activeSkill.cooldownTicks = Math.max(1, parseInt(value) || 12);
+  } else if (fieldName === 'hero_special_effects_json') {
+    try {
+      const parsed = value ? JSON.parse(value) : [];
+      if (!Array.isArray(parsed)) throw new Error('必须是 JSON 数组');
+      item.specialEffects = parsed;
+    } catch (e) {
+      showToast('特殊效果 JSON 格式错误: ' + e.message, 'error');
+      return;
+    }
+  } else if (fieldName === 'hero_active_skill_json') {
+    try {
+      const parsed = value ? JSON.parse(value) : {};
+      if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') throw new Error('必须是 JSON 对象');
+      item.activeSkill = parsed;
+    } catch (e) {
+      showToast('主动技能 JSON 格式错误: ' + e.message, 'error');
+      return;
+    }
+  } else if (fieldName === 'hero_dialogue_document_json') {
+    try {
+      const parsed = value ? JSON.parse(value) : {};
+      if (!parsed || (!Array.isArray(parsed.daily) && !Array.isArray(parsed.nodes))) throw new Error('必须包含 daily 对话数组（或旧格式 nodes 数组）');
+      item.dialogueDocument = parsed;
+    } catch (e) {
+      showToast('对话文档 JSON 格式错误: ' + e.message, 'error');
+      return;
+    }
+  } else if (fieldName === 'prerequisiteUnits' || fieldName === 'prerequisiteTechs'
+    || fieldName === 'roleTags' || fieldName === 'strongAgainst' || fieldName === 'weakAgainst') {
     item[fieldName] = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
   } else if (fieldName.startsWith('invasion')) {
     if (!item.invasion) item.invasion = {};
@@ -2799,13 +3305,13 @@ function addSubEntry(subName) {
       if (!state.data.combat) state.data.combat = { enemies: [], global: { humanHp: 2, clickAttack: 1 } };
       targetArray = state.data.combat.enemies;
       if (!targetArray) { state.data.combat.enemies = []; targetArray = state.data.combat.enemies; }
-      newEntry = { id: 'new_enemy', name: '新敌人', maxHp: 5, attack: 1, attackTarget: 'population', spawnConditions: { minDay: 1 } };
+      newEntry = { id: 'new_enemy', name: '新敌人', icon: '', faction: '敌对势力', maxHp: 5, attack: 1, attackRange: 1, speed: 1, cp: 1, strategicOnly: true, attackTarget: 'army', spawnConditions: { minDay: 1 } };
       break;
     case 'units':
       if (!state.data.combat) state.data.combat = { enemies: [], units: [], global: { humanHp: 2, clickAttack: 1 } };
       if (!state.data.combat.units) state.data.combat.units = [];
       targetArray = state.data.combat.units;
-      newEntry = { id: 'new_unit', name: '新单位', combatPower: 1, populationRequired: 0, cost: [], unlocked: true };
+      newEntry = getUnitDefaultItem();
       break;
     case 'techCost':
     case 'cultureCost': targetArray = item.cost; if (!targetArray) { item.cost = []; targetArray = item.cost; } break;
@@ -2923,7 +3429,10 @@ function applySubChange(el) {
   }
 
   if (targetArray && subIdx >= 0 && subIdx < targetArray.length) {
-    if (subName === 'unitReq' && key === 'reqKind') {
+    if (subName === 'enemies' && key === 'spawnMinDay') {
+      targetArray[subIdx].spawnConditions ||= {};
+      targetArray[subIdx].spawnConditions.minDay = value;
+    } else if (subName === 'unitReq' && key === 'reqKind') {
       const req = targetArray[subIdx];
       delete req.unitId;
       delete req.branch;
@@ -3070,6 +3579,10 @@ function addItem() {
     state.eventFileSource.set(newItem.id, isBase ? 'base' : 'expedition');
   } else {
     data.push(newItem);
+    if (state.tab === 'buildings') {
+      state.data.base_buildings.push(newItem);
+      state.buildingFileSource.set(newItem, 'buildings');
+    }
   }
 
   state.selectedIdx = data.length - 1;
@@ -3087,6 +3600,11 @@ function duplicateItem() {
   clone.id = clone.id + '_copy';
   clone.name = (clone.name || '') + ' (副本)';
   data.push(clone);
+  if (state.tab === 'buildings') {
+    const source = state.buildingFileSource.get(item) || 'buildings';
+    getBuildingSourceArray(source).push(clone);
+    state.buildingFileSource.set(clone, source);
+  }
   // Inherit event file source
   if (state.tab === 'events' && state.eventFileSource) {
     const src = state.eventFileSource.get(item.id);
@@ -3107,6 +3625,11 @@ function deleteItem() {
   // Clean up event file source tracking
   if (state.tab === 'events' && state.eventFileSource) {
     state.eventFileSource.delete(item.id);
+  }
+  if (state.tab === 'buildings') {
+    const sourceArray = getBuildingSourceArray(state.buildingFileSource.get(item));
+    const sourceIdx = sourceArray?.indexOf(item) ?? -1;
+    if (sourceIdx >= 0) sourceArray.splice(sourceIdx, 1);
   }
   data.splice(state.selectedIdx, 1);
   if (state.selectedIdx >= data.length) state.selectedIdx = data.length - 1;
@@ -3132,7 +3655,7 @@ function getDefaultItem() {
     case 'roads':
       return { id: 'new_road', name: '新道路', description: '', buildCost: [{ resourceId: 'stone', amount: 5 }], buildTime: 1, color: '#8B7355', alpha: 0.8 };
     case 'techs':
-      return { id: 'new_tech', name: '新科技', description: '', tier: 1, icon: '', cost: [{ resourceId: 'wood', amount: 50 }], researchTime: 3, prerequisites: [], pos: { x: 0, y: 0 }, unlocks: { buildings: [], items: [], regions: [], roadTypes: [], units: [], formations: [] } };
+      return { id: 'new_tech', name: '新科技', description: '', history: '', eraId: '', tier: 1, icon: '', pointCost: 50, cost: [], researchTime: 3, prerequisites: [], pos: { x: 0, y: 0 }, effects: {}, unlocks: { buildings: [], items: [], regions: [], units: [], formations: [] } };
     case 'combat':
       return { enemies: [], global: { humanHp: 2, clickAttack: 1 } };
     case 'adjacency':
@@ -3141,6 +3664,8 @@ function getDefaultItem() {
       return getCultureDefaultItem();
     case 'units':
       return getUnitDefaultItem();
+    case 'heroes':
+      return getHeroDefaultItem();
     case 'formations':
       return getFormationDefaultItem();
     case 'doctrines':
@@ -3153,24 +3678,28 @@ function getDefaultItem() {
    Tab switching
    ═══════════════════════════════════════════ */
 const tabTitles = {
+  cheats: '金手指',
+  city_states: '城邦生成',
   initial: '初始配置', buildings: '建筑配置', resources: '资源配置', items: '物品配置',
   events: '事件配置', expeditions: '探险配置', tags: '标签配置', map: '地图配置',
   roads: '道路配置', techs: '科技配置', combat: '战斗配置',
   adjacency: '相邻加成',
-  culture: '人文政策树', units: '兵种配置',
+  culture: '人文政策树', units: '兵种配置', heroes: '英雄配置',
   formations: '阵型配置',
   doctrines: '文化配置',
   analysis: '数值分析',
 };
 const tabFiles = {
-  initial: 'initial.json', buildings: 'buildings.json', resources: 'resources.json', items: 'items.json',
+  cheats: 'initial.json',
+  city_states: 'world-factions.json',
+  initial: 'initial.json', buildings: '全部运行时建筑（按来源保存）', resources: 'resources.json', items: 'items.json',
   events: 'events_base.json + events_expedition.json', expeditions: 'regions.json + expedition_global.json', tags: 'tags.json',
   map: 'base_map.json',
   roads: 'roads.json',
   techs: 'techs.json',
   combat: 'enemies.json',
   adjacency: 'adjacency-bonuses.json',
-  culture: 'culture.json', units: 'enemies.json',
+  culture: 'culture.json', units: 'enemies.json', heroes: 'ea_integration.json + historical_content.json',
   formations: 'enemies.json',
   doctrines: 'doctrines.json',
   analysis: '自动分析（只读）',
@@ -3195,7 +3724,7 @@ function switchTab(tab) {
   }
 
   // 地图和分析是单例 → 隐藏左侧列表和增删按钮，detail 占满宽度
-  const isSingleton = (tab === 'map' || tab === 'analysis');
+  const isSingleton = (tab === 'map' || tab === 'city_states' || tab === 'cheats' || tab === 'analysis');
   ['btnAdd','btnDup','btnDel','searchInput','itemCount','listHeader'].forEach(id => {
     document.getElementById(id).style.display = isSingleton ? 'none' : '';
   });

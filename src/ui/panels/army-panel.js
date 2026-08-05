@@ -6,14 +6,9 @@ import {
   calcFormationGroups,
   getFormationRequirementText,
   getFormationStatusText,
-  getArmyCombatPower,
   getFormationBonusText
 } from '../../utils/FormationUtils.js';
 import { eventBus } from '../../core/EventBus.js';
-
-function _getMaxCP() {
-  return _armySystem()?.getCommandPointLimit?.() || 20;
-}
 
 function _cfg() { return window.__game?.configRegistry?.get('enemies')?.units || []; }
 function _store() { return window.__game?.store; }
@@ -67,26 +62,21 @@ function _isFormationUnlocked(fId) {
   return false;
 }
 
-function calcCP(unitId) {
-  const cfg = _cfg().find(u => u.id === unitId);
-  return cfg ? (cfg.commandPoints || 1) : 1;
-}
-
 function getAvailCount(unitId) {
   const a = _avail();
   return a[unitId] || 0;
 }
 
-function addToArmy(armies, ai, uid) {
-  return _armySystem()?.addUnit?.(armies[ai].id, uid, 1).ok === true;
+function addToArmy(armyId, uid) {
+  return _armySystem()?.addUnit?.(armyId, uid, 1).ok === true;
 }
 
-function removeFromArmy(armies, ai, uid) {
-  _armySystem()?.removeUnit?.(armies[ai].id, uid, 1);
+function removeFromArmy(armyId, uid) {
+  _armySystem()?.removeUnit?.(armyId, uid, 1);
 }
 
-function dismissFromArmy(armies, ai, uid) {
-  return _armySystem()?.dismissUnit?.(armies[ai].id, uid, 1).ok === true;
+function dismissFromArmy(armyId, uid) {
+  return _armySystem()?.dismissUnit?.(armyId, uid, 1).ok === true;
 }
 
 function _renderAssemblyPanel(data, body, pm) {
@@ -156,7 +146,7 @@ function _renderAssemblyPanel(data, body, pm) {
     }));
     const details = document.createElement('div');
     details.style.cssText = 'flex:1;min-width:0;color:#e6e8ed;font-size:13px;';
-    details.textContent = `${unit.icon || '⚔️'} ${unit.name} · ${unit.domain === 'naval' ? '海军' : '陆军'} · CP ${calcCP(unit.id)} · 预备 ${reserves[unit.id]}`;
+    details.textContent = `${unit.icon || '⚔️'} ${unit.name} · ${unit.domain === 'naval' ? '海军' : '陆军'} · 预备 ${reserves[unit.id]}`;
     row.appendChild(details);
 
     const remove = document.createElement('button');
@@ -190,7 +180,7 @@ function _renderAssemblyPanel(data, body, pm) {
   }
 
   const selectedEntries = Object.entries(draft.unitCounts).filter(([, count]) => count > 0);
-  const usedCP = selectedEntries.reduce((sum, [unitId, count]) => sum + calcCP(unitId) * count, 0);
+  const selectedUnitCount = selectedEntries.reduce((sum, [, count]) => sum + count, 0);
   const selectedDomains = new Set(selectedEntries.map(([unitId]) => (
     _cfg().find(unit => unit.id === unitId)?.domain === 'naval' ? 'naval' : 'land'
   )));
@@ -198,12 +188,12 @@ function _renderAssemblyPanel(data, body, pm) {
   if (selectedEntries.length === 0) warning = '请至少选择一个预备队单位。';
   else if (selectedDomains.size !== 1 || !assemblyDomains.includes([...selectedDomains][0])) {
     warning = '部署域不匹配：同一军团必须全部属于该集结建筑支持的陆军或海军域。';
-  } else if (usedCP > _getMaxCP()) warning = '指挥点超过军团上限。';
-  else if (_armies().length >= (_armySystem()?.getArmyCapacity?.() || 2)) warning = '军团数量已达上限。';
+  } else if (_armies().length >= (_armySystem()?.getArmyCapacity?.() || 2)) warning = '军团数量已达上限。';
+  else if (selectedUnitCount > (_armySystem()?.getArmyUnitCapacity?.() || 5)) warning = `单支军团最多编入 ${_armySystem()?.getArmyUnitCapacity?.() || 5} 名士兵。`;
 
   const preview = document.createElement('div');
   preview.style.cssText = 'margin-top:12px;padding:10px 12px;background:rgba(91,141,239,.08);border-radius:8px;color:#b9cae8;font-size:12px;';
-  preview.textContent = `编成 ${selectedEntries.reduce((sum, [, count]) => sum + count, 0)} 单位 · CP ${usedCP}/${_getMaxCP()} · ${assemblyDomains.includes('naval') ? '海军部署' : '陆军部署'}`;
+  preview.textContent = `编成 ${selectedUnitCount} 单位（上限 ${_armySystem()?.getArmyUnitCapacity?.() || 5}）· ${assemblyDomains.includes('naval') ? '海军部署' : '陆军部署'}`;
   body.appendChild(preview);
   if (warning) {
     const warningElement = document.createElement('div');
@@ -229,13 +219,12 @@ function _renderAssemblyPanel(data, body, pm) {
         insufficient_reserve: '预备队数量不足。',
         mixed_unit_domains: '陆军与海军不能混编部署。',
         assembly_domain_not_supported: '该建筑不支持所选军种。',
-        command_points_full: '所选编成超过指挥点上限。',
         army_capacity_full: '军团数量已达上限。',
         no_deployment_tile: '建筑周围八个部署位置均不可用。'
       }[result?.reason] || result?.reason || '军团部署失败。');
       return;
     }
-    pm.pop?.();
+    pm.close?.();
   });
   body.appendChild(deploy);
 }
@@ -250,7 +239,8 @@ export function renderArmyPanel(data, body, pm) {
     return;
   }
 
-  const armies = _armies();
+  const allArmies = _armies();
+  const armies = data?.armyId ? allArmies.filter(army => army.id === data.armyId) : allArmies;
   const unitMap = {};
   _cfg().forEach(u => unitMap[u.id] = u);
 
@@ -262,8 +252,12 @@ export function renderArmyPanel(data, body, pm) {
 
   const info = document.createElement('div');
   info.style.cssText = 'font-size:12px;color:#808098;margin-bottom:14px;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:8px;';
-  info.textContent = '💡 军团 ' + armies.length + '/' + (_armySystem()?.getArmyCapacity?.() || 2) + '；每军团指挥点上限 ' + _getMaxCP() + '。军事学院、城堡与谋略府可提高军团上限。';
+  info.textContent = '💡 军团 ' + allArmies.length + '/' + (_armySystem()?.getArmyCapacity?.() || 2) + '；军团属性由其中的兵种与领队英雄共同计算。';
   body.appendChild(info);
+  const leaderGuide = document.createElement('div');
+  leaderGuide.style.cssText = 'margin-bottom:14px;padding:12px 14px;border:1px solid #c09245;border-radius:9px;background:rgba(192,146,69,.12);color:#f1d69b;font-size:12px;line-height:1.7;';
+  leaderGuide.innerHTML = '<b>⭐ 领队与CP提示</b><br>CP表示军团每个时段可进行的战斗行为数量。军团可以配备领队；对有领队的军团按中键准备主动技能，确认方向后按左键释放，再按中键取消。战斗时速度较快的一方先攻击；若速度高出对方至少2点，并在受到反击后仍然存活，将再攻击一次。军团生命归零后消失，领队返回历史酒馆休养。';
+  body.appendChild(leaderGuide);
 
   /* 已解锁战阵介绍 */
   const unlockedFormations = _formations().filter(f => _isFormationUnlocked(f.id));
@@ -305,15 +299,14 @@ export function renderArmyPanel(data, body, pm) {
   armies.forEach((army, ai) => {
     const card = document.createElement('div');
     card.style.cssText = 'background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;overflow:hidden;';
-    const usedCP = (army.unitIds || []).reduce((s, id) => s + calcCP(id), 0);
-    const totalPower = getArmyCombatPower(army);
-
     /* 头部行 */
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:14px 16px;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.06);';
     const representative = (army.unitIds || []).map(id => unitMap[id]).filter(Boolean)
       .sort((left, right) => (right.commandPoints || 1) - (left.commandPoints || 1))[0];
-    if (representative) row.appendChild(_createArtImage(representative.cardArt, representative.icon, {
+    const armyArt = army.heroIcon || army.heroPortrait || representative?.cardArt || representative?.icon;
+    const armyFallback = army.heroIcon ? (army.heroPortrait || representative?.icon) : representative?.icon;
+    if (armyArt) row.appendChild(_createArtImage(armyArt, armyFallback, {
       testid: `army-card-art-${army.id}`,
       cssText: 'width:54px;height:54px;object-fit:cover;border-radius:8px;background:#111722;'
     }));
@@ -324,18 +317,6 @@ export function renderArmyPanel(data, body, pm) {
       _armySystem()?.renameArmy?.(army.id, nameInput.value || '未命名');
     });
     row.appendChild(nameInput);
-
-    const cpRatio = usedCP / _getMaxCP();
-    const cpColor = cpRatio > 1 ? '#ff6b6b' : cpRatio > 0.8 ? '#f0a040' : '#4ecb71';
-    const cpLabel = document.createElement('span');
-    cpLabel.style.cssText = 'font-size:12px;color:' + cpColor + ';font-weight:600;white-space:nowrap;';
-    cpLabel.textContent = 'CP ' + usedCP + '/' + _getMaxCP();
-    row.appendChild(cpLabel);
-
-    const powerLabel = document.createElement('span');
-    powerLabel.style.cssText = 'font-size:12px;color:#5b8def;font-weight:600;white-space:nowrap;';
-    powerLabel.textContent = '⚔️ ' + totalPower;
-    row.appendChild(powerLabel);
 
     /* 阵型选择 */
     const formationSelect = document.createElement('select');
@@ -398,11 +379,19 @@ export function renderArmyPanel(data, body, pm) {
     commanderSelect.style.cssText = 'padding:4px 7px;border-radius:5px;border:1px solid rgba(255,255,255,.12);background:#242938;color:#e7e7ed;';
     commanderSelect.innerHTML = '<option value="">不配置统帅</option>';
     const commanders = (window.__game?.systems?.hero?.getRecruitedHeroes?.() || []).filter(hero => (hero.role === 'commander' || hero.heroClass === 'military') && hero.status !== 'injured');
+    const heroChangeStatus = _armySystem()?.getHeroChangeStatus?.(army.id) || { ok: true };
+    commanderSelect.disabled = !heroChangeStatus.ok;
+    commanderSelect.title = heroChangeStatus.ok ? '设置或更换统帅' : heroChangeStatus.reason;
     for (const hero of commanders) {
       const option = document.createElement('option');
       option.value = hero.heroId || hero.id;
       option.textContent = hero.name;
       option.selected = army.heroId === option.value;
+      const assignmentStatus = _armySystem()?.canAssignHero?.(army.id, option.value) || { ok: true };
+      if (!option.selected && !assignmentStatus.ok) {
+        option.disabled = true;
+        option.textContent += `（${assignmentStatus.reason}）`;
+      }
       commanderSelect.appendChild(option);
     }
     commanderSelect.addEventListener('change', () => {
@@ -414,11 +403,36 @@ export function renderArmyPanel(data, body, pm) {
     });
     commandRow.innerHTML = '<span>统帅</span>';
     commandRow.appendChild(commanderSelect);
+    if (!heroChangeStatus.ok) {
+      const lockReason = document.createElement('span');
+      lockReason.style.cssText = 'color:#e6a16f;';
+      lockReason.textContent = `🔒 ${heroChangeStatus.reason}`;
+      commandRow.appendChild(lockReason);
+    }
     const location = document.createElement('span');
     location.style.marginLeft = 'auto';
-    location.textContent = `位置 ${army.gridX},${army.gridY} · 士气 ${army.morale}`;
+    location.textContent = `位置 ${army.gridX},${army.gridY}`;
     commandRow.appendChild(location);
     card.appendChild(commandRow);
+    if (army.heroId === 'Hestia') {
+      const skillRow = document.createElement('div');
+      skillRow.style.cssText = 'padding:9px 16px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(126,174,226,.08);font-size:11px;color:#bcd9f4;';
+      const skillCooldown = window.__game?.systems?.hero?.getHero?.('Hestia')?.activeSkill?.cooldownTicks || 12;
+      skillRow.append(`🌙 月光 · 直线突刺4格 · 200%攻击伤害 · 1CP · 冷却 ${army.heroSkillCooldown || 0}/${skillCooldown}　`);
+      for (const [direction, label] of [['up','↑'],['down','↓'],['left','←'],['right','→']]) {
+        const button = document.createElement('button'); button.textContent = label;
+        button.style.cssText = 'margin-left:5px;padding:3px 9px;border:1px solid #6589ab;border-radius:5px;background:#263e59;color:#e5f3ff;cursor:pointer';
+        button.onclick = () => { const result = _armySystem()?.useHeroActiveSkill?.(army.id, direction); if (!result?.ok) pm.alert(result?.reason || '技能发动失败'); renderArmyPanel(data, body, pm); };
+        skillRow.appendChild(button);
+      }
+      card.appendChild(skillRow);
+    }
+
+    const statsRow = document.createElement('div');
+    statsRow.dataset.testid = `army-combat-stats-${army.id}`;
+    statsRow.style.cssText = 'display:grid;grid-template-columns:repeat(4,minmax(80px,1fr));gap:6px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;text-align:center;';
+    statsRow.innerHTML = `<span>⚔️ 攻击 <b>${army.attack ?? 0}</b></span><span>❤️ 生命 <b>${army.hp ?? 0}/${army.maxHp ?? 0}</b></span><span>🎯 射程 <b>${army.attackRange ?? 0}</b></span><span>🔷 CP <b>${army.cp ?? 0}/${army.maxCp ?? 1}</b></span><span>👟 速度 <b>${army.speed ?? 0}</b></span>`;
+    card.appendChild(statsRow);
 
     const movementRow = document.createElement('div');
     movementRow.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 16px;border-bottom:1px solid rgba(255,255,255,.06);font-size:11px;color:#9ba7b8;';
@@ -489,39 +503,6 @@ export function renderArmyPanel(data, body, pm) {
     }
     card.appendChild(movementRow);
 
-    const opponents = armies.filter(other => other.id !== army.id && other.unitIds?.length);
-    if (army.unitIds?.length && opponents.length) {
-      const battleRow = document.createElement('div');
-      battleRow.style.cssText = 'display:flex;align-items:center;gap:7px;padding:8px 16px;border-bottom:1px solid rgba(255,255,255,.06);font-size:11px;color:#c4a7a7;';
-      battleRow.append('战斗推演');
-      const opponentSelect = document.createElement('select');
-      opponentSelect.style.cssText = 'padding:4px 7px;border:1px solid #704f53;border-radius:5px;background:#302225;color:#f4e4e4;';
-      for (const opponent of opponents) {
-        const option = document.createElement('option');
-        option.value = opponent.id;
-        option.textContent = `${opponent.name}（战力 ${opponent.power}）`;
-        opponentSelect.appendChild(option);
-      }
-      const battleButton = document.createElement('button');
-      battleButton.textContent = '预估并交战';
-      battleButton.style.cssText = 'padding:4px 9px;border:1px solid #9a5555;border-radius:5px;background:#612f35;color:#ffe8e8;cursor:pointer;';
-      battleButton.addEventListener('click', async () => {
-        const prepared = _armySystem()?.previewEngagement?.(army.id, opponentSelect.value);
-        if (!prepared?.ok) return pm.alert(prepared?.reason || '无法推演');
-        const preview = prepared.preview;
-        const outlook = preview.outlook === 'attacker_advantage' ? '我方占优' : preview.outlook === 'defender_advantage' ? '对方占优' : '胜负接近';
-        const casualtyText = `预计伤亡：我方 ${preview.casualtyRanges.attacker.join('–')}，对方 ${preview.casualtyRanges.defender.join('–')}`;
-        if (!await pm.confirm(`${outlook}（战力 ${preview.attackerPower} / ${preview.defenderPower}）\n${casualtyText}\n交战会真实写回伤亡、士气与补给，是否继续？`)) return;
-        const result = _armySystem()?.commitEngagement?.(prepared);
-        if (!result?.ok) return pm.alert(result?.reason || '无法交战');
-        const headline = result.winner === 'attacker' ? `${army.name}获胜` : result.winner === 'defender' ? '对方获胜' : '双方战平';
-        await pm.alert(`${headline}\n最终战力：${result.finalPower.attacker} / ${result.finalPower.defender}\n伤亡：我方 ${result.casualties.attacker}，对方 ${result.casualties.defender}\n${result.report.decisiveReason}`);
-        renderArmyPanel(data, body, pm);
-      });
-      battleRow.append(opponentSelect, battleButton);
-      card.appendChild(battleRow);
-    }
-
     if (army.formationId) {
       const status = document.createElement('div');
       status.style.cssText = 'font-size:11px;padding:6px 16px;border-top:1px solid rgba(255,255,255,0.06);';
@@ -533,7 +514,21 @@ export function renderArmyPanel(data, body, pm) {
     /* 单位列表 */
     const unitsBody = document.createElement('div');
     unitsBody.style.cssText = 'padding:12px 16px;';
-    if (!army.unitIds || army.unitIds.length === 0) {
+    if (army.heroId) {
+      const hero = (window.__game?.systems?.hero?.getRecruitedHeroes?.() || []).find(item => (item.heroId || item.id) === army.heroId);
+      const heroStats = window.__game?.systems?.hero?.getHeroAbilityProfile?.(army.heroId)?.stats;
+      if (hero && heroStats) {
+        const heroRow = document.createElement('div');
+        heroRow.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(214,168,75,.12);border:1px solid rgba(214,168,75,.28);border-radius:8px;margin-bottom:7px;';
+        heroRow.appendChild(_createArtImage(hero.icon || hero.portrait, hero.portrait || '', { testid: `army-hero-art-${army.id}`, cssText: 'width:46px;height:46px;object-fit:cover;border-radius:8px;background:#111722;' }));
+        const text = document.createElement('span');
+        text.style.cssText = 'font-size:13px;color:#f2dfb0;flex:1;';
+        text.textContent = `${hero.name}（领队单位 · 攻击 ${heroStats.attack} · 生命 ${heroStats.hp} · 射程 ${heroStats.attackRange} · 速度 ${heroStats.speed}）`;
+        heroRow.appendChild(text);
+        unitsBody.appendChild(heroRow);
+      }
+    }
+    if ((!army.unitIds || army.unitIds.length === 0) && !army.heroId) {
       const emptyUnits = document.createElement('div');
       emptyUnits.style.cssText = 'font-size:12px;color:#808098;text-align:center;padding:8px;';
       emptyUnits.textContent = '尚未配置单位';
@@ -545,7 +540,7 @@ export function renderArmyPanel(data, body, pm) {
         const u = unitMap[uid];
         const uRow = document.createElement('div');
         uRow.style.cssText = 'display:flex;align-items:center;gap:10px;padding:6px 10px;background:rgba(91,141,239,0.06);border-radius:8px;margin-bottom:4px;';
-        uRow.innerHTML = '<span style="font-size:13px;font-weight:500;color:#ececf0;flex:1;">' + (u ? u.name + ' (⚔️' + u.combatPower + ' · CP' + (u.commandPoints||1) + ')' : uid) + '</span><span style="font-size:14px;font-weight:600;color:#a0a0ba;">×' + cnt + '</span>';
+        uRow.innerHTML = '<span style="font-size:13px;font-weight:500;color:#ececf0;flex:1;">' + (u ? u.name + '（攻击 ' + (u.attack ?? u.combatPower ?? 0) + ' · 生命 ' + (u.hp ?? 0) + ' · 射程 ' + (u.attackRange ?? 1) + ' · 速度 ' + (u.speed ?? 1) + '）' : uid) + '</span><span style="font-size:14px;font-weight:600;color:#a0a0ba;">×' + cnt + '</span>';
         if (u) uRow.appendChild(_createArtImage(u.cardArt, u.icon, {
           testid: `army-unit-art-${uid}`,
           cssText: 'width:42px;height:42px;object-fit:cover;border-radius:7px;background:#111722;'
@@ -555,8 +550,7 @@ export function renderArmyPanel(data, body, pm) {
         removeOne.style.cssText = 'padding:2px 8px;border:none;border-radius:4px;background:rgba(255,107,107,0.12);color:#ff6b6b;cursor:pointer;font-size:14px;';
         removeOne.title = '归还一个';
         removeOne.addEventListener('click', () => {
-          const a = _armies();
-          removeFromArmy(a, ai, uid);
+          removeFromArmy(army.id, uid);
           renderArmyPanel(data, body, pm);
         });
         uRow.appendChild(removeOne);
@@ -565,8 +559,7 @@ export function renderArmyPanel(data, body, pm) {
         dismissOne.style.cssText = 'padding:2px 8px;border:none;border-radius:4px;background:rgba(240,160,64,0.12);color:#f0a040;cursor:pointer;font-size:11px;';
         dismissOne.title = '遣散一个，释放士兵名额';
         dismissOne.addEventListener('click', () => {
-          const a = _armies();
-          dismissFromArmy(a, ai, uid);
+          dismissFromArmy(army.id, uid);
           renderArmyPanel(data, body, pm);
         });
         uRow.appendChild(dismissOne);
@@ -585,13 +578,8 @@ export function renderArmyPanel(data, body, pm) {
     /* 添加单位按钮 */
     const addArea = document.createElement('div');
     addArea.style.cssText = 'border-top:1px solid rgba(255,255,255,0.06);padding:10px 16px;display:flex;flex-wrap:wrap;gap:6px;';
-    if (usedCP >= _getMaxCP()) {
-      const fullMsg = document.createElement('span');
-      fullMsg.style.cssText = 'font-size:11px;color:#f0a040;';
-      fullMsg.textContent = '指挥点已满，无法继续添加';
-      addArea.appendChild(fullMsg);
-    } else {
-     _cfg().filter(u => _isUnitUnlocked(u.id) && usedCP + calcCP(u.id) <= _getMaxCP()).forEach(u => {
+    {
+     _cfg().filter(u => _isUnitUnlocked(u.id)).forEach(u => {
         const availCount = getAvailCount(u.id);
         const addBtn = document.createElement('button');
         addBtn.textContent = '+' + u.name;
@@ -604,8 +592,7 @@ export function renderArmyPanel(data, body, pm) {
             pm.alert('「' + u.name + '」数量不足，无法添加');
             return;
           }
-          const a = _armies();
-          if (!addToArmy(a, ai, u.id)) return;
+          if (!addToArmy(army.id, u.id)) return;
           renderArmyPanel(data, body, pm);
         });
         addArea.appendChild(addBtn);

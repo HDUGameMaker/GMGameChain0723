@@ -69,6 +69,7 @@ class ConfigRegistry {
     });
 
     await Promise.all(loadPromises);
+    this._configs.map = this._cropMapAroundPlayer(this._configs.map);
     this._configs.mapV2 = this._configs.map;
 
     this._applyEaIntegration();
@@ -76,12 +77,37 @@ class ConfigRegistry {
     this._applyExplorationBuildings();
     this._applyBuildingRuntimeOverrides();
     this._applyCivilizationBuildingOverrides();
+    this._removeRoadDependencies();
     this._ensureContentIcons();
 
     // 合成配方继承：高级建筑自动继承低级建筑的合成配方
     this._inheritSynthesisRecipes();
 
     console.log('[ConfigRegistry] All configs loaded:', Object.keys(this._configs));
+  }
+
+  _cropMapAroundPlayer(map) {
+    if (!map?.grid?.length || map._playerCenteredHalfArea) return map;
+    const oldHeight = map.grid.length;
+    const oldWidth = map.gridWidth || map.grid[0]?.length || 0;
+    const scale = Math.SQRT1_2;
+    const width = Math.max(32, Math.floor(oldWidth * scale));
+    const height = Math.max(32, Math.floor(oldHeight * scale));
+    const spawn = map.initialBuildings?.[0] || { gridX: Math.floor(oldWidth / 2), gridY: Math.floor(oldHeight / 2) };
+    const left = Math.max(0, Math.min(oldWidth - width, Math.floor(spawn.gridX - width / 2)));
+    const top = Math.max(0, Math.min(oldHeight - height, Math.floor(spawn.gridY - height / 2)));
+    const translate = item => ({ ...item, gridX: item.gridX - left, gridY: item.gridY - top });
+    const inside = item => item.gridX >= left && item.gridX < left + width && item.gridY >= top && item.gridY < top + height;
+    const manifest = Object.fromEntries(Object.entries(map.spawnManifest || {}).map(([key, items]) => [key,
+      Array.isArray(items) ? items.filter(inside).map(translate) : items]));
+    return {
+      ...map, _playerCenteredHalfArea: true, gridWidth: width, gridHeight: height,
+      grid: map.grid.slice(top, top + height).map(row => Array.isArray(row) ? row.slice(left, left + width) : row.slice(left, left + width)),
+      initialBuildings: (map.initialBuildings || []).filter(inside).map(translate),
+      spawnManifest: manifest,
+      initialCamera: map.initialCamera ? { ...map.initialCamera, gridX: map.initialCamera.gridX - left, gridY: map.initialCamera.gridY - top } : map.initialCamera,
+      viewportCenter: map.viewportCenter ? { ...map.viewportCenter, defaultGridX: spawn.gridX - left, defaultGridY: spawn.gridY - top } : map.viewportCenter
+    };
   }
 
   selectFixedMap(mapId = 'grand_map_v2') {
@@ -106,7 +132,9 @@ class ConfigRegistry {
     enemies.unitBranches = mergeUnique(enemies.unitBranches, content.unitBranches);
     enemies.units = (enemies.units || []).map(unit => ({ ...unit, ...(content.unitProfiles?.[unit.id] || {}) }));
     enemies.units = mergeUnique(enemies.units, content.units);
-    enemies.enemies = mergeUnique(enemies.enemies, content.enemies);
+    // Legacy click-to-damage map enemies were removed. Strategic hostile sites,
+    // enemy expansion cells and hostile armies remain the supported opponents.
+    // 敌人定义现在作为战略敌军模板使用，不再生成旧式点击伤害单位。
     this._configs.buildings = mergeUnique(this._configs.buildings, content.buildings);
 
     for (const building of content.buildings || []) {
@@ -146,15 +174,13 @@ class ConfigRegistry {
     // 旧主版本与 EA 单位没有时代字段。这里仅补充分类元数据，不覆盖其既有数值，
     // 使它们能够进入正确的时代分页并服从时代训练限制。
     const legacyUnitMetadata = {
-      warrior: ['primitive', 'infantry'], raft: ['primitive', 'navy'],
+      warrior: ['primitive', 'infantry'],
       spearman: ['primitive', 'anti_cavalry'], archer: ['primitive', 'ranged'],
-      swordsman: ['classical', 'infantry'], catapult: ['classical', 'siege'], galley: ['classical', 'navy'],
+      swordsman: ['classical', 'infantry'],
       knight: ['medieval', 'cavalry'], armored_cavalry: ['medieval', 'cavalry'], pikeman: ['medieval', 'anti_cavalry'],
-      crossbowman: ['medieval', 'ranged'], longbowman: ['medieval', 'ranged'], trebuchet: ['medieval', 'siege'], siege_tower: ['medieval', 'siege'],
-      musketeer: ['exploration', 'ranged'], sailing_ship: ['exploration', 'navy'], fire_ship: ['exploration', 'navy'],
-      cannon: ['early_modern', 'siege'], biplane: ['early_modern', 'special'], tank: ['early_modern', 'special'],
-      modern_infantry: ['modern', 'infantry'], jet_fighter: ['modern', 'special'],
-      rocket_artillery: ['modern', 'siege'], battleship: ['modern', 'navy'], missile_destroyer: ['modern', 'navy']
+      crossbowman: ['medieval', 'ranged'], longbowman: ['medieval', 'ranged'],
+      musketeer: ['exploration', 'ranged'],
+      modern_infantry: ['modern', 'infantry'], jet_fighter: ['modern', 'special']
     };
     this._configs.enemies.units = this._configs.enemies.units.map(unit => {
       const metadata = legacyUnitMetadata[unit.id];
@@ -243,10 +269,23 @@ class ConfigRegistry {
     });
   }
 
+  _removeRoadDependencies() {
+    this._configs.buildings = (this._configs.buildings || []).map(building => {
+      const groups = (building.adjacentRequirementGroups || []).map(group => {
+        const conditions = (Array.isArray(group) ? group : group?.conditions || []).filter(condition => condition?.type !== 'road');
+        return Array.isArray(group) ? conditions : { ...group, conditions };
+      }).filter(group => (Array.isArray(group) ? group : group.conditions).length > 0);
+      const cleaned = { ...building, roadRequired: false, adjacentRequirementGroups: groups };
+      delete cleaned.adjacentRequirements;
+      return cleaned;
+    });
+    this._configs.roads = [];
+  }
+
   getHistoricalContent() {
     return this._configs.historicalContent || {
       eras: [], civilizations: [], luxuries: [], buildings: [], techs: [],
-      civics: [], units: [], heroes: [], strategies: []
+      civics: [], units: [], heroes: []
     };
   }
 

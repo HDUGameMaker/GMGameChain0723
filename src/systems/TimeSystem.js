@@ -133,6 +133,7 @@ export class TimeSystem {
 
     // 一天结束
     if (this.periodIndex >= this.PERIOD_NAMES.length) {
+      eventBus.emit('dayEnd', { day: prevDay });
       this.periodIndex = 0;
       this.day++;
       dayChanged = true;
@@ -211,7 +212,8 @@ export class TimeSystem {
       tickInPeriod: this.tickInPeriod,
       periodIndex: this.periodIndex,
       day: this.day,
-      elapsedInTick: this.elapsedInTick
+      elapsedInTick: this.elapsedInTick,
+      speed: this.speed
     };
   }
 
@@ -222,6 +224,7 @@ export class TimeSystem {
     this.periodIndex = state.periodIndex || 0;
     this.day = state.day || 1;
     this.elapsedInTick = state.elapsedInTick || 0;
+    this.speed = [1, 2, 4, 8, 16].includes(Number(state.speed)) ? Number(state.speed) : 1;
     this._lastStartedDay = this._getTickInDay() > 0 ? this.day : this.day - 1;
     this._updateStore();
   }

@@ -31,7 +31,7 @@ export function renderGameOverPanel(data, body, pm) {
   let icon, mainTitle, mainColor, subtitle;
   if (isWin) {
     icon = '🏆';
-    mainTitle = '征服胜利';
+    mainTitle = data.reason === 'easternBossDefeated' ? '文明胜利' : '征服胜利';
     mainColor = '#ffcc44';
     if (daysSurvived <= 15) subtitle = '⚡ 极速征服者';
     else if (daysSurvived <= 30) subtitle = '👑 征服之王';
@@ -67,7 +67,9 @@ export function renderGameOverPanel(data, body, pm) {
   const reason = document.createElement('div');
   reason.style.cssText = 'font-size:13px;color:#888;margin-bottom:18px;text-align:center;';
   if (isWin) {
-    reason.textContent = '建筑与边境拓土已经控制过半土地，你的文明完成了历史征服。';
+    reason.textContent = data.reason === 'easternBossDefeated'
+      ? '东方遗迹中的神秘黑暗造物已经被击败。你的文明摆脱了黑雾的威胁，得以强盛不衰。'
+      : '建筑与边境拓土已经控制过半土地，你的文明完成了历史征服。';
   } else if (data.reason === 'hqLost') {
     reason.textContent = '大本营被敌人占领，指挥中心沦陷……';
   } else if (data.reason === 'overwhelmed') {
