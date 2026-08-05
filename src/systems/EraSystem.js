@@ -25,6 +25,12 @@ export class EraSystem {
   getEras() { return this._content().eras || []; }
   getCivilizations() { return this._content().civilizations || []; }
   getUnit(unitId) { return (this._content().units || []).find(unit => unit.id === unitId) || null; }
+  getBuilding(buildingId) { return (this._content().buildings || []).find(building => building.id === buildingId) || null; }
+  getEraUnlockedBuildings(eraId = this.getCurrentEra()?.id) {
+    return (this._content().buildings || [])
+      .filter(building => building.eraId === eraId && !building.civilizationId)
+      .sort((left, right) => String(left.category || '').localeCompare(String(right.category || '')) || String(left.name || '').localeCompare(String(right.name || ''), 'zh-CN'));
+  }
 
   initNew() {
     this._currentEraIndex = 0;
@@ -268,9 +274,10 @@ export class EraSystem {
     this._currentEraIndex += 1;
     const era = this.getCurrentEra();
     this._updateStore();
-    eventBus.emit('eraAdvanced', { previousEraId: previousEra.id, eraId: era.id });
+    const unlockedBuildings = this.getEraUnlockedBuildings(era.id);
+    eventBus.emit('eraAdvanced', { previousEraId: previousEra.id, eraId: era.id, unlockedBuildings });
     eventBus.emit('combatBroadcast', { message: `🏛️ 文明进入${era.name}` });
-    return { ok: true, era };
+    return { ok: true, era, unlockedBuildings };
   }
 
   _updateStore() {

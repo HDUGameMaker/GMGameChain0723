@@ -14,7 +14,7 @@ export function renderWorldFactionsPanel(data, body, pm) {
   const armySystem = window.__game?.systems?.army;
   if (!diplomacy || !wild) return;
   body.style.cssText = 'padding:20px 24px;max-height:75vh;overflow:auto;color:#e7e9ee;';
-  body.innerHTML = '<div style="font-size:11px;color:#9da7b5;margin-bottom:15px">城邦拥有外交、有限领地与随时代升级的驻军，但没有玩家的完整科技/人口/建筑循环；野外目标只有战斗和战利品。</div>';
+  body.innerHTML = '<div style="font-size:11px;color:#9da7b5;margin-bottom:15px">所有城邦均为敌对势力。摧毁2×2大本营后可夺取城邦奢侈品，并解锁其资源点。</div>';
 
   const title = document.createElement('h3');
   title.textContent = `城邦势力（${diplomacy.getAllOutposts().length}）`;
@@ -27,7 +27,6 @@ export function renderWorldFactionsPanel(data, body, pm) {
     const card = document.createElement('article');
     card.style.cssText = 'padding:11px;border:1px solid #465366;border-radius:8px;background:rgba(255,255,255,.035);';
     card.innerHTML = `<div><b>${outpost.icon || '🏘️'} ${outpost.name}</b><span style="float:right;font-size:10px;color:#9eb0c8">${STATUS_NAME[state.status] || state.status}</span></div><div style="font-size:10px;color:#aab3c0;line-height:1.5;margin:6px 0">${outpost.description}</div><div style="font-size:10px;color:#7f94ad">时代 ${state.currentEraId} · 发展级 ${state.developmentLevel} · 防御 ${diplomacy.getOutpostDefense(outpost.id)} · 领地 ${state.controlledCells.length}</div>`;
-    card.appendChild(smallButton('外交与谈判', () => pm.push('outpost_diplomacy', { outpostId: outpost.id, outpostName: outpost.name }), '#4e668d'));
     cityGrid.appendChild(card);
   }
   body.appendChild(cityGrid);

@@ -43,6 +43,7 @@ export class CultureSystem {
   setTechSystem(ts) { this._techSystem = ts; }
   setHeroSystem(hs) { this._heroSystem = hs; }
   setEraSystem(es) { this._eraSystem = es; }
+  setRuinSystem(system) { this._ruinSystem = system || null; }
 
   init() {
     // tier 0 自动完成
@@ -106,11 +107,13 @@ export class CultureSystem {
     const workforce = this._buildingSystem?.getWorkforceOutputs?.().civics || 0;
     const civilizationBonuses = this._eraSystem?.getBonuses?.() || {};
     const civilizationMultiplier = (civilizationBonuses.civicPointMul || 1) * (civilizationBonuses.civilizationYieldMul || 1);
+    const ruinMultiplier = this._ruinSystem?.getCultureMultiplier?.() || 1;
     return {
       passive: PASSIVE_CIVICS_PER_TICK,
       workforce,
       civilizationMultiplier,
-      total: (PASSIVE_CIVICS_PER_TICK + workforce) * civilizationMultiplier
+      ruinMultiplier,
+      total: (PASSIVE_CIVICS_PER_TICK + workforce) * civilizationMultiplier * ruinMultiplier
     };
   }
 
@@ -209,6 +212,12 @@ export class CultureSystem {
     }
     this._updateStore();
     eventBus.emit('cultureResearched', { id });
+  }
+
+  completeEraResearch(eraId) {
+    const nodes = this._getAll().filter(civic => civic.eraId === eraId && !this._researched.has(civic.id));
+    for (const civic of nodes) this._completeResearch(civic.id);
+    return nodes.length;
   }
 
   /** 检查阵型是否被文化政策解锁 */
@@ -435,8 +444,12 @@ export class CultureSystem {
 
   restoreState(state) {
     if (!state) return;
-    this._researched = new Set(state.researched || []);
-    this._currentResearch = state.currentResearch || null;
+    const remap = id => id?.replace(/^civic_ancient_/, 'civic_classical_')
+      ?.replace(/^civic_early_modern_/, 'civic_modern_');
+    this._researched = new Set((state.researched || []).map(remap));
+    this._currentResearch = state.currentResearch
+      ? { ...state.currentResearch, id: remap(state.currentResearch.id) }
+      : null;
     this._activatedPolicies = new Set(state.activatedPolicies || []);
     this._government = state.government || null;
     this._policyCooldownUntilDay = state.policyCooldownUntilDay || 0;

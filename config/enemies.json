@@ -9,39 +9,103 @@
       "id": "cavalry",
       "name": "骑兵",
       "order": 2
-    },
-    {
-      "id": "artillery",
-      "name": "炮兵",
-      "order": 3
-    },
-    {
-      "id": "navy",
-      "name": "海军",
-      "order": 4
     }
   ],
   "unitDomains": [
     {
       "id": "land",
       "name": "陆军"
-    },
-    {
-      "id": "naval",
-      "name": "海军"
     }
   ],
-  "enemies": [],
+  "enemies": [
+    {
+      "id": "enemy_expansion_force",
+      "name": "敌对军团",
+      "icon": "assets/historical-icons/units/primitive_infantry_1.svg",
+      "faction": "敌对势力",
+      "maxHp": 20,
+      "attack": 4,
+      "attackRange": 1,
+      "speed": 1,
+      "strategicOnly": true,
+      "attackTarget": "army",
+      "spawnConditions": {
+        "minDay": 10
+      }
+    },
+    {
+      "id": "eastern_ruin_guardian",
+      "name": "东境遗迹守护者",
+      "description": "沉睡在东侧大型遗迹中央的古代巨像。遭受攻击前保持中立。",
+      "icon": "🗿",
+      "faction": "远古遗迹",
+      "domain": "land",
+      "maxHp": 20000,
+      "attack": 1500,
+      "attackRange": 3,
+      "speed": 3,
+      "footprint": {
+        "width": 2,
+        "height": 2
+      },
+      "alertRange": 4,
+      "homeHealPerTick": 200,
+      "neutralUntilAttacked": true,
+      "boss": true,
+      "strategicOnly": true,
+      "spawnAtEasternRuin": true
+    },
+    {
+      "id": "ancient_ruin_berserker",
+      "name": "遗迹狂战士",
+      "description": "近距离破坏建筑的重型遗迹造物。",
+      "icon": "🗿",
+      "faction": "远古遗迹",
+      "maxHp": 260,
+      "attack": 70,
+      "attackRange": 1,
+      "speed": 2,
+      "cp": 1,
+      "strategicOnly": true
+    },
+    {
+      "id": "ancient_ruin_archer",
+      "name": "遗迹晶弓手",
+      "description": "高速远程攻击的遗迹造物。",
+      "icon": "🏹",
+      "faction": "远古遗迹",
+      "maxHp": 170,
+      "attack": 48,
+      "attackRange": 3,
+      "speed": 3,
+      "cp": 1,
+      "strategicOnly": true
+    },
+    {
+      "id": "ancient_ruin_overseer",
+      "name": "遗迹多核监军",
+      "description": "拥有多CP的中距离遗迹指挥造物。",
+      "icon": "🔷",
+      "faction": "远古遗迹",
+      "maxHp": 210,
+      "attack": 42,
+      "attackRange": 2,
+      "speed": 2,
+      "cp": 3,
+      "strategicOnly": true
+    }
+  ],
   "units": [
     {
       "id": "warrior",
       "name": "战士",
+      "description": "手持简陋武器的民兵，是聚落武装的第一道防线。【均衡型：生命85，攻击60，速度2，射程1，CP 1】【均衡型：生命85，攻击60，速度2，射程1，CP 1】【均衡型：生命85，攻击60，速度2，射程1，CP 1】【均衡型：生命85，攻击60，速度2，射程1，CP 1】【均衡型：生命85，攻击60，速度2，射程1，CP 1】【均衡型：生命85，攻击60，速度2，射程1，CP 1】",
       "domain": "land",
       "branch": "infantry",
       "tier": 0,
-      "combatPower": 2,
-      "hp": 6,
-      "attack": 2,
+      "combatPower": 243,
+      "hp": 85,
+      "attack": 60,
       "attackRange": 1,
       "populationRequired": 1,
       "commandPoints": 2,
@@ -58,17 +122,37 @@
           "amount": 10
         }
       ],
-      "unlocked": true
+      "unlocked": true,
+      "roleTags": [
+        "light_infantry",
+        "melee"
+      ],
+      "strongAgainst": [
+        "archer"
+      ],
+      "weakAgainst": [
+        "mounted",
+        "armored"
+      ],
+      "eraId": "primitive",
+      "eraMaterialCostBalanced": true,
+      "speed": 2,
+      "cp": 1,
+      "comprehensiveStrength": 243,
+      "archetype": "balanced",
+      "healingAfterBattle": 0,
+      "unlockCost": []
     },
     {
       "id": "swordsman",
       "name": "剑士",
+      "description": "经训练的职业剑士，剑刃与盾牌皆比民兵精良。【均衡型：生命120，攻击85，速度2，射程1，CP 1】【均衡型：生命120，攻击85，速度2，射程1，CP 1】【均衡型：生命120，攻击85，速度2，射程1，CP 1】【均衡型：生命120，攻击85，速度2，射程1，CP 1】【均衡型：生命120，攻击85，速度2，射程1，CP 1】【均衡型：生命120，攻击85，速度2，射程1，CP 1】",
       "domain": "land",
       "branch": "infantry",
       "tier": 1,
-      "combatPower": 6,
-      "hp": 9,
-      "attack": 4,
+      "combatPower": 328,
+      "hp": 120,
+      "attack": 85,
       "attackRange": 1,
       "populationRequired": 1,
       "commandPoints": 3,
@@ -76,12 +160,12 @@
       "researchCost": 40,
       "unlockCost": [
         {
-          "resourceId": "wood",
-          "amount": 25
+          "resourceId": "composite_plank",
+          "amount": 18
         },
         {
-          "resourceId": "stone",
-          "amount": 15
+          "resourceId": "goldstone",
+          "amount": 11
         },
         {
           "resourceId": "food",
@@ -101,42 +185,63 @@
       ],
       "cost": [
         {
-          "resourceId": "wood",
-          "amount": 15
+          "resourceId": "composite_plank",
+          "amount": 11
         },
         {
-          "resourceId": "stone",
-          "amount": 5
+          "resourceId": "goldstone",
+          "amount": 4
         },
         {
           "resourceId": "food",
           "amount": 20
         }
       ],
-      "unlocked": false
+      "unlocked": false,
+      "roleTags": [
+        "heavy_infantry",
+        "melee",
+        "armored"
+      ],
+      "strongAgainst": [
+        "light_infantry",
+        "archer"
+      ],
+      "weakAgainst": [
+        "armor_piercing",
+        "siege"
+      ],
+      "eraId": "classical",
+      "eraMaterialCostBalanced": true,
+      "speed": 2,
+      "cp": 1,
+      "comprehensiveStrength": 328,
+      "archetype": "balanced",
+      "healingAfterBattle": 0
     },
     {
       "id": "musketeer",
       "name": "火枪手",
+      "description": "装填火药的滑膛枪手，齐射的弹雨让旧式阵列土崩瓦解。【远程型：生命165，攻击30，速度3，射程4，CP 1】【远程型：生命165，攻击30，速度3，射程4，CP 1】【远程型：生命165，攻击30，速度3，射程4，CP 1】【远程型：生命165，攻击30，速度3，射程4，CP 1】【远程型：生命165，攻击30，速度3，射程4，CP 1】【远程型：生命165，攻击30，速度3，射程4，CP 1】",
       "domain": "land",
-      "branch": "infantry",
+      "branch": "ranged",
       "tier": 2,
-      "combatPower": 18,
-      "hp": 10,
-      "attack": 8,
-      "attackRange": 3,
+      "combatPower": 534,
+      "hp": 165,
+      "attack": 30,
+      "attackRange": 4,
       "populationRequired": 1,
       "commandPoints": 5,
       "weight": 25,
       "researchCost": 90,
       "unlockCost": [
         {
-          "resourceId": "wood",
-          "amount": 40
+          "resourceId": "ship_timber",
+          "amount": 23
         },
         {
-          "resourceId": "stone",
-          "amount": 30
+          "resourceId": "dressed_marble",
+          "amount": 17
         },
         {
           "resourceId": "food",
@@ -155,12 +260,12 @@
       ],
       "cost": [
         {
-          "resourceId": "wood",
-          "amount": 20
+          "resourceId": "ship_timber",
+          "amount": 12
         },
         {
-          "resourceId": "stone",
-          "amount": 10
+          "resourceId": "dressed_marble",
+          "amount": 6
         },
         {
           "resourceId": "food",
@@ -171,30 +276,51 @@
           "amount": 10
         }
       ],
-      "unlocked": false
+      "unlocked": false,
+      "roleTags": [
+        "gunpowder",
+        "ranged",
+        "armor_piercing"
+      ],
+      "strongAgainst": [
+        "armored",
+        "heavy_infantry"
+      ],
+      "weakAgainst": [
+        "mounted",
+        "siege"
+      ],
+      "eraId": "exploration",
+      "eraMaterialCostBalanced": true,
+      "speed": 3,
+      "cp": 1,
+      "comprehensiveStrength": 534,
+      "archetype": "balanced",
+      "healingAfterBattle": 0
     },
     {
       "id": "modern_infantry",
       "name": "现代步兵",
+      "description": "自动武器与制式装备武装的现代步兵，机动与火力兼备。【远程型：生命200，攻击20，速度3，射程5，CP 1】【远程型：生命200，攻击20，速度3，射程5，CP 1】【远程型：生命200，攻击20，速度3，射程5，CP 1】【远程型：生命200，攻击20，速度3，射程5，CP 1】【远程型：生命200，攻击20，速度3，射程5，CP 1】【远程型：生命200，攻击20，速度3，射程5，CP 1】",
       "domain": "land",
       "branch": "infantry",
       "tier": 3,
-      "combatPower": 42,
-      "hp": 14,
-      "attack": 16,
-      "attackRange": 4,
+      "combatPower": 629,
+      "hp": 200,
+      "attack": 20,
+      "attackRange": 5,
       "populationRequired": 1,
       "commandPoints": 7,
       "weight": 55,
       "researchCost": 180,
       "unlockCost": [
         {
-          "resourceId": "wood",
-          "amount": 60
+          "resourceId": "carbon_composite",
+          "amount": 29
         },
         {
-          "resourceId": "stone",
-          "amount": 50
+          "resourceId": "advanced_alloy",
+          "amount": 24
         },
         {
           "resourceId": "food",
@@ -213,12 +339,12 @@
       ],
       "cost": [
         {
-          "resourceId": "wood",
-          "amount": 30
+          "resourceId": "carbon_composite",
+          "amount": 14
         },
         {
-          "resourceId": "stone",
-          "amount": 20
+          "resourceId": "advanced_alloy",
+          "amount": 10
         },
         {
           "resourceId": "food",
@@ -229,17 +355,38 @@
           "amount": 20
         }
       ],
-      "unlocked": false
+      "unlocked": false,
+      "roleTags": [
+        "gunpowder",
+        "ranged",
+        "mobile"
+      ],
+      "strongAgainst": [
+        "light_infantry",
+        "mounted"
+      ],
+      "weakAgainst": [
+        "artillery",
+        "air"
+      ],
+      "eraId": "modern",
+      "eraMaterialCostBalanced": true,
+      "speed": 3,
+      "cp": 1,
+      "comprehensiveStrength": 629,
+      "archetype": "balanced",
+      "healingAfterBattle": 0
     },
     {
       "id": "knight",
       "name": "骑士",
+      "description": "披甲执矛的马上骑士，冲锋是他们最熟悉的战场语言。【敏捷型：生命110，攻击145，速度3，射程1，CP 1】【敏捷型：生命110，攻击145，速度3，射程1，CP 1】【敏捷型：生命110，攻击145，速度3，射程1，CP 1】【敏捷型：生命110，攻击145，速度3，射程1，CP 1】【敏捷型：生命110，攻击145，速度3，射程1，CP 1】【敏捷型：生命110，攻击145，速度3，射程1，CP 1】",
       "domain": "land",
       "branch": "cavalry",
       "tier": 1,
-      "combatPower": 10,
-      "hp": 12,
-      "attack": 6,
+      "combatPower": 447,
+      "hp": 110,
+      "attack": 145,
       "attackRange": 1,
       "populationRequired": 1,
       "commandPoints": 4,
@@ -247,12 +394,12 @@
       "researchCost": 55,
       "unlockCost": [
         {
-          "resourceId": "wood",
-          "amount": 25
+          "resourceId": "hardwood_beam",
+          "amount": 16
         },
         {
-          "resourceId": "stone",
-          "amount": 15
+          "resourceId": "reinforced_stone",
+          "amount": 10
         },
         {
           "resourceId": "food",
@@ -268,29 +415,50 @@
       ],
       "cost": [
         {
-          "resourceId": "wood",
-          "amount": 10
+          "resourceId": "hardwood_beam",
+          "amount": 6
         },
         {
-          "resourceId": "stone",
-          "amount": 10
+          "resourceId": "reinforced_stone",
+          "amount": 6
         },
         {
           "resourceId": "food",
           "amount": 25
         }
       ],
-      "unlocked": false
+      "unlocked": false,
+      "roleTags": [
+        "mounted",
+        "armored",
+        "melee"
+      ],
+      "strongAgainst": [
+        "archer",
+        "siege"
+      ],
+      "weakAgainst": [
+        "spear",
+        "gunpowder"
+      ],
+      "eraId": "medieval",
+      "eraMaterialCostBalanced": true,
+      "speed": 3,
+      "cp": 1,
+      "comprehensiveStrength": 447,
+      "archetype": "swift",
+      "healingAfterBattle": 0
     },
     {
       "id": "armored_cavalry",
       "name": "重甲骑兵",
+      "description": "人马俱披重甲的冲击骑兵，是撕开阵线的铁刃。【敏捷型：生命110，攻击145，速度3，射程1，CP 1】【敏捷型：生命110，攻击145，速度3，射程1，CP 1】【敏捷型：生命110，攻击145，速度3，射程1，CP 1】【敏捷型：生命110，攻击145，速度3，射程1，CP 1】【敏捷型：生命110，攻击145，速度3，射程1，CP 1】【敏捷型：生命110，攻击145，速度3，射程1，CP 1】",
       "domain": "land",
       "branch": "cavalry",
       "tier": 2,
-      "combatPower": 24,
-      "hp": 18,
-      "attack": 10,
+      "combatPower": 447,
+      "hp": 110,
+      "attack": 145,
       "attackRange": 1,
       "populationRequired": 1,
       "commandPoints": 6,
@@ -298,12 +466,12 @@
       "researchCost": 110,
       "unlockCost": [
         {
-          "resourceId": "wood",
-          "amount": 40
+          "resourceId": "hardwood_beam",
+          "amount": 26
         },
         {
-          "resourceId": "stone",
-          "amount": 30
+          "resourceId": "reinforced_stone",
+          "amount": 19
         },
         {
           "resourceId": "food",
@@ -322,12 +490,12 @@
       ],
       "cost": [
         {
-          "resourceId": "wood",
-          "amount": 15
+          "resourceId": "hardwood_beam",
+          "amount": 10
         },
         {
-          "resourceId": "stone",
-          "amount": 20
+          "resourceId": "reinforced_stone",
+          "amount": 13
         },
         {
           "resourceId": "food",
@@ -338,88 +506,51 @@
           "amount": 10
         }
       ],
-      "unlocked": false
-    },
-    {
-      "id": "biplane",
-      "name": "双翼机",
-      "domain": "land",
-      "branch": "cavalry",
-      "tier": 3,
-      "combatPower": 55,
-      "hp": 20,
-      "attack": 18,
-      "attackRange": 5,
-      "populationRequired": 2,
-      "commandPoints": 9,
-      "weight": 70,
-      "researchCost": 220,
-      "unlockCost": [
-        {
-          "resourceId": "wood",
-          "amount": 60
-        },
-        {
-          "resourceId": "stone",
-          "amount": 50
-        },
-        {
-          "resourceId": "food",
-          "amount": 55
-        },
-        {
-          "resourceId": "gold",
-          "amount": 45
-        }
+      "unlocked": false,
+      "roleTags": [
+        "mounted",
+        "armored",
+        "mobile"
       ],
-      "prerequisiteUnits": [
-        "armored_cavalry"
+      "strongAgainst": [
+        "archer",
+        "artillery"
       ],
-      "prerequisiteTechs": [
-        "aeronautics"
+      "weakAgainst": [
+        "spear",
+        "armor_piercing"
       ],
-      "cost": [
-        {
-          "resourceId": "wood",
-          "amount": 25
-        },
-        {
-          "resourceId": "stone",
-          "amount": 25
-        },
-        {
-          "resourceId": "food",
-          "amount": 45
-        },
-        {
-          "resourceId": "gold",
-          "amount": 25
-        }
-      ],
-      "unlocked": false
+      "eraId": "medieval",
+      "eraMaterialCostBalanced": true,
+      "speed": 3,
+      "cp": 1,
+      "comprehensiveStrength": 447,
+      "archetype": "swift",
+      "healingAfterBattle": 0
     },
     {
       "id": "jet_fighter",
       "name": "喷气式战机",
+      "description": "喷气引擎驱动的战斗机，速度与火力都翻越了旧时代的边界。【敏捷型：生命160，攻击210，速度5，射程1，CP 1】【敏捷型：生命160，攻击210，速度5，射程1，CP 1】【敏捷型：生命160，攻击210，速度5，射程1，CP 1】【敏捷型：生命160，攻击210，速度5，射程1，CP 1】【敏捷型：生命160，攻击210，速度5，射程1，CP 1】【敏捷型：生命160，攻击210，速度5，射程1，CP 1】",
       "domain": "land",
-      "branch": "cavalry",
+      "branch": "special",
       "tier": 4,
-      "combatPower": 120,
-      "hp": 28,
-      "attack": 34,
-      "attackRange": 6,
+      "combatPower": 692,
+      "hp": 160,
+      "attack": 210,
+      "attackRange": 1,
       "populationRequired": 2,
       "commandPoints": 12,
       "weight": 110,
       "researchCost": 420,
       "unlockCost": [
         {
-          "resourceId": "wood",
-          "amount": 90
+          "resourceId": "carbon_composite",
+          "amount": 43
         },
         {
-          "resourceId": "stone",
-          "amount": 80
+          "resourceId": "advanced_alloy",
+          "amount": 38
         },
         {
           "resourceId": "food",
@@ -438,12 +569,12 @@
       ],
       "cost": [
         {
-          "resourceId": "wood",
-          "amount": 40
+          "resourceId": "carbon_composite",
+          "amount": 19
         },
         {
-          "resourceId": "stone",
-          "amount": 40
+          "resourceId": "advanced_alloy",
+          "amount": 19
         },
         {
           "resourceId": "food",
@@ -454,402 +585,26 @@
           "amount": 40
         }
       ],
-      "unlocked": false
-    },
-    {
-      "id": "cannon",
-      "name": "加农炮",
-      "domain": "land",
-      "branch": "artillery",
-      "tier": 1,
-      "combatPower": 16,
-      "hp": 10,
-      "attack": 12,
-      "attackRange": 4,
-      "populationRequired": 2,
-      "commandPoints": 6,
-      "weight": 30,
-      "researchCost": 80,
-      "unlockCost": [
-        {
-          "resourceId": "wood",
-          "amount": 25
-        },
-        {
-          "resourceId": "stone",
-          "amount": 15
-        },
-        {
-          "resourceId": "food",
-          "amount": 20
-        },
-        {
-          "resourceId": "gold",
-          "amount": 10
-        }
+      "unlocked": false,
+      "roleTags": [
+        "air",
+        "modern",
+        "mobile"
       ],
-      "prerequisiteTechs": [
-        "smelting",
-        "gunpowder"
+      "strongAgainst": [
+        "air",
+        "artillery"
       ],
-      "cost": [
-        {
-          "resourceId": "wood",
-          "amount": 5
-        },
-        {
-          "resourceId": "stone",
-          "amount": 25
-        },
-        {
-          "resourceId": "food",
-          "amount": 15
-        },
-        {
-          "resourceId": "gold",
-          "amount": 10
-        }
+      "weakAgainst": [
+        "anti_air"
       ],
-      "unlocked": false
-    },
-    {
-      "id": "tank",
-      "name": "坦克",
-      "domain": "land",
-      "branch": "artillery",
-      "tier": 2,
-      "combatPower": 60,
-      "hp": 30,
-      "attack": 24,
-      "attackRange": 3,
-      "populationRequired": 3,
-      "commandPoints": 10,
-      "weight": 80,
-      "researchCost": 260,
-      "unlockCost": [
-        {
-          "resourceId": "wood",
-          "amount": 40
-        },
-        {
-          "resourceId": "stone",
-          "amount": 30
-        },
-        {
-          "resourceId": "food",
-          "amount": 35
-        },
-        {
-          "resourceId": "gold",
-          "amount": 25
-        }
-      ],
-      "prerequisiteUnits": [
-        "cannon"
-      ],
-      "prerequisiteTechs": [
-        "internal_combustion",
-        "precision_manufacturing"
-      ],
-      "cost": [
-        {
-          "resourceId": "wood",
-          "amount": 15
-        },
-        {
-          "resourceId": "stone",
-          "amount": 35
-        },
-        {
-          "resourceId": "food",
-          "amount": 30
-        },
-        {
-          "resourceId": "gold",
-          "amount": 20
-        }
-      ],
-      "unlocked": false
-    },
-    {
-      "id": "rocket_artillery",
-      "name": "火箭炮",
-      "domain": "land",
-      "branch": "artillery",
-      "tier": 3,
-      "combatPower": 140,
-      "hp": 24,
-      "attack": 42,
-      "attackRange": 6,
-      "populationRequired": 3,
-      "commandPoints": 13,
-      "weight": 120,
-      "researchCost": 460,
-      "unlockCost": [
-        {
-          "resourceId": "wood",
-          "amount": 60
-        },
-        {
-          "resourceId": "stone",
-          "amount": 50
-        },
-        {
-          "resourceId": "food",
-          "amount": 55
-        },
-        {
-          "resourceId": "gold",
-          "amount": 45
-        }
-      ],
-      "prerequisiteUnits": [
-        "tank"
-      ],
-      "prerequisiteTechs": [
-        "modern_ballistics"
-      ],
-      "cost": [
-        {
-          "resourceId": "wood",
-          "amount": 25
-        },
-        {
-          "resourceId": "stone",
-          "amount": 50
-        },
-        {
-          "resourceId": "food",
-          "amount": 40
-        },
-        {
-          "resourceId": "gold",
-          "amount": 35
-        }
-      ],
-      "unlocked": false
-    },
-    {
-      "id": "raft",
-      "name": "木筏",
-      "domain": "naval",
-      "branch": "navy",
-      "tier": 1,
-      "combatPower": 4,
-      "hp": 8,
-      "attack": 2,
-      "attackRange": 1,
-      "populationRequired": 1,
-      "commandPoints": 2,
-      "weight": 12,
-      "researchCost": 25,
-      "unlockCost": [
-        {
-          "resourceId": "wood",
-          "amount": 25
-        },
-        {
-          "resourceId": "stone",
-          "amount": 15
-        },
-        {
-          "resourceId": "food",
-          "amount": 20
-        },
-        {
-          "resourceId": "gold",
-          "amount": 10
-        }
-      ],
-      "prerequisiteTechs": [
-        "wood_processing"
-      ],
-      "cost": [
-        {
-          "resourceId": "wood",
-          "amount": 20
-        },
-        {
-          "resourceId": "food",
-          "amount": 10
-        }
-      ],
-      "unlocked": false
-    },
-    {
-      "id": "sailing_ship",
-      "name": "帆船",
-      "domain": "naval",
-      "branch": "navy",
-      "tier": 2,
-      "combatPower": 18,
-      "hp": 16,
-      "attack": 8,
-      "attackRange": 3,
-      "populationRequired": 2,
-      "commandPoints": 5,
-      "weight": 32,
-      "researchCost": 95,
-      "unlockCost": [
-        {
-          "resourceId": "wood",
-          "amount": 40
-        },
-        {
-          "resourceId": "stone",
-          "amount": 30
-        },
-        {
-          "resourceId": "food",
-          "amount": 35
-        },
-        {
-          "resourceId": "gold",
-          "amount": 25
-        }
-      ],
-      "prerequisiteUnits": [
-        "raft"
-      ],
-      "prerequisiteTechs": [
-        "sail"
-      ],
-      "cost": [
-        {
-          "resourceId": "wood",
-          "amount": 30
-        },
-        {
-          "resourceId": "stone",
-          "amount": 5
-        },
-        {
-          "resourceId": "food",
-          "amount": 25
-        },
-        {
-          "resourceId": "gold",
-          "amount": 10
-        }
-      ],
-      "unlocked": false
-    },
-    {
-      "id": "battleship",
-      "name": "战列舰",
-      "domain": "naval",
-      "branch": "navy",
-      "tier": 3,
-      "combatPower": 70,
-      "hp": 36,
-      "attack": 26,
-      "attackRange": 5,
-      "populationRequired": 4,
-      "commandPoints": 11,
-      "weight": 90,
-      "researchCost": 300,
-      "unlockCost": [
-        {
-          "resourceId": "wood",
-          "amount": 60
-        },
-        {
-          "resourceId": "stone",
-          "amount": 50
-        },
-        {
-          "resourceId": "food",
-          "amount": 55
-        },
-        {
-          "resourceId": "gold",
-          "amount": 45
-        }
-      ],
-      "prerequisiteUnits": [
-        "sailing_ship"
-      ],
-      "prerequisiteTechs": [
-        "steam_engine"
-      ],
-      "cost": [
-        {
-          "resourceId": "wood",
-          "amount": 30
-        },
-        {
-          "resourceId": "stone",
-          "amount": 40
-        },
-        {
-          "resourceId": "food",
-          "amount": 40
-        },
-        {
-          "resourceId": "gold",
-          "amount": 30
-        }
-      ],
-      "unlocked": false
-    },
-    {
-      "id": "missile_destroyer",
-      "name": "导弹驱逐舰",
-      "domain": "naval",
-      "branch": "navy",
-      "tier": 4,
-      "combatPower": 160,
-      "hp": 42,
-      "attack": 48,
-      "attackRange": 7,
-      "populationRequired": 4,
-      "commandPoints": 14,
-      "weight": 130,
-      "researchCost": 520,
-      "unlockCost": [
-        {
-          "resourceId": "wood",
-          "amount": 90
-        },
-        {
-          "resourceId": "stone",
-          "amount": 80
-        },
-        {
-          "resourceId": "food",
-          "amount": 80
-        },
-        {
-          "resourceId": "gold",
-          "amount": 70
-        }
-      ],
-      "prerequisiteUnits": [
-        "battleship"
-      ],
-      "prerequisiteTechs": [
-        "modern_ballistics",
-        "precision_manufacturing"
-      ],
-      "cost": [
-        {
-          "resourceId": "wood",
-          "amount": 40
-        },
-        {
-          "resourceId": "stone",
-          "amount": 55
-        },
-        {
-          "resourceId": "food",
-          "amount": 55
-        },
-        {
-          "resourceId": "gold",
-          "amount": 50
-        }
-      ],
-      "unlocked": false
+      "eraId": "modern",
+      "eraMaterialCostBalanced": true,
+      "speed": 5,
+      "cp": 1,
+      "comprehensiveStrength": 692,
+      "archetype": "swift",
+      "healingAfterBattle": 0
     }
   ],
   "formations": [
@@ -949,9 +704,9 @@
     "baseA": 2,
     "dayMulB": 0.8,
     "daySqMulC": 0.03,
-    "firstDay": 30,
-    "nextDelayMinDays": 2,
-    "nextDelayMaxDays": 5,
+    "firstDay": 7,
+    "nextDelayMinDays": 7,
+    "nextDelayMaxDays": 7,
     "tributeResourceId": "food",
     "tributeMultiplierMin": 1,
     "tributeMultiplierMax": 10,
@@ -963,7 +718,9 @@
     "minimumPopulationAfterPunish": 2,
     "reviveUnitRate": 0.5,
     "reviveDelayDays": 3,
-    "landDefenseDomain": "land"
+    "landDefenseDomain": "land",
+    "waveIntervalDays": 7,
+    "warningDays": 1
   },
   "global": {
     "humanHp": 2,

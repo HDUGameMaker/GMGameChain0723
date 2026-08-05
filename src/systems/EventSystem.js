@@ -54,15 +54,14 @@ export class EventSystem {
     this._effectHandlers = {};
     this._registerBuiltinEffects();
 
-    // 订阅 tick
-    eventBus.on('tick', (data) => this.onTick(data));
-    eventBus.on('periodEnd', (data) => this._onPeriodEnd(data));
+    // 随机事件按“每天一次”判定，触发后等待每日结算统一处理。
+    eventBus.on('dayStart', (data) => this.onDayStart(data));
 
     // 订阅弹窗关闭（驱动队列处理）
     eventBus.on('popupClosed', () => this._onPopupClosed());
   }
 
-  setSystems({ resource, item, building, time, gameLoop, alchemy, diplomacy, luxury, strategy, era }) {
+  setSystems({ resource, item, building, time, gameLoop, alchemy, diplomacy, luxury, era }) {
     this._resourceSystem = resource;
     this._itemSystem = item;
     this._buildingSystem = building;
@@ -71,7 +70,6 @@ export class EventSystem {
     this._alchemySystem = alchemy || null;
     this._diplomacySystem = diplomacy || null;
     this._luxurySystem = luxury || null;
-    this._strategySystem = strategy || null;
     this._eraSystem = era || null;
 
     // 从全局配置读取事件参数
@@ -137,10 +135,6 @@ export class EventSystem {
       this._luxurySystem?.addLuxury(params.luxuryId, params.amount || 1);
     });
 
-    this.registerEffect('add_strategy_card', (params) => {
-      this._strategySystem?.gainCard(params.strategyId, params.amount || 1);
-    });
-
     this.registerEffect('modify_satisfaction', (params) => {
       store.setState({ populationSatisfaction: Math.max(0, Math.min(100, (store.getState('populationSatisfaction') || 50) + (Number(params.amount) || 0))) });
     });
@@ -195,8 +189,10 @@ export class EventSystem {
   // ===== Tick 处理 =====
 
   onTick(data) {
-    // 如果事件队列正在处理中，不触发新事件
-    if (this._isProcessing || this._eventQueue.length > 0) return;
+    this._checkPendingEvents(data);
+  }
+
+  onDayStart(data) {
 
     // 减少各事件冷却（后台也正常推进）
     for (const [eventId, remaining] of Object.entries(this._cooldowns)) {
@@ -206,7 +202,6 @@ export class EventSystem {
       }
     }
 
-    // 检查到期的延迟事件（后台也正常触发）
     this._checkPendingEvents(data);
 
     // 全局事件间隔冷却（后台也正常推进）
@@ -222,7 +217,7 @@ export class EventSystem {
     }
 
     // === 全局概率系统 ===
-    // 每 tick 只掷一次全局骰子
+    // 每天只掷一次全局骰子；eventTriggerChance 即每日发生概率。
     const roll = Math.random();
     if (roll >= this._eventTriggerChance) return;
 
@@ -486,10 +481,28 @@ export class EventSystem {
     console.log(`[EventSystem] Enqueued event: "${evt.name}" (queue size: ${this._eventQueue.length + 1})`);
     this._eventQueue.push(evt);
 
-    // 如果当前没有在处理事件，立即开始处理
-    if (!this._isProcessing) {
-      this._processNextEvent();
-    }
+    eventBus.emit('dailyEventQueued', { eventId: evt.id, name: evt.name });
+  }
+
+  getSettlementEvents() { return this._eventQueue.map(evt => ({ id: evt.id, name: evt.name, description: evt.description || '' })); }
+
+  openSettlementEvent(eventId, popupManager = this._popupManager) {
+    const index = this._eventQueue.findIndex(evt => evt.id === eventId);
+    if (index < 0 || !popupManager) return false;
+    const [evt] = this._eventQueue.splice(index, 1);
+    this._currentEvent = evt;
+    this._currentEventHandled = false;
+    if (evt.effects?.length) this._executeEffects(evt.effects);
+    popupManager.push('event', { event: evt, source: 'eventSystem', fromSettlement: true });
+    return true;
+  }
+
+  skipSettlementEvent(eventId) {
+    const index = this._eventQueue.findIndex(evt => evt.id === eventId);
+    if (index < 0) return false;
+    this._eventQueue.splice(index, 1);
+    eventBus.emit('dailyEventSkipped', { eventId });
+    return true;
   }
 
   /**
@@ -533,14 +546,8 @@ export class EventSystem {
     this._currentEvent = null;
     this._currentEventHandled = false;
 
-    if (this._eventQueue.length > 0) {
-      // 还有待处理事件，继续处理下一个
-      this._processNextEvent();
-    } else {
-      // 队列为空，结束处理
-      this._isProcessing = false;
-      console.log('[EventSystem] Event processing complete');
-    }
+    // 随机事件只允许在每日结算中处理，不再于关闭弹窗后连续弹出。
+    this._isProcessing = false;
   }
 
   // ===== 效果执行 =====
@@ -725,7 +732,8 @@ export class EventSystem {
       cooldowns: { ...this._cooldowns },
       globalEventCooldown: this._globalEventCooldown,
       pendingEvents: this._pendingEvents.map(p => ({ ...p })),
-      deferredEvents: this._deferredEvents.map(e => ({ ...e }))
+      deferredEvents: this._deferredEvents.map(e => ({ ...e })),
+      settlementEventIds: this._eventQueue.map(e => e.id)
     };
   }
 
@@ -737,7 +745,7 @@ export class EventSystem {
     this._globalEventCooldown = state.globalEventCooldown || 0;
     this._pendingEvents = (state.pendingEvents || []).map(p => ({ ...p }));
     this._deferredEvents = (state.deferredEvents || []).map(e => ({ ...e }));
-    this._eventQueue = [];
+    this._eventQueue = (state.settlementEventIds || []).map(id => this._events.find(evt => evt.id === id)).filter(Boolean);
     this._isProcessing = false;
     this._currentEvent = null;
     this._currentEventHandled = false;

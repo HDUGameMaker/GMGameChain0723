@@ -9,12 +9,16 @@ export class LuxurySystem {
     this._resourceSystem = null;
     this._buildingSystem = null;
     this._diplomacySystem = null;
+    this._heroSystem = null;
+    this._lastGiftDay = 0;
+    this._systemUnlocked = false;
   }
 
   setSystems(systems = {}) {
     if (systems.resource) this._resourceSystem = systems.resource;
     if (systems.building) this._buildingSystem = systems.building;
     if (systems.diplomacy) this._diplomacySystem = systems.diplomacy;
+    if (systems.hero) this._heroSystem = systems.hero;
   }
 
   getLuxuries() { return configRegistry.getHistoricalContent().luxuries || []; }
@@ -23,18 +27,46 @@ export class LuxurySystem {
   initNew() {
     this._inventory = {};
     this._discoveredDeposits = [];
+    this._lastGiftDay = 0;
+    this._systemUnlocked = false;
     this._notify();
   }
 
   addLuxury(id, amount = 1) {
     if (!this.getLuxury(id) || !Number.isFinite(amount) || amount <= 0) return false;
     this._inventory[id] = (this._inventory[id] || 0) + Math.floor(amount);
+    const firstUnlock = !this._systemUnlocked;
+    this._systemUnlocked = true;
     this._notify();
     eventBus.emit('luxuryChanged', { luxuryId: id, amount: this._inventory[id] });
+    if (firstUnlock) eventBus.emit('luxurySystemUnlocked');
     return true;
   }
 
   getInventory() { return { ...this._inventory }; }
+  isSystemUnlocked() { return this._systemUnlocked; }
+
+  canGiftToHero(luxuryId, heroId, day = store.getState('timeDay') || 1) {
+    const luxury = this.getLuxury(luxuryId);
+    if (!luxury || luxury.giftable === false) return { ok: false, reason: '该奢侈品不能赠送' };
+    if ((this._inventory[luxuryId] || 0) < 2) return { ok: false, reason: '需要保留首份，仅重复获得的奢侈品可赠送' };
+    if (this._lastGiftDay === day) return { ok: false, reason: '今日已经赠送过礼物' };
+    const hero = this._heroSystem?.getRecruitedHeroes?.().find(entry => (entry.heroId || entry.id) === heroId);
+    if (!hero) return { ok: false, reason: '英雄尚未加入' };
+    return { ok: true };
+  }
+
+  giftToHero(luxuryId, heroId, day = store.getState('timeDay') || 1) {
+    const check = this.canGiftToHero(luxuryId, heroId, day);
+    if (!check.ok) return check;
+    this._inventory[luxuryId] -= 1;
+    const affinity = this._heroSystem.adjustAffinity(heroId, 50);
+    if (!affinity?.ok) { this._inventory[luxuryId] += 1; return affinity || { ok: false }; }
+    this._lastGiftDay = day;
+    this._notify();
+    eventBus.emit('luxuryGifted', { luxuryId, heroId, day, affinity: 50 });
+    return { ok: true, affinity: 50, remaining: this._inventory[luxuryId] };
+  }
 
   getBonuses() {
     const result = {};
@@ -75,30 +107,11 @@ export class LuxurySystem {
   }
 
   canTrade(luxuryId, amount = 1, outpostId = null) {
-    const luxury = this.getLuxury(luxuryId);
-    if (!luxury) return { ok: false, reason: '奢侈品不存在' };
-    if (!Number.isInteger(amount) || amount <= 0) return { ok: false, reason: '贸易数量无效' };
-    if ((this._inventory[luxuryId] || 0) - amount < 1) return { ok: false, reason: '首份奢侈品必须保留，只有重复份可以贸易' };
-    if (!this._hasMarket()) return { ok: false, reason: '需要启用市场或商栈' };
-    if (outpostId) {
-      const state = this._diplomacySystem?.getOutpostState?.(outpostId);
-      if (!state || state.status === 'defeated') return { ok: false, reason: '目标城邦不可贸易' };
-    }
-    return { ok: true };
+    return { ok: false, reason: '奢侈品已不可贸易，重复份只能赠送给英雄' };
   }
 
   tradeWithOutpost(luxuryId, outpostId, amount = 1) {
-    const check = this.canTrade(luxuryId, amount, outpostId);
-    if (!check.ok) return check;
-    const luxury = this.getLuxury(luxuryId);
-    this._inventory[luxuryId] -= amount;
-    const tradeMultiplier = this.getBonuses().tradeValueMul || 1;
-    const gold = Math.max(1, Math.round(luxury.baseTradeValue * amount * tradeMultiplier));
-    this._resourceSystem?.addClamped?.('gold', gold);
-    this._diplomacySystem?.adjustRelation?.(outpostId, 3 * amount, `${luxury.name}贸易`);
-    this._notify();
-    eventBus.emit('luxuryTraded', { luxuryId, outpostId, amount, gold });
-    return { ok: true, gold, remaining: this._inventory[luxuryId] };
+    return this.canTrade(luxuryId, amount, outpostId);
   }
 
   _notify() {
@@ -111,13 +124,15 @@ export class LuxurySystem {
   }
 
   getState() {
-    return { inventory: { ...this._inventory }, discoveredDeposits: this.getDiscoveredDeposits() };
+    return { inventory: { ...this._inventory }, discoveredDeposits: this.getDiscoveredDeposits(), lastGiftDay: this._lastGiftDay, systemUnlocked: this._systemUnlocked };
   }
 
   restoreState(state) {
     const validIds = new Set(this.getLuxuries().map(luxury => luxury.id));
     this._inventory = Object.fromEntries(Object.entries(state?.inventory || {}).filter(([id, amount]) => validIds.has(id) && Number.isFinite(amount) && amount > 0));
     this._discoveredDeposits = (state?.discoveredDeposits || []).filter(deposit => deposit?.id && validIds.has(deposit.luxuryId)).map(deposit => ({ ...deposit }));
+    this._lastGiftDay = Math.max(0, Math.floor(Number(state?.lastGiftDay) || 0));
+    this._systemUnlocked = Boolean(state?.systemUnlocked) || Object.keys(this._inventory).length > 0;
     this._notify();
   }
 }

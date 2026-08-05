@@ -7,53 +7,100 @@
       "jobType": "housing",
       "maxWorkers": 2,
       "housingCapacity": 18,
-      "uniqueFunction": { "satisfactionBonus": 3 }
+      "uniqueFunction": {
+        "satisfactionBonus": 3
+      }
     },
     "agriculture": {
       "category": "agriculture",
       "replaces": "grain_farm",
       "jobType": "farmer",
       "maxWorkers": 6,
-      "production": { "perWorker": true, "output": [{ "resourceId": "food", "amount": 3 }] },
-      "uniqueFunction": { "adjacentFarmYieldMultiplier": 1.15 }
+      "production": {
+        "perWorker": true,
+        "output": [
+          {
+            "resourceId": "food",
+            "amount": 3
+          }
+        ]
+      },
+      "uniqueFunction": {
+        "adjacentFarmYieldMultiplier": 1.15
+      }
     },
     "gathering": {
       "category": "gathering",
       "replaces": "gold_mine",
       "jobType": "gatherer",
       "maxWorkers": 5,
-      "production": { "perWorker": true, "output": [{ "resourceId": "gold", "amount": 2 }] },
-      "uniqueFunction": { "gatheringYieldMultiplier": 1.15 }
+      "production": {
+        "perWorker": true,
+        "output": [
+          {
+            "resourceId": "gold",
+            "amount": 2
+          }
+        ]
+      },
+      "uniqueFunction": {
+        "gatheringYieldMultiplier": 1.15
+      }
     },
     "industry": {
       "category": "industry",
       "replaces": "blacksmith",
       "jobType": "craftsman",
       "maxWorkers": 6,
-      "production": { "perWorker": true, "output": [{ "resourceId": "stone", "amount": 1 }] },
-      "uniqueFunction": { "buildSpeedMultiplier": 1.15 }
+      "production": {
+        "perWorker": true,
+        "output": [
+          {
+            "resourceId": "stone",
+            "amount": 1
+          }
+        ]
+      },
+      "uniqueFunction": {
+        "buildSpeedMultiplier": 1.15
+      }
     },
     "commerce": {
       "category": "commerce",
       "replaces": "market_square",
       "jobType": "merchant",
       "maxWorkers": 6,
-      "production": { "perWorker": true, "output": [{ "resourceId": "gold", "amount": 2 }] },
-      "uniqueFunction": { "tradeValueMultiplier": 1.2 }
+      "production": {
+        "perWorker": true,
+        "output": [
+          {
+            "resourceId": "gold",
+            "amount": 2
+          }
+        ]
+      },
+      "uniqueFunction": {
+        "tradeValueMultiplier": 1.2
+      }
     },
     "research": {
       "category": "research",
       "replaces": "academy",
       "jobType": "scholar",
       "maxWorkers": 6,
-      "uniqueFunction": { "sciencePerWorker": 2 }
+      "uniqueFunction": {
+        "sciencePerWorker": 2
+      }
     },
     "civic": {
       "category": "civic",
       "replaces": "civic_hall",
       "jobType": "artisan",
       "maxWorkers": 6,
-      "uniqueFunction": { "civicPerWorker": 2, "satisfactionBonus": 2 }
+      "uniqueFunction": {
+        "civicPerWorker": 2,
+        "satisfactionBonus": 2
+      }
     },
     "military": {
       "category": "military",
@@ -61,7 +108,14 @@
       "jobType": "trainer",
       "maxWorkers": 4,
       "soldierCapacity": 12,
-      "uniqueFunction": { "trainsBranches": ["infantry", "anti_cavalry", "ranged", "cavalry", "siege"] }
+      "uniqueFunction": {
+        "trainsBranches": [
+          "infantry",
+          "anti_cavalry",
+          "ranged",
+          "cavalry"
+        ]
+      }
     },
     "defense": {
       "category": "defense",
@@ -69,7 +123,10 @@
       "jobType": "garrison",
       "maxWorkers": 4,
       "soldierCapacity": 8,
-      "uniqueFunction": { "garrisonCapacity": 16, "defenseMultiplier": 1.25 }
+      "uniqueFunction": {
+        "garrisonCapacity": 16,
+        "defenseMultiplier": 1.25
+      }
     },
     "naval": {
       "category": "naval",
@@ -77,81 +134,272 @@
       "jobType": "shipwright",
       "maxWorkers": 6,
       "soldierCapacity": 10,
-      "allowedGrounds": ["S", "W"],
-      "uniqueFunction": { "trainsBranches": ["navy"], "navalMovementBonus": 1 }
+      "allowedGrounds": [
+        "S",
+        "W"
+      ],
+      "uniqueFunction": {}
     },
     "administration": {
       "category": "administration",
       "replaces": "council_hall",
       "jobType": "administrator",
       "maxWorkers": 4,
-      "production": { "perWorker": true, "output": [{ "resourceId": "gold", "amount": 1 }] },
-      "uniqueFunction": { "workerCapacityBonus": 6, "armyCapBonus": 1 }
+      "production": {
+        "perWorker": true,
+        "output": [
+          {
+            "resourceId": "gold",
+            "amount": 1
+          }
+        ]
+      },
+      "uniqueFunction": {
+        "workerCapacityBonus": 6,
+        "armyCapBonus": 1
+      }
     }
   },
   "civilizations": {
-    "proto_civilization": { "archetype": "housing", "name": "氏族火塘", "description": "氏族围绕长燃火塘共同生活，扩大早期人口容量，并以共同仪式提高聚落满意度。" },
-
-    "zhou": { "archetype": "civic", "name": "礼乐宗庙", "replaces": "monument", "description": "以宗法礼制和乐教维系封邦秩序，任职人口持续产出人文值并稳定民心。" },
-    "assyria": { "archetype": "military", "name": "王家兵工场", "replaces": "siege_workshop", "description": "集中制造攻城器械与军械的王室工场，扩充驻军并训练多兵种远征军。" },
-    "neo_babylon": { "archetype": "agriculture", "name": "空中花园", "description": "依托两河灌溉经营的层叠园圃，持续供给食物并提升相邻农田的收成。" },
-    "old_egypt": { "archetype": "civic", "name": "尼罗河神庙", "replaces": "monument", "description": "沿尼罗河组织祭祀与历法活动，任职人口产出人文值并提升城市满意度。" },
-    "archaic_greece": { "archetype": "administration", "name": "卫城议事场", "description": "公民在卫城之下议政并组织城邦事务，增加可调配人口与军团编制。" },
-    "vedic_india": { "archetype": "civic", "name": "吠陀祭坛", "description": "保存赞歌、祭仪和口述传统的公共祭坛，推动早期人文制度形成。" },
-
-    "han": { "archetype": "administration", "name": "长安宫阙", "replaces": "courthouse", "description": "承接郡国文书与财政调度的中央宫署，提高行政人口和军团组织上限。" },
-    "rome": { "archetype": "commerce", "name": "罗马广场", "description": "道路、法庭与商铺汇聚的城市中心，任职商人持续创造黄金并提高贸易收益。" },
-    "parthia": { "archetype": "commerce", "name": "商旅驿站", "replaces": "trade_depot", "description": "横跨高原商路的驿站网络，为远途商队换马补给并提高贸易价值。" },
-    "kushan": { "archetype": "civic", "name": "犍陀罗寺院", "description": "连接印度、中亚与希腊传统的寺院工坊，持续积累人文并安定多族群城市。" },
-    "aksum": { "archetype": "commerce", "name": "方尖碑商庭", "replaces": "trade_depot", "description": "红海商队在王家方尖碑下交易结算，产出黄金并扩大跨海贸易收益。" },
-    "teotihuacan": { "archetype": "civic", "name": "太阳金字塔", "replaces": "monument", "description": "宏大的礼仪中心凝聚谷地居民，任职祭司持续产出人文并改善满意度。" },
-    "maya_classic": { "archetype": "research", "name": "阶梯天文台", "replaces": "academy", "description": "祭司在阶梯顶端观测天象并修订历法，任职学者持续提供科技值。" },
-    "yamatai": { "archetype": "administration", "name": "祭政宫馆", "description": "将祭仪权威与部落议事合一的宫馆，提高人口调配和军团统辖能力。" },
-
-    "tang": { "archetype": "administration", "name": "大明宫", "replaces": "courthouse", "description": "处理律令、贡赋与跨域文书的帝国中枢，提升人口和军团的行政容量。" },
-    "abbasid": { "archetype": "research", "name": "智慧宫", "replaces": "library", "description": "翻译、收藏并研究各地典籍的学术中心，学者在此高效产出科技值。" },
-    "byzantium": { "archetype": "defense", "name": "狄奥多西城墙", "replaces": "city_wall", "description": "多重墙垣与塔楼构成的都城防线，可容纳大量守军并强化据点防御。" },
-    "franks": { "archetype": "military", "name": "加洛林宫廷军营", "replaces": "stable", "description": "宫廷封臣在此集结受训，扩充军队容量并支持步骑混编军团。" },
-    "anglo_saxon": { "archetype": "defense", "name": "木砦大厅", "replaces": "frontier_fort", "description": "以木墙和领主大厅保护聚落的防御工事，为边疆驻军提供坚固据点。" },
-    "srivijaya": { "archetype": "commerce", "name": "海贸佛寺", "replaces": "trade_depot", "description": "兼具旅舍、寺院与商站功能的港路节点，提高黄金产出与海贸价值。" },
-    "ghana_empire": { "archetype": "commerce", "name": "黄金商站", "replaces": "trade_depot", "description": "控制跨撒哈拉黄金与盐交易的商站，商人可持续产金并放大贸易收益。" },
-    "heian_japan": { "archetype": "administration", "name": "平安京官署", "description": "以律令文书管理京畿与庄园的官署，增强人口调配及军团行政能力。" },
-    "chola": { "archetype": "civic", "name": "石造神庙", "replaces": "monument", "description": "兼具祭祀、工艺和社区组织功能的石庙，持续提供人文值与满意度。" },
-    "toltec": { "archetype": "military", "name": "图拉武士柱殿", "replaces": "barracks_hall", "description": "以武士柱列彰显军功的训练殿堂，扩充兵力并训练多种陆军兵种。" },
-
-    "ming": { "archetype": "naval", "name": "宝船厂", "replaces": "grand_shipyard", "description": "建造大型远洋宝船的官营船厂，可在水岸训练海军并扩大舰队容量。" },
-    "ottoman": { "archetype": "military", "name": "帝国兵工厂", "replaces": "siege_workshop", "description": "集中铸炮、修械与操练的军工体系，支持步兵、骑兵和攻城部队。" },
-    "spain": { "archetype": "civic", "name": "传教会所", "description": "组织教育、救济和远行传教的会所，持续产出人文并稳定新建聚落。" },
-    "portugal": { "archetype": "research", "name": "航海学院", "replaces": "academy", "description": "汇集制图师、天文学家与领航员的学院，持续提供科技研究点数。" },
-    "england_exploration": { "archetype": "commerce", "name": "皇家交易所", "replaces": "market_square", "description": "集中保险、票据与海外商品交易的市场，提高黄金产出和贸易收益。" },
-    "dutch": { "archetype": "commerce", "name": "东印度商馆", "replaces": "luxury_workshop", "description": "管理远洋货栈、股份和奢侈品流通的商馆，显著提高贸易价值。" },
-    "mughal": { "archetype": "defense", "name": "红堡花园", "replaces": "castle", "description": "宫苑与红砂岩堡垒结合的统治中心，可驻扎守军并提高城市防御。" },
-    "aztec": { "archetype": "civic", "name": "大神庙", "replaces": "monument", "description": "都城祭仪与公共秩序的中心，任职人口提供人文值并凝聚城市。" },
-    "songhai": { "archetype": "research", "name": "廷巴克图学宫", "replaces": "library", "description": "保存法学、天文与商路知识的学宫，学者持续积累科技研究点。" },
-    "sengoku_japan": { "archetype": "defense", "name": "山城天守", "replaces": "castle", "description": "依山构筑的多层天守与曲轮体系，为驻军提供强韧的区域防线。" },
-
-    "qing": { "archetype": "industry", "name": "江南制造局", "replaces": "engineers_guild", "description": "引进机器并制造枪炮舰械的近代工场，提高建设效率并提供工业产出。" },
-    "british_empire": { "archetype": "naval", "name": "皇家船坞", "replaces": "grand_shipyard", "description": "标准化建造和维护远洋舰队的国家船坞，训练海军并扩大舰队容量。" },
-    "french_empire": { "archetype": "civic", "name": "凯旋门", "replaces": "monument", "description": "纪念公民军功与国家仪式的城市地标，持续提供人文值和满意度。" },
-    "russian_empire": { "archetype": "military", "name": "冬宫兵工场", "replaces": "war_academy", "description": "服务帝国近卫与野战军的军械中心，扩大兵力并训练完整陆军兵种。" },
-    "prussia": { "archetype": "military", "name": "总参谋部", "replaces": "war_academy", "description": "以地图推演和专业军官组织动员的机构，增强多兵种军团训练能力。" },
-    "usa_industrial": { "archetype": "industry", "name": "流水线工厂", "replaces": "blacksmith", "description": "以标准零件和流水组织扩大产能的工厂，提高建设速度并创造工业产出。" },
-    "meiji_japan": { "archetype": "industry", "name": "官营制铁所", "replaces": "blacksmith", "description": "国家主导建设的现代钢铁基地，为城市提供工业产出并加快工程建设。" },
-    "ottoman_reform": { "archetype": "administration", "name": "坦志麦特官署", "replaces": "courthouse", "description": "推行税制、法律和征兵改革的中央官署，提高人口与军团行政容量。" },
-    "mexico_industrial": { "archetype": "gathering", "name": "银矿庄园", "replaces": "gold_mine", "description": "整合矿井、冶炼和庄园运输的采掘基地，任职工人持续转化为黄金收益。" },
-    "brazil_empire": { "archetype": "commerce", "name": "咖啡出口港", "replaces": "trade_depot", "description": "集散咖啡与海外货物的出口节点，持续产出黄金并提高贸易价值。" },
-
-    "china_modern": { "archetype": "industry", "name": "大型联合工厂", "replaces": "engineers_guild", "description": "将多条工业链集中协作的生产基地，提供工业产出并加快城市建设。" },
-    "usa_modern": { "archetype": "industry", "name": "航空工业城", "replaces": "engineers_guild", "description": "集研发、总装与供应链于一体的航空产业群，提高工程效率和工业产出。" },
-    "russia_modern": { "archetype": "industry", "name": "重工业联合体", "replaces": "blacksmith", "description": "统筹冶金、机械与重型装备生产的联合体，强化建设效率和工业供给。" },
-    "uk_modern": { "archetype": "defense", "name": "雷达站", "replaces": "watch_tower", "description": "以远程侦测网络预警空海威胁的防御站，扩大驻防容量并强化防御。" },
-    "france_modern": { "archetype": "defense", "name": "马奇诺要塞", "replaces": "grand_fortress", "description": "由地下工事、火力点和补给线构成的要塞群，可容纳大量守军。" },
-    "germany_modern": { "archetype": "industry", "name": "精密机械厂", "replaces": "blacksmith", "description": "依靠高精度机床与专业技工生产复杂装备，提高建设速度和工业产出。" },
-    "india_modern": { "archetype": "research", "name": "国家理工学院", "replaces": "academy", "description": "培养工程师和基础科学人才的国家学院，学者持续提供科技值。" },
-    "japan_modern": { "archetype": "industry", "name": "综合制造所", "replaces": "engineers_guild", "description": "以精益协作组织多行业制造的产业基地，提高建设效率并提供工业产出。" },
-    "korea_modern": { "archetype": "research", "name": "半导体园区", "replaces": "academy", "description": "连接材料、芯片设计和制造研究的高技术园区，持续产生科技值。" },
-    "brazil_modern": { "archetype": "research", "name": "生物科技园", "replaces": "academy", "description": "研究热带农业、医药与生态技术的园区，任职学者持续提供科技值。" },
-    "nigeria_modern": { "archetype": "commerce", "name": "拉各斯物流港", "replaces": "trade_depot", "description": "连接内陆市场与大西洋航线的物流中心，产出黄金并扩大贸易收益。" },
-    "indonesia_modern": { "archetype": "naval", "name": "群岛联运港", "replaces": "harbor", "description": "衔接群岛客货航线和海军补给的综合港口，可训练舰船并提升海上机动。" }
+    "proto_civilization": {
+      "archetype": "housing",
+      "name": "氏族火塘",
+      "description": "氏族围绕长燃火塘共同生活，扩大早期人口容量，并以共同仪式提高聚落满意度。"
+    },
+    "han": {
+      "archetype": "administration",
+      "name": "长安宫阙",
+      "replaces": "courthouse",
+      "description": "承接郡国文书与财政调度的中央宫署，提高行政人口和军团组织上限。"
+    },
+    "rome": {
+      "archetype": "commerce",
+      "name": "罗马广场",
+      "description": "道路、法庭与商铺汇聚的城市中心，任职商人持续创造黄金并提高贸易收益。"
+    },
+    "parthia": {
+      "archetype": "commerce",
+      "name": "商旅驿站",
+      "replaces": "trade_depot",
+      "description": "横跨高原商路的驿站网络，为远途商队换马补给并提高贸易价值。"
+    },
+    "kushan": {
+      "archetype": "civic",
+      "name": "犍陀罗寺院",
+      "description": "连接印度、中亚与希腊传统的寺院工坊，持续积累人文并安定多族群城市。"
+    },
+    "aksum": {
+      "archetype": "commerce",
+      "name": "方尖碑商庭",
+      "replaces": "trade_depot",
+      "description": "红海商队在王家方尖碑下交易结算，产出黄金并扩大跨海贸易收益。"
+    },
+    "teotihuacan": {
+      "archetype": "civic",
+      "name": "太阳金字塔",
+      "replaces": "monument",
+      "description": "宏大的礼仪中心凝聚谷地居民，任职祭司持续产出人文并改善满意度。"
+    },
+    "maya_classic": {
+      "archetype": "research",
+      "name": "阶梯天文台",
+      "replaces": "academy",
+      "description": "祭司在阶梯顶端观测天象并修订历法，任职学者持续提供科技值。"
+    },
+    "yamatai": {
+      "archetype": "administration",
+      "name": "祭政宫馆",
+      "description": "将祭仪权威与部落议事合一的宫馆，提高人口调配和军团统辖能力。"
+    },
+    "tang": {
+      "archetype": "administration",
+      "name": "大明宫",
+      "replaces": "courthouse",
+      "description": "处理律令、贡赋与跨域文书的帝国中枢，提升人口和军团的行政容量。"
+    },
+    "abbasid": {
+      "archetype": "research",
+      "name": "智慧宫",
+      "replaces": "library",
+      "description": "翻译、收藏并研究各地典籍的学术中心，学者在此高效产出科技值。"
+    },
+    "byzantium": {
+      "archetype": "defense",
+      "name": "狄奥多西城墙",
+      "replaces": "city_wall",
+      "description": "多重墙垣与塔楼构成的都城防线，可容纳大量守军并强化据点防御。"
+    },
+    "franks": {
+      "archetype": "military",
+      "name": "加洛林宫廷军营",
+      "replaces": "stable",
+      "description": "宫廷封臣在此集结受训，扩充军队容量并支持步骑混编军团。"
+    },
+    "anglo_saxon": {
+      "archetype": "defense",
+      "name": "木砦大厅",
+      "replaces": "frontier_fort",
+      "description": "以木墙和领主大厅保护聚落的防御工事，为边疆驻军提供坚固据点。"
+    },
+    "srivijaya": {
+      "archetype": "commerce",
+      "name": "海贸佛寺",
+      "replaces": "trade_depot",
+      "description": "兼具旅舍、寺院与商站功能的港路节点，提高黄金产出与海贸价值。"
+    },
+    "ghana_empire": {
+      "archetype": "commerce",
+      "name": "黄金商站",
+      "replaces": "trade_depot",
+      "description": "控制跨撒哈拉黄金与盐交易的商站，商人可持续产金并放大贸易收益。"
+    },
+    "heian_japan": {
+      "archetype": "administration",
+      "name": "平安京官署",
+      "description": "以律令文书管理京畿与庄园的官署，增强人口调配及军团行政能力。"
+    },
+    "chola": {
+      "archetype": "civic",
+      "name": "石造神庙",
+      "replaces": "monument",
+      "description": "兼具祭祀、工艺和社区组织功能的石庙，持续提供人文值与满意度。"
+    },
+    "toltec": {
+      "archetype": "military",
+      "name": "图拉武士柱殿",
+      "replaces": "barracks_hall",
+      "description": "以武士柱列彰显军功的训练殿堂，扩充兵力并训练多种陆军兵种。"
+    },
+    "ming": {
+      "archetype": "naval",
+      "name": "宝船厂",
+      "replaces": "grand_shipyard",
+      "description": "建造大型远洋宝船的官营船厂，可在水岸训练海军并扩大舰队容量。"
+    },
+    "ottoman": {
+      "archetype": "military",
+      "name": "帝国兵工厂",
+      "replaces": "siege_workshop",
+      "description": "集中铸炮、修械与操练的军工体系，支持步兵、骑兵和攻城部队。"
+    },
+    "spain": {
+      "archetype": "civic",
+      "name": "传教会所",
+      "description": "组织教育、救济和远行传教的会所，持续产出人文并稳定新建聚落。"
+    },
+    "portugal": {
+      "archetype": "research",
+      "name": "航海学院",
+      "replaces": "academy",
+      "description": "汇集制图师、天文学家与领航员的学院，持续提供科技研究点数。"
+    },
+    "england_exploration": {
+      "archetype": "commerce",
+      "name": "皇家交易所",
+      "replaces": "market_square",
+      "description": "集中保险、票据与海外商品交易的市场，提高黄金产出和贸易收益。"
+    },
+    "dutch": {
+      "archetype": "commerce",
+      "name": "东印度商馆",
+      "replaces": "luxury_workshop",
+      "description": "管理远洋货栈、股份和奢侈品流通的商馆，显著提高贸易价值。"
+    },
+    "mughal": {
+      "archetype": "defense",
+      "name": "红堡花园",
+      "replaces": "castle",
+      "description": "宫苑与红砂岩堡垒结合的统治中心，可驻扎守军并提高城市防御。"
+    },
+    "aztec": {
+      "archetype": "civic",
+      "name": "大神庙",
+      "replaces": "monument",
+      "description": "都城祭仪与公共秩序的中心，任职人口提供人文值并凝聚城市。"
+    },
+    "songhai": {
+      "archetype": "research",
+      "name": "廷巴克图学宫",
+      "replaces": "library",
+      "description": "保存法学、天文与商路知识的学宫，学者持续积累科技研究点。"
+    },
+    "sengoku_japan": {
+      "archetype": "defense",
+      "name": "山城天守",
+      "replaces": "castle",
+      "description": "依山构筑的多层天守与曲轮体系，为驻军提供强韧的区域防线。"
+    },
+    "china_modern": {
+      "archetype": "industry",
+      "name": "大型联合工厂",
+      "replaces": "engineers_guild",
+      "description": "将多条工业链集中协作的生产基地，提供工业产出并加快城市建设。"
+    },
+    "usa_modern": {
+      "archetype": "industry",
+      "name": "航空工业城",
+      "replaces": "engineers_guild",
+      "description": "集研发、总装与供应链于一体的航空产业群，提高工程效率和工业产出。"
+    },
+    "russia_modern": {
+      "archetype": "industry",
+      "name": "重工业联合体",
+      "replaces": "blacksmith",
+      "description": "统筹冶金、机械与重型装备生产的联合体，强化建设效率和工业供给。"
+    },
+    "uk_modern": {
+      "archetype": "defense",
+      "name": "雷达站",
+      "replaces": "watch_tower",
+      "description": "以远程侦测网络预警空海威胁的防御站，扩大驻防容量并强化防御。"
+    },
+    "france_modern": {
+      "archetype": "defense",
+      "name": "马奇诺要塞",
+      "replaces": "grand_fortress",
+      "description": "由地下工事、火力点和补给线构成的要塞群，可容纳大量守军。"
+    },
+    "germany_modern": {
+      "archetype": "industry",
+      "name": "精密机械厂",
+      "replaces": "blacksmith",
+      "description": "依靠高精度机床与专业技工生产复杂装备，提高建设速度和工业产出。"
+    },
+    "india_modern": {
+      "archetype": "research",
+      "name": "国家理工学院",
+      "replaces": "academy",
+      "description": "培养工程师和基础科学人才的国家学院，学者持续提供科技值。"
+    },
+    "japan_modern": {
+      "archetype": "industry",
+      "name": "综合制造所",
+      "replaces": "engineers_guild",
+      "description": "以精益协作组织多行业制造的产业基地，提高建设效率并提供工业产出。"
+    },
+    "korea_modern": {
+      "archetype": "research",
+      "name": "半导体园区",
+      "replaces": "academy",
+      "description": "连接材料、芯片设计和制造研究的高技术园区，持续产生科技值。"
+    },
+    "brazil_modern": {
+      "archetype": "research",
+      "name": "生物科技园",
+      "replaces": "academy",
+      "description": "研究热带农业、医药与生态技术的园区，任职学者持续提供科技值。"
+    },
+    "nigeria_modern": {
+      "archetype": "commerce",
+      "name": "拉各斯物流港",
+      "replaces": "trade_depot",
+      "description": "连接内陆市场与大西洋航线的物流中心，产出黄金并扩大贸易收益。"
+    },
+    "indonesia_modern": {
+      "archetype": "naval",
+      "name": "群岛联运港",
+      "replaces": "harbor",
+      "description": "衔接群岛客货航线和海军补给的综合港口，可训练舰船并提升海上机动。"
+    }
   }
 }

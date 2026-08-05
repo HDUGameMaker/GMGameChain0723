@@ -8,8 +8,8 @@ import { store } from '../core/Store.js';
 
 const STRATEGIC_EVENTS = [
   'wildSiteBattleResolved', 'armyBattleResolved', 'outpostBattleResolved',
-  'diplomacyAction', 'luxuryTraded', 'colonyEstablished', 'heroRecruited',
-  'heroAssigned', 'techResearched', 'cultureResearched', 'eraAdvanced'
+  'diplomacyAction', 'luxuryGifted', 'colonyEstablished', 'heroRecruited',
+  'heroAssigned', 'techResearched', 'cultureResearched', 'eraAdvanced', 'dayEnd'
 ];
 
 export class QuestSystem {
@@ -33,7 +33,11 @@ export class QuestSystem {
     eventBus.on('roadBuilt', ({ constructing }) => {
       if (!constructing) this._onAction('build_road');
     });
-    eventBus.on('buildingComplete', () => this._onAction('build_building'));
+    eventBus.on('buildingComplete', payload => this._onAction('build_building', payload));
+    eventBus.on('workerChanged', payload => this._onAction('assign_worker', payload));
+    eventBus.on('populationRecruited', payload => this._onAction('recruit_population', payload));
+    eventBus.on('unitTrained', payload => this._onAction('train_units', payload));
+    eventBus.on('armyDeployed', payload => this._onAction('assemble_army', payload));
     eventBus.on('buildingMoved', () => this._onAction('move_building'));
     eventBus.on('roadRemoved', () => this._onAction('remove_road'));
     eventBus.on('expeditionComplete', () => this._onAction('complete_expedition'));
@@ -166,7 +170,8 @@ export class QuestSystem {
       moveCount: 0, removeRoadCount: 0,
       modeToggleCount: 0, fullscreenCount: 0,
       pauseCount: 0, lightViewCount: 0, popClickCount: 0,
-      techCount: 0, cultureCount: 0
+      techCount: 0, cultureCount: 0,
+      recruitedPopulation: 0, trainedUnits: {}, assembledArmies: 0
     };
   }
 
@@ -288,6 +293,18 @@ export class QuestSystem {
     if (!this._snapshot) return { current: 0, target: 1 };
     const s = this._snapshot;
     switch (q.type) {
+      case 'build_specific': {
+        const current = this._countBuildingsById()[q.target.buildingId] || 0;
+        const baseline = s.buildingCounts?.[q.target.buildingId] || 0;
+        return { current: Math.max(0, current - baseline), target: q.target.count || 1 };
+      }
+      case 'assign_worker': {
+        const current = (this._buildingSystem?.buildings || []).filter(building => building.buildingId === q.target.buildingId && building.status === 'active').reduce((sum, building) => sum + (building.currentWorkers || 0), 0);
+        return { current, target: q.target.count || 1 };
+      }
+      case 'recruit_population': return { current: s.recruitedPopulation || 0, target: q.target.count || 1 };
+      case 'train_units': return { current: s.trainedUnits?.[q.target.unitId] || 0, target: q.target.count || 1 };
+      case 'assemble_army': return { current: s.assembledArmies || 0, target: q.target.count || 1 };
       case 'build_road':
         return { current: this._countCompletedRoads() - s.roadCount, target: q.target.count };
       case 'build_building': {
@@ -342,7 +359,7 @@ export class QuestSystem {
     }
   }
 
-  _onAction(type) {
+  _onAction(type, payload = {}) {
     if (!this._enabled || this._activeIndex < 0) return;
     // 更新快照计数（总是更新，无论是否当前任务类型）
     if (type === 'move_building') this._snapshot.moveCount++;
@@ -354,6 +371,9 @@ export class QuestSystem {
     else if (type === 'click_population') this._snapshot.popClickCount++;
     else if (type === 'research_tech') this._snapshot.techCount++;
     else if (type === 'research_culture') this._snapshot.cultureCount++;
+    else if (type === 'recruit_population') this._snapshot.recruitedPopulation += Math.max(1, Number(payload.amount) || 1);
+    else if (type === 'train_units' && payload.unitId) this._snapshot.trainedUnits[payload.unitId] = (this._snapshot.trainedUnits[payload.unitId] || 0) + Math.max(1, Number(payload.amount) || 1);
+    else if (type === 'assemble_army' && (payload.unitCount || 0) >= (this._quests[this._activeIndex]?.target?.minUnits || 1)) this._snapshot.assembledArmies++;
     else if (type === 'complete_expedition') {
       let cur = (store.getState('questExpeditionCount') || 0) + 1;
       store.setState({ questExpeditionCount: cur });

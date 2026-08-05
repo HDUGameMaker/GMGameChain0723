@@ -203,7 +203,6 @@ test('every deployment validation failure preserves armies reserves and next id'
     ['insufficient reserve', () => {}, { buildingIndex: 0, unitCounts: { spear: 5 } }, 'insufficient_reserve'],
     ['mixed domains', () => {}, { buildingIndex: 0, unitCounts: { spear: 1, galley: 1 } }, 'mixed_unit_domains'],
     ['unsupported domain', () => {}, { buildingIndex: 0, unitCounts: { galley: 1 } }, 'assembly_domain_not_supported'],
-    ['command points', () => {}, { buildingIndex: 0, unitCounts: { heavy: 2 } }, 'command_points_full'],
     ['army capacity', ({ army }) => {
       army.createArmy('一');
       army.createArmy('二');

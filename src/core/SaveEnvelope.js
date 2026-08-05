@@ -2,30 +2,30 @@ const FORMAT = 'gmgc-save-envelope';
 const ENVELOPE_VERSION = 1;
 const BUILD_ID = 'complete-release-v9';
 
-function normalize(value, active) {
+function normalize(value, active, path = '$') {
   if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
   if (typeof value === 'number') {
-    if (!Number.isFinite(value)) throw new TypeError('Canonical payload numbers must be finite');
+    if (!Number.isFinite(value)) throw new TypeError(`Canonical payload numbers must be finite at ${path}`);
     return value;
   }
-  if (typeof value !== 'object') throw new TypeError(`Unsupported canonical payload value: ${typeof value}`);
-  if (active.has(value)) throw new TypeError('Canonical payload contains a cycle');
+  if (typeof value !== 'object') throw new TypeError(`Unsupported canonical payload value: ${typeof value} at ${path}`);
+  if (active.has(value)) throw new TypeError(`Canonical payload contains a cycle at ${path}`);
 
   active.add(value);
   try {
     if (Array.isArray(value)) {
       for (let index = 0; index < value.length; index += 1) {
-        if (!Object.hasOwn(value, index)) throw new TypeError('Canonical payload arrays cannot be sparse');
+        if (!Object.hasOwn(value, index)) throw new TypeError(`Canonical payload arrays cannot be sparse at ${path}[${index}]`);
       }
-      return value.map(item => normalize(item, active));
+      return value.map((item, index) => normalize(item, active, `${path}[${index}]`));
     }
 
     const prototype = Object.getPrototypeOf(value);
     if (prototype !== Object.prototype && prototype !== null) {
-      throw new TypeError('Unsupported canonical payload object');
+      throw new TypeError(`Unsupported canonical payload object at ${path} (${prototype?.constructor?.name || 'unknown'})`);
     }
     if (Object.getOwnPropertySymbols(value).length > 0) {
-      throw new TypeError('Unsupported canonical payload symbol key');
+      throw new TypeError(`Unsupported canonical payload symbol key at ${path}`);
     }
 
     const result = Object.create(null);
@@ -33,7 +33,7 @@ function normalize(value, active) {
       Object.defineProperty(result, key, {
         configurable: true,
         enumerable: true,
-        value: normalize(value[key], active),
+        value: normalize(value[key], active, `${path}.${key}`),
         writable: true
       });
     }

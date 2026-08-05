@@ -13,9 +13,9 @@ import { PopulationSystem } from './systems/PopulationSystem.js';
 import { BuildingSystem } from './systems/BuildingSystem.js';
 import { ItemSystem } from './systems/ItemSystem.js';
 import { EventSystem } from './systems/EventSystem.js';
+import { DailySettlementSystem } from './systems/DailySettlementSystem.js';
 import { ExpeditionSystem } from './systems/ExpeditionSystem.js';
 import { TorchSystem } from './systems/TorchSystem.js';
-import { RoadSystem } from './systems/RoadSystem.js';
 import { AudioSystem } from './systems/AudioSystem.js';
 import { TechSystem } from './systems/TechSystem.js';
 import { CultureSystem } from './systems/CultureSystem.js';
@@ -31,13 +31,14 @@ import { DiplomacySystem } from './systems/DiplomacySystem.js';
 import { HeroSystem } from './systems/HeroSystem.js';
 import { EraSystem } from './systems/EraSystem.js';
 import { LuxurySystem } from './systems/LuxurySystem.js';
-import { StrategySystem } from './systems/StrategySystem.js';
 import { EconomyOrderSystem } from './systems/EconomyOrderSystem.js';
 import { CommerceSystem } from './systems/CommerceSystem.js';
 import { CommercialBuildingSystem } from './systems/CommercialBuildingSystem.js';
 import { ArmySystem } from './systems/ArmySystem.js';
 import { ArmyInteractionSystem } from './systems/ArmyInteractionSystem.js';
 import { WildSiteSystem } from './systems/WildSiteSystem.js';
+import { RuinSystem } from './systems/RuinSystem.js';
+import { BlackMistSystem } from './systems/BlackMistSystem.js';
 import { MapRenderer } from './rendering/MapRenderer.js';
 import { createNewWorldState } from './world/WorldMapState.js';
 import { FogOfWarState } from './world/FogOfWarState.js';
@@ -52,7 +53,11 @@ import { DebugPanel } from './ui/panels/debug-panel.js';
 import { migrateLegacyBuildingResearch } from './domain/BuildingResearchMigration.js';
 
 function omitUndefinedSaveProperties(value) {
-  if (Array.isArray(value)) return value.map(omitUndefinedSaveProperties);
+  if (Array.isArray(value)) {
+    return Array.from(value)
+      .filter(item => item !== undefined)
+      .map(omitUndefinedSaveProperties);
+  }
   if (!value || typeof value !== 'object' || Object.getPrototypeOf(value) !== Object.prototype) return value;
   return Object.fromEntries(
     Object.entries(value)
@@ -140,9 +145,6 @@ class Game {
     // 火把系统（光照）
     this.systems.torch = new TorchSystem();
 
-    // 道路系统
-    this.systems.road = new RoadSystem();
-
     // 科技树系统
     this.systems.tech = new TechSystem();
 
@@ -150,12 +152,13 @@ class Game {
     this.systems.culture = new CultureSystem();
     this.systems.era = new EraSystem();
     this.systems.luxury = new LuxurySystem();
-    this.systems.strategy = new StrategySystem();
     this.systems.economyOrders = new EconomyOrderSystem();
     this.systems.commerce = new CommerceSystem();
     this.systems.commercialBuildings = new CommercialBuildingSystem();
     this.systems.army = new ArmySystem();
     this.systems.wildSites = new WildSiteSystem();
+    this.systems.ruins = new RuinSystem();
+    this.systems.blackMist = new BlackMistSystem();
 
     // 建筑科技树（永久被动加成 + T2 建筑解锁）
     this.systems.buildingTech = new BuildingTechSystem();
@@ -192,12 +195,19 @@ class Game {
       diplomacy: this.systems.diplomacy,
       combat: this.systems.combat,
       enemyExpansion: this.systems.enemyExpansion,
+      ruins: this.systems.ruins,
       popupManager: this.popupManager
     });
 
     // 3.1 事件系统需要 popupManager
     this.systems.event = new EventSystem();
     this.systems.event._popupManager = this.popupManager;
+    this.systems.dailySettlement = new DailySettlementSystem({
+      resource: this.systems.resource,
+      territory: this.systems.territory,
+      event: this.systems.event,
+      popupManager: this.popupManager
+    });
 
     // 连接系统间交叉引用
     this.systems.building.setResourceSystem(this.systems.resource);
@@ -205,7 +215,6 @@ class Game {
     this.systems.building.setPopulationSystem(this.systems.population);
     this.systems.building.setItemSystem(this.systems.item);
     this.systems.building.setTorchSystem(this.systems.torch);
-    this.systems.building.setRoadSystem(this.systems.road);
     this.systems.building.setTechSystem(this.systems.tech);
     this.systems.building.setWeatherSystem(this.systems.weather);
     this.systems.building.setCultureSystem(this.systems.culture);
@@ -220,19 +229,10 @@ class Game {
     this.systems.enemyExpansion.setHeroSystem(this.systems.hero);
     this.systems.enemyExpansion.init();
     // 历史策略接线：影响资源、建筑产出与敌军状态
-    this.systems.strategy.setSystems({ resource: this.systems.resource });
-    this.systems.building.setStrategySystem(this.systems.strategy);
-    this.systems.enemyExpansion.setStrategySystem(this.systems.strategy);
     this.systems.torch.setResourceSystem(this.systems.resource);
     this.systems.torch.setBuildingSystem(this.systems.building);
-    this.systems.torch.setRoadSystem(this.systems.road);
     this.systems.torch.init();
-    this.systems.road.setBuildingSystem(this.systems.building);
-    this.systems.road.setResourceSystem(this.systems.resource);
-    this.systems.road.setPopulationSystem(this.systems.population);
-    this.systems.road.init();
     this.systems.quest.setBuildingSystem(this.systems.building);
-    this.systems.quest.setRoadSystem(this.systems.road);
     this.systems.quest.init();
     this.systems.tech.setResourceSystem(this.systems.resource);
     this.systems.tech.setBuildingSystem(this.systems.building);
@@ -253,7 +253,7 @@ class Game {
     this.systems.era.setTechSystem(this.systems.tech);
     this.systems.era.setCultureSystem(this.systems.culture);
     this.systems.era.setBuildingSystem(this.systems.building);
-    this.systems.luxury.setSystems({ resource: this.systems.resource, building: this.systems.building, diplomacy: this.systems.diplomacy });
+    this.systems.luxury.setSystems({ resource: this.systems.resource, building: this.systems.building, diplomacy: this.systems.diplomacy, hero: this.systems.hero });
     this.systems.economyOrders.setSystems({
       population: this.systems.population,
       resource: this.systems.resource,
@@ -277,12 +277,26 @@ class Game {
       era: this.systems.era,
       resource: this.systems.resource,
       population: this.systems.population,
-      tech: this.systems.tech
+      tech: this.systems.tech,
+      luxury: this.systems.luxury,
+      enemyExpansion: this.systems.enemyExpansion,
+      ruins: this.systems.ruins
+      , combat: this.systems.combat
     });
     this.systems.building.setArmySystem(this.systems.army);
     this.systems.invasion.setArmySystem(this.systems.army);
+    this.systems.invasion.setSystems({
+      enemyExpansion: this.systems.enemyExpansion,
+      building: this.systems.building,
+      era: this.systems.era,
+      tech: this.systems.tech,
+      culture: this.systems.culture
+    });
     this.systems.enemyExpansion.setArmySystem(this.systems.army);
-    this.systems.wildSites.setSystems({ resource: this.systems.resource, era: this.systems.era, army: this.systems.army });
+    this.systems.wildSites.setSystems({ resource: this.systems.resource, era: this.systems.era, army: this.systems.army, luxury: this.systems.luxury });
+    this.systems.enemyExpansion.setLuxurySystem(this.systems.luxury);
+    this.systems.enemyExpansion.setBattlePreviewHandler(data => this.popupManager.previewBattle(data));
+    this.systems.diplomacy.setBattlePreviewHandler(data => this.popupManager.previewBattle(data));
     this.systems.building.setLuxurySystem(this.systems.luxury);
     this.systems.population.setLuxurySystem(this.systems.luxury);
     this.systems.diplomacy.setSystems({ luxury: this.systems.luxury });
@@ -290,9 +304,15 @@ class Game {
       resource: this.systems.resource,
       culture: this.systems.culture,
       hero: this.systems.hero,
-      strategy: this.systems.strategy,
-      era: this.systems.era
+      era: this.systems.era,
+      resourceNodes: this.systems.resourceNodes,
+      army: this.systems.army,
+      enemyExpansion: this.systems.enemyExpansion
     });
+    this.systems.ruins.setSystems({ army: this.systems.army });
+    this.systems.tech.setRuinSystem(this.systems.ruins);
+    this.systems.culture.setRuinSystem(this.systems.ruins);
+    this.systems.army.setCityStateSystem(this.systems.diplomacy);
     this.systems.hero.setSystems({
       building: this.systems.building,
       resource: this.systems.resource,
@@ -304,7 +324,11 @@ class Game {
     this.systems.combat.setResourceSystem(this.systems.resource);
     this.systems.combat.setCultureSystem(this.systems.culture);
     this.systems.combat.setHeroSystem(this.systems.hero);
+    this.systems.combat.setArmySystem(this.systems.army);
     this.systems.combat.init();
+    this.systems.blackMist.setSystems({ combat: this.systems.combat, resourceNodes: this.systems.resourceNodes, wildSites: this.systems.wildSites, diplomacy: this.systems.diplomacy, enemyExpansion: this.systems.enemyExpansion });
+    this.systems.building.setBlackMistSystem(this.systems.blackMist);
+    this.systems.army.setBlackMistSystem(this.systems.blackMist);
 
     // 天气系统引用
     this.systems.weather.setPopulationSystem(this.systems.population);
@@ -324,7 +348,6 @@ class Game {
       gameLoop: gameLoop,
       diplomacy: this.systems.diplomacy,
       luxury: this.systems.luxury,
-      strategy: this.systems.strategy,
       era: this.systems.era
     });
     this.systems.expedition.setSystems({
@@ -347,6 +370,12 @@ class Game {
     eventBus.on('gameOver', (data) => {
       this.handleGameOver(data);
     });
+    eventBus.on('ancientRuinWaveWarning', ({ arrivalDay }) => {
+      this.popupManager.alert(`侦察兵发现东部远古遗迹正在聚集军队。\n第 ${arrivalDay} 日将从地图东侧发动袭击，请提前部署军队并加固建筑。`, {
+        title: '远古遗迹袭击预警',
+        okText: '准备防御'
+      });
+    });
 
     // 作弊状态变化
     eventBus.on('cheatToggled', ({ enabled }) => {
@@ -365,23 +394,21 @@ class Game {
 
     eventBus.on('outpostClicked', (outpost) => {
       this.systems.diplomacy.discoverOutpost(outpost.id);
-      this.popupManager.open('outpost_diplomacy', { outpostId: outpost.id, outpostName: outpost.name });
+      eventBus.emit('combatBroadcast', { message: `⚔️ ${outpost.name}是敌对城邦，必须派遣军队摧毁其大本营。` });
     });
 
     eventBus.on('armyDetailRequested', ({ armyId }) => {
       this.popupManager.openArmyDetail(armyId);
     });
 
+    eventBus.on('enemyDetailRequested', data => {
+      this.popupManager.open('enemy_detail', data);
+    });
+
     eventBus.on('armyInteractionRequested', request => {
       void this.systems.armyInteraction.request(request);
     });
 
-    // 道路编辑模式切换时，退出建筑放置模式
-    eventBus.on('roadEditModeChanged', ({ enabled }) => {
-      if (enabled && this.systems.building.placingState === 'PLACING') {
-        this.systems.building.exitPlacingMode();
-      }
-    });
 
     // 注册探险出发口点击事件
     eventBus.on('expeditionEntranceClicked', (entrance) => {
@@ -437,14 +464,90 @@ class Game {
       this.initNewGame();
       console.log('[Game] New game initialized');
     }
+    this.systems.fogOfWar.setRevealAll(configRegistry.get('initial')?.cheats?.clearAllFog === true);
+    const configuredCheats = configRegistry.get('initial')?.cheats || {};
+    if (configuredCheats.unlimitedBasicResources === true) this.systems.resource.fillBasicResourcesToCapacity();
+    this.systems.army.setMovementSpeedMultiplier(configuredCheats.extremeArmyMovementSpeed === true ? 10 : 1);
+    if (configuredCheats.cityStatesAttackImmediately === true) this.systems.diplomacy.launchImmediateRaids();
+    if (configuredCheats.grantAllLuxuries === true) {
+      for (const luxury of this.systems.luxury.getLuxuries()) this.systems.luxury.addLuxury(luxury.id, 1);
+    }
+    if (configuredCheats.completeCurrentEraResearchHotkey === true && !this._eraResearchCheatHandler) {
+      this._eraResearchCheatHandler = event => {
+        const target = event.target;
+        if (event.repeat || event.key !== '1' || target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName)) return;
+        const era = this.systems.era.getCurrentEra?.();
+        if (!era?.id) return;
+        const techCount = this.systems.tech.completeEraResearch?.(era.id) || 0;
+        const cultureCount = this.systems.culture.completeEraResearch?.(era.id) || 0;
+        eventBus.emit('combatBroadcast', { message: `🛠️ 金手指：已完成${era.name || era.id}的科技 ${techCount} 项、人文 ${cultureCount} 项。` });
+      };
+      window.addEventListener('keydown', this._eraResearchCheatHandler);
+    }
+    if (configuredCheats.increaseCurrentHeroAffinityHotkey === true && !this._heroAffinityCheatHandler) {
+      this._heroAffinityCheatHandler = event => {
+        const target = event.target;
+        if (event.repeat || event.key !== '2' || target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName)) return;
+        const current = this.popupManager?._stack?.at(-1);
+        if (current?.type !== 'hero_interaction' || !current.data?.heroId) return;
+        const result = this.systems.hero.increaseAffinityLevel(current.data.heroId);
+        if (!result.ok) return;
+        delete current.data._dialogue;
+        delete current.data._dialogueSession;
+        this.popupManager.refresh(current.data);
+        eventBus.emit('combatBroadcast', { message: `🛠️ 金手指：当前英雄好感提升至 ${result.level} 级。` });
+      };
+      window.addEventListener('keydown', this._heroAffinityCheatHandler);
+    }
+    if (configuredCheats.fillEraMaterialsHotkey === true && !this._eraMaterialsCheatHandler) {
+      this._eraMaterialsCheatHandler = event => {
+        const target = event.target;
+        if (event.repeat || event.key !== '3' || target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName)) return;
+        const era = this.systems.era.getCurrentEra?.();
+        if (!era?.id) return;
+        const materialIds = this.systems.resource.fillEraMaterialsToCapacity(era.id);
+        const names = materialIds.map(id => configRegistry.getResource(id)?.name || id);
+        eventBus.emit('combatBroadcast', { message: `🛠️ 金手指：已补满${era.name || era.id}及以前时代材料：${names.join('、')}` });
+      };
+      window.addEventListener('keydown', this._eraMaterialsCheatHandler);
+    }
+    if (configuredCheats.spawnTestEnemyHotkey === true && !this._spawnTestEnemyCheatHandler) {
+      this._spawnTestEnemyCheatHandler = event => {
+        const target = event.target;
+        if (event.repeat || event.key !== '4' || target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName)) return;
+        const result = this.systems.combat.spawnCheatEnemyNearHeadquarters?.();
+        eventBus.emit('combatBroadcast', { message: result?.ok ? '🛠️ 金手指：已在大本营附近生成测试敌人。' : '⚠️ 大本营附近没有可用的敌人生成位置。' });
+      };
+      window.addEventListener('keydown', this._spawnTestEnemyCheatHandler);
+    }
+    if (configuredCheats.spawnHestiaArmyHotkey === true && !this._spawnHestiaArmyCheatHandler) {
+      this._spawnHestiaArmyCheatHandler = event => {
+        const target = event.target;
+        if (event.repeat || event.key !== '5' || target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName)) return;
+        const result = this.systems.army.spawnCheatHestiaArmyNearHeadquarters?.();
+        eventBus.emit('combatBroadcast', { message: result?.ok ? '🛠️ 金手指：已在大本营附近生成赫斯提亚测试军团。' : '⚠️ 无法生成赫斯提亚测试军团。' });
+      };
+      window.addEventListener('keydown', this._spawnHestiaArmyCheatHandler);
+    }
+    if (configuredCheats.spawnSuperArmyHotkey === true && !this._spawnSuperArmyCheatHandler) {
+      this._spawnSuperArmyCheatHandler = event => {
+        const target = event.target;
+        if (event.repeat || event.key !== '6' || target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName)) return;
+        const result = this.systems.army.spawnCheatSuperArmyNearHeadquarters?.();
+        eventBus.emit('combatBroadcast', { message: result?.ok ? '🛠️ 金手指：已在大本营附近生成超级测试军团。' : '⚠️ 无法生成超级测试军团。' });
+      };
+      window.addEventListener('keydown', this._spawnSuperArmyCheatHandler);
+    }
 
     // 6. 初始化渲染器（先构造，再异步预加载纹理后绘制）
-    this.mapRenderer = new MapRenderer(this.app, this.systems.building, this.systems.torch, this.systems.road, this.systems.combat, this.systems.territory);
+    this.mapRenderer = new MapRenderer(this.app, this.systems.building, this.systems.torch, null, this.systems.combat, this.systems.territory);
     this.mapRenderer.setEnemyExpansion(this.systems.enemyExpansion);
     this.mapRenderer.setDiplomacySystem(this.systems.diplomacy);
     this.mapRenderer.setArmySystem(this.systems.army);
     this.mapRenderer.setWildSiteSystem(this.systems.wildSites);
+    this.mapRenderer.setRuinSystem(this.systems.ruins);
     this.mapRenderer.setResourceNodeSystem(this.systems.resourceNodes);
+    this.mapRenderer.setBlackMistSystem(this.systems.blackMist);
     this.mapRenderer.setFogOfWarState(this.systems.fogOfWar, { hero: this.systems.hero });
     await this.mapRenderer.init();
 
@@ -491,16 +594,12 @@ class Game {
       if (q) eventBus.emit('questUpdated', { quest: q });
     }
 
-    // 7.05 新手教程（重设计后旧教程内容过时，暂禁用，待 Phase F 重写）
-    // if (!saveData) {
-    //   setTimeout(() => {
-    //     this.popupManager.open('tutorial_prompt', { questSystem: this.systems.quest });
-    //   }, 600);
-    // }
-
-    // 7.06 开局战役目标简报（仅新游戏，读档不弹；blocking 暂停游戏）
+    // 7.05-7.06 开局目标关闭后再显示新手教程，避免阻塞弹窗重复暂停。
     if (!saveData) {
       setTimeout(() => {
+        eventBus.once('popupClosed', () => {
+          setTimeout(() => this.popupManager.open('tutorial_prompt', { questSystem: this.systems.quest }), 0);
+        });
         this.popupManager.open('objective', { briefing: true, blocking: true });
       }, 600);
     }
@@ -591,11 +690,13 @@ class Game {
     this.systems.era.initNew();
     // 初始化奢侈品库存与产地发现
     this.systems.luxury.initNew();
-    this.systems.strategy.initNew();
     this.systems.economyOrders.initNew();
     this.systems.commerce.initNew();
     this.systems.army.initNew();
     this.systems.wildSites.initNew();
+    this.systems.ruins.initNew();
+    this.systems.blackMist.initNew();
+    this.systems.dailySettlement.init();
     this.systems.quest.enable();
 
     // 初始化事件标记状态（新游戏 = 无已移除标记）
@@ -626,9 +727,6 @@ class Game {
     if (saveData.torches) {
       this.systems.torch.restoreState(saveData.torches);
     }
-    if (saveData.roads) {
-      this.systems.road.restoreState(saveData.roads);
-    }
     if (saveData.audio) {
       this.systems.audio.restoreState(saveData.audio);
     }
@@ -651,6 +749,7 @@ class Game {
     } else {
       this.systems.enemyExpansion.initNew();
     }
+    this.systems.dailySettlement.restoreState(saveData.dailySettlement);
     if (saveData.buildingTech) {
       this.systems.buildingTech.restoreState(saveData.buildingTech);
     } else {
@@ -661,17 +760,16 @@ class Game {
     } else {
       this.systems.diplomacy.initNew();
     }
+    // 英雄好感等级上限依赖当前时代，必须先恢复时代再恢复英雄。
+    if (saveData.era) this.systems.era.restoreState(saveData.era);
+    else this.systems.era.initNew();
     if (saveData.heroes) {
       this.systems.hero.restoreState(saveData.heroes);
     } else {
       this.systems.hero.initNew();
     }
-    if (saveData.era) this.systems.era.restoreState(saveData.era);
-    else this.systems.era.initNew();
     if (saveData.luxuries) this.systems.luxury.restoreState(saveData.luxuries);
     else this.systems.luxury.initNew();
-    if (saveData.strategies) this.systems.strategy.restoreState(saveData.strategies);
-    else this.systems.strategy.initNew();
     if (saveData.economicOrders) this.systems.economyOrders.restoreState(saveData.economicOrders);
     else this.systems.economyOrders.initNew();
     if (saveData.commerce) this.systems.commerce.restoreState(saveData.commerce);
@@ -695,6 +793,10 @@ class Game {
     this.systems.army.restoreState(saveData.armyState);
     if (saveData.wildSites) this.systems.wildSites.restoreState(saveData.wildSites);
     else this.systems.wildSites.initNew();
+    if (saveData.ruins) this.systems.ruins.restoreState(saveData.ruins);
+    else this.systems.ruins.initNew();
+    if (saveData.blackMist) this.systems.blackMist.restoreState(saveData.blackMist);
+    else this.systems.blackMist.initNew();
     store.setState({
       factions: saveData.commerce?.factions || { states: {}, relations: {}, lastSyncDay: 0 },
       eraMusic: saveData.eraMusic || { currentEraId: saveData.era?.currentEraId || 'primitive', currentTrackId: null }
@@ -715,22 +817,31 @@ class Game {
     this.systems.time.update(delta);
     // 建造进度按各自开始时间推进，避免同一 tick 内新建对象共享全局进度
     this.systems.building.updateConstructionProgress();
-    this.systems.road.updateConstructionProgress();
   }
 
   registerAutoSave() {
     // 每天结束后的存档点：第二天开始时保存上一天结算后的状态
     eventBus.on('dayAutosaveTick', (data) => {
       if ((data?.day || 1) <= 1) return;
-      this.saveGame();
+      void this.saveGame('day_start');
     });
+    eventBus.on('dailySettlementClosed', () => { void this.saveGame('daily_settlement'); });
+    this._initialAutosaveTimer ||= window.setTimeout(() => { void this.saveGame('initial'); }, 5000);
+    this._autosaveTimer ||= window.setInterval(() => { void this.saveGame('periodic'); }, 60000);
+    this._visibilitySaveHandler ||= () => {
+      if (document.visibilityState === 'hidden') void this.saveGame('background');
+    };
+    document.addEventListener('visibilitychange', this._visibilitySaveHandler);
+    this._pageHideSaveHandler ||= () => { void this.saveGame('pagehide'); };
+    window.addEventListener('pagehide', this._pageHideSaveHandler);
   }
 
-  async saveGame() {
+  async saveGame(reason = 'manual') {
     if (this._resetting || this._gameOver) return false;
-    const armyState = this.systems.army.getState();
-    armyState.armies = armyState.armies.map(army => ({ ownerId: 'player', ...army }));
-    const state = {
+    try {
+      const armyState = this.systems.army.getState();
+      armyState.armies = armyState.armies.map(army => ({ ownerId: 'player', ...army }));
+      const state = {
       version: SaveManager.CURRENT_VERSION,
       timestamp: Date.now(),
       world: structuredClone(this._worldState),
@@ -743,8 +854,9 @@ class Game {
       buildings: this.systems.building.getAllStates(),
       expedition: this.systems.expedition.getState(),
       events: this.systems.event.getSaveState(),
+      dailySettlement: this.systems.dailySettlement.getState(),
       torches: this.systems.torch.getAllStates(),
-      roads: this.systems.road.getAllStates(),
+      roads: [],
       tech: this.systems.tech.getState(),
       culture: this.systems.culture.getState(),
       combat: this.systems.combat.getState(),
@@ -759,11 +871,12 @@ class Game {
       heroes: this.systems.hero.getState(),
       era: this.systems.era.getState(),
       luxuries: this.systems.luxury.getState(),
-      strategies: this.systems.strategy.getState(),
       audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
       armyState,
       wildSites: this.systems.wildSites.getState(),
+      ruins: this.systems.ruins.getState(),
+      blackMist: this.systems.blackMist.getState(),
       economicOrders: this.systems.economyOrders.getState(),
       commerce: {
         ...this.systems.commerce.getState(),
@@ -774,10 +887,23 @@ class Game {
       doctrineResearchLevels: store.getState('doctrineResearchLevels') || {},
       inspiration: store.getState('inspiration') || 0,
       removedEventMarkers: this.mapRenderer ? this.mapRenderer.getMarkerState() : []
-    };
-    await SaveManager.save(omitUndefinedSaveProperties(state));
-    console.log('[Game] Auto-saved');
-    return true;
+      };
+      const saved = await SaveManager.save(omitUndefinedSaveProperties(state));
+      if (!saved) {
+        const diagnostic = SaveManager.getLastSaveDiagnostic();
+        console.error(`[Game] Save rejected or failed (${reason})`);
+        eventBus.emit('combatBroadcast', { message: `❌ 自动存档失败：${diagnostic?.detail || diagnostic?.stage || '未知错误'}` });
+        return false;
+      }
+      console.log(`[Game] Saved (${reason})`);
+      store.setState({ lastSaveTimestamp: state.timestamp, lastSaveReason: reason });
+      eventBus.emit('combatBroadcast', { message: '💾 自动存档成功' });
+      return true;
+    } catch (error) {
+      console.error(`[Game] Save snapshot failed (${reason}):`, error);
+      eventBus.emit('combatBroadcast', { message: `❌ 自动存档失败：${error?.name || error?.message || 'unknown_error'}` });
+      return false;
+    }
   }
 
   onResize() {

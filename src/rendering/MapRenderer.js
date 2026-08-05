@@ -9,8 +9,9 @@ import { progressManager } from '../utils/ProgressManager.js';
 import { gridToScreenTopLeft, screenToGrid } from '../utils/gridUtils.js';
 import { AnimatedSpriteHelper } from './AnimatedSpriteHelper.js';
 import { classifyArmyInteractionTarget } from '../domain/ArmyInteractionTarget.js';
+import { createResourceNodeHoverDetails } from '../domain/ResourceNodePresentation.js';
 import { getStrategicFogStyle } from './FogPresentation.js';
-import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels, getMountainRockSpriteModel, getMountainRubbleSpriteModels, getResourceNodeArtPath, getResourceNodeGroundStyle, getTerrainFillColor, getTerrainPropDepth, getTopDownShoreEdges, getVisibleTileBounds, MOUNTAIN_ROCK_TEXTURES, MOUNTAIN_RUBBLE_TEXTURES } from './MapPresentation.js';
+import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels, formatEnemyTokenStats, getMountainRockSpriteModel, getMountainRubbleSpriteModels, getResourceNodeArtPath, getResourceNodeGroundStyle, getTerrainFillColor, getTerrainPropDepth, getTopDownShoreEdges, getVisibleTileBounds, MOUNTAIN_ROCK_TEXTURES, MOUNTAIN_RUBBLE_TEXTURES } from './MapPresentation.js';
 
 export class MapRenderer {
   constructor(app, buildingSystem, torchSystem, roadSystem, combatSystem, territorySystem) {
@@ -21,6 +22,7 @@ export class MapRenderer {
     this._combatSystem = combatSystem || null;
     this._territorySystem = territorySystem || null;
     this.selectedArmyId = null;
+    this.selectedEnemyTarget = null;
     this._spellSystem = null; // 炼金法术系统
     this._spellHover = null;  // 施法模式下的悬停格子（AoE 预览）
     this.mapConfig = configRegistry.get('map');
@@ -36,7 +38,7 @@ export class MapRenderer {
 
     // 缩放级别（1.0 = 默认，滚轮缩放以鼠标为中心）
     this.zoom = 1.0;
-    this.MIN_ZOOM = 0.5;
+    this.MIN_ZOOM = 0.3;
     this.MAX_ZOOM = 3.0;
 
     // 游戏视图容器（包裹所有地图层，统一缩放）
@@ -62,6 +64,8 @@ export class MapRenderer {
     this.worldContainer.addChild(this.buildingLayer);
     this.roadLayer = new PIXI.Container();
     this.worldContainer.addChild(this.roadLayer);
+    this.heroSkillAimLayer = new PIXI.Container();
+    this.worldContainer.addChild(this.heroSkillAimLayer);
     this.actorLayer = new PIXI.Container();
     this.worldContainer.addChild(this.actorLayer);
     this.worldContainer.addChild(this.ghostLayer);
@@ -70,6 +74,11 @@ export class MapRenderer {
     // 3. 固定迷雾层（永远在 0,0，迷雾以视口本地坐标绘制 → 始终铺满屏幕）
     this.fogContainer = new PIXI.Container();
     this.gameView.addChild(this.fogContainer);
+    this.intelLayer = new PIXI.Container();
+    this.gameView.addChild(this.intelLayer);
+    // 黑雾属于全局威胁情报，绘制在普通探索迷雾之上。
+    this.blackMistLayer = new PIXI.Container();
+    this.intelLayer.addChild(this.blackMistLayer);
 
     // 拖拽状态
     this.isDragging = false;
@@ -164,7 +173,22 @@ export class MapRenderer {
   setDiplomacySystem(ds) { this._diplomacySystem = ds || null; }
   setArmySystem(system) { this._armySystem = system || null; }
   setWildSiteSystem(system) { this._wildSiteSystem = system || null; }
+  setRuinSystem(system) { this._ruinSystem = system || null; }
   setResourceNodeSystem(system) { this._resourceNodeSystem = system || null; }
+  setBlackMistSystem(system) { this._blackMistSystem = system || null; this._drawBlackMist(); }
+
+  _drawBlackMist() {
+    if (!this.blackMistLayer) return;
+    for (const child of this.blackMistLayer.removeChildren()) child.destroy?.();
+    const state = this._blackMistSystem?.getState?.();
+    if (!state?.radius) return;
+    const graphic = new PIXI.Graphics();
+    const centerX = (state.originX + .5) * this.tileSize;
+    const centerY = (state.originY + .5) * this.tileSize;
+    graphic.circle(centerX, centerY, (state.radius + .5) * this.tileSize).fill({ color: 0x12091f, alpha: .68 });
+    graphic.circle(centerX, centerY, (state.radius + .5) * this.tileSize).stroke({ color: 0x63317c, width: 5, alpha: .9 });
+    this.blackMistLayer.addChild(graphic);
+  }
   setFogOfWarState(state, systems = {}) {
     this._fogOfWar = state || null;
     this._heroSystem = systems.hero || null;
@@ -481,21 +505,36 @@ export class MapRenderer {
 
   _drawOutposts() {
     for (const sprite of this._outpostSprites || []) {
-      this.worldContainer.removeChild(sprite);
+      sprite.parent?.removeChild(sprite);
       sprite.destroy({ children: true });
     }
     this._outpostSprites = [];
     this._outpostData = this._diplomacySystem?.getVisibleOutposts?.() || [];
     const states = store.getState('outpostStates') || {};
-    const colors = { hostile: 0xc74b4b, wary: 0xd18b3d, neutral: 0x85859b, friendly: 0x4eaa70, allied: 0x4f7fda, defeated: 0x79639f };
+    const colors = { hostile: 0xc74b4b, wary: 0xd18b3d, neutral: 0x85859b, friendly: 0x4eaa70, allied: 0x4f7fda, defeated: 0x79639f, corrupted: 0x34283f };
     const ts = this.tileSize;
+    const bounds = getVisibleTileBounds({
+      gridWidth: this.mapConfig.gridWidth, gridHeight: this.mapConfig.gridHeight,
+      tileSize: ts, camX: this.camX, camY: this.camY,
+      screenWidth: this.screenW, screenHeight: this.screenH, zoom: this.zoom,
+      overscanTiles: 4
+    });
     for (const outpost of this._outpostData) {
       const state = states[outpost.id] || {};
+      const visibleCells = [
+        { x: outpost.gridX, y: outpost.gridY },
+        ...(state.buildings || []), ...(state.armies || [])
+      ];
+      if (!visibleCells.some(cell => Number.isFinite(cell.x) && Number.isFinite(cell.y)
+        && cell.x <= bounds.endCol && cell.x + Math.max(1, cell.width || 1) >= bounds.startCol
+        && cell.y <= bounds.endRow && cell.y + Math.max(1, cell.height || 1) >= bounds.startRow)) continue;
       const color = colors[state.status] || colors.neutral;
+      const fogState = this._fogOfWar?.getTileState(outpost.gridX, outpost.gridY) || 'visible';
+      const isUnknown = fogState === 'unexplored';
       const x = outpost.gridX * ts;
       const y = outpost.gridY * ts;
       const container = new PIXI.Container();
-      for (const cell of state.controlledCells || []) {
+      for (const cell of isUnknown ? [] : (state.controlledCells || [])) {
         const zone = new PIXI.Graphics();
         zone.rect(cell.x * ts, cell.y * ts, ts, ts);
         zone.fill({ color, alpha: 0.16 });
@@ -503,23 +542,56 @@ export class MapRenderer {
         container.addChild(zone);
       }
       const bg = new PIXI.Graphics();
-      bg.roundRect(x - 2, y - 2, ts + 4, ts + 4, 6);
+      bg.roundRect(x - 2, y - 2, ts * 2 + 4, ts * 2 + 4, 6);
       bg.fill({ color, alpha: 0.82 });
-      bg.roundRect(x - 2, y - 2, ts + 4, ts + 4, 6);
+      bg.roundRect(x - 2, y - 2, ts * 2 + 4, ts * 2 + 4, 6);
       bg.stroke({ color: 0xffffff, alpha: 0.72, width: 2 });
       container.addChild(bg);
-      const icon = new PIXI.Text({ text: outpost.icon || '🏰', style: { fontSize: 22, fill: 0xffffff, align: 'center' } });
+      const icon = new PIXI.Text({ text: state.status === 'corrupted' ? '🏚️' : (isUnknown ? '🏰' : (outpost.icon || '🏰')), style: { fontSize: 22, fill: 0xffffff, align: 'center' } });
       icon.anchor.set(0.5);
-      icon.x = x + ts / 2;
-      icon.y = y + ts / 2;
+      icon.x = x + ts;
+      icon.y = y + ts;
       container.addChild(icon);
-      this.worldContainer.addChild(container);
+
+      if (!isUnknown) {
+        const stats = new PIXI.Text({
+          text: state.status === 'corrupted' ? '黑雾残骸' : `Lv.${state.level || 1}`,
+          style: { fontSize: Math.max(8, ts * 0.12), fill: 0xffffff, align: 'center', fontWeight: 'bold', dropShadow: { color: 0x000000, alpha: 0.95, blur: 2, distance: 1 } }
+        });
+        stats.anchor.set(0.5, 0);
+        stats.x = x + ts;
+        stats.y = y + 3;
+        container.addChild(stats);
+      }
+      for (const building of (state.buildings || []).filter(item => !item.headquarters && Number.isFinite(item.x) && Number.isFinite(item.y))) {
+        const marker = new PIXI.Graphics();
+        const markerWidth = Math.max(1, building.width || 1) * ts;
+        const markerHeight = Math.max(1, building.height || 1) * ts;
+        marker.roundRect(building.x * ts + ts * 0.12, building.y * ts + ts * 0.12, markerWidth - ts * 0.24, markerHeight - ts * 0.24, 3);
+        marker.fill({ color: isUnknown ? 0x722f37 : color, alpha: isUnknown ? 0.68 : 0.82 });
+        marker.stroke({ color: 0xffc4c4, alpha: isUnknown ? 0.38 : 0.7, width: 1 });
+        container.addChild(marker);
+      }
+      for (const army of (state.armies || []).filter(item => Number.isFinite(item.x) && Number.isFinite(item.y))) {
+        const marker = new PIXI.Graphics();
+        marker.circle(army.x * ts + ts / 2, army.y * ts + ts / 2, ts * 0.34);
+        marker.fill({ color: isUnknown ? 0x5f2028 : 0xa82432, alpha: isUnknown ? 0.72 : 0.94 });
+        marker.stroke({ color: 0xffd0d0, alpha: isUnknown ? 0.4 : 0.9, width: 2 });
+        container.addChild(marker);
+        const armyIcon = new PIXI.Text({ text: '⚔', style: { fontSize: Math.max(10, ts * 0.52), fill: 0xffffff, fontWeight: 'bold' } });
+        armyIcon.anchor.set(0.5);
+        armyIcon.x = army.x * ts + ts / 2;
+        armyIcon.y = army.y * ts + ts / 2;
+        container.addChild(armyIcon);
+      }
+      container.alpha = isUnknown ? 0.72 : 1;
+      this.intelLayer.addChild(container);
       this._outpostSprites.push(container);
     }
   }
 
   _isClickOnOutpost(col, row) {
-    return (this._outpostData || []).find(outpost => outpost.gridX === col && outpost.gridY === row) || null;
+    return (this._outpostData || []).find(outpost => col >= outpost.gridX && col < outpost.gridX + 2 && row >= outpost.gridY && row < outpost.gridY + 2) || null;
   }
 
   _drawResourceNodes() {
@@ -613,8 +685,7 @@ export class MapRenderer {
   _getStrategicTokenModels() {
     const armies = (this._armySystem?.getArmies?.() || []).map(army => ({
       ...army,
-      unitCount: army.unitIds?.length || 0,
-      power: this._armySystem.getArmyPower(army.id)
+      unitCount: (army.unitIds?.length || 0) + (army.heroId ? 1 : 0)
     }));
     const wildSites = (this._wildSiteSystem?.getVisibleSites?.() || []).map(site => ({
       ...site,
@@ -633,9 +704,17 @@ export class MapRenderer {
   _drawStrategicTokens() {
     this.actorLayer.removeChildren().forEach(child => child.destroy({ children: true }));
     const ts = this.tileSize;
+    const armies = this._armySystem?.getArmies?.() || [];
     const selectedArmy = this._armySystem?.getArmy?.(this.selectedArmyId)
-      || this._armySystem?.getArmies?.().find(army => army.id === this.selectedArmyId);
+      || armies.find(army => army.id === this.selectedArmyId);
     const selection = createArmySelectionModel(selectedArmy);
+    for (const army of armies) {
+      const routeModel = createArmySelectionModel(army);
+      if (routeModel?.route.length) this.actorLayer.addChild(this._createArmyRouteUnderlay(routeModel, army.id === this.selectedArmyId));
+    }
+    if (this.selectedEnemyTarget) {
+      this.actorLayer.addChild(this._createAttackRangeUnderlay(this.selectedEnemyTarget.gridX, this.selectedEnemyTarget.gridY, this.selectedEnemyTarget.attackRange, 0xe05252));
+    }
     if (selection) this.actorLayer.addChild(this._createArmySelectionUnderlay(selection));
     for (const token of this._getStrategicTokenModels()) {
       const x = token.gridX * ts;
@@ -691,19 +770,8 @@ export class MapRenderer {
 
   _createArmySelectionUnderlay(model) {
     const ts = this.tileSize;
-    const center = point => ({ x: point.x * ts + ts / 2, y: point.y * ts + ts / 2 });
     const container = new PIXI.Container();
-    if (model.route.length > 0) {
-      const route = new PIXI.Graphics();
-      const start = center({ x: model.gridX, y: model.gridY });
-      route.moveTo(start.x, start.y);
-      for (const point of model.route) {
-        const next = center(point);
-        route.lineTo(next.x, next.y);
-      }
-      route.stroke({ color: 0xe2c15c, alpha: 0.86, width: Math.max(2, ts * 0.045) });
-      container.addChild(route);
-    }
+    if (model.attackRange > 0) container.addChild(this._createAttackRangeUnderlay(model.gridX, model.gridY, model.attackRange, 0x4d9ce0));
     const ring = new PIXI.Graphics();
     const cx = model.gridX * ts + ts / 2;
     const cy = model.gridY * ts + ts / 2;
@@ -713,6 +781,40 @@ export class MapRenderer {
     ring.stroke({ color: 0xf0cf63, alpha: 1, width: Math.max(2, ts * 0.04) });
     container.addChild(ring);
     return container;
+  }
+
+  _createArmyRouteUnderlay(model, selected = false) {
+    const ts = this.tileSize;
+    const center = point => ({ x: point.x * ts + ts / 2, y: point.y * ts + ts / 2 });
+    const route = new PIXI.Graphics();
+    const start = center({ x: model.gridX, y: model.gridY });
+    route.moveTo(start.x, start.y);
+    for (const point of model.route) {
+      const next = center(point);
+      route.lineTo(next.x, next.y);
+    }
+    route.stroke({ color: selected ? 0xffdc68 : 0xd3a94e, alpha: selected ? 0.95 : 0.72, width: Math.max(2, ts * 0.045) });
+    return route;
+  }
+
+  _createAttackRangeUnderlay(originX, originY, attackRange, color) {
+    const ts = this.tileSize;
+    const graphics = new PIXI.Graphics();
+    const map = configRegistry.get('map');
+    const radius = Math.max(0, Math.floor(Number(attackRange) || 0));
+    for (let dx = -radius; dx <= radius; dx += 1) {
+      for (let dy = -radius; dy <= radius; dy += 1) {
+        if (Math.abs(dx) + Math.abs(dy) > radius || (dx === 0 && dy === 0)) continue;
+        const gridX = originX + dx;
+        const gridY = originY + dy;
+        if (gridX < 0 || gridY < 0 || gridX >= (map?.gridWidth ?? Infinity) || gridY >= (map?.gridHeight ?? Infinity)) continue;
+        graphics.rect(gridX * ts + 2, gridY * ts + 2, ts - 4, ts - 4);
+        graphics.fill({ color, alpha: 0.2 });
+        graphics.rect(gridX * ts + 2, gridY * ts + 2, ts - 4, ts - 4);
+        graphics.stroke({ color, alpha: 0.58, width: Math.max(1, ts * 0.025) });
+      }
+    }
+    return graphics;
   }
 
   _createArmySelectionOverlay(model) {
@@ -758,6 +860,7 @@ export class MapRenderer {
     ));
     if (!army) return false;
     this.selectedArmyId = army.id;
+    this.selectedEnemyTarget = null;
     this._drawStrategicTokens();
     return true;
   }
@@ -769,9 +872,34 @@ export class MapRenderer {
     return true;
   }
 
+  _enemySelectionKey(target) {
+    return `${target?.source || 'enemy'}:${target?.enemyId || target?.enemy?.id || target?.enemy?.enemyId || ''}:${target?.gridX},${target?.gridY}`;
+  }
+
+  toggleEnemySelection(target) {
+    if (!target || target.kind !== 'enemy') return false;
+    const key = this._enemySelectionKey(target);
+    if (this.selectedEnemyTarget?.key === key) this.selectedEnemyTarget = null;
+    else {
+      this.selectedEnemyTarget = {
+        key,
+        source: target.source,
+        enemyId: target.enemyId,
+        gridX: target.gridX,
+        gridY: target.gridY,
+        attackRange: Math.max(0, Math.floor(Number(target.enemy?.attackRange) || 1))
+      };
+      this.selectedArmyId = null;
+    }
+    this._drawStrategicTokens();
+    return true;
+  }
+
   _classifyArmyInteractionTarget(gridX, gridY) {
     const combatEnemies = (this._combatSystem?.getAllEnemies?.() || []).map(enemy => ({ ...enemy, source: 'combat' }));
     const expansionEnemies = (this._enemyExpansion?.getAllCells?.() || []).map(enemy => ({ ...enemy, source: 'expansion' }));
+    const garrisonEnemies = this._diplomacySystem?.getGarrisonArmies?.() || [];
+    const ruinGuards = (this._ruinSystem?.getGuards?.() || []).map(enemy => ({ ...enemy, source: 'ruin_guard' }));
     return classifyArmyInteractionTarget({
       gridX,
       gridY,
@@ -779,7 +907,8 @@ export class MapRenderer {
       buildings: this.buildingSystem?.buildings || [],
       wildSites: this._wildSiteSystem?.getVisibleSites?.() || [],
       cityStates: this._diplomacySystem?.getVisibleOutposts?.() || [],
-      enemies: [...combatEnemies, ...expansionEnemies],
+      enemies: [...combatEnemies, ...expansionEnemies, ...garrisonEnemies, ...ruinGuards],
+      ruins: this._ruinSystem?.getRuins?.() || [],
       getBuildingConfig: buildingId => configRegistry.getBuilding(buildingId)
     });
   }
@@ -788,20 +917,57 @@ export class MapRenderer {
     const clickedArmy = this._getPlayerArmyAt(gridX, gridY);
     if (clickedArmy) {
       if (this.selectedArmyId === clickedArmy.id) {
-        eventBus.emit('armyDetailRequested', { armyId: clickedArmy.id });
+        this.clearArmySelection();
       } else {
         this.selectArmy(clickedArmy.id);
       }
       return true;
     }
-    if (!this.selectedArmyId) return false;
+    if (!this.selectedArmyId) {
+      const target = this._classifyArmyInteractionTarget(gridX, gridY);
+      if (target.kind === 'enemy') {
+        return this.toggleEnemySelection(target);
+      }
+      return false;
+    }
+    const armyId = this.selectedArmyId;
+    const target = this._classifyArmyInteractionTarget(gridX, gridY);
+    const rangeCheck = target.kind === 'enemy'
+      ? this._armySystem?.canAttackTarget?.(armyId, target.gridX, target.gridY)
+      : null;
+    const movingTowardEnemy = rangeCheck?.ok === false && rangeCheck.reason === 'target_out_of_range';
     eventBus.emit('armyInteractionRequested', {
-      armyId: this.selectedArmyId,
+      armyId,
       gridX,
       gridY,
-      target: this._classifyArmyInteractionTarget(gridX, gridY)
+      target
     });
+    if (target.kind === 'move' || movingTowardEnemy) this.clearArmySelection();
     return true;
+  }
+
+  _handleStrategicContextMenu(gridX, gridY) {
+    const army = this._getPlayerArmyAt(gridX, gridY);
+    if (army) {
+      eventBus.emit('armyDetailRequested', { armyId: army.id });
+      return true;
+    }
+    const garrison = this._diplomacySystem?.getCityStateAt?.(gridX, gridY);
+    if (garrison?.army) {
+      eventBus.emit('enemyDetailRequested', { enemy: { ...garrison.army, name: garrison.army.name || `${garrison.outpost.name}驻军`, faction: garrison.outpost.name }, source: 'city_state_garrison', gridX, gridY });
+      return true;
+    }
+    const target = this._classifyArmyInteractionTarget(gridX, gridY);
+    if (target.kind === 'enemy') {
+      eventBus.emit('enemyDetailRequested', { enemy: target.enemy, source: target.source, gridX, gridY });
+      return true;
+    }
+    if (target.kind === 'wild_site') {
+      const enemy = this._wildSiteSystem?.getSiteCombatProfile?.(target.siteId) || target.site;
+      eventBus.emit('enemyDetailRequested', { enemy, source: 'wild_site', gridX, gridY });
+      return true;
+    }
+    return false;
   }
 
   _escapeHtml(value) {
@@ -830,24 +996,97 @@ export class MapRenderer {
     }
     const position = this._clientToGrid(event.clientX, event.clientY);
     if (!position) return this._hideMapHover();
+    const mistEffect = this._blackMistSystem?.getTileEffect?.(position.col, position.row);
+    if (mistEffect) return this._showMapHover({ title: '黑雾覆盖地块', subtitle: '异界污染', lines: [mistEffect.label, '无法建造，资源点无法使用。'] }, event.clientX, event.clientY);
     const buildingIndex = this._getBuildingAt(position.col, position.row);
     if (buildingIndex >= 0) {
       const building = this.buildingSystem.buildings[buildingIndex];
       const config = configRegistry.getBuilding(building.buildingId);
       const upgradeName = config?.upgradesTo ? configRegistry.getBuilding(config.upgradesTo)?.name : null;
-      return this._showMapHover(createBuildingHoverDetails(building, config, { upgradeName }), event.clientX, event.clientY);
+      return this._showMapHover(createBuildingHoverDetails(building, config, {
+        upgradeName,
+        hp: this.buildingSystem.getBuildingHp?.(buildingIndex),
+        maxHp: this.buildingSystem.getBuildingMaxHp?.(buildingIndex)
+      }), event.clientX, event.clientY);
     }
     const token = this._getStrategicTokenModels().find(item => item.gridX === position.col && item.gridY === position.row);
     if (token) return this._showMapHover({ title: token.label, subtitle: token.kind, lines: [token.detail] }, event.clientX, event.clientY);
+    const ruinGuard = this._ruinSystem?.getGuards?.().find(guard => guard.gridX === position.col && guard.gridY === position.row);
+    if (ruinGuard) return this._showMapHover({ title: ruinGuard.name, subtitle: `遗迹守卫 · ${ruinGuard.level}级`, lines: [`生命值：${ruinGuard.hp}/${ruinGuard.maxHp}`, `攻击力：${ruinGuard.attack}`, `速度：${ruinGuard.speed}`, `攻击距离：${ruinGuard.attackRange}`] }, event.clientX, event.clientY);
+    const ruin = this._ruinSystem?.getRuins?.().find(item => item.gridX === position.col && item.gridY === position.row);
+    if (ruin) return this._showMapHover({ title: ruin.name, subtitle: ruin.activated ? '已激活石碑 · 传送节点' : '未激活石碑', lines: ruin.activated ? ['科技点获取 +35%', '人文点获取 +35%', '军团靠近任意已激活石碑后，可点击这里传送。'] : [`剩余守卫：${ruin.guards.filter(guard => guard.hp > 0).length}`, '消灭全部守卫后，让军团靠近并激活石碑。'] }, event.clientX, event.clientY);
+    const hostileBuilding = this._diplomacySystem?.getCityStateAt?.(position.col, position.row);
+    if (hostileBuilding) {
+      if (!this._isTileRevealed(position.col, position.row)) {
+        return this._showMapHover({ title: '未知敌对建筑', subtitle: '尚未探索', lines: ['探索地格后才能查看城邦生命值。'] }, event.clientX, event.clientY);
+      }
+      const { outpost, state, building, army } = hostileBuilding;
+      if (army) return this._showMapHover({
+        title: army.name || `${outpost.name}驻军`, subtitle: `敌对驻军 · Lv.${state.level || 1}`,
+        lines: [`生命值：${army.hp || army.maxHp || 0}/${army.maxHp || 0}`, `攻击力：${army.attack || 0}`, `速度：${Number(army.speed || 1).toFixed(1)}`, `攻击距离：${army.attackRange || 1}`]
+      }, event.clientX, event.clientY);
+      return this._showMapHover({
+        title: building.headquarters ? `${outpost.name}大本营` : `${outpost.name}建筑`,
+        subtitle: `敌对城邦 · Lv.${state.level || 1}`,
+        lines: [`生命值：${Math.max(0, state.hp ?? state.maxHp ?? 0)}/${Math.max(0, state.maxHp ?? state.compositeStrength ?? 0)}`, `综合战力：${state.compositeStrength || 0}`]
+      }, event.clientX, event.clientY);
+    }
     const outpost = (this._outpostData || []).find(item => item.gridX === position.col && item.gridY === position.row);
     if (outpost) {
+      if (!this._isTileRevealed(position.col, position.row)) {
+        return this._showMapHover({ title: '未知城邦', subtitle: '尚未探索', lines: ['只能确认此处存在敌对建筑，探索地格后才能查看详情。'] }, event.clientX, event.clientY);
+      }
       const state = this._diplomacySystem?.getOutpostState?.(outpost.id) || {};
-      return this._showMapHover({ title: outpost.name, subtitle: '城邦', lines: [`关系：${state.status || '中立'}`, `好感：${state.relation ?? 0}`, outpost.description || '可交涉、贸易、结盟或宣战。'] }, event.clientX, event.clientY);
+      return this._showMapHover({ title: outpost.name, subtitle: '敌对城邦', lines: [`生命值：${state.hp ?? state.maxHp ?? 0}/${state.maxHp ?? state.compositeStrength ?? 0}`, `综合战力：${state.compositeStrength || 0}`, outpost.description || '摧毁大本营以占领城邦。'] }, event.clientX, event.clientY);
+    }
+    const resourceNode = this._resourceNodeSystem?.getNodeAt?.(position.col, position.row);
+    if (resourceNode?.discovered !== false && this._isTileRevealed(position.col, position.row)) {
+      const definitions = configRegistry.get('resourceNodes')?.types || {};
+      const luxuries = configRegistry.getHistoricalContent?.().luxuries || [];
+      return this._showMapHover(createResourceNodeHoverDetails(resourceNode, definitions, luxuries), event.clientX, event.clientY);
     }
     return this._hideMapHover();
   }
 
   // ===== 敌人渲染 =====
+
+  _drawRuins() {
+    if (this._ruinContainer) {
+      this._ruinContainer.parent?.removeChild(this._ruinContainer);
+      this._ruinContainer.destroy({ children: true });
+    }
+    this._ruinContainer = new PIXI.Container();
+    this.intelLayer.addChild(this._ruinContainer);
+    if (!this._ruinSystem) return;
+    const ts = this.tileSize;
+    for (const ruin of this._ruinSystem.getRuins()) {
+      const container = new PIXI.Container();
+      const floor = new PIXI.Graphics();
+      floor.roundRect((ruin.gridX - 2) * ts, (ruin.gridY - 2) * ts, ts * 5, ts * 5, Math.max(3, ts * 0.3));
+      floor.fill({ color: ruin.activated ? 0x314b45 : 0x302b25, alpha: 0.46 });
+      floor.stroke({ color: ruin.activated ? 0x64dbc0 : 0x89785e, alpha: 0.78, width: Math.max(1, ts * 0.07) });
+      container.addChild(floor);
+      const steleBg = new PIXI.Graphics();
+      steleBg.roundRect(ruin.gridX * ts + ts * 0.14, ruin.gridY * ts + ts * 0.06, ts * 0.72, ts * 0.88, Math.max(2, ts * 0.1));
+      steleBg.fill({ color: ruin.activated ? 0x42bfa4 : 0x615b54, alpha: 0.95 });
+      steleBg.stroke({ color: ruin.activated ? 0xb6fff0 : 0xd1c09e, alpha: 0.9, width: 2 });
+      container.addChild(steleBg);
+      const glyph = new PIXI.Text({ text: ruin.activated ? '✦' : 'ᚱ', style: { fontSize: Math.max(12, ts * 0.55), fill: 0xf4e7bd, fontWeight: 'bold' } });
+      glyph.anchor.set(0.5); glyph.x = ruin.gridX * ts + ts / 2; glyph.y = ruin.gridY * ts + ts / 2;
+      container.addChild(glyph);
+      for (const guard of ruin.guards.filter(item => item.hp > 0)) {
+        const marker = new PIXI.Graphics();
+        marker.circle(guard.gridX * ts + ts / 2, guard.gridY * ts + ts / 2, ts * 0.38);
+        marker.fill({ color: 0x8e3434, alpha: 0.92 });
+        marker.stroke({ color: 0xffb0a0, alpha: 0.85, width: 2 });
+        container.addChild(marker);
+        const icon = new PIXI.Text({ text: '🛡️', style: { fontSize: Math.max(11, ts * 0.52) } });
+        icon.anchor.set(0.5); icon.x = guard.gridX * ts + ts / 2; icon.y = guard.gridY * ts + ts / 2;
+        container.addChild(icon);
+      }
+      this._ruinContainer.addChild(container);
+    }
+  }
 
   _drawEnemies() {
     if (!this._combatSystem) return;
@@ -855,11 +1094,11 @@ export class MapRenderer {
     const enemies = this._combatSystem.getAllEnemies();
     // 清理旧敌人精灵
     if (this._enemyContainer) {
-      this.worldContainer.removeChild(this._enemyContainer);
+      this._enemyContainer.parent?.removeChild(this._enemyContainer);
       this._enemyContainer.destroy({ children: true });
     }
     this._enemyContainer = new PIXI.Container();
-    this.worldContainer.addChild(this._enemyContainer);
+    this.intelLayer.addChild(this._enemyContainer);
 
     for (const enemy of enemies) {
       const cfg = this._combatSystem.getEnemyConfig(enemy.enemyId);
@@ -867,48 +1106,66 @@ export class MapRenderer {
 
       const x = enemy.gridX * ts;
       const y = enemy.gridY * ts;
+      const footprintWidth = Math.max(1, Number(enemy.footprint?.width || cfg.footprint?.width || 1));
+      const footprintHeight = Math.max(1, Number(enemy.footprint?.height || cfg.footprint?.height || 1));
+      const enemyWidth = ts * footprintWidth;
+      const enemyHeight = ts * footprintHeight;
+      const isRuinBoss = enemy.boss === true || cfg.spawnAtEasternRuin === true;
 
       const container = new PIXI.Container();
+      const isUnknown = (this._fogOfWar?.getTileState(enemy.gridX, enemy.gridY) || 'visible') === 'unexplored';
 
       // 敌人底色（红色/灰色）
       const bg = new PIXI.Graphics();
       const isRobot = enemy.enemyId.startsWith('robot');
-      const color = isRobot ? 0xcc4444 : 0xcc8844;
-      bg.rect(x + 2, y + 2, ts - 4, ts - 4);
+      const isNeutral = enemy.neutral === true || enemy.disposition === 'neutral';
+      const color = isNeutral ? 0x8b8065 : (isRobot ? 0xcc4444 : 0xcc8844);
+      if (isRuinBoss) {
+        const ruinRadius = Math.max(1, Number(cfg.ruinRadius || 3));
+        const ruin = new PIXI.Graphics();
+        ruin.roundRect(x - ruinRadius * ts, y - ruinRadius * ts,
+          enemyWidth + ruinRadius * ts * 2, enemyHeight + ruinRadius * ts * 2,
+          Math.max(3, ts * 0.35));
+        ruin.fill({ color: 0x24201c, alpha: 0.48 });
+        ruin.stroke({ color: 0x776b55, alpha: 0.72, width: Math.max(1, ts * 0.08) });
+        container.addChild(ruin);
+      }
+      bg.rect(x + 2, y + 2, enemyWidth - 4, enemyHeight - 4);
       bg.fill({ color, alpha: 0.7 });
-      bg.rect(x + 2, y + 2, ts - 4, ts - 4);
-      bg.stroke({ color: 0xff0000, alpha: 0.6, width: 2 });
+      bg.rect(x + 2, y + 2, enemyWidth - 4, enemyHeight - 4);
+      bg.stroke({ color: isNeutral ? 0xd2bd82 : 0xff0000, alpha: 0.75, width: isRuinBoss ? 3 : 2 });
       container.addChild(bg);
 
       // 敌人图标
       const icon = new PIXI.Text({
-        text: isRobot ? '🤖' : '🐺',
-        style: { fontSize: 24 }
+        text: isUnknown ? '?' : (cfg.icon || (isRobot ? '🤖' : '⚔️')),
+        style: { fontSize: isRuinBoss ? Math.max(28, ts * 1.25) : 24 }
       });
       icon.anchor.set(0.5);
-      icon.x = x + ts / 2;
-      icon.y = y + ts / 2;
+      icon.x = x + enemyWidth / 2;
+      icon.y = y + enemyHeight / 2;
       container.addChild(icon);
 
       // 血量条
       const hpPct = enemy.hp / enemy.maxHp;
-      const barW = ts - 8;
-      const barH = 4;
+      const barW = enemyWidth - 8;
+      const barH = isRuinBoss ? Math.max(5, ts * 0.16) : 4;
       const barX = x + 4;
-      const barY = y + ts - 8;
+      const barY = y + enemyHeight - barH - 4;
 
       // 背景
       const barBg = new PIXI.Graphics();
       barBg.rect(barX, barY, barW, barH);
       barBg.fill({ color: 0x333333, alpha: 0.8 });
-      container.addChild(barBg);
+      if (!isUnknown) container.addChild(barBg);
 
       // 填充
       const barFill = new PIXI.Graphics();
       const hpColor = hpPct > 0.5 ? 0x4ecb71 : (hpPct > 0.25 ? 0xf0a040 : 0xff4444);
       barFill.rect(barX, barY, barW * hpPct, barH);
       barFill.fill({ color: hpColor, alpha: 0.9 });
-      container.addChild(barFill);
+      if (!isUnknown) container.addChild(barFill);
+      container.alpha = isUnknown ? 0.72 : 1;
 
       this._enemyContainer.addChild(container);
     }
@@ -939,7 +1196,7 @@ export class MapRenderer {
       if (isTamed) {
         iconText = unit.tamedInfo?.icon || '🐾';
       } else {
-        iconText = isArcher ? '🏹' : '⚔️';
+        iconText = isRanged ? '🏹' : '⚔️';
       }
       const icon = new PIXI.Text({
         text: iconText,
@@ -1120,6 +1377,10 @@ export class MapRenderer {
     }
     this._drawResourceNodes();
     this._drawStrategicTokens();
+    this._drawOutposts();
+    this._drawEnemies();
+    this._drawRuins();
+    this._drawEnemyExpansion();
   }
 
   /**
@@ -1679,6 +1940,8 @@ export class MapRenderer {
   _updateWorldContainerPosition() {
     this.worldContainer.x = -this.camX;
     this.worldContainer.y = -this.camY;
+    this.intelLayer.x = -this.camX;
+    this.intelLayer.y = -this.camY;
     this._updateViewportCenter();
     // 施法模式：相机移动后重绘视口内可占领空格标记
     if (this._territorySystem && this._territorySystem.isCastingMode()) {
@@ -1709,27 +1972,28 @@ export class MapRenderer {
 
   _centerView() {
     const ts = this.tileSize;
+    const headquarters = this.mapConfig.initialBuildings?.[0];
     // 优先级1：配置的初始相机位置（以网格坐标指定，新游戏开局居中于永恒火把等关键建筑）
-    const initCam = this.mapConfig.initialCamera;
+    const initCam = headquarters ? { gridX: headquarters.gridX, gridY: headquarters.gridY, zoom: this.mapConfig.initialCamera?.zoom } : this.mapConfig.initialCamera;
     if (initCam && initCam.gridX != null && initCam.gridY != null) {
       // 将网格坐标居中到屏幕中心
-      this.camX = (initCam.gridX + 0.5) * ts - this.screenW / 2;
-      this.camY = (initCam.gridY + 0.5) * ts - this.screenH / 2;
       if (initCam.zoom != null) {
         this.zoom = Math.max(this.MIN_ZOOM, Math.min(this.MAX_ZOOM, initCam.zoom));
         this.gameView.scale.set(this.zoom);
       }
+      this.camX = (initCam.gridX + 0.5) * ts - this.screenW / (2 * this.zoom);
+      this.camY = (initCam.gridY + 0.5) * ts - this.screenH / (2 * this.zoom);
     } else if (this.mapConfig.viewportCenter &&
                this.mapConfig.viewportCenter.defaultGridX != null &&
                this.mapConfig.viewportCenter.defaultGridY != null) {
       // 优先级2：viewportCenter.defaultGridX/Y（配置中标记的"世界中心"，通常对应永恒火把）
       const vc = this.mapConfig.viewportCenter;
-      this.camX = (vc.defaultGridX + 0.5) * ts - this.screenW / 2;
-      this.camY = (vc.defaultGridY + 0.5) * ts - this.screenH / 2;
       if (vc.defaultZoom != null) {
         this.zoom = Math.max(this.MIN_ZOOM, Math.min(this.MAX_ZOOM, vc.defaultZoom));
         this.gameView.scale.set(this.zoom);
       }
+      this.camX = (vc.defaultGridX + 0.5) * ts - this.screenW / (2 * this.zoom);
+      this.camY = (vc.defaultGridY + 0.5) * ts - this.screenH / (2 * this.zoom);
     } else {
       // 优先级3：回退到地图几何中心
       const { gridWidth, gridHeight, tileSize } = this.mapConfig;
@@ -1758,7 +2022,24 @@ export class MapRenderer {
     this._relocateConfig = null;
 
     canvas.addEventListener('pointerdown', (e) => {
+      if (e.button === 2) return;
       const gridPos = this._clientToGrid(e.clientX, e.clientY);
+      if (e.button === 1) {
+        e.preventDefault();
+        if (this._heroSkillAim) { this._cancelHeroSkillAim(); return; }
+        this._middleDragging = true;
+        this._middleDragMoved = false;
+        this._middleDragStartX = e.clientX; this._middleDragStartY = e.clientY;
+        this._middleDragCamX = this.camX; this._middleDragCamY = this.camY;
+        this._middleDownGrid = gridPos;
+        return;
+      }
+      if (e.button === 0 && this._heroSkillAim) {
+        const result = this._armySystem?.useHeroActiveSkill?.(this._heroSkillAim.armyId, this._heroSkillAim.direction);
+        eventBus.emit('combatBroadcast', { message: result?.ok ? '🌙 月光发动。' : `月光发动失败：${result?.reason || '未知原因'}` });
+        if (result?.ok) this._cancelHeroSkillAim(); else this._drawHeroSkillAim();
+        return;
+      }
 
       // 放置建筑模式：优先于道路编辑，避免选中建筑后点击地图误铺道路
       if (this.buildingSystem.placingState === 'PLACING') {
@@ -1839,6 +2120,27 @@ export class MapRenderer {
     });
 
     canvas.addEventListener('pointermove', (e) => {
+      if (this._middleDragging) {
+        const dx = e.clientX - this._middleDragStartX, dy = e.clientY - this._middleDragStartY;
+        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) this._middleDragMoved = true;
+        if (this._middleDragMoved) {
+          this.camX = this._middleDragCamX - dx / this.zoom;
+          this.camY = this._middleDragCamY - dy / this.zoom;
+          this._clampCamera(); this._updateWorldContainerPosition(); this._drawTerrainChunk(); this._updateFogTexture(); this._scheduleStrategicLayerRedraw();
+        }
+        return;
+      }
+      if (this._heroSkillAim) {
+        const army = this._armySystem?.getArmy?.(this._heroSkillAim.armyId);
+        const hover = this._clientToGrid(e.clientX, e.clientY);
+        if (army && hover) {
+          const dx = hover.col - army.gridX, dy = hover.row - army.gridY;
+          this._heroSkillAim.direction = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
+          this._drawHeroSkillAim();
+        }
+        this._updateMapHover(e);
+        return;
+      }
       // 道路编辑模式
       if (this._roadSystem && this._roadSystem.isEditMode()) {
         this._updateRoadGhost(e.clientX, e.clientY);
@@ -1875,6 +2177,7 @@ export class MapRenderer {
         this._updateWorldContainerPosition();
         this._drawTerrainChunk();
         this._updateFogTexture();
+        this._scheduleStrategicLayerRedraw();
       }
 
       // 放置模式下更新虚影
@@ -1904,6 +2207,14 @@ export class MapRenderer {
     canvas.addEventListener('pointerleave', () => this._hideMapHover());
 
     canvas.addEventListener('pointerup', (e) => {
+      if (e.button === 2) return;
+      if (e.button === 1) {
+        const wasMoved = this._middleDragMoved;
+        const grid = this._middleDownGrid;
+        this._middleDragging = false; this._middleDragMoved = false; this._middleDownGrid = null;
+        if (!wasMoved && grid) this._toggleHeroSkillAimAt(grid.col, grid.row);
+        return;
+      }
       // 单位拖动结束
       if (this._dragUnitIndex !== null) {
         const unitIdx = this._dragUnitIndex;
@@ -1958,7 +2269,15 @@ export class MapRenderer {
       this.isDragging = false;
     });
 
+    canvas.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      const gridPos = this._clientToGrid(e.clientX, e.clientY);
+      if (!gridPos || !this._isTileRevealed(gridPos.col, gridPos.row)) return;
+      this._handleStrategicContextMenu(gridPos.col, gridPos.row);
+    });
+
     canvas.addEventListener('pointerleave', () => {
+      this._middleDragging = false;
       // 清理单位拖动
       if (this._dragUnitIndex !== null) {
         this._clearUnitDragGhost();
@@ -2056,6 +2375,7 @@ export class MapRenderer {
       this._updateWorldContainerPosition();
       this._recreateFogCanvas();
       this._drawTerrainChunk();
+      this._scheduleStrategicLayerRedraw();
     }, { passive: false });
 
     this._keyboardPanTicker = (ticker) => {
@@ -2119,6 +2439,39 @@ export class MapRenderer {
     this._updateWorldContainerPosition();
     this._drawTerrainChunk();
     this._updateFogTexture();
+    this._scheduleStrategicLayerRedraw();
+  }
+
+  _cancelHeroSkillAim() {
+    this._heroSkillAim = null;
+    for (const child of this.heroSkillAimLayer?.removeChildren?.() || []) child.destroy?.();
+  }
+
+  _toggleHeroSkillAimAt(col, row) {
+    const army = this._getPlayerArmyAt(col, row);
+    if (!army) return;
+    this.selectArmy(army.id);
+    if (!army.heroId) { eventBus.emit('combatBroadcast', { message: '该军团没有领队，无法准备主动技能。' }); return; }
+    if ((army.heroSkillCooldown || 0) > 0) { eventBus.emit('combatBroadcast', { message: `主动技能冷却中：剩余${army.heroSkillCooldown}时段。` }); return; }
+    if ((army.cp || 0) < 1) { eventBus.emit('combatBroadcast', { message: '军团CP不足，无法准备主动技能。' }); return; }
+    this._heroSkillAim = { armyId: army.id, direction: 'right' };
+    this._drawHeroSkillAim();
+  }
+
+  _drawHeroSkillAim() {
+    for (const child of this.heroSkillAimLayer?.removeChildren?.() || []) child.destroy?.();
+    const aim = this._heroSkillAim, army = aim ? this._armySystem?.getArmy?.(aim.armyId) : null;
+    if (!army) return;
+    const [dx, dy] = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] }[aim.direction];
+    const endX = army.gridX + dx * 4, endY = army.gridY + dy * 4;
+    const valid = this._armySystem?.isLandPassableAt?.(endX, endY) && !this._armySystem?._isArmyTileOccupied?.(endX, endY, army.id);
+    for (let step = 1; step <= 4; step += 1) {
+      const marker = new PIXI.Graphics();
+      marker.rect((army.gridX + dx * step) * this.tileSize + 2, (army.gridY + dy * step) * this.tileSize + 2, this.tileSize - 4, this.tileSize - 4);
+      marker.fill({ color: valid ? 0x8bcaff : 0xe05252, alpha: .42 });
+      marker.stroke({ color: valid ? 0xd8f0ff : 0xffb0b0, width: 2, alpha: .95 });
+      this.heroSkillAimLayer.addChild(marker);
+    }
   }
 
   _drawSpellZones() {
@@ -2198,14 +2551,22 @@ export class MapRenderer {
     if (!this._enemyExpansion) return;
     const ts = this.tileSize;
     if (this._enemyExpansionContainer) {
-      this.worldContainer.removeChild(this._enemyExpansionContainer);
+      this._enemyExpansionContainer.parent?.removeChild(this._enemyExpansionContainer);
       this._enemyExpansionContainer.destroy({ children: true });
     }
     this._enemyExpansionContainer = new PIXI.Container();
-    this.worldContainer.addChild(this._enemyExpansionContainer);
+    this.intelLayer.addChild(this._enemyExpansionContainer);
+    const bounds = getVisibleTileBounds({
+      gridWidth: this.mapConfig.gridWidth, gridHeight: this.mapConfig.gridHeight,
+      tileSize: ts, camX: this.camX, camY: this.camY,
+      screenWidth: this.screenW, screenHeight: this.screenH, zoom: this.zoom,
+      overscanTiles: 3
+    });
 
     for (const cell of this._enemyExpansion.getAllCells()) {
+      if (cell.x < bounds.startCol || cell.x > bounds.endCol || cell.y < bounds.startRow || cell.y > bounds.endRow) continue;
       const x = cell.x * ts, y = cell.y * ts;
+      const isUnknown = (this._fogOfWar?.getTileState(cell.x, cell.y) || 'visible') === 'unexplored';
       const aboutToExpand = cell.countdown <= 1;
       const g = new PIXI.Graphics();
       g.rect(x + 2, y + 2, ts - 4, ts - 4);
@@ -2215,14 +2576,25 @@ export class MapRenderer {
       this._enemyExpansionContainer.addChild(g);
 
       const txt = new PIXI.Text({
-        text: cell.strength + '\n⏱' + cell.countdown,
-        style: { fontSize: 12, fill: 0xffffff, align: 'center', lineHeight: 13 }
+        text: isUnknown ? '⚠' : (formatEnemyTokenStats(cell) + '\n⏱' + cell.countdown),
+        style: { fontSize: Math.max(8, ts * 0.12), fill: 0xffffff, align: 'center', lineHeight: Math.max(11, ts * 0.14), fontWeight: 'bold', dropShadow: { color: 0x000000, alpha: 0.95, blur: 2, distance: 1 } }
       });
       txt.anchor.set(0.5);
       txt.x = x + ts / 2;
       txt.y = y + ts / 2;
       this._enemyExpansionContainer.addChild(txt);
+      g.alpha = isUnknown ? 0.62 : 1;
     }
+  }
+
+  _scheduleStrategicLayerRedraw() {
+    if (this._strategicRedrawPending) return;
+    this._strategicRedrawPending = true;
+    requestAnimationFrame(() => {
+      this._strategicRedrawPending = false;
+      this._drawOutposts();
+      this._drawEnemyExpansion();
+    });
   }
 
   _drawTerritory() {
@@ -2385,16 +2757,6 @@ export class MapRenderer {
       if (this._enemyExpansion && this._enemyExpansion.getCellAt(gridPos.col, gridPos.row)) {
         this._enemyExpansion.clearEnemyCell(gridPos.col, gridPos.row);
         return;
-      }
-
-      // 检查是否点击了敌人（反击）
-      if (this._combatSystem) {
-        const enemy = this._combatSystem.getEnemyAt(gridPos.col, gridPos.row);
-        if (enemy) {
-          this._combatSystem.playerAttack(gridPos.col, gridPos.row);
-          this._drawEnemies();
-          return;
-        }
       }
 
       // 检查是否点击了友方单位（查看血量）
@@ -3061,7 +3423,7 @@ export class MapRenderer {
     this._mapProductionFills = []; // 重建产出进度条引用列表
 
     // 绘制所有建筑
-    for (const building of this.buildingSystem.buildings) {
+    for (const [buildingIndex, building] of this.buildingSystem.buildings.entries()) {
       const config = configRegistry.getBuilding(building.buildingId);
       if (!config) continue;
 
@@ -3200,9 +3562,9 @@ export class MapRenderer {
       }
 
       // ===== 建筑血量条（受战斗系统影响）=====
-      if (this._combatSystem && building._damage && building._damage > 0) {
-        const maxHp = this._combatSystem._getBuildingHp(building.buildingId);
-        const hpPct = Math.max(0, 1 - building._damage / maxHp);
+      if (building.hpDamage > 0) {
+        const maxHp = this.buildingSystem.getBuildingMaxHp?.(buildingIndex) || config.maxHp || 100;
+        const hpPct = Math.max(0, (this.buildingSystem.getBuildingHp?.(buildingIndex) ?? maxHp) / maxHp);
         const bw = w * this.tileSize - 8;
         const bh = 4;
         const bxx = x + 4;
@@ -3682,6 +4044,7 @@ export class MapRenderer {
     this._updateWorldContainerPosition();
     this._recreateFogCanvas();
     this._drawTerrainChunk();
+    this._scheduleStrategicLayerRedraw();
   }
 
   /**
@@ -3740,16 +4103,38 @@ export class MapRenderer {
 
     // 敌人重绘
     eventBus.on('enemySpawned', () => this._drawEnemies());
-    eventBus.on('enemyKilled', () => this._drawEnemies());
+    eventBus.on('enemyKilled', () => {
+      this._drawEnemies();
+      if (this.selectedEnemyTarget?.source === 'combat'
+        && !this._combatSystem?.getEnemyAt?.(this.selectedEnemyTarget.gridX, this.selectedEnemyTarget.gridY)) {
+        this.selectedEnemyTarget = null;
+      }
+      this._drawStrategicTokens();
+    });
     eventBus.on('unitSpawned', () => this._drawEnemies());
     eventBus.on('tamedCreatureGained', () => this._drawEnemies());
+    eventBus.on('ruinsChanged', () => {
+      this._drawRuins();
+      if (this.selectedEnemyTarget?.source === 'ruin_guard'
+        && !(this._ruinSystem?.getGuards?.() || []).some(guard => guard.id === this.selectedEnemyTarget.enemyId)) {
+        this.selectedEnemyTarget = null;
+      }
+      this._drawStrategicTokens();
+    });
     store.subscribe('combatVersion', () => this._drawEnemies());
     eventBus.on('territoryChanged', () => this._drawTerritory());
     eventBus.on('territoryCastingModeChanged', ({ enabled } = {}) => {
       if (enabled) this.clearArmySelection();
       this._drawTerritory();
     });
-    eventBus.on('enemyExpansionChanged', () => this._drawEnemyExpansion());
+    eventBus.on('enemyExpansionChanged', () => {
+      this._drawEnemyExpansion();
+      if (this.selectedEnemyTarget?.source === 'expansion'
+        && !this._enemyExpansion?.getCellAt?.(this.selectedEnemyTarget.gridX, this.selectedEnemyTarget.gridY)) {
+        this.selectedEnemyTarget = null;
+      }
+      this._drawStrategicTokens();
+    });
     eventBus.on('spellZonesChanged', () => this._drawSpellZones());
     eventBus.on('spellCastingModeChanged', ({ enabled } = {}) => {
       if (enabled) this.clearArmySelection();
@@ -3789,6 +4174,7 @@ export class MapRenderer {
     eventBus.on('armyChanged', () => this._updateFogTexture());
     eventBus.on('wildSitesChanged', () => this._drawStrategicTokens());
     eventBus.on('resourceNodesChanged', () => this._drawResourceNodes());
+    eventBus.on('blackMistChanged', () => this._drawBlackMist());
     eventBus.on('heroChanged', () => this._updateFogTexture());
   }
 

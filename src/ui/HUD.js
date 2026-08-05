@@ -12,6 +12,16 @@ const SECONDARY_RESOURCE_IDS = ['icon_inspiration'];
 
 export class HUD {
   constructor(systems, popupManager) {
+    this._updateResolutionClass = () => {
+      const physicalWidth = Math.round(window.innerWidth * (window.devicePixelRatio || 1));
+      const physicalHeight = Math.round(window.innerHeight * (window.devicePixelRatio || 1));
+      const density = physicalWidth >= 3400 && physicalHeight >= 1800 ? 'ultra'
+        : physicalWidth >= 2500 && physicalHeight >= 1300 ? 'high'
+          : 'normal';
+      document.documentElement.dataset.uiDensity = density;
+    };
+    this._updateResolutionClass();
+    window.addEventListener('resize', this._updateResolutionClass);
     this.systems = systems;
     this.popupManager = popupManager;
     this._popover = null;
@@ -36,7 +46,6 @@ export class HUD {
     this.btnObjective = document.getElementById('btn-objective');
     this.btnTech = document.getElementById('btn-tech');
     this.btnCulture = document.getElementById('btn-culture');
-    this.btnRoad = document.getElementById('btn-road');
     this.btnQuest = document.getElementById('btn-quest');
     this.btnCancelPlace = document.getElementById('btn-cancel-place');
     this.btnFullscreen = document.getElementById('btn-fullscreen');
@@ -52,12 +61,11 @@ export class HUD {
     this.deferredEventTray = document.getElementById('deferred-event-tray');
     this.techStatus = document.getElementById('tech-status');
     this.btnEra = document.getElementById('btn-era');
+    this.btnDevelopmentDetails = document.getElementById('btn-development-details');
     this.btnLuxury = document.getElementById('btn-luxury');
-    this.btnStrategy = document.getElementById('btn-strategy');
-    this.btnEconomyOrders = document.getElementById('btn-economy-orders');
-    this.btnCommerce = document.getElementById('btn-commerce');
-    this.btnCommercial = document.getElementById('btn-commercial');
     this.btnWorld = document.getElementById('btn-world');
+    this._updateLuxuryButtonVisibility();
+    this._updateHeroButtonVisibility();
     if (this.weatherDisplay) {
       this.weatherDisplay.style.display = 'none';
     }
@@ -70,11 +78,10 @@ export class HUD {
     this.btnEra?.addEventListener('click', () => {
       this.popupManager.open('era_civilization', { eraSystem: this.systems.era });
     });
+    this.btnDevelopmentDetails?.addEventListener('click', () => {
+      this.popupManager.open('development_details', {});
+    });
     this.btnLuxury?.addEventListener('click', () => this.popupManager.open('luxury_trade', {}));
-    this.btnStrategy?.addEventListener('click', () => this.popupManager.open('strategy_cards', {}));
-    this.btnEconomyOrders?.addEventListener('click', () => this.popupManager.open('economic_orders', {}));
-    this.btnCommercial?.addEventListener('click', () => this.popupManager.open('commercial', {}));
-    this.btnCommerce?.addEventListener('click', () => this.popupManager.open('trade', {}));
     this.btnWorld?.addEventListener('click', () => this.popupManager.open('world_factions', {}));
     // 科技树
     this.btnTech.addEventListener('click', () => {
@@ -87,8 +94,6 @@ export class HUD {
     });
 
 
-    // 道路编辑
-    this.btnRoad.addEventListener('click', () => this._toggleRoadEditMode());
 
     // 任务面板
     this.btnQuest.addEventListener('click', () => {
@@ -103,7 +108,7 @@ export class HUD {
       this.popupManager.open('unit_research', {});
     });
     this.btnHeroes?.addEventListener('click', () => {
-      this.popupManager.open('tavern_heroes', {});
+      this.popupManager.open('hero_roster', {});
     });
     this.btnBuild.addEventListener('click', () => {
       this.systems.territory?.exitCastingMode();
@@ -117,7 +122,9 @@ export class HUD {
       });
     }
 
-    // 边境拓土按钮
+    // 拓土系统已移除，保留空引用兼容旧存档与旧调用。
+    this.btnPossession = null;
+    /*
     this.btnPossession = document.createElement('button');
     this.btnPossession.className = 'hud-btn';
     this.btnPossession.innerHTML = '<span class="hud-btn-icon">🚩</span><span class="hud-btn-label">拓土</span>';
@@ -126,12 +133,14 @@ export class HUD {
       this.btnBuild.parentNode.insertBefore(this.btnPossession, this.btnBuild);
     }
     this.btnPossession.addEventListener('click', () => this._togglePossessionMode());
+    */
 
     // 领地进度 / 建筑上限 状态条
     this.territoryStatus = document.createElement('div');
     this.territoryStatus.className = 'territory-status';
     this.territoryStatus.style.cssText = 'position:fixed;top:54px;left:50%;transform:translateX(-50%);z-index:50;background:rgba(20,20,40,0.72);padding:4px 14px;border-radius:8px;font-size:12px;color:#ccc;pointer-events:none;backdrop-filter:blur(4px);white-space:nowrap;';
     document.body.appendChild(this.territoryStatus);
+    this.territoryStatus.style.display = 'none';
 
     eventBus.on('territoryCastingModeChanged', () => this._updatePossessionButton());
     eventBus.on('territoryChanged', () => this._updateTerritoryStatus());
@@ -155,6 +164,7 @@ export class HUD {
     gpTrack.appendChild(gpMark);
     this.gameProgressBar.appendChild(gpTrack);
     document.body.appendChild(this.gameProgressBar);
+    this.gameProgressBar.style.display = 'none';
     this._updateGameProgress();
 
     // 敌人压力 / 军队战力 状态条
@@ -227,13 +237,22 @@ export class HUD {
     });
   }
 
+  _updateLuxuryButtonVisibility() {
+    if (!this.btnLuxury) return;
+    const inventory = this.systems?.luxury?.getInventory?.() || {};
+    this.btnLuxury.style.display = Object.values(inventory).some(amount => Number(amount) > 0) ? '' : 'none';
+  }
+
+  _updateHeroButtonVisibility() {
+    if (this.btnHeroes) this.btnHeroes.style.display = this.systems?.hero?.isSystemUnlocked?.() ? '' : 'none';
+  }
+
   _togglePossessionMode() {
     const ts = this.systems.territory;
     if (!ts) return;
     if (ts.isCastingMode()) {
       ts.exitCastingMode();
     } else {
-      this.systems.road?.exitEditMode?.();
       ts.enterCastingMode();
     }
   }
@@ -253,7 +272,6 @@ export class HUD {
     if (!this.enemyStatus) return;
     const ee = this.systems.enemyExpansion;
     if (!ee) { this.enemyStatus.style.display = 'none'; return; }
-    const power = ee.getArmyPower();
     const count = ee.getCellCount();
     const total = store.getState('enemyClaimableTotal') || 0;
     const pct = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
@@ -263,7 +281,7 @@ export class HUD {
     const danger = parseFloat(pct) >= failRatioPct * 0.6;
     const pctColor = danger ? '#ff4444' : '#ff6b6b';
     this.enemyStatus.innerHTML =
-      `👾 敌占 <b style="color:${pctColor}">${pct}%</b> (${count}格/危${failRatioPct.toFixed(0)}%) &nbsp; ⚔️ 战力 <b style="color:#4ecb71">${power}</b> · 强度 ${strength}`;
+      `👾 敌占 <b style="color:${pctColor}">${pct}%</b> (${count}格/危${failRatioPct.toFixed(0)}%) · 敌兵强度 ${strength}`;
     this._updateGameProgress();
   }
 
@@ -277,7 +295,7 @@ export class HUD {
     const cap = ts.getBuildingCap();
     const bCount = this.systems.building ? this.systems.building.buildings.length : 0;
     const cost = ts.getCastCost();
-    this.territoryStatus.style.display = 'block';
+    this.territoryStatus.style.display = 'none';
     this.territoryStatus.innerHTML =
       `🚩 领地 <b style="color:#cc88ff">${pct}%</b> (${owned}/${total}) · 目标50% &nbsp; 💰拓土${cost} 🏠${bCount}/${cap}`;
     this._updateGameProgress();
@@ -310,19 +328,7 @@ export class HUD {
         this._updatePauseIndicator(paused);
         window.__game?.systems?.quest?.onPlayerAction('toggle_pause');
       }
-      if ((e.key === 'e' || e.key === 'E') && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (this._shouldIgnoreShortcut(e)) return;
-        e.preventDefault();
-        this._toggleRoadEditMode();
-      }
     });
-  }
-
-  _toggleRoadEditMode() {
-    if (!this.systems.road) return;
-    const mr = window.__game?.mapRenderer;
-    if (mr && mr._moveMode) mr.exitMoveMode();
-    this.systems.road.toggleEditMode();
   }
 
   _shouldIgnoreShortcut(e) {
@@ -382,6 +388,7 @@ export class HUD {
       this._refreshPopulation();
       this._refreshResources();
     });
+    store.subscribe('eraCurrentIndex', () => this._refreshResources());
   }
 
   _subscribeWeather() {
@@ -396,6 +403,24 @@ export class HUD {
 
   _subscribeEvents() {
     eventBus.on('resourceChanged', () => this._refreshResources());
+    eventBus.on('luxuryChanged', () => this._updateLuxuryButtonVisibility());
+    eventBus.on('hestiaArrivalRequested', data => this.popupManager.open('hero_interaction', {
+      ...data, heroId: 'Hestia', heroName: '赫斯提亚', blocking: true, nonClosable: true, storyMode: 'hestia_arrival',
+      storyConversation: {
+        id: 'hestia_arrival', start: 'arrival_1', nodes: [
+          { id:'arrival_1', speaker:'system', text:'你度过了再不过平常的一日，月色正暗。', next:'arrival_2' },
+          { id:'arrival_2', speaker:'system', text:'突然，银白色的丝线冲入了你的眼眶。那是月色，也是一位宛如月一般的少女。', next:'arrival_3' },
+          { id:'arrival_3', speaker:'system', text:'还未等你从惊讶中缓过来，少女先开口了。', next:'arrival_4' },
+          { id:'arrival_4', speaker:'hero', text:'“你是这里的统治者吗？”', next:'arrival_5' },
+          { id:'arrival_5', speaker:'hero', text:'“很远的东方，有不属于这个世界的黑暗造物。”', next:'arrival_6' },
+          { id:'arrival_6', speaker:'hero', text:'“我来到这里，是为了消灭它。仅凭我做不到，所以……我需要与你们合作。”', next:'arrival_7' },
+          { id:'arrival_7', speaker:'system', text:'少女停顿片刻，安静地望向遥远的东方。', next:'arrival_8' },
+          { id:'arrival_8', speaker:'hero', text:'“即使这件事，可能需要花上数千年。”', end:true }
+        ]
+      }
+    }));
+    eventBus.on('heroSystemUnlocked', () => this._updateHeroButtonVisibility());
+    eventBus.on('luxurySystemUnlocked', () => this.popupManager.open('feature_unlock', { blocking: true, icon: '💎', title: '奢侈品系统', description: '你获得了第一件奢侈品。奢侈品栏现已解锁；相同奢侈品的效果不会叠加，重复的奢侈品可以赠送给英雄。' }));
     eventBus.on('populationChanged', () => this._refreshPopulation());
     eventBus.on('tick', () => this._refreshPopulation());
     eventBus.on('expeditionComplete', (result) => {
@@ -447,6 +472,8 @@ export class HUD {
   }
 
   refresh() {
+    this._updateLuxuryButtonVisibility();
+    this._updateHeroButtonVisibility();
     this._refreshResources();
     this._refreshPopulation();
     this._refreshTime();
@@ -482,9 +509,13 @@ export class HUD {
       }
     };
 
+    const processedResourceIds = resources
+      .filter(resource => !PRIMARY_RESOURCE_IDS.includes(resource.id) && !SECONDARY_RESOURCE_IDS.includes(resource.id))
+      .map(resource => resource.id);
     const groups = [
       { className: 'primary', title: '建筑和采集直接获得的基础资源', ids: PRIMARY_RESOURCE_IDS },
-      { className: 'secondary', title: '依赖基础资源加工转化的生产资源', ids: SECONDARY_RESOURCE_IDS }
+      { className: 'secondary processed', title: '随时代解锁、由上一层材料加工的时代材料', ids: processedResourceIds },
+      { className: 'secondary', title: '文明发展资源', ids: SECONDARY_RESOURCE_IDS }
     ];
 
     for (const group of groups) {
@@ -667,6 +698,7 @@ export class HUD {
   }
 
   _refreshPopulation() {
+    if (!this.populationDisplay) return;
     const bs = this.systems.building;
     const population = this.systems.population;
     const stats = population?.getPopulationStats?.(this.systems.combat) || {};

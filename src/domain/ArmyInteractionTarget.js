@@ -1,5 +1,9 @@
 function isAt(target, gridX, gridY) {
-  return (target?.gridX ?? target?.x) === gridX && (target?.gridY ?? target?.y) === gridY;
+  const left = target?.gridX ?? target?.x;
+  const top = target?.gridY ?? target?.y;
+  const width = Math.max(1, Number(target?.footprint?.width ?? target?.width) || 1);
+  const height = Math.max(1, Number(target?.footprint?.height ?? target?.height) || 1);
+  return gridX >= left && gridX < left + width && gridY >= top && gridY < top + height;
 }
 
 function buildingContains(building, config, gridX, gridY) {
@@ -9,6 +13,14 @@ function buildingContains(building, config, gridX, gridY) {
     && gridX < building.gridX + width
     && gridY >= building.gridY
     && gridY < building.gridY + height;
+}
+
+function cityStateContains(city, gridX, gridY) {
+  const left = city?.gridX ?? city?.x;
+  const top = city?.gridY ?? city?.y;
+  const width = Math.max(1, Number(city?.width) || 2);
+  const height = Math.max(1, Number(city?.height) || 2);
+  return gridX >= left && gridX < left + width && gridY >= top && gridY < top + height;
 }
 
 /** Classifies a revealed strategic-map click without mutating game state. */
@@ -21,6 +33,7 @@ export function classifyArmyInteractionTarget({
   cityStates = [],
   outposts = [],
   enemies = [],
+  ruins = [],
   getBuildingConfig = () => null
 } = {}) {
   if (!Number.isInteger(gridX) || !Number.isInteger(gridY)) {
@@ -41,10 +54,13 @@ export function classifyArmyInteractionTarget({
     };
   }
 
+  const ruin = ruins.find(item => isAt(item, gridX, gridY));
+  if (ruin) return { kind: 'ruin_stele', gridX, gridY, ruinId: ruin.id, ruin };
+
   const wildSite = wildSites.find(site => isAt(site, gridX, gridY));
   if (wildSite) return { kind: 'wild_site', gridX, gridY, siteId: wildSite.id, site: wildSite };
 
-  const cityState = [...cityStates, ...outposts].find(city => isAt(city, gridX, gridY));
+  const cityState = [...cityStates, ...outposts].find(city => cityStateContains(city, gridX, gridY));
   if (cityState) return { kind: 'city_state', gridX, gridY, cityStateId: cityState.id, cityState };
 
   const buildingIndex = buildings.findIndex(building => {
@@ -55,6 +71,7 @@ export function classifyArmyInteractionTarget({
   if (buildingIndex >= 0) {
     const building = buildings[buildingIndex];
     const config = getBuildingConfig(building.buildingId, building) || building.config || building.definition || {};
+    if (config.passable === true) return { kind: 'move', gridX, gridY };
     const capacity = Math.max(0, Number(config.uniqueFunction?.garrisonCapacity) || 0);
     return {
       kind: capacity > 0 && building.status === 'active' ? 'garrison' : 'blocked_building',

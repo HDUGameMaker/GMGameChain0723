@@ -4,58 +4,111 @@
     "category": "military",
     "eraId": "primitive",
     "name": "军营",
-    "description": "士兵的驻训营地。提升可容纳的士兵上限--训练菜单产出的士兵都受此上限约束。",
-    "footprint": { "width": 1, "height": 1 },
+    "description": "士兵的驻训营地，操练声昼夜不息。提升可容纳的士兵上限，训练出的士兵皆受此约束。",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
     "maxCount": null,
     "initialBuilding": true,
     "soldierCapacity": 3,
     "buildCost": [
-      { "resourceId": "stone", "amount": 10 },
-      { "resourceId": "wood", "amount": 20 }
+      {
+        "resourceId": "stone",
+        "amount": 10
+      },
+      {
+        "resourceId": "wood",
+        "amount": 20
+      }
     ],
     "buildTime": 1,
     "upgradesTo": "plank_house",
     "unlockConditions": [],
     "production": null,
     "uniqueFunction": {
-      "trainsBranches": ["infantry", "anti_cavalry"]
+      "trainsBranches": [
+        "infantry",
+        "anti_cavalry"
+      ]
     },
     "synthesisRecipes": [],
-    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
-    "mapIconLayout": { "scaleX": 1, "scaleY": 1, "offsetX": 0, "offsetY": 0 },
-    "detailLayout": { "scale": 1, "offsetX": 0, "offsetY": 0 },
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "mapIconLayout": {
+      "scaleX": 1,
+      "scaleY": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "detailLayout": {
+      "scale": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
     "icon": "",
     "imageDetail": "assets/buildings/building_work_shed_1784771193.png",
     "mapIcon": "assets/buildings/building_work_shed_1784771193.png",
-    "tags": ["barracks"]
+    "tags": [
+      "barracks"
+    ],
+    "maxHp": 630
   },
   {
     "id": "plank_house",
     "category": "military",
     "eraId": "primitive",
     "name": "营房",
-    "description": "加固的大型营房，显著提升士兵容纳上限。由军营升级而来。",
-    "footprint": { "width": 1, "height": 1 },
+    "description": "加固的大型营房，可容纳更多士兵。由军营升级而来。",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
     "maxCount": null,
     "initialBuilding": false,
     "soldierCapacity": 8,
     "upgradesFrom": "work_shed",
     "unlockConditions": [],
     "upgradeCost": [
-      { "resourceId": "wood", "amount": 30 },
-      { "resourceId": "stone", "amount": 15 }
+      {
+        "resourceId": "wood",
+        "amount": 30
+      },
+      {
+        "resourceId": "stone",
+        "amount": 15
+      }
     ],
     "buildTime": 2,
     "upgradesTo": null,
     "production": null,
     "uniqueFunction": {
-      "trainsBranches": ["infantry", "anti_cavalry"]
+      "trainsBranches": [
+        "infantry",
+        "anti_cavalry"
+      ]
     },
     "synthesisRecipes": [],
-    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
     "imageDetail": "assets/buildings/anim_plank_house.png",
-    "detailAnimation": { "frameCount": 4, "fps": 6, "frameWidth": 1024, "frameHeight": 1024, "pingpong": true },
-    "tags": ["barracks"]
+    "detailAnimation": {
+      "frameCount": 4,
+      "fps": 6,
+      "frameWidth": 1024,
+      "frameHeight": 1024,
+      "pingpong": true
+    },
+    "tags": [
+      "barracks"
+    ],
+    "maxHp": 630
   },
   {
     "id": "logging_camp",
@@ -64,29 +117,48 @@
     "category": "gathering",
     "eraId": "primitive",
     "name": "伐木集散点",
-    "description": "林地边缘的伐木前哨，自动产出原木。仅能建造在林地边缘。",
-    "footprint": { "width": 1, "height": 1 },
+    "description": "林地边缘的伐木前哨，斧锯声中，原木被源源运回。仅能建造在林地边缘。",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
     "maxCount": null,
     "initialBuilding": false,
-    "allowedGrounds": ["F"],
+    "allowedGrounds": [
+      "F"
+    ],
     "requiredResourceNode": "wood",
     "unlockConditions": [],
     "maxWorkers": 5,
     "buildCost": [
-      { "resourceId": "wood", "amount": 20 }
+      {
+        "resourceId": "wood",
+        "amount": 20
+      }
     ],
     "buildTime": 1,
     "upgradesTo": "logging_camp_t2",
     "production": {
       "perWorker": true,
       "output": [
-        { "resourceId": "wood", "amount": 2 }
+        {
+          "resourceId": "wood",
+          "amount": 2
+        }
       ]
     },
     "productionCycle": "tick",
     "synthesisRecipes": [],
-    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
-    "tags": ["logging_camp"]
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "logging_camp"
+    ],
+    "maxHp": 470,
+    "uniqueFunction": {}
   },
   {
     "id": "stope",
@@ -95,29 +167,48 @@
     "category": "gathering",
     "eraId": "primitive",
     "name": "采石场",
-    "description": "裸露岩石上的露天采石场，自动产出石头。仅能建造在裸露石头地形上。",
-    "footprint": { "width": 2, "height": 2 },
+    "description": "裸露岩石上的露天采石场，锤凿之下石料滚落。仅能建造在裸露石头地形上。",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
     "maxCount": null,
     "initialBuilding": false,
-    "allowedGrounds": ["R"],
+    "allowedGrounds": [
+      "R"
+    ],
     "requiredResourceNode": "stone",
     "unlockConditions": [],
     "maxWorkers": 5,
     "buildCost": [
-      { "resourceId": "wood", "amount": 50 }
+      {
+        "resourceId": "wood",
+        "amount": 50
+      }
     ],
     "buildTime": 2,
     "upgradesTo": "stope_t2",
     "production": {
       "perWorker": true,
       "output": [
-        { "resourceId": "stone", "amount": 2 }
+        {
+          "resourceId": "stone",
+          "amount": 2
+        }
       ]
     },
     "productionCycle": "tick",
     "synthesisRecipes": [],
-    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
-    "tags": ["stope"]
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "stope"
+    ],
+    "uniqueFunction": {},
+    "maxHp": 470
   },
   {
     "id": "farm",
@@ -126,28 +217,48 @@
     "category": "agriculture",
     "eraId": "primitive",
     "name": "农田",
-    "description": "平原上的耕地，自动产出食物。仅能建造在草地或普通土地上。大建筑，被敌人触及会整栋摧毁。",
-    "footprint": { "width": 3, "height": 3 },
+    "description": "平原上的耕地，麦浪随风起伏，喂饱聚落的每一张嘴。仅能建造在草地或普通土地上。大建筑，被敌人触及会整栋摧毁。",
+    "footprint": {
+      "width": 3,
+      "height": 3
+    },
     "maxCount": null,
     "initialBuilding": false,
-    "allowedGrounds": ["G", "D"],
+    "allowedGrounds": [
+      "G",
+      "D"
+    ],
     "unlockConditions": [],
     "maxWorkers": 6,
     "buildCost": [
-      { "resourceId": "wood", "amount": 50 }
+      {
+        "resourceId": "wood",
+        "amount": 50
+      }
     ],
     "buildTime": 3,
     "upgradesTo": "farm_t2",
     "production": {
       "perWorker": true,
       "output": [
-        { "resourceId": "food", "amount": 3 }
+        {
+          "resourceId": "food",
+          "amount": 3
+        }
       ]
     },
     "productionCycle": "tick",
     "synthesisRecipes": [],
-    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
-    "tags": ["farm"]
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "farm"
+    ],
+    "maxHp": 1350,
+    "uniqueFunction": {}
   },
   {
     "id": "gold_mint",
@@ -156,33 +267,62 @@
     "category": "commerce",
     "eraId": "primitive",
     "name": "铸币所",
-    "description": "将基础资源转化为黄金的核心设施。消耗木材、石料与食物，支撑建设、贸易和军队维护。",
-    "footprint": { "width": 2, "height": 2 },
+    "description": "将基础资源熔铸为黄金的核心设施，消耗木材、石料与食物，支撑建设、贸易与军饷。",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
     "maxCount": null,
     "initialBuilding": false,
     "unlockConditions": [],
     "maxWorkers": 4,
     "buildCost": [
-      { "resourceId": "wood", "amount": 80 },
-      { "resourceId": "stone", "amount": 60 }
+      {
+        "resourceId": "wood",
+        "amount": 80
+      },
+      {
+        "resourceId": "stone",
+        "amount": 60
+      }
     ],
     "buildTime": 3,
     "upgradesTo": "gold_mint_t2",
     "production": {
       "perWorker": true,
       "input": [
-        { "resourceId": "wood", "amount": 3 },
-        { "resourceId": "stone", "amount": 3 },
-        { "resourceId": "food", "amount": 3 }
+        {
+          "resourceId": "wood",
+          "amount": 3
+        },
+        {
+          "resourceId": "stone",
+          "amount": 3
+        },
+        {
+          "resourceId": "food",
+          "amount": 3
+        }
       ],
       "output": [
-        { "resourceId": "gold", "amount": 2 }
+        {
+          "resourceId": "gold",
+          "amount": 2
+        }
       ]
     },
     "productionCycle": "tick",
     "synthesisRecipes": [],
-    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
-    "tags": ["gold_mint"]
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "gold_mint"
+    ],
+    "maxHp": 800,
+    "uniqueFunction": {}
   },
   {
     "id": "warehouse",
@@ -191,32 +331,56 @@
     "category": "administration",
     "eraId": "primitive",
     "name": "大本营",
-    "description": "阵营的核心指挥建筑，提升全局资源存储上限。不可拆除；一旦被敌人占领即告失败。",
+    "description": "阵营的核心指挥建筑，四方物资汇聚于此，提升全局存储上限。不可拆除；一旦被敌人占领即告失败。",
     "isHeadquarters": true,
     "demolishable": false,
     "draggable": false,
     "unlockConditions": [],
-    "footprint": { "width": 3, "height": 3 },
-    "maxCount": 0,
+    "footprint": {
+      "width": 3,
+      "height": 3
+    },
+    "maxCount": null,
     "initialBuilding": true,
     "storageMultiplier": 1,
     "buildCost": [
-      { "resourceId": "stone", "amount": 60 },
-      { "resourceId": "wood", "amount": 100 }
+      {
+        "resourceId": "stone",
+        "amount": 60
+      },
+      {
+        "resourceId": "wood",
+        "amount": 100
+      }
     ],
     "buildTime": 4,
     "upgradesTo": null,
     "production": null,
     "uniqueFunction": {
-      "armyAssemblyDomains": ["land"],
+      "armyAssemblyDomains": [
+        "land"
+      ],
       "workerRecruitment": {
         "amount": 1,
-        "cost": [{ "resourceId": "food", "amount": 20 }]
-      }
+        "cost": [
+          {
+            "resourceId": "food",
+            "amount": 20
+          }
+        ]
+      },
+      "buildingHpMul": 1.15
     },
     "synthesisRecipes": [],
-    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
-    "tags": ["warehouse"]
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "warehouse"
+    ],
+    "maxHp": 2000
   },
   {
     "id": "supply_post",
@@ -225,50 +389,47 @@
     "category": "administration",
     "eraId": "primitive",
     "name": "补给站",
-    "description": "物资调度点，为邻近的基础采集建筑提供产出加成。",
+    "description": "物资调度点，为邻近的基础采集建筑输送补给，提升其产出。",
     "icon": "",
-    "tags": ["logistics"],
-    "mapIconLayout": { "scaleX": 1, "scaleY": 1, "offsetX": 0, "offsetY": 0 },
-    "footprint": { "width": 1, "height": 1 },
+    "tags": [
+      "logistics"
+    ],
+    "mapIconLayout": {
+      "scaleX": 1,
+      "scaleY": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    },
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
     "maxCount": null,
     "initialBuilding": false,
     "housingCapacity": 0,
     "maxWorkers": 0,
     "buildCost": [
-      { "resourceId": "wood", "amount": 40 },
-      { "resourceId": "stone", "amount": 20 }
+      {
+        "resourceId": "wood",
+        "amount": 40
+      },
+      {
+        "resourceId": "stone",
+        "amount": 20
+      }
     ],
     "unlockConditions": [],
     "buildTime": 2,
     "upgradesTo": null,
     "production": null,
     "synthesisRecipes": [],
-    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 }
-  },
-  {
-    "id": "strategy_archive",
-    "imageDetail": "assets/buildings/overhaul/strategy_archive.png",
-    "mapIcon": "assets/buildings/overhaul/strategy_archive.png",
-    "category": "research",
-    "eraId": "primitive",
-    "name": "战略档案馆",
-    "description": "整理战报、地图与历史案例的研究设施，为城市提供战略卡获取线索。",
-    "footprint": { "width": 2, "height": 2 },
-    "maxCount": 1,
-    "initialBuilding": false,
-    "unlockConditions": [],
-    "maxWorkers": 0,
-    "buildCost": [
-      { "resourceId": "stone", "amount": 30 },
-      { "resourceId": "wood", "amount": 20 }
-    ],
-    "buildTime": 3,
-    "upgradesTo": null,
-    "production": null,
-    "synthesisRecipes": [],
-    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
-    "detailLayout": { "scale": 1, "offsetX": 0, "offsetY": 0 },
-    "tags": ["strategy", "research"]
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "maxHp": 610,
+    "uniqueFunction": {}
   },
   {
     "id": "logging_camp_t2",
@@ -278,30 +439,57 @@
     "eraId": "primitive",
     "name": "伐木场",
     "description": "升级版伐木前哨，产出翻倍。由伐木集散点升级而来；需科技「轮轴运输」解锁。",
-    "footprint": { "width": 1, "height": 1 },
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
     "maxCount": null,
     "initialBuilding": false,
-    "allowedGrounds": ["F"],
+    "allowedGrounds": [
+      "F"
+    ],
     "requiredResourceNode": "wood",
-    "unlockConditions": [{ "type": "tech", "techId": "tech_ancient_5" }],
+    "unlockConditions": [
+      {
+        "type": "tech",
+        "techId": "tech_classical_5"
+      }
+    ],
     "maxWorkers": 8,
     "upgradesFrom": "logging_camp",
     "upgradeCost": [
-      { "resourceId": "wood", "amount": 40 },
-      { "resourceId": "stone", "amount": 20 }
+      {
+        "resourceId": "wood",
+        "amount": 40
+      },
+      {
+        "resourceId": "stone",
+        "amount": 20
+      }
     ],
     "buildTime": 2,
     "upgradesTo": null,
     "production": {
       "perWorker": true,
       "output": [
-        { "resourceId": "wood", "amount": 4 }
+        {
+          "resourceId": "wood",
+          "amount": 4
+        }
       ]
     },
     "productionCycle": "tick",
     "synthesisRecipes": [],
-    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
-    "tags": ["logging_camp"]
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "logging_camp"
+    ],
+    "maxHp": 470,
+    "uniqueFunction": {}
   },
   {
     "id": "stope_t2",
@@ -310,31 +498,58 @@
     "category": "gathering",
     "eraId": "primitive",
     "name": "深矿",
-    "description": "升级版采石场，产出翻倍。由采石场升级而来；需科技「青铜冶铸」解锁。",
-    "footprint": { "width": 2, "height": 2 },
+    "description": "升级版采石场，深入地下，产出翻倍。由采石场升级而来；需科技「青铜冶铸」解锁。",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
     "maxCount": null,
     "initialBuilding": false,
-    "allowedGrounds": ["R"],
+    "allowedGrounds": [
+      "R"
+    ],
     "requiredResourceNode": "stone",
-    "unlockConditions": [{ "type": "tech", "techId": "tech_ancient_1" }],
+    "unlockConditions": [
+      {
+        "type": "tech",
+        "techId": "tech_classical_1"
+      }
+    ],
     "maxWorkers": 8,
     "upgradesFrom": "stope",
     "upgradeCost": [
-      { "resourceId": "wood", "amount": 60 },
-      { "resourceId": "stone", "amount": 30 }
+      {
+        "resourceId": "wood",
+        "amount": 60
+      },
+      {
+        "resourceId": "stone",
+        "amount": 30
+      }
     ],
     "buildTime": 2,
     "upgradesTo": null,
     "production": {
       "perWorker": true,
       "output": [
-        { "resourceId": "stone", "amount": 4 }
+        {
+          "resourceId": "stone",
+          "amount": 4
+        }
       ]
     },
     "productionCycle": "tick",
     "synthesisRecipes": [],
-    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
-    "tags": ["stope"]
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "stope"
+    ],
+    "maxHp": 800,
+    "uniqueFunction": {}
   },
   {
     "id": "farm_t2",
@@ -343,30 +558,58 @@
     "category": "agriculture",
     "eraId": "primitive",
     "name": "灌溉农田",
-    "description": "升级版农田，产出翻倍。由农田升级而来；需人文「劳役组织」解锁。",
-    "footprint": { "width": 3, "height": 3 },
+    "description": "升级版农田，引渠灌溉，产出翻倍。由农田升级而来；需人文「劳役组织」解锁。",
+    "footprint": {
+      "width": 3,
+      "height": 3
+    },
     "maxCount": null,
     "initialBuilding": false,
-    "allowedGrounds": ["G", "D"],
-    "unlockConditions": [{ "type": "culture", "cultureId": "civic_ancient_4" }],
+    "allowedGrounds": [
+      "G",
+      "D"
+    ],
+    "unlockConditions": [
+      {
+        "type": "culture",
+        "cultureId": "civic_classical_4"
+      }
+    ],
     "maxWorkers": 10,
     "upgradesFrom": "farm",
     "upgradeCost": [
-      { "resourceId": "wood", "amount": 80 },
-      { "resourceId": "stone", "amount": 40 }
+      {
+        "resourceId": "wood",
+        "amount": 80
+      },
+      {
+        "resourceId": "stone",
+        "amount": 40
+      }
     ],
     "buildTime": 3,
     "upgradesTo": null,
     "production": {
       "perWorker": true,
       "output": [
-        { "resourceId": "food", "amount": 6 }
+        {
+          "resourceId": "food",
+          "amount": 6
+        }
       ]
     },
     "productionCycle": "tick",
     "synthesisRecipes": [],
-    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
-    "tags": ["farm"]
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "farm"
+    ],
+    "maxHp": 1350,
+    "uniqueFunction": {}
   },
   {
     "id": "gold_mint_t2",
@@ -375,117 +618,182 @@
     "category": "commerce",
     "eraId": "primitive",
     "name": "精炼铸币所",
-    "description": "升级版铸币所，黄金产出翻倍（同等原料）。由铸币所升级而来；需人文「跨城贸易」解锁。",
-    "footprint": { "width": 2, "height": 2 },
+    "description": "升级版铸币所，工艺精进，黄金产出翻倍（同等原料）。由铸币所升级而来；需人文「跨城贸易」解锁。",
+    "footprint": {
+      "width": 2,
+      "height": 2
+    },
     "maxCount": null,
     "initialBuilding": false,
-    "unlockConditions": [{ "type": "culture", "cultureId": "civic_ancient_8" }],
+    "unlockConditions": [
+      {
+        "type": "culture",
+        "cultureId": "civic_classical_8"
+      }
+    ],
     "maxWorkers": 6,
     "upgradesFrom": "gold_mint",
     "upgradeCost": [
-      { "resourceId": "wood", "amount": 100 },
-      { "resourceId": "stone", "amount": 80 }
+      {
+        "resourceId": "wood",
+        "amount": 100
+      },
+      {
+        "resourceId": "stone",
+        "amount": 80
+      }
     ],
     "buildTime": 3,
     "upgradesTo": null,
     "production": {
       "perWorker": true,
       "input": [
-        { "resourceId": "wood", "amount": 3 },
-        { "resourceId": "stone", "amount": 3 },
-        { "resourceId": "food", "amount": 3 }
+        {
+          "resourceId": "wood",
+          "amount": 3
+        },
+        {
+          "resourceId": "stone",
+          "amount": 3
+        },
+        {
+          "resourceId": "food",
+          "amount": 3
+        }
       ],
       "output": [
-        { "resourceId": "gold", "amount": 4 }
+        {
+          "resourceId": "gold",
+          "amount": 4
+        }
       ]
     },
     "productionCycle": "tick",
     "synthesisRecipes": [],
-    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
-    "tags": ["gold_mint"]
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "gold_mint"
+    ],
+    "maxHp": 800,
+    "uniqueFunction": {}
   },
   {
     "id": "hunting_lodge",
     "name": "狩猎小屋",
-    "description": "在野生动物出没的食物点建立猎人营地。配置工人后持续取得食物，适合游戏前期机动供给。",
+    "description": "在野生动物出没的食物点建立猎人营地，配置工人后持续取得食物，是前期机动供给的利器。",
     "category": "gathering",
     "eraId": "primitive",
-    "footprint": { "width": 1, "height": 1 },
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
     "maxCount": null,
     "initialBuilding": false,
-    "allowedGrounds": ["G", "D", "F", "B"],
+    "allowedGrounds": [
+      "G",
+      "D",
+      "F",
+      "B"
+    ],
     "requiredResourceNode": "food",
     "unlockConditions": [],
     "maxWorkers": 5,
     "buildCost": [
-      { "resourceId": "wood", "amount": 24 }
+      {
+        "resourceId": "wood",
+        "amount": 24
+      }
     ],
     "buildTime": 1,
     "production": {
       "perWorker": true,
-      "output": [{ "resourceId": "food", "amount": 2 }]
+      "output": [
+        {
+          "resourceId": "food",
+          "amount": 2
+        }
+      ]
     },
     "productionCycle": "tick",
     "imageDetail": "assets/buildings/historical-details/hunting_lodge.png",
     "mapIcon": "assets/historical-icons/buildings/hunting_lodge.svg",
     "synthesisRecipes": [],
-    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
-    "tags": ["gathering", "hunting"]
-  },
-  {
-    "id": "forager_hut",
-    "name": "采集小屋",
-    "description": "覆盖浆果、野粮与灌木食物点，配置工人后以稳定但较低的速度采集食物。",
-    "category": "gathering",
-    "eraId": "primitive",
-    "footprint": { "width": 1, "height": 1 },
-    "maxCount": null,
-    "initialBuilding": false,
-    "allowedGrounds": ["G", "D", "F", "B"],
-    "requiredResourceNode": "food",
-    "unlockConditions": [],
-    "maxWorkers": 4,
-    "buildCost": [
-      { "resourceId": "wood", "amount": 16 }
-    ],
-    "buildTime": 1,
-    "production": {
-      "perWorker": true,
-      "output": [{ "resourceId": "food", "amount": 1 }]
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
     },
-    "productionCycle": "tick",
-    "imageDetail": "assets/buildings/historical-details/forager_hut.png",
-    "mapIcon": "assets/historical-icons/buildings/forager_hut.svg",
-    "synthesisRecipes": [],
-    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
-    "tags": ["gathering", "foraging"]
+    "tags": [
+      "gathering",
+      "hunting"
+    ],
+    "maxHp": 470,
+    "uniqueFunction": {}
   },
   {
     "id": "trade_post",
     "name": "贸易站",
-    "description": "只能覆盖地图奢侈品产地。配置工人后缓慢采集该产地对应的奢侈品，首份提供帝国加成，重复份可用于贸易。",
+    "description": "覆盖地图上的奢侈品产地，配置工人后缓慢采集奢侈品——每种的第一份为帝国带来加成，多余的份额可用于贸易。",
     "category": "commerce",
     "eraId": "primitive",
-    "footprint": { "width": 1, "height": 1 },
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
     "maxCount": null,
     "initialBuilding": false,
-    "allowedGrounds": ["G", "D", "F", "R", "S"],
+    "allowedGrounds": [
+      "G",
+      "D",
+      "F",
+      "R",
+      "S"
+    ],
     "requiredResourceNode": "luxury",
     "unlockConditions": [],
     "maxWorkers": 3,
     "buildCost": [
-      { "resourceId": "wood", "amount": 45 },
-      { "resourceId": "stone", "amount": 20 },
-      { "resourceId": "gold", "amount": 15 }
+      {
+        "resourceId": "wood",
+        "amount": 45
+      },
+      {
+        "resourceId": "stone",
+        "amount": 20
+      },
+      {
+        "resourceId": "gold",
+        "amount": 15
+      }
     ],
     "buildTime": 2,
-    "production": { "perWorker": true, "output": [] },
-    "boundLuxuryYield": { "intervalWorkerTicks": 12, "amount": 1 },
+    "production": {
+      "perWorker": true,
+      "output": []
+    },
+    "boundLuxuryYield": {
+      "intervalWorkerTicks": 12,
+      "amount": 1
+    },
     "productionCycle": "tick",
     "imageDetail": "assets/buildings/historical-details/trade_post.png",
     "mapIcon": "assets/historical-icons/buildings/trade_post.svg",
     "synthesisRecipes": [],
-    "labelLayout": { "nameOffsetY": 0, "progressBarOffsetY": 0, "workersOffsetY": 0 },
-    "tags": ["commerce", "luxury", "trade"]
+    "labelLayout": {
+      "nameOffsetY": 0,
+      "progressBarOffsetY": 0,
+      "workersOffsetY": 0
+    },
+    "tags": [
+      "commerce",
+      "luxury",
+      "trade"
+    ],
+    "maxHp": 470,
+    "uniqueFunction": {}
   }
 ]

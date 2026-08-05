@@ -10,11 +10,15 @@ function techSystem() { return game()?.systems?.tech; }
 function eraSystem() { return game()?.systems?.era; }
 function availableUnits() { return armySystem()?.getAvailableUnits?.() || {}; }
 
-const BRANCH_ORDER = ['infantry', 'anti_cavalry', 'ranged', 'archer', 'cavalry', 'siege', 'artillery', 'special', 'air', 'navy'];
+function getEra(unit) {
+  const eras = game()?.configRegistry?.getHistoricalContent?.().eras || [];
+  return eras.find(era => era.id === unit?.eraId) || null;
+}
+
+const BRANCH_ORDER = ['infantry', 'anti_cavalry', 'ranged', 'archer', 'cavalry', 'special', 'air'];
 const BRANCH_NAMES = {
   infantry: '近战步兵', anti_cavalry: '反骑兵', ranged: '远程部队', archer: '远程部队',
-  cavalry: '骑兵', siege: '工程与攻城', artillery: '工程与攻城', special: '特殊部队',
-  air: '空军', navy: '海军', other: '辅助部队'
+  cavalry: '骑兵', special: '特殊部队', air: '空军', other: '辅助部队'
 };
 const COUNTER_NAMES = {
   infantry: '步兵', light_infantry: '轻步兵', heavy_infantry: '重步兵', light: '轻装单位', melee: '近战单位',
@@ -61,11 +65,16 @@ function renderUnitCard(unit, context, body, pm, rerender) {
 
   const top = document.createElement('div');
   top.style.cssText = 'display:flex;align-items:center;gap:14px;margin-bottom:10px;';
+  const requiredEra = getEra(unit);
+  const isHealer = unit.roleTags?.includes('healer');
+  const primaryStat = isHealer
+    ? `战后恢复 ${unit.healingAfterBattle || unit.attack || 0} · 每时段恢复 ${(unit.healingAfterBattle || unit.attack || 0) / 2}`
+    : `攻击 ${unit.attack || 0}`;
   top.innerHTML = `<div style="position:relative;flex:0 0 112px;width:112px;height:112px;overflow:hidden;border-radius:11px;background:rgba(13,17,24,.92);border:1px solid rgba(214,176,103,.28)">
     <img data-testid="unit-card-art" data-fallback-src="${unit.icon || ''}" src="${unit.cardArt || unit.icon || ''}" alt="${unit.name} 招募立绘" loading="lazy" style="width:100%;height:100%;object-fit:contain">
     ${unit.icon ? `<img src="${unit.icon}" alt="" style="position:absolute;right:6px;bottom:6px;width:28px;height:28px;object-fit:contain;border-radius:6px;background:rgba(8,12,18,.88);padding:3px">` : ''}
   </div><div style="min-width:0"><span style="display:block;font-size:16px;font-weight:700;color:#ececf0;margin-bottom:6px;">${isUnitUnlocked(unit) ? '' : '🔒 '}${unit.name}</span>
-  <span style="display:block;font-size:12px;color:#808098;line-height:1.7;">${unit.domain === 'naval' ? '海军' : '陆军'}<br>⚔️ 战力 ${unit.combatPower || 0} · 指挥点 ${unit.commandPoints || 1}</span></div>`;
+  <span style="display:block;font-size:12px;color:#808098;line-height:1.7;">陆军<br><span style="color:#d3b56f">生产时代：${requiredEra?.name || unit.eraId || '无时代限制'}</span><br>${primaryStat} · 生命 ${unit.hp || 0} · 射程 ${unit.attackRange || 1} · CP ${unit.cp || 1} · 速度 ${unit.speed || 1}</span></div>`;
   card.appendChild(top);
   const cardArt = top.querySelector?.('[data-testid="unit-card-art"]');
   cardArt?.addEventListener('error', () => {
@@ -153,9 +162,16 @@ export function renderTrainingPanel(data, body, pm) {
   }
 
   const currentEra = eraSystem()?.getCurrentEra?.();
-  const selectedEraId = data?.eraId || currentEra?.id;
+  const eras = game()?.configRegistry?.getHistoricalContent?.().eras || [];
+  const visibleEras = eras.filter(era => !currentEra || era.order <= currentEra.order);
+  const requestedEra = visibleEras.find(era => era.id === data?.eraId);
+  const selectedEraId = requestedEra?.id || currentEra?.id;
   const units = (armySystem()?.getTrainableUnitsAt?.(context.buildingIndex) || [])
-    .filter(unit => !unit.eraId || unit.eraId === selectedEraId)
+    .filter(unit => {
+      const unitEra = getEra(unit);
+      return (!unitEra || unitEra.order <= (currentEra?.order ?? 0))
+        && (!unit.eraId || unit.eraId === selectedEraId);
+    })
     .sort((left, right) => (BRANCH_ORDER.indexOf(left.branch) - BRANCH_ORDER.indexOf(right.branch))
       || (left.combatPower || 0) - (right.combatPower || 0));
   const rerender = () => renderTrainingPanel(data, body, pm);
@@ -172,11 +188,10 @@ export function renderTrainingPanel(data, body, pm) {
 
   const tabs = document.createElement('div');
   tabs.style.cssText = 'display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:3px;';
-  for (const era of game()?.configRegistry?.getHistoricalContent?.().eras || []) {
+  for (const era of visibleEras) {
     const tab = document.createElement('button');
-    const locked = currentEra && era.order > currentEra.order;
-    tab.textContent = `${locked ? '🔒 ' : ''}${era.name}`;
-    tab.style.cssText = `white-space:nowrap;padding:6px 10px;border:1px solid ${era.id === selectedEraId ? '#a8874d' : '#444'};border-radius:6px;background:${era.id === selectedEraId ? '#514021' : '#272a31'};color:${locked ? '#777' : '#ddd'};cursor:pointer;`;
+    tab.textContent = era.name;
+    tab.style.cssText = `white-space:nowrap;padding:6px 10px;border:1px solid ${era.id === selectedEraId ? '#a8874d' : '#444'};border-radius:6px;background:${era.id === selectedEraId ? '#514021' : '#272a31'};color:#ddd;cursor:pointer;`;
     tab.addEventListener('click', () => renderTrainingPanel({ ...data, eraId: era.id }, body, pm));
     tabs.appendChild(tab);
   }

@@ -34,5 +34,93 @@
     "max": 100000,
     "rare": false,
     "showInHUD": true
+  },
+  {
+    "id": "composite_plank",
+    "name": "复合木板",
+    "icon": "assets/icon/era-materials/composite_plank.png",
+    "initial": 0,
+    "max": 5000,
+    "rare": false,
+    "processed": true,
+    "unlockEraId": "classical",
+    "showInHUD": true
+  },
+  {
+    "id": "goldstone",
+    "name": "金石",
+    "icon": "assets/icon/era-materials/goldstone.png",
+    "initial": 0,
+    "max": 5000,
+    "rare": false,
+    "processed": true,
+    "unlockEraId": "classical",
+    "showInHUD": true
+  },
+  {
+    "id": "hardwood_beam",
+    "name": "硬木梁",
+    "icon": "assets/icon/era-materials/hardwood_beam.png",
+    "initial": 0,
+    "max": 5000,
+    "rare": false,
+    "processed": true,
+    "unlockEraId": "medieval",
+    "showInHUD": true
+  },
+  {
+    "id": "reinforced_stone",
+    "name": "强化石材",
+    "icon": "assets/icon/era-materials/reinforced_stone.png",
+    "initial": 0,
+    "max": 5000,
+    "rare": false,
+    "processed": true,
+    "unlockEraId": "medieval",
+    "showInHUD": true
+  },
+  {
+    "id": "ship_timber",
+    "name": "船用木料",
+    "icon": "assets/icon/era-materials/ship_timber.png",
+    "initial": 0,
+    "max": 5000,
+    "rare": false,
+    "processed": true,
+    "unlockEraId": "exploration",
+    "showInHUD": true
+  },
+  {
+    "id": "dressed_marble",
+    "name": "精琢大理石",
+    "icon": "assets/icon/era-materials/dressed_marble.png",
+    "initial": 0,
+    "max": 5000,
+    "rare": false,
+    "processed": true,
+    "unlockEraId": "exploration",
+    "showInHUD": true
+  },
+  {
+    "id": "carbon_composite",
+    "name": "碳纤维复材",
+    "icon": "assets/icon/era-materials/carbon_composite.png",
+    "initial": 0,
+    "max": 5000,
+    "rare": false,
+    "processed": true,
+    "unlockEraId": "modern",
+    "showInHUD": true
+  },
+  {
+    "id": "advanced_alloy",
+    "name": "先进合金",
+    "icon": "assets/icon/era-materials/advanced_alloy.png",
+    "initial": 0,
+    "max": 5000,
+    "rare": false,
+    "processed": true,
+    "unlockEraId": "modern",
+    "showInHUD": true
   }
 ]

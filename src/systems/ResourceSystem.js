@@ -49,6 +49,35 @@ export class ResourceSystem {
     return this._storageMultiplier;
   }
 
+  fillBasicResourcesToCapacity() {
+    const basicIds = (configRegistry.get('resources') || [])
+      .filter(resource => resource.rare !== true && resource.processed !== true)
+      .map(resource => resource.id);
+    for (const id of basicIds) {
+      const resource = this._resources[id];
+      if (resource) resource.current = this.getMaxResourceCapacity(id);
+    }
+    this._notifyChange();
+    return basicIds;
+  }
+
+  fillEraMaterialsToCapacity(currentEraId) {
+    const eras = configRegistry.getHistoricalContent().eras || [];
+    const eraOrder = new Map(eras.map((era, index) => [era.id, Number.isFinite(era.order) ? era.order : index]));
+    const currentOrder = eraOrder.get(currentEraId) ?? 0;
+    const materialIds = (configRegistry.get('resources') || [])
+      .filter(resource => ['wood', 'stone'].includes(resource.id) || (
+        resource.processed === true && (eraOrder.get(resource.unlockEraId) ?? Infinity) <= currentOrder
+      ))
+      .map(resource => resource.id);
+    for (const id of materialIds) {
+      const resource = this._resources[id];
+      if (resource) resource.current = this.getMaxResourceCapacity(id);
+    }
+    this._notifyChange();
+    return materialIds;
+  }
+
   // ===== 修改类 API =====
 
   /**
@@ -138,8 +167,11 @@ export class ResourceSystem {
 
   getHUDResources() {
     const configs = configRegistry.get('resources') || [];
+    const currentEraIndex = Number(store.getState('eraCurrentIndex') || 0);
+    const eras = configRegistry.getHistoricalContent().eras || [];
+    const eraOrder = new Map(eras.map((era, index) => [era.id, Number.isFinite(era.order) ? era.order : index]));
     return configs
-      .filter(cfg => cfg.showInHUD)
+      .filter(cfg => cfg.showInHUD && (!cfg.unlockEraId || (eraOrder.get(cfg.unlockEraId) ?? Infinity) <= currentEraIndex))
       .map(cfg => ({
         id: cfg.id,
         name: cfg.name,

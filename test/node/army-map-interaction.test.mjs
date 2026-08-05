@@ -101,7 +101,66 @@ test('coordinator translates failed move reasons into Chinese alerts', async () 
   assert.deepEqual(alerts, ['无法到达目标格，路径可能被阻挡。']);
 });
 
-test('map selection gives player armies precedence and emits detail then target requests', () => {
+test('passable bridges are classified as movement targets', () => {
+  const result = classifyArmyInteractionTarget({
+    ...emptyContext,
+    gridX: 4,
+    gridY: 3,
+    buildings: [{ buildingId: 'classical_bridge', status: 'active', gridX: 4, gridY: 3 }],
+    getBuildingConfig: () => ({ footprint: { width: 1, height: 1 }, passable: true })
+  });
+  assert.equal(result.kind, 'move');
+});
+
+test('coordinator moves toward enemies beyond the army weighted attack range without an alert', async () => {
+  const alerts = [];
+  const moves = [];
+  let confirmations = 0;
+  const coordinator = new ArmyInteractionSystem({
+    army: {
+      getArmy: () => ({ id: 'army-1', ownerId: 'player', gridX: 1, gridY: 1, unitIds: ['spear'] }),
+      getArmies: () => [{ id: 'army-1', ownerId: 'player', gridX: 1, gridY: 1, unitIds: ['spear'] }],
+      canAttackTarget: () => ({ ok: false, reason: 'target_out_of_range', distance: 5, attackRange: 1 }),
+      issueMoveOrder: (...args) => { moves.push(args); return { ok: true, path: [{ x: 2, y: 1 }] }; }
+    },
+    popupManager: {
+      confirm: async () => { confirmations += 1; return true; },
+      alert: async message => alerts.push(message)
+    }
+  });
+  const result = await coordinator.request({
+    armyId: 'army-1', gridX: 6, gridY: 1,
+    target: { kind: 'enemy', source: 'expansion', gridX: 6, gridY: 1, enemy: { name: '远处敌军' } }
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.movingTowardEnemy, true);
+  assert.equal(confirmations, 0);
+  assert.deepEqual(moves, [['army-1', 6, 1]]);
+  assert.deepEqual(alerts, []);
+});
+
+test('selected armies clear expansion enemies through army-scoped combat', async () => {
+  const calls = [];
+  const coordinator = new ArmyInteractionSystem({
+    army: {
+      getArmy: () => ({ id: 'army-1', ownerId: 'player', unitIds: ['spear'] }),
+      getArmies: () => [{ id: 'army-1', ownerId: 'player', unitIds: ['spear'] }]
+    },
+    enemyExpansion: {
+      clearEnemyCellWithArmy: (...args) => { calls.push(args); return { ok: true, casualties: 0 }; }
+    },
+    popupManager: { confirm: async () => true, alert: async () => {} }
+  });
+  const result = await coordinator.request({
+    armyId: 'army-1', gridX: 8, gridY: 9,
+    target: { kind: 'enemy', source: 'expansion', gridX: 8, gridY: 9, enemy: { name: '敌占区' } }
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(calls, [[8, 9, 'army-1']]);
+});
+
+test('map selection gives player armies precedence and clicking the selected army again cancels selection', () => {
   eventBus.clear();
   const renderer = Object.create(MapRenderer.prototype);
   renderer.selectedArmyId = null;
@@ -121,10 +180,86 @@ test('map selection gives player armies precedence and emits detail then target 
   assert.equal(renderer._handleArmyMapClick(2, 2), true);
   assert.equal(renderer.selectedArmyId, 'army-1');
   assert.equal(renderer._handleArmyMapClick(2, 2), true);
-  assert.deepEqual(details, [{ armyId: 'army-1' }]);
-  assert.equal(renderer._handleArmyMapClick(4, 2), true);
-  assert.deepEqual(requests, [{ armyId: 'army-1', gridX: 4, gridY: 2, target: { kind: 'move', gridX: 4, gridY: 2 } }]);
+  assert.equal(renderer.selectedArmyId, null);
+  assert.deepEqual(details, []);
+  assert.equal(renderer._handleArmyMapClick(4, 2), false);
+  assert.deepEqual(requests, []);
   assert.equal(renderer._handleArmyMapClick(3, 2), true);
   assert.equal(renderer.selectedArmyId, 'army-2');
+  eventBus.clear();
+});
+
+test('left click toggles enemy selection while right click opens enemy or army details', () => {
+  eventBus.clear();
+  const renderer = Object.create(MapRenderer.prototype);
+  renderer.selectedArmyId = null;
+  renderer.selectedEnemyTarget = null;
+  renderer._drawStrategicTokens = () => {};
+  renderer._armySystem = {
+    getArmies: () => [{ id: 'army-1', ownerId: 'player', gridX: 2, gridY: 2, unitIds: ['spear'] }]
+  };
+  const enemyTarget = {
+    kind: 'enemy', source: 'expansion', enemyId: 'enemy-force', gridX: 5, gridY: 4,
+    enemy: { id: 'enemy-force', name: '敌军', attackRange: 3 }
+  };
+  renderer._classifyArmyInteractionTarget = (gridX, gridY) => gridX === 5 && gridY === 4
+    ? enemyTarget
+    : { kind: 'move', gridX, gridY };
+
+  assert.equal(renderer._handleArmyMapClick(5, 4), true);
+  assert.deepEqual(renderer.selectedEnemyTarget, {
+    key: 'expansion:enemy-force:5,4', source: 'expansion', enemyId: 'enemy-force', gridX: 5, gridY: 4, attackRange: 3
+  });
+  assert.equal(renderer._handleArmyMapClick(5, 4), true);
+  assert.equal(renderer.selectedEnemyTarget, null);
+
+  const armyDetails = [];
+  const enemyDetails = [];
+  eventBus.on('armyDetailRequested', data => armyDetails.push(data));
+  eventBus.on('enemyDetailRequested', data => enemyDetails.push(data));
+  assert.equal(renderer._handleStrategicContextMenu(2, 2), true);
+  assert.equal(renderer._handleStrategicContextMenu(5, 4), true);
+  assert.deepEqual(armyDetails, [{ armyId: 'army-1' }]);
+  assert.deepEqual(enemyDetails, [{ enemy: enemyTarget.enemy, source: 'expansion', gridX: 5, gridY: 4 }]);
+  eventBus.clear();
+});
+
+test('marking a movement destination clears selection after publishing the route order', () => {
+  eventBus.clear();
+  const renderer = Object.create(MapRenderer.prototype);
+  renderer.selectedArmyId = 'army-1';
+  renderer.selectedEnemyTarget = null;
+  renderer._drawStrategicTokens = () => {};
+  renderer._armySystem = {
+    getArmies: () => [{ id: 'army-1', ownerId: 'player', gridX: 1, gridY: 1, unitIds: ['spear'] }]
+  };
+  renderer._classifyArmyInteractionTarget = (gridX, gridY) => ({ kind: 'move', gridX, gridY });
+  const requests = [];
+  eventBus.on('armyInteractionRequested', data => requests.push(data));
+
+  assert.equal(renderer._handleArmyMapClick(4, 1), true);
+  assert.equal(renderer.selectedArmyId, null);
+  assert.deepEqual(requests, [{ armyId: 'army-1', gridX: 4, gridY: 1, target: { kind: 'move', gridX: 4, gridY: 1 } }]);
+  eventBus.clear();
+});
+
+test('clicking an out-of-range enemy publishes an approach order and clears army selection', () => {
+  eventBus.clear();
+  const renderer = Object.create(MapRenderer.prototype);
+  renderer.selectedArmyId = 'army-1';
+  renderer.selectedEnemyTarget = null;
+  renderer._drawStrategicTokens = () => {};
+  renderer._armySystem = {
+    getArmies: () => [{ id: 'army-1', ownerId: 'player', gridX: 1, gridY: 1, unitIds: ['spear'] }],
+    canAttackTarget: () => ({ ok: false, reason: 'target_out_of_range', distance: 5, attackRange: 1 })
+  };
+  const target = { kind: 'enemy', source: 'expansion', gridX: 6, gridY: 1, enemy: { id: 'enemy-1' } };
+  renderer._classifyArmyInteractionTarget = () => target;
+  const requests = [];
+  eventBus.on('armyInteractionRequested', data => requests.push(data));
+
+  assert.equal(renderer._handleArmyMapClick(6, 1), true);
+  assert.equal(renderer.selectedArmyId, null);
+  assert.deepEqual(requests, [{ armyId: 'army-1', gridX: 6, gridY: 1, target }]);
   eventBus.clear();
 });

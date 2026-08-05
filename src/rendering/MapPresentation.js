@@ -63,6 +63,7 @@ export function getResourceNodeArtPath(node, definition = {}, luxury = null) {
   if (node?.type === 'luxury' && /^[a-z0-9_]+$/i.test(luxuryId)) {
     return `assets/resource-nodes/luxuries/${luxuryId}.png`;
   }
+  if (node?.type === 'stone') return 'assets/resource-nodes/stone-deposit.svg';
   return definition.mapArt || luxury?.icon || '';
 }
 
@@ -177,9 +178,10 @@ function describeFunction(uniqueFunction = {}) {
   return labels;
 }
 
-export function createBuildingHoverDetails(building, config, { upgradeName = null } = {}) {
+export function createBuildingHoverDetails(building, config, { upgradeName = null, hp = null, maxHp = null } = {}) {
   const lines = [
     config.description || '城市功能建筑。',
+    `生命值：${hp ?? maxHp ?? config.maxHp ?? 100}/${maxHp ?? config.maxHp ?? 100}`,
     `状态：${STATUS_NAMES[building.status] || building.status || '未知'}`,
     `岗位：${building.currentWorkers || 0}/${config.maxWorkers || 0}`
   ];
@@ -205,14 +207,14 @@ export function createMapTokenModels({ armies = [], wildSites = [], unitConfigs 
     return {
       id: army.id,
       kind: army.embarked ? 'fleet' : 'army',
-      art: representative?.icon || representative?.cardArt || '',
-      fallbackArt: representative?.icon ? (representative.cardArt || '') : '',
+      art: army.heroIcon || army.heroPortrait || representative?.icon || representative?.cardArt || '',
+      fallbackArt: army.heroIcon ? (army.heroPortrait || representative?.icon || '') : (representative?.icon ? (representative.cardArt || '') : ''),
       fallbackIcon: army.embarked ? '⚓' : '⚔️',
       icon: army.embarked ? '⚓' : '⚔️',
       selected: army.id === selectedArmyId,
       unitCount,
       label: `${army.name} · ${unitCount}队`,
-      detail: `战力 ${army.power ?? 0} · 士气 ${Math.round(army.morale ?? 100)} · 补给 ${Math.round((army.supply ?? 1) * 100)}%`,
+      detail: `攻击 ${army.attack ?? 0} · 生命 ${army.hp ?? 0}/${army.maxHp ?? 0} · 射程 ${army.attackRange ?? 0} · CP ${army.cp ?? 0}/${army.maxCp ?? 1} · 速度 ${army.speed ?? 0}`,
       gridX: army.gridX,
       gridY: army.gridY,
       color: army.factionColor || army.color || (army.embarked ? 0x2875a8 : 0x2f8f62)
@@ -223,7 +225,7 @@ export function createMapTokenModels({ armies = [], wildSites = [], unitConfigs 
     id: site.id,
     kind: 'wild_site',
     icon: siteIcons[site.category] || '!',
-    label: site.name,
+    label: `${site.name} · 战力 ${site.strength ?? site.baseStrength ?? 0}`,
     detail: `野外据点 · 战力 ${site.strength ?? site.baseStrength ?? 0}`,
     gridX: site.gridX,
     gridY: site.gridY,
@@ -240,8 +242,16 @@ export function createArmySelectionModel(army) {
     unitCount: Array.isArray(army.unitIds) ? army.unitIds.length : Math.max(0, Number(army.unitCount) || 0),
     gridX: army.gridX,
     gridY: army.gridY,
+    attackRange: Math.max(0, Math.floor(Number(army.attackRange) || 0)),
     route: (army.movePath || [])
       .filter(point => Number.isFinite(point?.x) && Number.isFinite(point?.y))
       .map(point => ({ x: point.x, y: point.y }))
   };
 }
+
+export function formatEnemyTokenStats(enemy = {}) {
+  const hp = Math.max(0, Math.ceil(Number(enemy.hp ?? enemy.maxHp) || 0));
+  const speed = Math.max(0, Number(enemy.speed) || 1);
+  return `❤️${hp}  👟${speed}  ⚔️${calculateCombatStrength(enemy)}`;
+}
+import { calculateCombatStrength } from '../domain/CombatStrength.js';

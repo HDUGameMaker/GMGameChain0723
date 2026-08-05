@@ -2,10 +2,16 @@
   "schemaVersion": 1,
   "buildings": {
     "stope": {
-      "footprint": { "width": 1, "height": 1 }
+      "footprint": {
+        "width": 1,
+        "height": 1
+      }
     },
     "stone_quarry": {
-      "footprint": { "width": 1, "height": 1 }
+      "footprint": {
+        "width": 1,
+        "height": 1
+      }
     },
     "warehouse": {
       "maxCount": null,

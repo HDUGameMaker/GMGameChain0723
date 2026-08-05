@@ -39,9 +39,25 @@ export class FogOfWarState {
     this.height = height;
     this._explored = new Uint8Array(width * height);
     this._visible = new Uint8Array(width * height);
+    this._revealAll = false;
+  }
+
+  setRevealAll(enabled) {
+    this._revealAll = enabled === true;
+    if (this._revealAll) {
+      this._explored.fill(1);
+      this._visible.fill(1);
+    } else {
+      this._visible.fill(0);
+    }
   }
 
   recalculate(sources = [], period = 'morning') {
+    if (this._revealAll) {
+      this._explored.fill(1);
+      this._visible.fill(1);
+      return;
+    }
     this._visible.fill(0);
     const baseRadius = DAY_PERIODS.has(period) ? 10 : 6;
     for (const source of sources) {
@@ -83,6 +99,7 @@ export class FogOfWarState {
     if (state?.width !== this.width || state?.height !== this.height) return false;
     this._explored = decodeBits(state.exploredRle, this.width * this.height);
     this._visible.fill(0);
+    if (this._revealAll) this.setRevealAll(true);
     return true;
   }
 }

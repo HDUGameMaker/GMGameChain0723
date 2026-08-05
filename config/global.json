@@ -29,7 +29,7 @@
   "NIGHT_PERIODS": ["evening", "night"],
   "WORK_PERIODS": ["morning", "afternoon"],
   "eventTriggerChance": 0.25,
-  "eventMinInterval": 4,
+  "eventMinInterval": 1,
   "population": {
     "growthPerDay": { "min": 2, "max": 4 },
     "declineDelayDays": 2

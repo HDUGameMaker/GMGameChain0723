@@ -2,6 +2,7 @@
   {
     "id": "logging",
     "name": "伐木技术",
+  "description": "掌握了斧柄与伐木的要领，聚落能高效地从森林中获取原木。",
     "tier": 0,
     "cost": [],
     "researchTime": 0,
@@ -18,6 +19,7 @@
   {
     "id": "mining",
     "name": "采矿技术",
+  "description": "学会开凿与支护矿洞，地下的石料与矿石得以源源而出。",
     "tier": 0,
     "cost": [],
     "researchTime": 0,
@@ -34,6 +36,7 @@
   {
     "id": "farming",
     "name": "农耕技术",
+  "description": "翻土、播种、轮作，让土地按季节回报稳定的粮食。",
     "tier": 0,
     "cost": [
       {
@@ -55,6 +58,7 @@
   {
     "id": "basic_crafting",
     "name": "基础制作",
+  "description": "粗木作架、石料为础，建立起最早的手工作坊。",
     "tier": 1,
     "cost": [
       {
@@ -78,6 +82,7 @@
   {
     "id": "wood_processing",
     "name": "木材加工",
+  "description": "锯解、刨平与干燥处理，让原木变成可用的建材。",
     "tier": 1,
     "cost": [
       {
@@ -101,6 +106,7 @@
   {
     "id": "smelting",
     "name": "冶炼技术",
+  "description": "高温熔炼矿石提取金属，铁与铜从矿石中重生。",
     "tier": 1,
     "cost": [
       {
@@ -131,6 +137,7 @@
   {
     "id": "woodworking",
     "name": "木工工艺",
+  "description": "榫卯与拼接的技艺，让木屋更加牢固耐用。",
     "tier": 2,
     "cost": [
       {
@@ -154,6 +161,7 @@
   {
     "id": "steelmaking",
     "name": "炼钢技术",
+  "description": "在炭火中渗碳锻打，炼出远比铁坚硬的钢。",
     "tier": 2,
     "cost": [
       {
@@ -180,6 +188,7 @@
   {
     "id": "precision_crafting",
     "name": "精密加工",
+  "description": "卡尺与磨床的应用，让零件精度达到毫米级。",
     "tier": 2,
     "cost": [
       {
@@ -207,6 +216,7 @@
   {
     "id": "brickmaking",
     "name": "制砖工艺",
+  "description": "以黏土制坯、入窑烧成，砖块让建筑不再依赖木材。",
     "tier": 2,
     "cost": [
       {
@@ -230,6 +240,7 @@
   {
     "id": "storage_tech",
     "name": "仓储技术",
+  "description": "分区货架与干燥通风的库房，让物资存储更有效率。",
     "tier": 2,
     "cost": [
       {
@@ -253,6 +264,7 @@
   {
     "id": "fishing",
     "name": "渔业技术",
+  "description": "渔网、鱼钩与竹筏，让河流湖泊成为取之不尽的粮仓。",
     "tier": 1,
     "cost": [
       {
@@ -276,6 +288,7 @@
   {
     "id": "hunting",
     "name": "狩猎技术",
+  "description": "陷阱、猎弓与围猎技巧，让猎物成为稳定的肉食来源。",
     "tier": 1,
     "cost": [
       {
@@ -299,6 +312,7 @@
   {
     "id": "mine_support_tech",
     "name": "矿井支撑",
+  "description": "木柱与顶板支护，让矿工能深入更危险的矿层。",
     "tier": 3,
     "cost": [
       {
@@ -322,6 +336,7 @@
   {
     "id": "mechanical_engineering",
     "name": "机械工程",
+  "description": "齿轮、连杆与轴承的组合，让机械开始代替人力。",
     "tier": 3,
     "cost": [
       {
@@ -348,6 +363,7 @@
   {
     "id": "brick_architecture",
     "name": "砖石建筑",
+  "description": "以砖石砌墙、以灰浆黏合，建筑可以更高、更坚固。",
     "tier": 3,
     "cost": [
       {
@@ -373,6 +389,7 @@
   {
     "id": "tile_housing",
     "name": "砖瓦住宅",
+  "description": "屋顶覆瓦、地面铺砖，住宅的舒适与耐久更上一层。",
     "tier": 3,
     "cost": [
       {
@@ -396,6 +413,7 @@
   {
     "id": "military_training",
     "name": "军事训练",
+  "description": "阵列、操典与体能训练，让征召的士兵成为真正的军人。",
     "tier": 2,
     "cost": [
       {
@@ -423,6 +441,7 @@
   {
     "id": "advanced_military",
     "name": "高级军事训练",
+  "description": "分兵种协同训练与战场纪律，军队的组织度大幅提升。",
     "tier": 3,
     "cost": [
       {
@@ -450,6 +469,7 @@
   {
     "id": "building_repair",
     "name": "建筑维修",
+  "description": "常备的修缮工匠与工具，让建筑始终保持最佳状态。",
     "tier": 4,
     "cost": [
       {
@@ -477,6 +497,7 @@
   {
     "id": "exploration_tech",
     "name": "勘探技术",
+  "description": "地质调查与钻探取样，让地下的矿脉无所遁形。",
     "tier": 4,
     "cost": [
       {
@@ -501,6 +522,7 @@
   {
     "id": "precision_manufacturing",
     "name": "精密制造",
+  "description": "高精度机床与标准化生产，让工业制品质量飞跃。",
     "tier": 4,
     "cost": [
       {
@@ -528,6 +550,7 @@
   {
     "id": "resource_expansion",
     "name": "物资扩容",
+  "description": "扩建仓储与装卸设施，聚落的物资容量再上台阶。",
     "tier": 4,
     "cost": [
       {
@@ -551,6 +574,7 @@
   {
     "id": "grain_storage",
     "name": "粮食储备",
+  "description": "防潮防鼠的谷仓设计，让余粮可以长年保存。",
     "tier": 1,
     "cost": [
       {
@@ -574,6 +598,7 @@
   {
     "id": "electronic_engineering",
     "name": "电子工程",
+  "description": "电路、传感器与信号处理，为文明装上电子的大脑。",
     "tier": 5,
     "cost": [
       {
@@ -600,6 +625,7 @@
   {
     "id": "deep_exploration",
     "name": "深度勘探",
+  "description": "深井钻探与地下测绘，触及最深处的资源。",
     "tier": 6,
     "cost": [
       {
@@ -624,6 +650,7 @@
   {
     "id": "precision_molding",
     "name": "精密成形",
+  "description": "模具压制与精密铸造，让金属零件一次成型。",
     "tier": 4,
     "cost": [
       {
@@ -651,6 +678,7 @@
   {
     "id": "waterwheel",
     "name": "水车",
+  "description": "以水流驱动水轮，借自然之力碾磨与鼓风。",
     "tier": 5,
     "cost": [
       {
@@ -676,6 +704,7 @@
   {
     "id": "sail",
     "name": "风帆",
+  "description": "借风行船，让舟船摆脱桨橹的束缚驶向远洋。",
     "tier": 6,
     "cost": [
       {
@@ -705,7 +734,7 @@
   {
     "id": "domesticate_horses",
     "name": "驯化野马",
-    "description": "",
+    "description": "驯服野马为坐骑与挽畜，运输与骑兵的时代就此开启。",
     "tier": 3,
     "icon": "",
     "cost": [
@@ -737,7 +766,7 @@
   {
     "id": "vehicles",
     "name": "大型载具",
-    "description": "",
+    "description": "四轮车厢与坚固车轴，让大宗货物得以远距离转运。",
     "tier": 4,
     "icon": "",
     "cost": [
@@ -775,7 +804,7 @@
   {
     "id": "firearm",
     "name": "火器",
-    "description": "",
+    "description": "点燃药池、击发弹丸，火器将彻底改变战争的面貌。",
     "tier": 5,
     "icon": "",
     "cost": [

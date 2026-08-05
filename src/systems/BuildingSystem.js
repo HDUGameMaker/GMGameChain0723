@@ -7,6 +7,7 @@ import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
 import { isAreaInBounds, isAreaOverlap } from '../utils/gridUtils.js';
 import { formatBonusEffect } from '../utils/BonusUtils.js';
+import { getResourceNodeTypePresentation } from '../domain/ResourceNodePresentation.js';
 
 export class BuildingSystem {
   constructor() {
@@ -25,7 +26,6 @@ export class BuildingSystem {
     this._spellSystem = null; // 炼金法术系统（区域效率乘法）
 
     // 订阅 tick 事件处理建造和生产
-    this._strategySystem = null;
     eventBus.on('workTick', (data) => this._onWorkTick(data));
     eventBus.on('tick', (data) => this._onAnyTick(data));
     eventBus.on('dayProductionTick', (data) => this._onDayProductionTick(data));
@@ -55,7 +55,6 @@ export class BuildingSystem {
   setCultureSystem(cs) { this._cultureSystem = cs; }
   setAlchemySystem(as) { this._alchemySystem = as; }
   setSpellSystem(ss) { this._spellSystem = ss; }
-  setStrategySystem(ss) { this._strategySystem = ss; }
   setTerritorySystem(ts) { this._territorySystem = ts; }
   setHeroSystem(hs) { this._heroSystem = hs; }
   setLuxurySystem(ls) { this._luxurySystem = ls; }
@@ -137,6 +136,9 @@ export class BuildingSystem {
 
     const w = config.footprint.width;
     const h = config.footprint.height;
+    for (let y = gridY; y < gridY + h; y += 1) for (let x = gridX; x < gridX + w; x += 1) {
+      if (this._blackMistSystem?.isCovered?.(x, y)) return { valid: false, reason: '黑雾覆盖的地块无法建造' };
+    }
     const map = this._mapConfig;
 
     // 边界检查
@@ -157,7 +159,7 @@ export class BuildingSystem {
           return { valid: false, reason: '无效地形' };
         }
         // 不可建造地形（山脉、水源）
-        if (groundType.buildable === false && !config.requiredExpeditionEntrance) {
+        if (groundType.buildable === false && !config.requiredExpeditionEntrance && !config.waterBuildable) {
           return { valid: false, reason: `${groundType.name}上不可建造` };
         }
         // 受限地形：仅特定建筑可建造（如采石场→裸露石头）
@@ -180,7 +182,8 @@ export class BuildingSystem {
     // 道路上不可修建建筑
     if (config.requiredResourceNode && this._resourceNodeSystem) {
       const node = this._resourceNodeSystem.findNodeForArea(gridX, gridY, w, h, config.requiredResourceNode);
-      if (!node) return { valid: false, reason: `必须覆盖空闲的${config.requiredResourceNode}资源点` };
+      const nodeType = getResourceNodeTypePresentation(config.requiredResourceNode, configRegistry.get('resourceNodes')?.types || {});
+      if (!node) return { valid: false, reason: `必须覆盖空闲的${nodeType.name}` };
     }
 
     if (this._roadSystem) {
@@ -217,13 +220,6 @@ export class BuildingSystem {
       }
     }
 
-    // 建筑数量上限（占有术系统）：超上限只能用占术占地
-    if (this._territorySystem) {
-      if (this.buildings.length >= this._territorySystem.getBuildingCap()) {
-        return { valid: false, reason: `已达建筑数量上限 ${this._territorySystem.getBuildingCap()}（升上限或用占术占地）` };
-      }
-    }
-
     // 道路依赖建筑：必须邻接道路
     if (config.roadRequired && this._roadSystem) {
       if (!this._satisfiesRoadDependency(gridX, gridY, w, h, buildingId)) {
@@ -248,7 +244,7 @@ export class BuildingSystem {
     if (!check.valid) return false;
 
     // 消耗资源（应用人文政策建造成本倍率）
-    const buildCostMul = (this._cultureSystem ? (this._cultureSystem.getEffects().buildCostMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).buildCostMul || 1) : 1) * (this._heroSystem?.getBonuses?.().buildCostMul || 1);
+    const buildCostMul = (this._cultureSystem ? (this._cultureSystem.getEffects().buildCostMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).buildCostMul || 1) : 1) * (this._heroSystem?.getBonuses?.().buildCostMul || 1) * (this._luxurySystem?.getBonuses?.().buildCostMul || 1);
     if (config.buildCost && config.buildCost.length > 0) {
       const scaledCost = config.buildCost.map(c => ({ ...c, amount: Math.max(1, Math.round(c.amount * buildCostMul)) }));
       if (!this._resourceSystem.consumeAll(scaledCost)) return false;
@@ -274,7 +270,8 @@ export class BuildingSystem {
       synthesisProgress: null, // { recipeId, progress }
       cropId: this._isFarmConfig(config) ? 'grain' : null,
       pendingCropId: null,
-      cropLuxuryProgress: 0
+      cropLuxuryProgress: 0,
+      hpDamage: 0
     };
 
     this.buildings.push(building);
@@ -305,7 +302,8 @@ export class BuildingSystem {
       synthesisProgress: null,
       cropId: this._isFarmConfig(config) ? 'grain' : null,
       pendingCropId: null,
-      cropLuxuryProgress: 0
+      cropLuxuryProgress: 0,
+      hpDamage: 0
     };
     this.buildings.push(building);
     this._updateStore();
@@ -349,7 +347,7 @@ export class BuildingSystem {
     const targetConfig = configRegistry.getBuilding(check.targetId);
 
     // 消耗资源（升级也应用人文政策建造成本倍率）
-    const buildCostMul = (this._cultureSystem ? (this._cultureSystem.getEffects().buildCostMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).buildCostMul || 1) : 1) * (this._heroSystem?.getBonuses?.().buildCostMul || 1);
+    const buildCostMul = (this._cultureSystem ? (this._cultureSystem.getEffects().buildCostMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).buildCostMul || 1) : 1) * (this._heroSystem?.getBonuses?.().buildCostMul || 1) * (this._luxurySystem?.getBonuses?.().buildCostMul || 1);
     const scaledUpgradeCost = check.cost.map(c => ({ ...c, amount: Math.max(1, Math.round(c.amount * buildCostMul)) }));
     this._resourceSystem.consumeAll(scaledUpgradeCost);
 
@@ -415,6 +413,7 @@ export class BuildingSystem {
       return { ok: false, reason: 'housing_full' };
     }
 
+    eventBus.emit('populationRecruited', { buildingIndex, amount });
     return { ok: true, population: this._populationSystem.current };
   }
 
@@ -678,7 +677,7 @@ export class BuildingSystem {
     if (type === 'hydro') {
       return [
         { resourceId: 'gear', amount: 20 },
-        { resourceId: 'plank', amount: 50 },
+        { resourceId: 'composite_plank', amount: 28 },
         { resourceId: 'electronic_part', amount: 10 },
         { resourceId: 'steel', amount: 40 }
       ];
@@ -686,7 +685,7 @@ export class BuildingSystem {
     // wind
     return [
       { resourceId: 'gear', amount: 15 },
-      { resourceId: 'plank', amount: 75 },
+      { resourceId: 'composite_plank', amount: 42 },
       { resourceId: 'electronic_part', amount: 10 },
       { resourceId: 'steel', amount: 35 },
       { resourceId: 'fur', amount: 30 }
@@ -816,7 +815,7 @@ export class BuildingSystem {
         if (!groundType) {
           return { valid: false, reason: '无效地形' };
         }
-        if (groundType.buildable === false) {
+        if (groundType.buildable === false && !config.waterBuildable) {
           return { valid: false, reason: `${groundType.name}上不可建造` };
         }
         if (groundType.buildable === 'restricted' && !this._terrainRestrictionBypassed(config)) {
@@ -839,7 +838,8 @@ export class BuildingSystem {
       const node = this._resourceNodeSystem.findNodeForArea(
         newGridX, newGridY, w, h, config.requiredResourceNode, building.instanceId
       );
-      if (!node) return { valid: false, reason: `必须覆盖空闲的${config.requiredResourceNode}资源点` };
+      const nodeType = getResourceNodeTypePresentation(config.requiredResourceNode, configRegistry.get('resourceNodes')?.types || {});
+      if (!node) return { valid: false, reason: `必须覆盖空闲的${nodeType.name}` };
     }
 
     if (this._roadSystem) {
@@ -995,6 +995,83 @@ export class BuildingSystem {
   _onAnyTick(data) {
     this._processProductionTick(data, { cycle: 'tick', attachmentsOnly: true, processSynthesis: true });
     this._processAttachmentWeatherTick();
+    this._repairNearbyBuildings();
+  }
+
+  setBlackMistSystem(system) { this._blackMistSystem = system || null; }
+
+  getBuildingHpMultiplier() {
+    return this.buildings.reduce((multiplier, building) => {
+      if (building.status !== 'active') return multiplier;
+      const config = configRegistry.getBuilding(building.buildingId);
+      return multiplier * Math.max(0.01, Number(config?.uniqueFunction?.buildingHpMul) || 1);
+    }, 1);
+  }
+
+  getBuildingMaxHp(buildingIndex) {
+    const building = this.buildings[buildingIndex];
+    const config = building && configRegistry.getBuilding(building.buildingId);
+    return config ? Math.max(1, Math.round((Number(config.maxHp) || 100) * this.getBuildingHpMultiplier())) : 0;
+  }
+
+  getBuildingHp(buildingIndex) {
+    const building = this.buildings[buildingIndex];
+    return building ? Math.max(0, this.getBuildingMaxHp(buildingIndex) - Math.max(0, Number(building.hpDamage) || 0)) : 0;
+  }
+
+  getBuildingCombatModel(buildingIndex) {
+    const building = this.buildings[buildingIndex];
+    const config = building && configRegistry.getBuilding(building.buildingId);
+    if (!building || !config) return null;
+    return {
+      id: building.instanceId, name: config.name, icon: config.mapIcon || config.imageDetail || config.icon,
+      hp: this.getBuildingHp(buildingIndex), maxHp: this.getBuildingMaxHp(buildingIndex),
+      attack: 0, speed: 0, attackRange: 0, cp: 0, isBuilding: true,
+      gridX: building.gridX, gridY: building.gridY
+    };
+  }
+
+  damageBuilding(buildingIndex, amount) {
+    const building = this.buildings[buildingIndex];
+    if (!building || amount <= 0) return { ok: false, reason: 'invalid_building' };
+    const config = configRegistry.getBuilding(building.buildingId);
+    building.hpDamage = Math.min(this.getBuildingMaxHp(buildingIndex), (Number(building.hpDamage) || 0) + amount);
+    const hp = this.getBuildingHp(buildingIndex);
+    eventBus.emit('buildingDamaged', { buildingIndex, buildingId: building.buildingId, damage: amount, hp, maxHp: this.getBuildingMaxHp(buildingIndex) });
+    if (hp > 0) {
+      this._updateStore();
+      return { ok: true, destroyed: false, hp };
+    }
+    const headquartersDestroyed = config?.isHeadquarters === true;
+    this.demolishBuilding(buildingIndex, true);
+    if (headquartersDestroyed) eventBus.emit('gameOver', { win: false, reason: 'hqLost' });
+    return { ok: true, destroyed: true, hp: 0, headquartersDestroyed };
+  }
+
+  _repairNearbyBuildings() {
+    let changed = false;
+    for (const source of this.buildings) {
+      if (source.status !== 'active') continue;
+      const sourceConfig = configRegistry.getBuilding(source.buildingId);
+      const repair = Math.max(0, Number(sourceConfig?.uniqueFunction?.repairNearbyBuildingsPerTick) || 0);
+      const radius = Math.max(0, Number(sourceConfig?.uniqueFunction?.repairRadius) || 0);
+      if (!repair || !radius) continue;
+      for (const target of this.buildings) {
+        if (!(target.hpDamage > 0)) continue;
+        const targetConfig = configRegistry.getBuilding(target.buildingId);
+        const distance = this._chebyshevDistance(
+          source.gridX, source.gridY, sourceConfig.footprint.width, sourceConfig.footprint.height,
+          target.gridX, target.gridY, targetConfig.footprint.width, targetConfig.footprint.height
+        );
+        if (distance > radius) continue;
+        target.hpDamage = Math.max(0, target.hpDamage - repair);
+        changed = true;
+      }
+    }
+    if (changed) {
+      this._updateStore();
+      eventBus.emit('buildingsRepaired');
+    }
   }
 
   _onDayProductionTick(data) {
@@ -1176,7 +1253,9 @@ export class BuildingSystem {
       const skipOutputResourceIds = new Set(options.skipOutputResourceIds || []);
       for (const out of prod.output) {
         if (skipOutputResourceIds.has(out.resourceId)) continue;
-        const cultureProdMul = this._getProductionMultiplier(out.resourceId, building);
+        const cultureProdMul = config.ignoreProductionMultipliers
+          ? 1
+          : this._getProductionMultiplier(out.resourceId, building);
         const baseAmount = out.amount * outputMultiplier * cultureProdMul;
         const adjusted = this.applyAdjacencyToProduction(
           building.buildingId, out.resourceId, baseAmount, 'production', bonuses
@@ -1212,6 +1291,8 @@ export class BuildingSystem {
         building.boundLuxuryProgress = Math.max(0, Number(building.boundLuxuryProgress) || 0) + effectiveWorkers;
         while (building.boundLuxuryProgress >= interval) {
           building.boundLuxuryProgress -= interval;
+          const gathered = this._resourceNodeSystem?.consume?.(node.id, amount, store.getState('timeDay') || 1);
+          if (!gathered?.ok) break;
           this._luxurySystem?.addLuxury?.(node.luxuryId, amount);
         }
       }
@@ -1556,11 +1637,25 @@ export class BuildingSystem {
     const scopedCultureMul = resourceId ? (cultureEffects?.resourceProductionMul?.[resourceId] || 1) : 1;
     const alchemyMul = this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).productionMul || 1) : 1;
     // 炼金法术：区域内生产建筑效率乘法（按建筑所在区域连乘），叠入产出链
-    const spellMul = this._strategySystem?.getProductionMultiplier?.(resourceId) || 1;
+    const spellMul = 1;
     const heroMul = this._heroSystem?.getBonuses?.().productionMul || 1;
     const luxuryEffects = this._luxurySystem?.getBonuses?.() || {};
-    const luxuryMul = resourceId === 'gold' ? (luxuryEffects.goldProductionMul || 1) : 1;
-    return globalCultureMul * techMul * scopedTechMul * scopedCultureMul * alchemyMul * spellMul * heroMul * luxuryMul;
+    const luxuryMul = resourceId ? (luxuryEffects[`${resourceId}ProductionMul`] || 1) : 1;
+    let activeBuildingResourceBonus = 0;
+    if (resourceId) {
+      for (const activeBuilding of this.buildings || []) {
+        if (activeBuilding.status !== 'active' || activeBuilding._invalid) continue;
+        const activeConfig = configRegistry.getBuilding(activeBuilding.buildingId);
+        const multiplier = activeConfig?.uniqueFunction?.resourceProductionMul?.[resourceId];
+        if (Number.isFinite(multiplier)) activeBuildingResourceBonus += multiplier - 1;
+      }
+    }
+    const activeBuildingResourceMul = 1 + activeBuildingResourceBonus;
+    return globalCultureMul * techMul * scopedTechMul * scopedCultureMul * alchemyMul * spellMul * heroMul * luxuryMul * activeBuildingResourceMul;
+  }
+
+  getProductionMultiplier(resourceId = null) {
+    return this._getProductionMultiplier(resourceId);
   }
 
   getBuildingCount(buildingId) {
@@ -2098,7 +2193,8 @@ export class BuildingSystem {
       cropId: b.cropId || null,
       pendingCropId: b.pendingCropId || null,
       pendingCropDay: b.pendingCropDay || null,
-      cropLuxuryProgress: Math.max(0, Number(b.cropLuxuryProgress) || 0)
+      cropLuxuryProgress: Math.max(0, Number(b.cropLuxuryProgress) || 0),
+      hpDamage: Math.max(0, Number(b.hpDamage) || 0)
     }));
   }
 
@@ -2129,7 +2225,8 @@ export class BuildingSystem {
         cropId,
         pendingCropId,
         pendingCropDay: pendingCropId ? Math.max(1, Math.floor(Number(s.pendingCropDay) || 1)) : null,
-        cropLuxuryProgress: Math.max(0, Number(s.cropLuxuryProgress) || 0)
+        cropLuxuryProgress: Math.max(0, Number(s.cropLuxuryProgress) || 0),
+        hpDamage: Math.max(0, Number(s.hpDamage) || 0)
       };
     });
     this._nextInstanceId = maximumInstance + 1;

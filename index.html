@@ -260,50 +260,6 @@
       height: var(--hud-top-block-height);
     }
 
-    #population-display {
-      color: var(--text-primary);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      box-sizing: border-box;
-      height: var(--hud-top-block-height);
-      padding: 8px 12px;
-      border-radius: 14px;
-      background: #191932;
-      border: 1px solid #2d2d4b;
-      min-width: 176px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .population-line,
-    .military-line {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      width: 100%;
-    }
-
-    .hud-info-main {
-      color: var(--text-primary);
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .hud-info-sub {
-      color: var(--text-muted);
-      font-size: 10px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    #population-display .bottleneck {
-      color: var(--text-warning);
-    }
-
     #time-display {
       color: var(--text-primary);
       font-size: 13px;
@@ -507,6 +463,17 @@
       background: linear-gradient(180deg, rgba(214,168,75,0.14), var(--bg-card));
       box-shadow: inset 0 0 0 1px rgba(214,168,75,0.08);
     }
+
+    #population-display {
+      color: var(--text-primary); font-size:13px; font-weight:600; cursor:pointer;
+      box-sizing:border-box; height:var(--hud-top-block-height); padding:8px 12px;
+      border-radius:14px; background:#191932; border:1px solid #2d2d4b;
+      min-width:176px; display:flex; flex-direction:column; justify-content:center; gap:8px;
+    }
+    .population-line,.military-line { display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%; }
+    .hud-info-main { color:var(--text-primary);font-weight:700;white-space:nowrap; }
+    .hud-info-sub { color:var(--text-muted);font-size:10px;font-weight:600;white-space:nowrap; }
+    #population-display .bottleneck { color:var(--text-warning); }
     .hud-btn-feature .hud-btn-label { color: #efd58c; font-weight: 700; }
 
     /* ===== 挪动模式切换按钮（右下角）===== */
@@ -617,6 +584,56 @@
       box-shadow: var(--shadow-lg), var(--shadow-glow);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
+    }
+
+    /* 英雄交互采用稳定的阅读宽度，避免 4K 屏上横向留白无限扩张。 */
+    #popup-container[data-popup-type="hero_interaction"] {
+      width: min(94vw, 820px);
+      max-width: 820px;
+      max-height: 92vh;
+    }
+    #popup-container[data-popup-type="hero_interaction"] #popup-body {
+      flex: 0 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* 依据屏幕实际像素分档放大交互控件，保持不同分辨率下接近的视觉尺寸。 */
+    html[data-ui-density="high"] .hud-btn {
+      min-width: 58px;
+      height: 58px;
+      padding: 5px 12px;
+    }
+    html[data-ui-density="high"] .hud-btn-icon { font-size: 23px; }
+    html[data-ui-density="high"] .hud-btn-label { font-size: 12px; }
+    html[data-ui-density="high"] .res-icon,
+    html[data-ui-density="high"] .res-icon-wrap img { width: 25px; height: 25px; }
+    html[data-ui-density="high"] .res-icon-wrap { min-width: 25px; }
+    html[data-ui-density="high"] .resource-item { min-height: 40px; font-size: 15px; }
+    html[data-ui-density="high"] #popup-header { padding: 17px 20px; }
+    html[data-ui-density="high"] #popup-back-btn,
+    html[data-ui-density="high"] #popup-close-btn { width: 44px; height: 44px; font-size: 18px; }
+    html[data-ui-density="high"] #popup-title { font-size: 19px; }
+
+    html[data-ui-density="ultra"] .hud-btn {
+      min-width: 68px;
+      height: 68px;
+      padding: 6px 14px;
+    }
+    html[data-ui-density="ultra"] .hud-btn-icon { font-size: 28px; }
+    html[data-ui-density="ultra"] .hud-btn-label { font-size: 14px; }
+    html[data-ui-density="ultra"] .res-icon,
+    html[data-ui-density="ultra"] .res-icon-wrap img { width: 30px; height: 30px; }
+    html[data-ui-density="ultra"] .res-icon-wrap { min-width: 30px; }
+    html[data-ui-density="ultra"] .resource-item { min-height: 48px; font-size: 17px; }
+    html[data-ui-density="ultra"] #popup-header { padding: 20px 24px; }
+    html[data-ui-density="ultra"] #popup-back-btn,
+    html[data-ui-density="ultra"] #popup-close-btn { width: 52px; height: 52px; font-size: 22px; }
+    html[data-ui-density="ultra"] #popup-title { font-size: 23px; }
+
+    @media (max-width: 760px), (max-height: 620px) {
+      #popup-container[data-popup-type="hero_interaction"] { width: 96vw; }
+      #popup-container[data-popup-type="hero_interaction"] #popup-body { min-height: 0 !important; }
     }
 
     #popup-header {
@@ -1013,6 +1030,18 @@
       box-shadow: var(--shadow-sm);
     }
 
+    /* 存档诊断必须完整显示字段路径，不能被普通播报的省略号截断。 */
+    .msg-item.diagnostic {
+      width: max-content;
+      max-width: min(560px, calc(100vw - 24px));
+      overflow: visible;
+      overflow-wrap: anywhere;
+      text-overflow: clip;
+      white-space: normal;
+      text-align: left;
+      line-height: 1.55;
+    }
+
     .msg-item.left {
       background: linear-gradient(135deg, rgba(78, 203, 113, 0.2), rgba(78, 203, 113, 0.08));
       border: 1px solid rgba(78, 203, 113, 0.25);
@@ -1383,10 +1412,10 @@
         gap: 3px;
       }
 
-      #population-display { min-width: 158px; }
       #time-display { min-width: 170px; }
+      #population-display { min-width:158px; }
       #viewport-center-display { min-width: 62px; }
-      .hud-info-sub { font-size: 9px; }
+      .hud-info-sub { font-size:9px; }
       .time-weather-line { flex-direction: row; gap: 5px; }
 
       #hud-actions {
@@ -1474,15 +1503,10 @@
 
     <div id="hud-bottom">
       <button class="hud-btn" id="btn-era" title="时代与文明"><span class="hud-btn-icon">🏛️</span><span class="hud-btn-label">时代</span></button>
-      <button class="hud-btn" id="btn-luxury" title="奢侈品与贸易"><span class="hud-btn-icon">💎</span><span class="hud-btn-label">奢侈品</span></button>
-      <button class="hud-btn" id="btn-economy-orders" title="农业总览"><span class="hud-btn-icon">🌾</span><span class="hud-btn-label">农业</span></button>
-      <button class="hud-btn" id="btn-commercial" title="城市商业"><span class="hud-btn-icon">🏪</span><span class="hud-btn-label">商业</span></button>
-      <button class="hud-btn" id="btn-commerce" title="城邦贸易"><span class="hud-btn-icon">⚖️</span><span class="hud-btn-label">贸易</span></button>
-      <button class="hud-btn" id="btn-world" title="世界势力与野外目标"><span class="hud-btn-icon">🗺️</span><span class="hud-btn-label">世界</span></button>
+      <button class="hud-btn" id="btn-development-details" title="查看当前发展状态与全部加成"><span class="hud-btn-icon">📊</span><span class="hud-btn-label">发展详情</span></button>
+      <button class="hud-btn" id="btn-luxury" title="奢侈品与贸易" style="display:none"><span class="hud-btn-icon">💎</span><span class="hud-btn-label">奢侈品</span></button>
       <button class="hud-btn" id="btn-tech" title="科技"><span class="hud-btn-icon">🔬</span><span class="hud-btn-label">科技</span></button>
       <button class="hud-btn" id="btn-culture" title="文化"><span class="hud-btn-icon">📜</span><span class="hud-btn-label">文化</span></button>
-        <button class="hud-btn" id="btn-strategy" title="历史策略"><span class="hud-btn-icon">📜</span><span class="hud-btn-label">策略</span></button>
-      <button class="hud-btn" id="btn-road" title="道路"><span class="hud-btn-icon">🛤️</span><span class="hud-btn-label">铺路</span></button>
       <button class="hud-btn" id="btn-quest" title="任务"><span class="hud-btn-icon">📋</span><span class="hud-btn-label">任务</span></button>
       <button class="hud-btn" id="btn-objective" title="战役目标"><span class="hud-btn-icon">🎯</span><span class="hud-btn-label">目标</span></button>
       <button class="hud-btn" id="btn-build" title="建设"><span class="hud-btn-icon">🏗️</span><span class="hud-btn-label">建设</span></button>

@@ -7,6 +7,7 @@ import { configRegistry } from '../../src/core/ConfigRegistry.js';
 import { renderArmyPanel } from '../../src/ui/panels/army-panel.js';
 import { renderBuildingDetailPanel } from '../../src/ui/panels/building-detail-panel.js';
 import { renderTrainingPanel } from '../../src/ui/panels/training-panel.js';
+import { renderUnitResearchPanel } from '../../src/ui/panels/unit-research-panel.js';
 
 class FakeElement {
   constructor(tagName) {
@@ -162,6 +163,41 @@ test('training panel renders only system-filtered units with stable test ids and
   assert.deepEqual(buttons.map(button => button.dataset.testid), ['train-unit-primitive_infantry_1']);
   buttons[0].click();
   assert.deepEqual(calls.train, [[0, 'primitive_infantry_1']]);
+  assert.match(renderedText(body), /生产时代：原始时代/);
+});
+
+test('training panel hides future-era units and future-era tabs', () => {
+  setupDom();
+  const { army, unit } = setupTrainingGame();
+  const futureUnit = { ...unit, id: 'future_guard', name: '未来卫队', eraId: 'classical' };
+  configRegistry._configs.historicalContent.eras.push({ id: 'classical', name: '古典时代', order: 1 });
+  army.getTrainableUnitsAt = () => [unit, futureUnit];
+  const body = new FakeElement('body');
+  renderTrainingPanel({ buildingIndex: 0, eraId: 'classical' }, body, { open() {}, alert() {} });
+
+  assert.deepEqual(walk(body).filter(node => node.dataset.testid?.startsWith('train-unit-')).map(node => node.dataset.testid), ['train-unit-primitive_infantry_1']);
+  assert.doesNotMatch(renderedText(body), /未来卫队|古典时代/);
+});
+
+test('main unit research panel does not render future-era units', () => {
+  setupDom();
+  const { unit } = setupTrainingGame();
+  const futureUnit = { ...unit, id: 'future_guard', name: '未来卫队', eraId: 'classical', unlocked: false };
+  configRegistry._configs.enemies.units = [unit, futureUnit];
+  configRegistry._configs.historicalContent.eras.push({ id: 'classical', name: '古典时代', order: 1 });
+  window.__game.systems.tech = {
+    getUnitResearch: () => [unit.id],
+    canResearchUnit: () => ({ valid: false, reason: '尚未进入该兵种所属时代' }),
+    isUnitUnlockedByTech: id => id === unit.id,
+    researchUnit: () => false
+  };
+  window.__game.systems.resource = { canAfford: () => true };
+  const body = new FakeElement('body');
+  renderUnitResearchPanel({}, body, { alert() {} });
+
+  assert.match(renderedText(body), /氏族战士/);
+  assert.doesNotMatch(renderedText(body), /未来卫队/);
+  assert.match(renderedText(body), /已解锁 1 \/ 1/);
 });
 
 test('only compatible building details expose the building-scoped training entry', () => {
@@ -208,7 +244,7 @@ test('building-scoped assembly renders reserve controls preview and deploys the 
   const { calls, army, unit } = setupTrainingGame();
   army.getAvailableUnits = () => ({ [unit.id]: 2 });
   const body = new FakeElement('body');
-  const pm = { alert: message => assert.fail(message), pop: () => { calls.pop += 1; } };
+  const pm = { alert: message => assert.fail(message), close: () => { calls.pop += 1; } };
   const data = { assemblyBuildingIndex: 1 };
 
   renderArmyPanel(data, body, pm);
@@ -222,7 +258,8 @@ test('building-scoped assembly renders reserve controls preview and deploys the 
   assert.ok(add);
   assert.ok(remove);
   add.click();
-  assert.match(renderedText(body), /CP 1\/20/);
+  assert.match(renderedText(body), /编成 1 单位/);
+  assert.doesNotMatch(renderedText(body), /CP|指挥点|战力|士气/);
 
   const deploy = walk(body).find(node => node.dataset.testid === 'deploy-army');
   assert.ok(deploy);

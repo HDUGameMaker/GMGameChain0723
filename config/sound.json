@@ -1,5 +1,5 @@
 {
-  "masterVolume": 0.8,
+  "masterVolume": 0.15,
   "bgmVolume": 0.7,
   "sfxVolume": 0.8,
   "bgm": [
@@ -7,7 +7,7 @@
       "id": "bgm_era_primitive",
       "eraId": "primitive",
       "name": "初火黎明",
-      "file": "assets/audio/bgm/era-primitive.wav",
+      "file": "assets/audio/bgm/dream-away.mp3",
       "volume": 0.86,
       "loop": true
     },
@@ -15,7 +15,7 @@
       "id": "bgm_era_ancient",
       "eraId": "ancient",
       "name": "青铜河冠",
-      "file": "assets/audio/bgm/era-ancient.wav",
+      "file": "assets/audio/bgm/dream-away.mp3",
       "volume": 0.82,
       "loop": true
     },
@@ -23,7 +23,7 @@
       "id": "bgm_era_classical",
       "eraId": "classical",
       "name": "大理石与铁之路",
-      "file": "assets/audio/bgm/era-classical.wav",
+      "file": "assets/audio/bgm/dream-away.mp3",
       "volume": 0.82,
       "loop": true
     },
@@ -31,7 +31,7 @@
       "id": "bgm_era_medieval",
       "eraId": "medieval",
       "name": "城垒之外的旗帜",
-      "file": "assets/audio/bgm/era-medieval.wav",
+      "file": "assets/audio/bgm/dream-away.mp3",
       "volume": 0.84,
       "loop": true
     },
@@ -39,7 +39,7 @@
       "id": "bgm_era_exploration",
       "eraId": "exploration",
       "name": "驶向未绘之海",
-      "file": "assets/audio/bgm/era-exploration.wav",
+      "file": "assets/audio/bgm/dream-away.mp3",
       "volume": 0.8,
       "loop": true
     },
@@ -47,7 +47,7 @@
       "id": "bgm_era_early_modern",
       "eraId": "early_modern",
       "name": "旌旗下的引擎",
-      "file": "assets/audio/bgm/era-early_modern.wav",
+      "file": "assets/audio/bgm/dream-away.mp3",
       "volume": 0.78,
       "loop": true
     },
@@ -55,24 +55,84 @@
       "id": "bgm_era_modern",
       "eraId": "modern",
       "name": "流动的世界",
-      "file": "assets/audio/bgm/era-modern.wav",
+      "file": "assets/audio/bgm/dream-away.mp3",
       "volume": 0.78,
       "loop": true
     }
   ],
   "sfx": [
-    { "id": "sfx_ui_confirm", "name": "界面确认", "file": "assets/audio/sfx/strategic/ui-confirm.wav", "volume": 0.48 },
-    { "id": "sfx_construction", "name": "工程开工", "file": "assets/audio/sfx/strategic/construction.wav", "volume": 0.68 },
-    { "id": "sfx_training", "name": "部队训练完成", "file": "assets/audio/sfx/strategic/training.wav", "volume": 0.68 },
-    { "id": "sfx_research", "name": "研究完成", "file": "assets/audio/sfx/strategic/research.wav", "volume": 0.60 },
-    { "id": "sfx_era_fanfare", "name": "时代推进", "file": "assets/audio/sfx/strategic/era-fanfare.wav", "volume": 0.72 },
-    { "id": "sfx_diplomacy", "name": "外交行动", "file": "assets/audio/sfx/strategic/diplomacy.wav", "volume": 0.58 },
-    { "id": "sfx_trade", "name": "商业与贸易", "file": "assets/audio/sfx/strategic/trade.wav", "volume": 0.56 },
-    { "id": "sfx_colony", "name": "殖民建立", "file": "assets/audio/sfx/strategic/colony.wav", "volume": 0.68 },
-    { "id": "sfx_wild_victory", "name": "野外目标完成", "file": "assets/audio/sfx/strategic/wild-victory.wav", "volume": 0.66 },
-    { "id": "sfx_battle_resolve", "name": "战斗结算", "file": "assets/audio/sfx/strategic/battle-resolve.wav", "volume": 0.72 },
-    { "id": "sfx_hero_recruit", "name": "英雄招募", "file": "assets/audio/sfx/strategic/hero-recruit.wav", "volume": 0.66 },
-    { "id": "sfx_quest_consequence", "name": "任务长期后果", "file": "assets/audio/sfx/strategic/quest-consequence.wav", "volume": 0.64 },
+    {
+      "id": "sfx_ui_confirm",
+      "name": "界面确认",
+      "file": "assets/audio/sfx/strategic/ui-confirm.wav",
+      "volume": 0.48
+    },
+    {
+      "id": "sfx_construction",
+      "name": "工程开工",
+      "file": "assets/audio/sfx/strategic/construction.wav",
+      "volume": 0.68
+    },
+    {
+      "id": "sfx_training",
+      "name": "部队训练完成",
+      "file": "assets/audio/sfx/strategic/training.wav",
+      "volume": 0.68
+    },
+    {
+      "id": "sfx_research",
+      "name": "研究完成",
+      "file": "assets/audio/sfx/strategic/research.wav",
+      "volume": 0.6
+    },
+    {
+      "id": "sfx_era_fanfare",
+      "name": "时代推进",
+      "file": "assets/audio/sfx/strategic/era-fanfare.wav",
+      "volume": 0.72
+    },
+    {
+      "id": "sfx_diplomacy",
+      "name": "外交行动",
+      "file": "assets/audio/sfx/strategic/diplomacy.wav",
+      "volume": 0.58
+    },
+    {
+      "id": "sfx_trade",
+      "name": "商业与贸易",
+      "file": "assets/audio/sfx/strategic/trade.wav",
+      "volume": 0.56
+    },
+    {
+      "id": "sfx_colony",
+      "name": "殖民建立",
+      "file": "assets/audio/sfx/strategic/colony.wav",
+      "volume": 0.68
+    },
+    {
+      "id": "sfx_wild_victory",
+      "name": "野外目标完成",
+      "file": "assets/audio/sfx/strategic/wild-victory.wav",
+      "volume": 0.66
+    },
+    {
+      "id": "sfx_battle_resolve",
+      "name": "战斗结算",
+      "file": "assets/audio/sfx/strategic/battle-resolve.wav",
+      "volume": 0.72
+    },
+    {
+      "id": "sfx_hero_recruit",
+      "name": "英雄招募",
+      "file": "assets/audio/sfx/strategic/hero-recruit.wav",
+      "volume": 0.66
+    },
+    {
+      "id": "sfx_quest_consequence",
+      "name": "任务长期后果",
+      "file": "assets/audio/sfx/strategic/quest-consequence.wav",
+      "volume": 0.64
+    },
     {
       "id": "sfx_build",
       "name": "默认建造音效",
@@ -222,37 +282,51 @@
     {
       "event": "eraAdvanced",
       "bgm": "bgm_era_primitive",
-      "eraIds": ["primitive"]
+      "eraIds": [
+        "primitive"
+      ]
     },
     {
       "event": "eraAdvanced",
       "bgm": "bgm_era_ancient",
-      "eraIds": ["ancient"]
+      "eraIds": [
+        "ancient"
+      ]
     },
     {
       "event": "eraAdvanced",
       "bgm": "bgm_era_classical",
-      "eraIds": ["classical"]
+      "eraIds": [
+        "classical"
+      ]
     },
     {
       "event": "eraAdvanced",
       "bgm": "bgm_era_medieval",
-      "eraIds": ["medieval"]
+      "eraIds": [
+        "medieval"
+      ]
     },
     {
       "event": "eraAdvanced",
       "bgm": "bgm_era_exploration",
-      "eraIds": ["exploration"]
+      "eraIds": [
+        "exploration"
+      ]
     },
     {
       "event": "eraAdvanced",
       "bgm": "bgm_era_early_modern",
-      "eraIds": ["early_modern"]
+      "eraIds": [
+        "early_modern"
+      ]
     },
     {
       "event": "eraAdvanced",
       "bgm": "bgm_era_modern",
-      "eraIds": ["modern"]
+      "eraIds": [
+        "modern"
+      ]
     }
   ],
   "eventBindings": [
@@ -278,18 +352,66 @@
       "event": "buildingDemolished",
       "sound": "sfx_demolish"
     },
-    { "event": "unitTrained", "sound": "sfx_training", "category": "train" },
-    { "event": "techResearched", "sound": "sfx_research", "category": "research" },
-    { "event": "cultureResearched", "sound": "sfx_research", "category": "research" },
-    { "event": "eraAdvanced", "sound": "sfx_era_fanfare", "category": "era" },
-    { "event": "diplomacyAction", "sound": "sfx_diplomacy", "category": "diplomacy" },
-    { "event": "luxuryTraded", "sound": "sfx_trade", "category": "trade" },
-    { "event": "commerceChanged", "sound": "sfx_trade", "category": "trade" },
-    { "event": "colonyEstablished", "sound": "sfx_colony", "category": "colony" },
-    { "event": "wildSiteBattleResolved", "sound": "sfx_wild_victory", "category": "wild" },
-    { "event": "armyBattleResolved", "sound": "sfx_battle_resolve", "category": "combat" },
-    { "event": "heroRecruited", "sound": "sfx_hero_recruit", "category": "hero" },
-    { "event": "questConsequenceFired", "sound": "sfx_quest_consequence", "category": "quest" },
+    {
+      "event": "unitTrained",
+      "sound": "sfx_training",
+      "category": "train"
+    },
+    {
+      "event": "techResearched",
+      "sound": "sfx_research",
+      "category": "research"
+    },
+    {
+      "event": "cultureResearched",
+      "sound": "sfx_research",
+      "category": "research"
+    },
+    {
+      "event": "eraAdvanced",
+      "sound": "sfx_era_fanfare",
+      "category": "era"
+    },
+    {
+      "event": "diplomacyAction",
+      "sound": "sfx_diplomacy",
+      "category": "diplomacy"
+    },
+    {
+      "event": "luxuryGifted",
+      "sound": "sfx_trade",
+      "category": "hero"
+    },
+    {
+      "event": "commerceChanged",
+      "sound": "sfx_trade",
+      "category": "trade"
+    },
+    {
+      "event": "colonyEstablished",
+      "sound": "sfx_colony",
+      "category": "colony"
+    },
+    {
+      "event": "wildSiteBattleResolved",
+      "sound": "sfx_wild_victory",
+      "category": "wild"
+    },
+    {
+      "event": "armyBattleResolved",
+      "sound": "sfx_battle_resolve",
+      "category": "combat"
+    },
+    {
+      "event": "heroRecruited",
+      "sound": "sfx_hero_recruit",
+      "category": "hero"
+    },
+    {
+      "event": "questConsequenceFired",
+      "sound": "sfx_quest_consequence",
+      "category": "quest"
+    },
     {
       "event": "resourceChanged",
       "sound": null

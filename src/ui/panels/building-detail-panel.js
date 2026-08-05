@@ -5,7 +5,7 @@
 import { configRegistry } from '../../core/ConfigRegistry.js';
 import { eventBus } from '../../core/EventBus.js';
 import { progressManager } from '../../utils/ProgressManager.js';
-import { getBuildingPresentation } from '../../domain/BuildingPresentation.js';
+import { getBuildingPresentation, getBuildingPrimaryFunctionRows } from '../../domain/BuildingPresentation.js';
 
 /* 通用区块容器 */
 function section(label, icon) {
@@ -68,6 +68,9 @@ export function renderBuildingDetailPanel(data, body, pm) {
   if (!config) return;
   const unlockStatus = buildingSystem.getUnlockStatus(config.id);
   const presentation = getBuildingPresentation(config, unlockStatus.conditions);
+  const primaryFunctions = getBuildingPrimaryFunctionRows(config, resourceId => configRegistry.getResource(resourceId)?.name || resourceId);
+  const buildingHp = buildingSystem.getBuildingHp?.(buildingIndex) ?? config.maxHp ?? 100;
+  const buildingMaxHp = buildingSystem.getBuildingMaxHp?.(buildingIndex) ?? config.maxHp ?? 100;
   const buildingGarrisoned = game.systems.army?.hasGarrisonAtBuilding?.(buildingIndex) === true;
 
   const container = document.createElement('div');
@@ -158,10 +161,12 @@ export function renderBuildingDetailPanel(data, body, pm) {
   header.style.textAlign = 'center';
   header.innerHTML = `
     <div style="font-size:18px;font-weight:700;color:#ececf0;letter-spacing:-0.01em;">${config.name}</div>
+    <div style="font-size:12px;color:#e98d96;margin-top:4px;">❤️ 建筑生命 ${buildingHp}/${buildingMaxHp}</div>
     <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:7px;font-size:11px;color:#c9b57a;">
       <span>${presentation.categoryName}</span><span>·</span><span>${presentation.eraName}</span><span>·</span><span>${statusText}</span>
     </div>
-    <div style="font-size:13px;color:#a0a0ba;margin-top:4px;">${config.description || ''}${config.roadRequired ? '<br><span style="color:#f0a040;">🛤️ 道路依赖：必须紧邻道路</span>' : ''}</div>
+    ${primaryFunctions.length ? `<div style="font-size:12px;color:#8ed6a5;font-weight:650;margin-top:6px;line-height:1.55;">主要功能：${primaryFunctions.join('；')}</div>` : ''}
+    <div style="font-size:13px;color:#a0a0ba;margin-top:4px;">${config.description || ''}</div>
     <div class="status-label" style="font-size:12px;color:${statusColor};margin-top:6px;font-weight:500;">${statusText}</div>
     ${building.status === 'constructing' ? `
       <div class="build-progress" style="margin-top:10px;">
@@ -202,7 +207,6 @@ export function renderBuildingDetailPanel(data, body, pm) {
       `视野半径 ${garrison.visionRadius || 0} 格`
     ];
     if (garrison.garrisonSupplyRecovery) effects.push(`每日补给恢复 +${Math.round(garrison.garrisonSupplyRecovery * 100)}%`);
-    if (garrison.garrisonMoraleRecovery) effects.push(`每日士气恢复 +${garrison.garrisonMoraleRecovery}`);
     for (const text of effects) {
       const row = document.createElement('div');
       row.style.cssText = 'font-size:12px;color:#d7deea;padding:3px 0;';

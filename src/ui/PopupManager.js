@@ -5,10 +5,11 @@
 import { eventBus } from '../core/EventBus.js';
 import { renderTutorialPromptPanel } from './panels/tutorial-prompt-panel.js';
 import { renderSaveRecoveryPanel } from './panels/save-recovery-panel.js';
+import { renderBattlePreviewPanel } from './panels/battle-preview-panel.js';
 
 // 阻塞时间的面板类型
 const SYSTEM_DIALOG_TYPE = '_system_dialog';
-const BLOCKING_TYPES = ['event', 'expedition_prep', 'game_over', 'tutorial_prompt', SYSTEM_DIALOG_TYPE];
+const BLOCKING_TYPES = ['event', 'daily_settlement', 'expedition_prep', 'game_over', 'tutorial_prompt', 'battle_preview', 'hestia_arrival', 'feature_unlock', SYSTEM_DIALOG_TYPE];
 
 export class PopupManager {
   constructor(gameLoop, techSystem, cultureSystem, combatSystem) {
@@ -60,13 +61,27 @@ export class PopupManager {
    * 打开面板（清空栈）
    */
   open(type, data) {
+    const wasOpen = this._isOpen;
+    const wasBlocking = wasOpen && this._isBlocking();
+    if (wasOpen) this._cleanupAnimations();
     this._stack = [{ type, data }];
-    this._show();
+    const isBlocking = this._isBlocking();
+    if (!wasOpen) {
+      this._show();
+    } else if (!wasBlocking && isBlocking) {
+      this._gameLoop.pause();
+    } else if (wasBlocking && !isBlocking && this._gameLoop.isPaused()) {
+      this._gameLoop.resume();
+    }
     this._render();
   }
 
   openArmyDetail(armyId) {
     this.open('army_panel', { armyId });
+  }
+
+  previewBattle(data) {
+    return new Promise(resolve => this.open('battle_preview', { ...data, _resolvePreview: resolve }));
   }
 
   /**
@@ -110,7 +125,7 @@ export class PopupManager {
    */
   close() {
     const current = this._stack[this._stack.length - 1];
-    if (current?.type === 'game_over') return;
+    if (current?.type === 'game_over' || current?.type === 'hestia_arrival' || current?.data?.nonClosable) return;
     if (current?.type === SYSTEM_DIALOG_TYPE) {
       this._resolveSystemDialog(this._getDialogCancelValue(current.data));
       return;
@@ -259,11 +274,12 @@ export class PopupManager {
     if (!current) return;
 
     this._currentType = current.type;
+    this.container.dataset.popupType = current.type;
     const renderFn = this._panels[current.type];
 
     // 更新标题和返回按钮
     this.backBtn.style.display = this._stack.length > 1 && current.type !== SYSTEM_DIALOG_TYPE ? 'flex' : 'none';
-    this.closeBtn.style.display = current.type === 'game_over' ? 'none' : 'flex';
+    this.closeBtn.style.display = ['game_over', 'battle_preview'].includes(current.type) ? 'none' : 'flex';
     this.titleEl.textContent = this._getTitle(current.type, current.data);
 
     // 清理旧面板的动画定时器，然后清空 body
@@ -355,9 +371,12 @@ export class PopupManager {
       'unit_research': '兵种研发',
       'outpost_diplomacy': data?.outpostName || '据点外交',
       'tavern_heroes': '历史英雄酒馆',
+      'hero_roster': '英雄名册',
+      'hero_interaction': data?.heroName || '英雄互动',
+      'daily_settlement': `第 ${data?.day || ''} 日结算`,
       'era_civilization': '时代与文明',
-      'luxury_trade': '奢侈品与贸易',
-      'strategy_cards': '历史策略',
+      'development_details': '发展详情',
+      'luxury_trade': '奢侈品',
       'economic_orders': '农业总览',
       'commercial': '城市商业',
       'trade': '城邦贸易',
@@ -367,6 +386,8 @@ export class PopupManager {
       'tutorial_prompt': '新手教程',
       'quest_panel': '任务',
       'army_panel': '军团详情',
+      'enemy_detail': '敌人详情',
+      'battle_preview': '战斗预估',
       'training_panel': '兵种训练'
     };
     if (type === SYSTEM_DIALOG_TYPE) return data?.title || '提示';
@@ -392,8 +413,13 @@ export class PopupManager {
    * 注册内置面板
    */
   _registerBuiltinPanels() {
+    this.register('battle_preview', renderBattlePreviewPanel);
     this.register('tutorial_prompt', renderTutorialPromptPanel);
     this.register('save_recovery', renderSaveRecoveryPanel);
+    import('./panels/feature-unlock-panel.js').then(m => {
+      this.register('feature_unlock', m.renderFeatureUnlockPanel);
+      this.register('hestia_arrival', m.renderHestiaArrivalPanel);
+    });
 
     // 延迟导入避免循环依赖，使用动态注册
     import('./panels/building-select-panel.js').then(m => {
@@ -404,6 +430,9 @@ export class PopupManager {
     });
     import('./panels/event-panel.js').then(m => {
       this.register('event', m.renderEventPanel);
+    });
+    import('./panels/daily-settlement-panel.js').then(m => {
+      this.register('daily_settlement', m.renderDailySettlementPanel);
     });
     import('./panels/settings-panel.js').then(m => {
       this.register('settings', m.renderSettingsPanel);
@@ -440,6 +469,9 @@ export class PopupManager {
     import('./panels/training-panel.js').then(m => {
       this.register('training_panel', m.renderTrainingPanel);
     });
+    import('./panels/enemy-detail-panel.js').then(m => {
+      this.register('enemy_detail', m.renderEnemyDetailPanel);
+    });
     import('./panels/unit-research-panel.js').then(m => {
       this.register('unit_research', m.renderUnitResearchPanel);
     });
@@ -453,14 +485,18 @@ export class PopupManager {
     import('./panels/tavern-heroes-panel.js').then(m => {
       this.register('tavern_heroes', m.renderTavernHeroesPanel);
     });
+    import('./panels/hero-social-panel.js').then(m => {
+      this.register('hero_roster', m.renderHeroRosterPanel);
+      this.register('hero_interaction', m.renderHeroInteractionPanel);
+    });
     import('./panels/era-civilization-panel.js').then(m => {
       this.register('era_civilization', m.renderEraCivilizationPanel);
     });
+    import('./panels/development-details-panel.js').then(m => {
+      this.register('development_details', m.renderDevelopmentDetailsPanel);
+    });
     import('./panels/luxury-trade-panel.js').then(m => {
       this.register('luxury_trade', m.renderLuxuryTradePanel);
-    });
-    import('./panels/strategy-cards-panel.js').then(m => {
-      this.register('strategy_cards', m.renderStrategyCardsPanel);
     });
     import('./panels/economic-orders-panel.js').then(m => {
       this.register('economic_orders', m.renderEconomicOrdersPanel);

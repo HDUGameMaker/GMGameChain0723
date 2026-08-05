@@ -363,7 +363,7 @@
   {
     "id": "new_base_event",
     "name": "新基地事件",
-    "description": "",
+    "description": "一件发生在基地中的意外插曲，为平静的日子添上一点波澜。",
     "image": "",
     "priority": 0,
     "mutexGroup": null,

@@ -27,6 +27,19 @@
   },
   "inspirationPerPerson": 1,
   "foodPerPerson": 1,
+  "cheats": {
+    "clearAllFog": false,
+    "unlimitedBasicResources": false,
+    "extremeArmyMovementSpeed": false,
+    "cityStatesAttackImmediately": false,
+    "grantAllLuxuries": false,
+    "completeCurrentEraResearchHotkey": false,
+    "increaseCurrentHeroAffinityHotkey": false,
+    "fillEraMaterialsHotkey": false,
+    "spawnTestEnemyHotkey": false,
+    "spawnHestiaArmyHotkey": false,
+    "spawnSuperArmyHotkey": false
+  },
   "capacities": {
     "expeditionResourceCapacity": 100,
     "backpackCapacity": 10

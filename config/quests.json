@@ -1,60 +1,9 @@
-{
-  "tutorial": [
-    {
-      "id": "tutorial_road",
-      "name": "开路先锋",
-      "description": "欢迎你，年轻人！我是营地的向导。\n作为营地的领袖，通过路来连通起各个住所可是门规划必修课。现在，就请靠着仓库来修建你的第一条路吧。\n在界面左下角点击🛤️铺路按钮进入铺路模式，点击 Esc 或 ✕ 结束。道路需要紧邻已有道路或建筑修建。\n每段路都需要1个人来修建；如果暂时没有空闲工人，道路仍会先放下并等待，有空闲工人后会自动继续建造。",
-      "type": "build_road",
-      "icon": "🛤️",
-      "target": { "count": 2 }
-    },
-    {
-      "id": "tutorial_food",
-      "name": "民以食为天",
-      "description": "我们的人手并不充裕，但好在每天都有新的冒险者会来到我们的营地，建造些工棚和狩猎小屋，也许能给他们提供所需的食物及住所。\n点击🏗️建设图标，即可打开修建栏目，有些建筑拥有特殊的修建要求，务必看清！\n放置建筑时按住 Ctrl 点击，可以连续建造同一种建筑；不按 Ctrl 时，成功放置后会退出建造模式。",
-      "type": "build_building",
-      "icon": "🏗️",
-      "target": { "buildings": ["work_shed", "hunting_lodge"] }
-    },
-    {
-      "id": "tutorial_expedition",
-      "name": "探索环境时间！",
-      "description": "洞穴里可能藏有资源、遗迹或危险。先打开建设菜单，选择“探索营地”，并把它精确建造在洞穴入口格上。\n探索营地落成后，点击地图上的探索营地或打开其建筑详情，再点击“开始探索洞穴”。探索营地不需要道路连接。",
-      "type": "complete_expedition",
-      "icon": "🚪",
-      "target": { "count": 1 }
-    },
-    {
-      "id": "tutorial_shortcuts",
-      "name": "快捷键大师",
-      "description": "掌握快捷键能让你事半功倍！\n\n• 按 F 键切换挪动模式/常时模式\n• 按 空格键 暂停/继续时间\n• 按住 Alt 键查看建筑和道路的光照范围\n\n分别尝试一次吧！",
-      "type": "shortcuts",
-      "icon": "⌨️",
-      "target": { "toggle_mode": 1, "toggle_pause": 1, "view_light": 1 }
-    },
-    {
-      "id": "tutorial_features",
-      "name": "熟悉更多功能",
-      "description": "营地管理还有更多实用功能等你发现：\n\n• 挪动一次建筑：进入挪动模式，拖动建筑到新位置\n• 删除一次道路：在铺路模式下点击已建成的道路\n• 开启一次全屏：点击右上角⛶按钮\n• 点击右上角人口信息 👥，可查看工人分配、住宅上限和每日人口增长",
-      "type": "features",
-      "icon": "🛠️",
-      "target": { "move_building": 1, "remove_road": 1, "toggle_fullscreen": 1, "click_population": 1 }
-    },
-    {
-      "id": "tutorial_tech",
-      "name": "科技的力量",
-      "description": "点击底部🔬科技按钮，研究一项新技术吧！\n科技能解锁更高级的建筑和升级路径。",
-      "type": "research_tech",
-      "icon": "🔬",
-      "target": { "count": 1 }
-    },
-    {
-      "id": "tutorial_culture",
-      "name": "人文的智慧",
-      "description": "点击底部📜人文按钮，研究一项文化政策吧！\n政策能提供经济、战斗和人口加成。",
-      "type": "research_culture",
-      "icon": "📜",
-      "target": { "count": 1 }
-    }
-  ]
-}
+{"tutorial":[
+{"id":"tutorial_logging","name":"木材是发展的第一步","description":"找到木头资源点，在资源点上建造一座伐木集散点。","type":"build_specific","icon":"🪵","target":{"buildingId":"logging_camp","count":1}},
+{"id":"tutorial_logging_worker","name":"派遣居民工作","description":"点击刚建好的伐木集散点，派遣至少一名居民在其中工作。","type":"assign_worker","icon":"👷","target":{"buildingId":"logging_camp","count":1}},
+{"id":"tutorial_farm","name":"建立食物来源","description":"建造一座农田，为聚落提供稳定的食物。","type":"build_specific","icon":"🌾","target":{"buildingId":"farm","count":1}},
+{"id":"tutorial_population","name":"扩充聚落人口","description":"打开大本营，在大本营中提升一次人口。","type":"recruit_population","icon":"👥","target":{"count":1}},
+{"id":"tutorial_train_warriors","name":"训练战士","description":"在军营中训练至少两名战士。","type":"train_units","icon":"⚔️","target":{"unitId":"warrior","count":2}},
+{"id":"tutorial_assemble_army","name":"集结军团","description":"打开大本营，选择至少两名战士并部署军团。","type":"assemble_army","icon":"🛡️","target":{"minUnits":2,"count":1}},
+{"id":"tutorial_tavern","name":"历史酒馆","description":"建造历史酒馆。酒馆会吸引来自远方、甚至异界的访客。","type":"build_specific","icon":"🍺","target":{"buildingId":"tavern_hall","count":1}}
+]}

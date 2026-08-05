@@ -41,6 +41,7 @@ export class AudioSystem {
 
     /** @type {Object<string, HTMLAudioElement>} 预创建的 BGM 元素 */
     this._bgmElements = {};
+    this._bgmElementsByFile = new Map();
 
     /** @type {boolean} 用户手动静音标记（区别于 tab 隐藏自动静音） */
     this._userMuted = false;
@@ -56,6 +57,10 @@ export class AudioSystem {
 
     /** @type {boolean} tab 隐藏引起的静音 */
     this._visibilityMuted = false;
+
+    /** 游戏逻辑暂停时只淡出 BGM，不重置播放进度。 */
+    this._gamePaused = false;
+    this._volumeAnimationTokens = new WeakMap();
 
     this._initialized = false;
 
@@ -100,7 +105,8 @@ export class AudioSystem {
         }
         // 预加载 BGM 音频数据（fetch + 缓存到 blob URL），
         // 避免游戏启动后首次播放 BGM 因网络/解码延迟而"没有及时播放"。
-        await this._preloadBGMFiles(this._config.bgm);
+        const uniqueBGMFiles = [...new Map(this._config.bgm.map(track => [track.file, track])).values()];
+        await this._preloadBGMFiles(uniqueBGMFiles);
       }
 
       // 预解码 SFX buffer
@@ -137,6 +143,12 @@ export class AudioSystem {
     if (!bgmConfig) {
       console.warn(`[AudioSystem] BGM not found: ${id}`);
       return;
+    }
+
+    // 多个时代入口使用同一首全局 BGM 时保持连续播放，不重新起歌。
+    if (this._currentBGM) {
+      const currentConfig = this._getBGMConfig(this._currentBGM.id);
+      if (currentConfig?.file === bgmConfig.file) return;
     }
 
     // 取消正在进行的淡出
@@ -460,7 +472,8 @@ export class AudioSystem {
    * 游戏暂停时的处理
    */
   _onPause() {
-    // 游戏逻辑暂停不影响 BGM。BGM 只由静音、页面可见性和时段切换控制。
+    this._gamePaused = true;
+    if (this._currentBGM && !this._muted) this._fadeOut(this._currentBGM.element, 700);
     if (this._audioContext && this._audioContext.state === 'running') {
       this._audioContext.suspend().catch(() => {});
     }
@@ -470,9 +483,14 @@ export class AudioSystem {
    * 游戏恢复时的处理
    */
   _onResume() {
+    this._gamePaused = false;
     // 恢复 AudioContext
     if (this._audioContext && this._audioContext.state === 'suspended') {
       this._audioContext.resume().catch(() => {});
+    }
+    if (this._currentBGM && !this._muted && !this._visibilityMuted) {
+      this._currentBGM.element.play().catch(() => {});
+      this._fadeIn(this._currentBGM.element, 700);
     }
   }
 
@@ -601,11 +619,17 @@ export class AudioSystem {
    * @returns {HTMLAudioElement}
    */
   _createBGMElement(bgmConfig) {
+    const shared = this._bgmElementsByFile.get(bgmConfig.file);
+    if (shared) {
+      this._bgmElements[bgmConfig.id] = shared;
+      return shared;
+    }
     const element = new Audio(bgmConfig.file);
     element.loop = bgmConfig.loop !== false;
     element.preload = 'auto';
     element.volume = 0; // 从 0 开始，播放时淡入
     this._bgmElements[bgmConfig.id] = element;
+    this._bgmElementsByFile.set(bgmConfig.file, element);
     return element;
   }
 
@@ -708,6 +732,7 @@ export class AudioSystem {
    */
   _getEffectiveBGMVolume() {
     if (!this._currentBGM) return 0;
+    if (this._gamePaused) return 0;
     const bgmConfig = this._getBGMConfig(this._currentBGM.id);
     const configVol = bgmConfig ? (bgmConfig.volume ?? 1.0) : 1.0;
     return configVol * this._bgmVolume * this._masterVolume;
@@ -751,8 +776,11 @@ export class AudioSystem {
    * @param {Function} [onComplete]
    */
   _animateVolume(element, from, to, duration, onComplete) {
+    const token = (this._volumeAnimationTokens.get(element) || 0) + 1;
+    this._volumeAnimationTokens.set(element, token);
     const start = performance.now();
     const step = (now) => {
+      if (this._volumeAnimationTokens.get(element) !== token) return;
       const elapsed = now - start;
       const progress = Math.min(elapsed / duration, 1);
       // easeInOutQuad

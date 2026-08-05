@@ -52,9 +52,9 @@ function canonicalV9Violation(payload) {
         || buildingIds.has(building.instanceId) || typeof building.buildingId !== 'string' || !building.buildingId
         || !Number.isInteger(building.gridX) || !Number.isInteger(building.gridY)
         || building.gridX < 0 || building.gridY < 0 || building.gridX >= 512 || building.gridY >= 512
-        || (building.cropId !== null && typeof building.cropId !== 'string')
-        || (building.pendingCropId !== null && typeof building.pendingCropId !== 'string')
-        || (building.resourceNodeId !== null && typeof building.resourceNodeId !== 'string')) return 'buildings.record';
+        || (building.cropId != null && typeof building.cropId !== 'string')
+        || (building.pendingCropId != null && typeof building.pendingCropId !== 'string')
+        || (building.resourceNodeId != null && typeof building.resourceNodeId !== 'string')) return 'buildings.record';
     buildingIds.add(building.instanceId);
   }
 
@@ -66,7 +66,7 @@ function canonicalV9Violation(payload) {
         || typeof node.type !== 'string' || !node.type
         || !Number.isInteger(node.gridX) || !Number.isInteger(node.gridY)
         || node.gridX < 0 || node.gridY < 0 || node.gridX >= 512 || node.gridY >= 512
-        || (node.developedByBuildingId !== null && typeof node.developedByBuildingId !== 'string')) return 'resourceNodes.record';
+        || (node.developedByBuildingId != null && typeof node.developedByBuildingId !== 'string')) return 'resourceNodes.record';
     nodeIds.add(node.id);
   }
 
@@ -79,11 +79,35 @@ function canonicalV9Violation(payload) {
   return null;
 }
 
+function compactCanonicalError(error) {
+  const message = String(error?.message || error || 'non_serializable_payload');
+  const path = message.match(/ at (\$[^\s]*)(?:\s|$)/)?.[1] || '$';
+  if (/numbers must be finite/i.test(message)) return `${path} / 非有限数字(NaN或Infinity)`;
+  if (/arrays cannot be sparse/i.test(message)) return `${path} / 稀疏数组`;
+  if (/contains a cycle/i.test(message)) return `${path} / 循环引用`;
+  const objectType = message.match(/\(([^)]+)\)\s*$/)?.[1];
+  if (/unsupported canonical payload object/i.test(message)) return `${path} / 不支持的对象${objectType ? `(${objectType})` : ''}`;
+  if (/unsupported canonical payload value/i.test(message)) return `${path} / 不支持的数据类型`;
+  return `${path} / ${message.slice(0, 80)}`;
+}
+
 export class SaveManager {
   static CURRENT_VERSION = 9;
   static _db = null;
   static _nextEnvelopeSequence = 1;
   static _mutationQueue = Promise.resolve();
+  static _lastSaveDiagnostic = null;
+
+  static _reportSaveProgress(onProgress, stage, status = 'running', detail = '') {
+    const diagnostic = { stage, status, detail: String(detail || ''), timestamp: Date.now() };
+    SaveManager._lastSaveDiagnostic = diagnostic;
+    if (typeof onProgress === 'function') onProgress({ ...diagnostic });
+    return diagnostic;
+  }
+
+  static getLastSaveDiagnostic() {
+    return SaveManager._lastSaveDiagnostic ? { ...SaveManager._lastSaveDiagnostic } : null;
+  }
 
   static migrate(raw) {
     try {
@@ -135,13 +159,9 @@ export class SaveManager {
         if (Array.isArray(state.buildings)) {
           state.buildings = state.buildings.map(building => ({ assignedWorkers: 0, ...building }));
         }
-        state.era ??= { currentEraId: 'ancient', selectedCivilizations: {}, legacyCivilizationIds: [], eraStars: {} };
+        state.era ??= { currentEraId: 'primitive', selectedCivilizations: {}, legacyCivilizationIds: [], eraStars: {} };
         state.luxuries ??= { inventory: {}, deposits: [], discoveredDepositIds: [] };
-        state.strategies ??= {
-          cards: { forced_march: 1, harvest_drive: 1, fortify: 1 },
-          cooldowns: {},
-          activeEffects: []
-        };
+        delete state.strategies;
         state.territory ??= {};
         state.enemyExpansion ??= {};
         state.buildingTech ??= {};
@@ -179,7 +199,7 @@ export class SaveManager {
   static _migrateEraStateToV8(state) {
     const eraMap = {
       ancient: 'primitive', classical: 'classical', medieval: 'medieval', exploration: 'exploration',
-      industrial: 'early_modern', modern: 'modern', information: 'modern'
+      industrial: 'modern', modern: 'modern', information: 'modern'
     };
     const previous = state.era || {};
     const remapRecord = (record = {}) => {
@@ -470,20 +490,45 @@ export class SaveManager {
       : operation();
   }
 
-  static async save(gameState) {
+  static async save(gameState, { onProgress } = {}) {
+    SaveManager._reportSaveProgress(onProgress, 'validate', 'running');
+    let rawViolation = null;
+    try {
+      canonicalizePayload(gameState);
+      rawViolation = canonicalV9Violation(gameState);
+    } catch (error) {
+      console.error('[SaveManager] Save canonicalization failed:', error);
+      SaveManager._reportSaveProgress(onProgress, 'validate', 'failed', compactCanonicalError(error));
+      return false;
+    }
+    if (rawViolation) {
+      SaveManager._reportSaveProgress(onProgress, 'validate', 'failed', rawViolation);
+      console.error(`[SaveManager] Save payload rejected: ${rawViolation}`);
+      return false;
+    }
     const payload = SaveManager.migrate(gameState);
-    if (!payload) return false;
+    if (!payload) {
+      let reason = 'non_serializable_payload';
+      try { reason = canonicalV9Violation(gameState) || reason; } catch { /* keep diagnostic */ }
+      SaveManager._reportSaveProgress(onProgress, 'migrate', 'failed', reason);
+      console.error(`[SaveManager] Save payload rejected: ${reason}`);
+      return false;
+    }
+    SaveManager._reportSaveProgress(onProgress, 'validate', 'complete');
     return SaveManager._queueMutation(() => SaveManager._withStorageLock(async () => {
       try {
-        return await SaveManager._savePayload(payload);
+        return await SaveManager._savePayload(payload, onProgress);
       } catch (error) {
+        const previous = SaveManager.getLastSaveDiagnostic();
+        SaveManager._reportSaveProgress(onProgress, previous?.stage || 'unknown', 'failed', error?.name || error?.message || 'unknown_error');
         console.error('[SaveManager] Save failed:', error);
         return false;
       }
     }));
   }
 
-  static async _savePayload(payload) {
+  static async _savePayload(payload, onProgress) {
+      SaveManager._reportSaveProgress(onProgress, 'read_backups', 'running');
       const records = await SaveManager._readRecords([PRIMARY_KEY, ROLLBACK_KEY, EMERGENCY_KEY]);
       const primary = await SaveManager._candidateEnvelope(records[PRIMARY_KEY]);
       const rollback = await SaveManager._candidateEnvelope(records[ROLLBACK_KEY]);
@@ -491,11 +536,14 @@ export class SaveManager {
       const localEmergency = await SaveManager._candidateEnvelope(SaveManager._readLocalEmergency());
       const verified = [primary, rollback, storedEmergency, localEmergency].filter(Boolean);
       const sequence = verified.reduce((highest, item) => Math.max(highest, item.sequence), 0) + 1;
+      SaveManager._reportSaveProgress(onProgress, 'envelope', 'running', `sequence=${sequence}`);
       const envelope = await SaveManager._createEnvelopeWithSequence(payload, sequence);
       const nextRollback = primary;
       const nextEmergency = rollback || storedEmergency || localEmergency;
 
+      SaveManager._reportSaveProgress(onProgress, 'open_database', 'running');
       const db = await SaveManager._getDB();
+      SaveManager._reportSaveProgress(onProgress, 'write_transaction', 'running');
       await new Promise((resolve, reject) => {
         let tx;
         let operationError = null;
@@ -525,9 +573,23 @@ export class SaveManager {
         }
       });
 
-      if (nextEmergency) localStorage.setItem(LOCAL_EMERGENCY_KEY, JSON.stringify(nextEmergency));
+      SaveManager._reportSaveProgress(onProgress, 'indexeddb_committed', 'complete');
+      const emergencyWritten = SaveManager._writeLocalEmergency(nextEmergency);
+      SaveManager._reportSaveProgress(onProgress, 'complete', 'complete', emergencyWritten ? 'all_backups_written' : 'local_emergency_skipped');
+      return true;
+  }
+
+  static _writeLocalEmergency(envelope) {
+    try {
+      if (envelope) localStorage.setItem(LOCAL_EMERGENCY_KEY, JSON.stringify(envelope));
       else localStorage.removeItem(LOCAL_EMERGENCY_KEY);
       return true;
+    } catch (error) {
+      // IndexedDB primary/rollback records are already committed. A full or
+      // unavailable localStorage must not turn a successful save into failure.
+      console.warn('[SaveManager] Local emergency backup skipped:', error?.message || error);
+      return false;
+    }
   }
 
   static async hasSave() {

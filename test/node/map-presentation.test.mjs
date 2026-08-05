@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   createArmySelectionModel,
+  formatEnemyTokenStats,
   createBuildingHoverDetails,
   createMapTokenModels,
   getMountainRubbleSpriteModels,
@@ -51,19 +52,18 @@ test('map token models distinguish armies, fleets and wild sites', () => {
   assert.ok(tokens.every(token => Number.isFinite(token.gridX) && token.label));
 });
 
-test('army map tokens resolve the highest-command-point unit icon before card art', () => {
+test('army map tokens use the assigned hero icon before unit art', () => {
   const units = [
     { id: 'spear', commandPoints: 2, icon: 'assets/historical-icons/units/spear.svg', cardArt: 'assets/unit-cards/spear.png' },
     { id: 'guard', commandPoints: 5, icon: 'assets/historical-icons/units/guard.svg', cardArt: 'assets/unit-cards/guard.png' }
   ];
   const [token] = createMapTokenModels({
-    armies: [{ id: 'army_1', name: 'Guard', unitIds: ['spear', 'guard'], gridX: 1, gridY: 1 }],
+    armies: [{ id: 'army_1', name: 'Guard', heroId: 'hero_1', heroIcon: 'assets/heroes/leader.png', unitIds: ['spear', 'guard'], gridX: 1, gridY: 1 }],
     unitConfigs: units,
     selectedArmyId: 'army_1'
   });
 
-  assert.equal(token.art, units[1].icon);
-  assert.equal(token.fallbackArt, units[1].cardArt);
+  assert.equal(token.art, 'assets/heroes/leader.png');
   assert.equal(token.fallbackIcon, '⚔️');
   assert.equal(token.selected, true);
   assert.equal(token.unitCount, 2);
@@ -83,8 +83,23 @@ test('selected army presentation exposes its name, unit count and remaining rout
     unitCount: 2,
     gridX: 2,
     gridY: 3,
+    attackRange: 0,
     route: [{ x: 3, y: 3 }, { x: 4, y: 3 }]
   });
+});
+
+test('a moving army keeps its route model without requiring a selected flag', () => {
+  const model = createArmySelectionModel({
+    id: 'army-moving', name: '行军军团', gridX: 1, gridY: 1,
+    attackRange: 1, unitIds: ['spear'], movePath: [{ x: 2, y: 1 }, { x: 3, y: 1 }]
+  });
+  assert.deepEqual(model.route, [{ x: 2, y: 1 }, { x: 3, y: 1 }]);
+  assert.equal(Object.hasOwn(model, 'selected'), false);
+});
+
+test('enemy map labels show current hp with a heart and speed with a shoe', () => {
+  assert.equal(formatEnemyTokenStats({ hp: 7.2, maxHp: 10, speed: 1.5 }), '❤️8  👟1.5  ⚔️28.86');
+  assert.equal(formatEnemyTokenStats({ maxHp: 12 }), '❤️12  👟1  ⚔️15.6');
 });
 
 test('mountains and exposed mining rock share the yellow dirt foundation used beneath forest art', () => {
@@ -188,7 +203,7 @@ test('adjacent mountain cells receive stable small-rubble fillers across their s
 test('mineable stone nodes use a clear square marker and the stone resource art', () => {
   assert.equal(
     getResourceNodeArtPath({ type: 'stone' }, { mapArt: 'assets/resource-nodes/stone.png' }),
-    'assets/resource-nodes/stone.png'
+    'assets/resource-nodes/stone-deposit.svg'
   );
   assert.deepEqual(
     getResourceNodeGroundStyle({ type: 'stone', developedByBuildingId: null }, { color: '#8d929d' }, 'visible'),

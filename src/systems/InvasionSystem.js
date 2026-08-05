@@ -15,6 +15,12 @@ export class InvasionSystem {
     this._invasionHistory = [];    // 历史记录
     this._pendingRevives = [];     // { unitIds, reviveDay }
     this._armySystem = null;
+    this._enemyExpansionSystem = null;
+    this._buildingSystem = null;
+    this._eraSystem = null;
+    this._techSystem = null;
+    this._cultureSystem = null;
+    this._ancientRuinWave = 0;
 
     eventBus.on('dayStart', (data) => this._onDayStart(data));
   }
@@ -28,6 +34,13 @@ export class InvasionSystem {
   get _unitConfigs() { return configRegistry.get('enemies')?.units || []; }
 
   setArmySystem(armySystem) { this._armySystem = armySystem; }
+  setSystems({ enemyExpansion, building, era, tech, culture } = {}) {
+    this._enemyExpansionSystem = enemyExpansion || null;
+    this._buildingSystem = building || null;
+    this._eraSystem = era || null;
+    this._techSystem = tech || null;
+    this._cultureSystem = culture || null;
+  }
 
   _notifyArmyChanged(reason) {
     const version = (store.getState('armyVersion') || 0) + 1;
@@ -108,22 +121,59 @@ export class InvasionSystem {
   _onDayStart(data) {
     const day = data?.day || store.getState('timeDay') || 1;
     this._processPendingRevives(day);
-
-    // 入侵持续中 → 每24小时循环惩罚
-    if (this._activeInvasion && day > this._lastPunishDay) {
-      this._punishPlayer();
-      this._lastPunishDay = day;
-      this._updateUI();
+    if (day % 7 === 6) {
+      eventBus.emit('combatBroadcast', { message: '⚠️ 远古遗迹警报：侦察到东部异常活动，明日将有敌军来袭！' });
+      eventBus.emit('ancientRuinWaveWarning', { day, arrivalDay: day + 1 });
     }
+    if (day % 7 === 0) this._spawnAncientRuinWave(day);
+    this._nextDay = day + (7 - (day % 7) || 7);
+    this._updateUI();
+  }
 
-    // 如果已有活跃入侵，不生成新的
-    if (this._activeInvasion) return;
-
-    // 检查是否到达预定入侵日
-    if (day >= this._nextDay) {
-      this._generateInvasion(null);
-      this._scheduleNext();
+  _spawnAncientRuinWave(day) {
+    if (!this._enemyExpansionSystem || !this._buildingSystem) return false;
+    const headquarters = this._buildingSystem.buildings.find(building => configRegistry.getBuilding(building.buildingId)?.isHeadquarters);
+    const map = configRegistry.get('map');
+    if (!headquarters || !map) return false;
+    this._ancientRuinWave += 1;
+    const era = this._eraSystem?.getCurrentEra?.();
+    const eraOrder = Math.max(0, Number(era?.order) || 0);
+    const techProgress = this._techSystem?.getEraProgress?.(era?.id) || 0;
+    const civicProgress = this._cultureSystem?.getEraProgress?.(era?.id) || 0;
+    const progress = eraOrder + (techProgress + civicProgress) / 2;
+    const count = Math.min(10, 2 + eraOrder + Math.floor(this._ancientRuinWave / 2));
+    const scale = 1 + progress * 0.7 + (this._ancientRuinWave - 1) * 0.22;
+    const types = [
+      { id: 'ancient_ruin_berserker', hp: 260, attack: 70, attackRange: 1, speed: 2, cp: 1 },
+      { id: 'ancient_ruin_archer', hp: 170, attack: 48, attackRange: 3, speed: 3, cp: 1 },
+      { id: 'ancient_ruin_overseer', hp: 210, attack: 42, attackRange: 2, speed: 2, cp: 3 }
+    ];
+    let spawned = 0;
+    for (let index = 0; index < count; index += 1) {
+      const type = types[index % types.length];
+      const yBase = Math.floor((index + 1) * map.gridHeight / (count + 1));
+      let placed = false;
+      for (let offset = 0; offset < map.gridHeight && !placed; offset += 1) {
+        const y = (yBase + offset) % map.gridHeight;
+        for (const x of [map.gridWidth - 2, map.gridWidth - 3, map.gridWidth - 4]) {
+          if (['S', 'W'].includes(map.grid?.[y]?.[x])) continue;
+          placed = this._enemyExpansionSystem.spawnCityStateRaid({
+            outpostId: 'ancient_ruin', gridX: x, gridY: y,
+            targetX: headquarters.gridX, targetY: headquarters.gridY,
+            strength: Math.round((type.hp + type.attack * 1.2) * scale), enemyId: type.id,
+            combatStats: {
+              hp: Math.round(type.hp * scale), maxHp: Math.round(type.hp * scale),
+              attack: Math.round(type.attack * scale), attackRange: type.attackRange,
+              speed: type.speed, cp: type.cp, ancientRuinWave: this._ancientRuinWave
+            }
+          });
+          if (placed) spawned += 1;
+        }
+      }
     }
+    eventBus.emit('ancientRuinWaveSpawned', { day, wave: this._ancientRuinWave, count: spawned, scale });
+    eventBus.emit('combatBroadcast', { message: `⚔️ 第${this._ancientRuinWave}波远古遗迹军队从东侧出现：${spawned}支敌军，强度倍率 ×${scale.toFixed(2)}！` });
+    return spawned > 0;
   }
 
   /* ===== 超时惩罚 ===== */
@@ -386,6 +436,7 @@ export class InvasionSystem {
       activeInvasion: this._activeInvasion ? { ...this._activeInvasion } : null,
       history: this._invasionHistory,
       pendingRevives: this._pendingRevives.map(r => ({ ...r, unitIds: [...(r.unitIds || [])] })),
+      ancientRuinWave: this._ancientRuinWave,
     };
   }
 
@@ -393,14 +444,10 @@ export class InvasionSystem {
     if (!state) return;
     this._nextDay = state.nextDay || 0;
     this._lastPunishDay = state.lastPunishDay || 0;
-    this._activeInvasion = state.activeInvasion || null;
-    if (this._activeInvasion && !this._activeInvasion.tributeFoodCost) {
-      const tribute = this._rollTributeCost(this._activeInvasion.combatPower);
-      this._activeInvasion.tributeFoodCost = tribute.foodCost;
-      this._activeInvasion.tributeMultiplier = tribute.multiplier;
-    }
+    this._activeInvasion = null;
     this._invasionHistory = state.history || [];
     this._pendingRevives = (state.pendingRevives || []).map(r => ({ ...r, unitIds: [...(r.unitIds || [])] }));
+    this._ancientRuinWave = Math.max(0, Number(state.ancientRuinWave) || 0);
     const day = store.getState('timeDay') || 1;
     const firstDay = this._cfgNumber('firstDay', 30);
     if (!this._activeInvasion && day < firstDay && this._nextDay < firstDay) {
@@ -410,9 +457,10 @@ export class InvasionSystem {
   }
 
   initNew() {
-    this._scheduleFirst();
+    this._nextDay = 7;
     this._activeInvasion = null;
     this._pendingRevives = [];
+    this._ancientRuinWave = 0;
     this._updateUI();
   }
 }

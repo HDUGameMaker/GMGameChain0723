@@ -16,7 +16,17 @@ const REASON_MESSAGES = Object.freeze({
   army_unavailable: '该军团当前无法参与交互。',
   unknown_site: '野外目标已不存在。',
   site_inactive: '该野外目标已被清剿。',
-  blocked_building: '军团不能与普通建筑重合。'
+  blocked_building: '军团不能与普通建筑重合。',
+  army_power_insufficient: '该军团战力不足，无法击败此目标。',
+  enemy_unavailable: '敌方目标已经不存在。',
+  target_out_of_range: '目标超出军团攻击距离。',
+  insufficient_cp: '军团CP不足，需要等待下一个tick恢复。',
+  unknown_ruin: '遗迹已经不存在。',
+  ruin_guards_remaining: '必须先击败该遗迹的全部守卫。',
+  stele_too_far: '军团必须移动到石碑相邻地格才能激活。',
+  stele_already_activated: '这座石碑已经激活。',
+  teleport_source_too_far: '军团必须靠近另一座已激活石碑才能进行传送。',
+  teleport_destination_blocked: '目标石碑周围没有可供军团落脚的地格。'
 });
 
 export function getArmyInteractionReasonMessage(reason) {
@@ -30,19 +40,22 @@ export class ArmyInteractionSystem {
     this.setSystems(systems);
   }
 
-  setSystems({ army, building, wildSites, diplomacy, combat, enemyExpansion, popupManager } = {}) {
+  setSystems({ army, building, wildSites, diplomacy, combat, enemyExpansion, ruins, popupManager } = {}) {
     this._army = army || null;
     this._building = building || null;
     this._wildSites = wildSites || null;
     this._diplomacy = diplomacy || null;
     this._combat = combat || null;
     this._enemyExpansion = enemyExpansion || null;
+    this._ruins = ruins || null;
     this._popupManager = popupManager || null;
   }
 
   _context(gridX, gridY) {
     const combatEnemies = (this._combat?.getAllEnemies?.() || []).map(enemy => ({ ...enemy, source: 'combat' }));
     const expansionEnemies = (this._enemyExpansion?.getAllCells?.() || []).map(enemy => ({ ...enemy, source: 'expansion' }));
+    const garrisonEnemies = this._diplomacy?.getGarrisonArmies?.() || [];
+    const ruinGuards = (this._ruins?.getGuards?.() || []).map(enemy => ({ ...enemy, source: 'ruin_guard' }));
     return {
       gridX,
       gridY,
@@ -50,7 +63,8 @@ export class ArmyInteractionSystem {
       buildings: this._building?.buildings || [],
       wildSites: this._wildSites?.getVisibleSites?.() || [],
       cityStates: this._diplomacy?.getVisibleOutposts?.() || [],
-      enemies: [...combatEnemies, ...expansionEnemies],
+      enemies: [...combatEnemies, ...expansionEnemies, ...garrisonEnemies, ...ruinGuards],
+      ruins: this._ruins?.getRuins?.() || [],
       getBuildingConfig: buildingId => this._building?.getBuildingConfig?.(buildingId) || configRegistry.getBuilding?.(buildingId)
     };
   }
@@ -84,9 +98,23 @@ export class ArmyInteractionSystem {
       wild_site: classified.site?.name || '野外目标',
       city_state: classified.cityState?.name || '城邦',
       enemy: classified.enemy?.name || '敌对目标',
-      garrison: classified.buildingConfig?.name || '防御建筑'
+      garrison: classified.buildingConfig?.name || '防御建筑',
+      ruin_stele: classified.ruin?.name || '遗迹石碑'
     };
-    const verbs = { wild_site: '进攻', city_state: '进攻', enemy: '交战', garrison: '进入驻防' };
+    const verbs = { wild_site: '进攻', city_state: '进攻', enemy: '交战', garrison: '进入驻防', ruin_stele: classified.ruin?.activated ? '传送至' : '激活' };
+    if (['wild_site', 'city_state', 'enemy'].includes(classified.kind) && this._army?.canAttackTarget) {
+      const rangeCheck = this._army.canAttackTarget(armyId, classified.gridX, classified.gridY);
+      if (!rangeCheck.ok) {
+        if (classified.kind === 'enemy' && rangeCheck.reason === 'target_out_of_range') {
+          const moveResult = this._army.issueMoveOrder?.(armyId, classified.gridX, classified.gridY)
+            || { ok: false, reason: 'no_path' };
+          return this._alertFailure(moveResult.ok
+            ? { ...moveResult, movingTowardEnemy: true, target: classified }
+            : moveResult);
+        }
+        return this._alertFailure(rangeCheck);
+      }
+    }
     const confirmed = await this._confirm(`是否让该军团${verbs[classified.kind] || '交互'}${labels[classified.kind] || '目标'}？`, '军团行动确认');
     if (!confirmed) return { ok: false, reason: 'cancelled', target: classified };
 
@@ -100,10 +128,23 @@ export class ArmyInteractionSystem {
       }) || { ok: false, reason: 'unknown_city_state' };
     } else if (classified.kind === 'garrison') {
       result = this._army.garrisonArmy?.(armyId, classified.buildingIndex) || { ok: false, reason: 'invalid_garrison' };
+    } else if (classified.kind === 'ruin_stele') {
+      result = this._ruins?.activateStele?.(classified.ruinId, armyId) || { ok: false, reason: 'unknown_ruin' };
     } else if (classified.kind === 'enemy') {
-      if (classified.enemyArmyId) result = this._army.resolveEngagement?.(armyId, classified.enemyArmyId);
-      else if (classified.source === 'expansion') result = { ok: this._enemyExpansion?.clearEnemyCell?.(classified.gridX, classified.gridY) === true, reason: 'enemy_unavailable' };
-      else result = this._combat?.playerAttack?.(classified.gridX, classified.gridY) || { ok: false, reason: 'enemy_unavailable' };
+      const resolveBattle = () => {
+        if (classified.enemyArmyId) return this._army.resolveEngagement?.(armyId, classified.enemyArmyId);
+        if (classified.source === 'combat') return this._combat?.attackEnemyWithArmy?.(classified.enemy.id, armyId) || { ok: false, reason: 'enemy_unavailable' };
+        if (classified.source === 'ruin_guard') return this._ruins?.attackGuardWithArmy?.(classified.enemy.id, armyId) || { ok: false, reason: 'enemy_unavailable' };
+        if (classified.source === 'expansion') return this._enemyExpansion?.clearEnemyCellWithArmy?.(classified.gridX, classified.gridY, armyId) || { ok: false, reason: 'enemy_unavailable' };
+        if (classified.source === 'city_state_garrison') return this._diplomacy?.attackGarrison?.(classified.enemyId, armyId) || { ok: false, reason: 'enemy_unavailable' };
+        return { ok: false, reason: 'enemy_unavailable' };
+      };
+      const playerStats = this._army.getArmyStats?.(armyId) || {};
+      const playerModel = { ...army, ...playerStats, portrait: army.heroPortrait || army.heroIcon || army.icon };
+      const enemyModel = { ...classified.enemy, hp: classified.enemy.hp ?? classified.enemy.maxHp ?? 1, maxHp: classified.enemy.maxHp ?? classified.enemy.hp ?? 1 };
+      result = this._popupManager?.previewBattle
+        ? await this._popupManager.previewBattle({ enemy: enemyModel, player: playerModel, distance: Math.abs(army.gridX - classified.gridX) + Math.abs(army.gridY - classified.gridY), resolveBattle })
+        : resolveBattle();
       if (result && result.ok == null) result = { ok: true, ...result };
     } else {
       result = { ok: false, reason: 'invalid_target' };

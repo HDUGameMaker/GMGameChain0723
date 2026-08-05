@@ -91,14 +91,12 @@ export function renderEventPanel(data, body, pm) {
         return;
       }
       const hasTrigger = result.hasTrigger;
-      if (!hasTrigger) {
-        pm.close();
-      }
+      if (!hasTrigger) data.fromSettlement ? pm.pop() : pm.close();
     });
     optionsDiv.appendChild(btn);
   }
 
-  if (managedByEventSystem) {
+  if (managedByEventSystem && !data.fromSettlement) {
     const laterBtn = document.createElement('button');
     laterBtn.className = 'event-option-btn';
     laterBtn.textContent = '稍后处理';
