@@ -35,6 +35,7 @@ export class QuestSystem {
     });
     eventBus.on('buildingComplete', payload => this._onAction('build_building', payload));
     eventBus.on('workerChanged', payload => this._onAction('assign_worker', payload));
+    eventBus.on('workersAutoFilled', () => this._onAction('fill_workers'));
     eventBus.on('populationRecruited', payload => this._onAction('recruit_population', payload));
     eventBus.on('unitTrained', payload => this._onAction('train_units', payload));
     eventBus.on('armyDeployed', payload => this._onAction('assemble_army', payload));
@@ -171,7 +172,8 @@ export class QuestSystem {
       modeToggleCount: 0, fullscreenCount: 0,
       pauseCount: 0, lightViewCount: 0, popClickCount: 0,
       techCount: 0, cultureCount: 0,
-      recruitedPopulation: 0, trainedUnits: {}, assembledArmies: 0
+      recruitedPopulation: 0, trainedUnits: {}, assembledArmies: 0,
+      fillWorkerCount: 0
     };
   }
 
@@ -303,6 +305,7 @@ export class QuestSystem {
         return { current, target: q.target.count || 1 };
       }
       case 'recruit_population': return { current: s.recruitedPopulation || 0, target: q.target.count || 1 };
+      case 'fill_workers': return { current: s.fillWorkerCount || 0, target: q.target.count || 1 };
       case 'train_units': return { current: s.trainedUnits?.[q.target.unitId] || 0, target: q.target.count || 1 };
       case 'assemble_army': return { current: s.assembledArmies || 0, target: q.target.count || 1 };
       case 'build_road':
@@ -372,6 +375,7 @@ export class QuestSystem {
     else if (type === 'research_tech') this._snapshot.techCount++;
     else if (type === 'research_culture') this._snapshot.cultureCount++;
     else if (type === 'recruit_population') this._snapshot.recruitedPopulation += Math.max(1, Number(payload.amount) || 1);
+    else if (type === 'fill_workers') this._snapshot.fillWorkerCount = (this._snapshot.fillWorkerCount || 0) + 1;
     else if (type === 'train_units' && payload.unitId) this._snapshot.trainedUnits[payload.unitId] = (this._snapshot.trainedUnits[payload.unitId] || 0) + Math.max(1, Number(payload.amount) || 1);
     else if (type === 'assemble_army' && (payload.unitCount || 0) >= (this._quests[this._activeIndex]?.target?.minUnits || 1)) this._snapshot.assembledArmies++;
     else if (type === 'complete_expedition') {

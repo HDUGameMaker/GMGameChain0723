@@ -26,6 +26,7 @@ import { InvasionSystem } from './systems/InvasionSystem.js';
 import { ColonySystem } from './systems/ColonySystem.js';
 import { TerritorySystem } from './systems/TerritorySystem.js';
 import { EnemyExpansionSystem } from './systems/EnemyExpansionSystem.js';
+import { PathfindingSystem } from './systems/PathfindingSystem.js';
 import { BuildingTechSystem } from './systems/BuildingTechSystem.js';
 import { DiplomacySystem } from './systems/DiplomacySystem.js';
 import { HeroSystem } from './systems/HeroSystem.js';
@@ -159,6 +160,7 @@ class Game {
     this.systems.wildSites = new WildSiteSystem();
     this.systems.ruins = new RuinSystem();
     this.systems.blackMist = new BlackMistSystem();
+    this.systems.pathfinding = new PathfindingSystem();
 
     // 建筑科技树（永久被动加成 + T2 建筑解锁）
     this.systems.buildingTech = new BuildingTechSystem();
@@ -227,6 +229,11 @@ class Game {
     this.systems.enemyExpansion.setTerritorySystem(this.systems.territory);
     this.systems.enemyExpansion.setBuildingSystem(this.systems.building);
     this.systems.enemyExpansion.setHeroSystem(this.systems.hero);
+    // 共享 BFS 寻路:玩家军团与敌人都从这里取路径,缓存仅在建筑/桥变化时失效
+    this.systems.pathfinding.setMap(configRegistry.get('map'));
+    this.systems.pathfinding.setContext({ buildingSystem: this.systems.building, configRegistry });
+    this.systems.pathfinding.bindEvents();
+    this.systems.enemyExpansion.setPathfindingSystem(this.systems.pathfinding);
     this.systems.enemyExpansion.init();
     // 历史策略接线：影响资源、建筑产出与敌军状态
     this.systems.torch.setResourceSystem(this.systems.resource);
@@ -313,6 +320,8 @@ class Game {
     this.systems.tech.setRuinSystem(this.systems.ruins);
     this.systems.culture.setRuinSystem(this.systems.ruins);
     this.systems.army.setCityStateSystem(this.systems.diplomacy);
+    this.systems.army.setPathfindingSystem(this.systems.pathfinding);
+    this.systems.pathfinding.setHostileBuildingProvider((x, y) => this.systems.diplomacy?.isHostileBuildingAt?.(x, y) || false);
     this.systems.hero.setSystems({
       building: this.systems.building,
       resource: this.systems.resource,

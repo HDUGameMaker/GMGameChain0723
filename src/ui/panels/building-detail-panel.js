@@ -392,13 +392,42 @@ export function renderBuildingDetailPanel(data, body, pm) {
       recruitButton.style.cursor = 'default';
       recruitButton.style.color = '#777';
       recruitButton.title = disabledReason;
+    }
+    // R1: 尽可能招募——循环招募直到住房满或食物耗尽（仅建筑/配置无效时禁用）
+    const recruitMaxButton = actionButton(
+      '尽可能招募',
+      'rgba(78, 203, 113, 0.18)',
+      () => {
+        const result = buildingSystem.recruitWorkersMax(buildingIndex);
+        if (!result.ok) {
+          pm.alert({
+            invalid_recruitment_building: '该建筑无法招募工人',
+            invalid_recruitment_config: '招募配置无效',
+            insufficient_resources: '资源不足',
+            housing_full: '住房已满'
+          }[result.reason] || '无法招募工人');
+          return;
+        }
+        pm.alert(`招募了 ${result.recruited} 名工人`);
+        pm.refresh({ buildingIndex });
+      }
+    );
+    const recruitMaxDisabled = building.status !== 'active' || !Number.isInteger(amount) || amount <= 0;
+    recruitMaxButton.disabled = recruitMaxDisabled;
+    if (recruitMaxDisabled) {
+      recruitMaxButton.style.cursor = 'default';
+      recruitMaxButton.style.color = '#777';
+    }
+    const recruitButtonRow = document.createElement('div');
+    recruitButtonRow.style.cssText = 'display:flex;gap:8px;';
+    recruitButtonRow.appendChild(recruitButton);
+    recruitButtonRow.appendChild(recruitMaxButton);
+    recruitSection.appendChild(recruitButtonRow);
+    if (disabledReason) {
       const reason = document.createElement('div');
       reason.style.cssText = 'font-size:11px;color:#e79a9a;text-align:center;margin-top:7px;';
       reason.textContent = disabledReason;
-      recruitSection.appendChild(recruitButton);
       recruitSection.appendChild(reason);
-    } else {
-      recruitSection.appendChild(recruitButton);
     }
     container.appendChild(recruitSection);
   }

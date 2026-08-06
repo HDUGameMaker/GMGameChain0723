@@ -2,6 +2,7 @@ import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
 import { createCityStateDevelopment } from '../domain/CityStateGeneration.js';
+import { makePowerScaleBuff, applyEnemyBuffs } from '../domain/EnemyBuffs.js';
 
 const BASIC_ACTIONS = new Set(['talk', 'gift', 'aid']);
 const TREATY_ACTIONS = new Set(['ceasefire', 'trade', 'open_borders', 'non_aggression', 'joint_patrol', 'alliance']);
@@ -77,21 +78,35 @@ export class DiplomacySystem {
       for (let slot = 0; slot < columns * rows && result.length < count; slot += 1) {
         const column = slot % columns, row = Math.floor(slot / columns);
         const cx = Math.floor((column + 0.5) * width / columns), cy = Math.floor((row + 0.5) * height / rows);
-        let target = null;
-        const radiusLimit = Math.ceil(Math.max(width / columns, height / rows) * 4);
-        for (let radius = 0; radius <= radiusLimit && !target; radius += 1) for (let dy = -radius; dy <= radius && !target; dy += 1) for (let dx = -radius; dx <= radius; dx += 1) {
-          if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue;
-          const x = cx + dx, y = cy + dy;
-          if (x < 0 || y < 0 || x + 1 >= width || y + 1 >= height) continue;
-          if (Math.abs(x - spawn.gridX) + Math.abs(y - spawn.gridY) < 10) continue;
-          if (![map.grid[y]?.[x], map.grid[y]?.[x + 1], map.grid[y + 1]?.[x], map.grid[y + 1]?.[x + 1]].every(cell => cell && !['S', 'W'].includes(cell))) continue;
-          if (occupied.some(cell => Math.max(Math.abs(cell.x - x), Math.abs(cell.y - y)) < Math.max(4, Math.floor(Math.min(width / columns, height / rows) * 0.45)))) continue;
-          target = { x, y };
-        }
-        if (!target) continue;
         const template = templates[result.length % Math.max(1, templates.length)] || {};
         const number = result.length + 1;
-        result.push({ ...template, id: number <= templates.length ? template.id : `generated_city_state_${number}`, name: number <= templates.length ? template.name : `${template.name || '敌对城邦'} ${number}`, gridX: target.x, gridY: target.y });
+        const id = number <= templates.length ? template.id : `generated_city_state_${number}`;
+        // R3b: 生成城邦可被 spawnManifest 固定位置(用于把城邦挪到指定地点,如河/山地形改造后)。
+        // 只对生成城邦生效,模板城邦仍走网格搜索;pinned 位置无效则跳过该槽位(不回落搜索)。
+        const pinned = /^generated_city_state_/.test(id) ? positions.get(id) : null;
+        let target = null;
+        if (pinned && Number.isFinite(pinned.gridX) && Number.isFinite(pinned.gridY)) {
+          const px = pinned.gridX, py = pinned.gridY;
+          const isLand4 = [map.grid[py]?.[px], map.grid[py]?.[px + 1], map.grid[py + 1]?.[px], map.grid[py + 1]?.[px + 1]]
+            .every(cell => cell && !['S', 'W'].includes(cell));
+          // 人工固定位置只做最小 4 格防重叠检查(网格密度阈值对人工选址过严)
+          const spaced = !occupied.some(cell => Math.max(Math.abs(cell.x - px), Math.abs(cell.y - py)) < 4);
+          if (px >= 0 && py >= 0 && px + 1 < width && py + 1 < height && isLand4 && spaced) target = { x: px, y: py };
+        }
+        if (!target) {
+          const radiusLimit = Math.ceil(Math.max(width / columns, height / rows) * 4);
+          for (let radius = 0; radius <= radiusLimit && !target; radius += 1) for (let dy = -radius; dy <= radius && !target; dy += 1) for (let dx = -radius; dx <= radius; dx += 1) {
+            if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue;
+            const x = cx + dx, y = cy + dy;
+            if (x < 0 || y < 0 || x + 1 >= width || y + 1 >= height) continue;
+            if (Math.abs(x - spawn.gridX) + Math.abs(y - spawn.gridY) < 10) continue;
+            if (![map.grid[y]?.[x], map.grid[y]?.[x + 1], map.grid[y + 1]?.[x], map.grid[y + 1]?.[x + 1]].every(cell => cell && !['S', 'W'].includes(cell))) continue;
+            if (occupied.some(cell => Math.max(Math.abs(cell.x - x), Math.abs(cell.y - y)) < Math.max(4, Math.floor(Math.min(width / columns, height / rows) * 0.45)))) continue;
+            target = { x, y };
+          }
+        }
+        if (!target) continue;
+        result.push({ ...template, id, name: number <= templates.length ? template.name : `${template.name || '敌对城邦'} ${number}`, gridX: target.x, gridY: target.y });
         occupied.push(target);
       }
     }
@@ -235,8 +250,21 @@ export class DiplomacySystem {
       units: configRegistry.get('enemies')?.units || [],
       luxuries: historical.luxuries || [],
       playerEraOrder: this._eraSystem?.getCurrentEra?.()?.order || 0,
-      settings: { ...this._config.settings, levelBonus }
+      settings: { ...this._config.settings, levelBonus },
+      playerPowerBase: this._playerPowerBase()
     });
+  }
+
+  /**
+   * 玩家战力基准:军团平均综合强度与时代保底取高。
+   * 敌人(城邦派兵/守军)强度锚定此值,时代保底保证玩家不练兵时也有基本挑战。
+   */
+  _playerPowerBase() {
+    const average = Number(this._armySystem?.getAverageArmyPower?.() || 0);
+    const eraOrder = this._eraSystem?.getCurrentEra?.()?.order || 0;
+    const floors = this._config.settings?.powerBaseFloor || [200, 400, 800, 1500, 2500];
+    const floor = Number(floors[eraOrder]) || 200;
+    return Math.max(average, floor);
   }
 
   _claimLandArea(outpost, area) {
@@ -363,12 +391,26 @@ export class DiplomacySystem {
     const units = configRegistry.get('enemies')?.units || [];
     const members = (army.unitIds || []).map(id => units.find(unit => unit.id === id)).filter(Boolean);
     const count = Math.max(1, members.length);
+    // R3b: 优先取 army 自身字段 —— 实例化时已叠加 power_scale buff(hp/maxHp/attack),
+    // 不再回退到配置表基础值,否则加成会失效。
+    const ownAttack = Number.isFinite(Number(army.attack)) ? Number(army.attack) : NaN;
+    const ownMaxHp = Number.isFinite(Number(army.maxHp)) ? Number(army.maxHp) : NaN;
+    const ownHp = Number.isFinite(Number(army.hp)) ? Number(army.hp) : NaN;
     return {
       name: army.name || '城邦驻军', faction: '敌对城邦',
-      attack: Math.max(1, Math.round(members.reduce((sum, unit) => sum + (Number(unit.attack) || 0), 0) || army.compositeStrength * 0.3 || 1)),
-      maxHp: Math.max(1, Math.round(members.reduce((sum, unit) => sum + (Number(unit.hp) || Number(unit.maxHp) || 0), 0) || army.compositeStrength * 0.7 || 1)),
-      speed: members.reduce((sum, unit) => sum + (Number(unit.speed) || 1), 0) / count,
-      attackRange: Math.max(1, Math.floor(members.reduce((sum, unit) => sum + (Number(unit.attackRange) || 1), 0) / count))
+      attack: ownAttack >= 0
+        ? ownAttack
+        : Math.max(1, Math.round(members.reduce((sum, unit) => sum + (Number(unit.attack) || 0), 0) || army.compositeStrength * 0.3 || 1)),
+      maxHp: ownMaxHp > 0
+        ? ownMaxHp
+        : Math.max(1, Math.round(members.reduce((sum, unit) => sum + (Number(unit.hp) || Number(unit.maxHp) || 0), 0) || army.compositeStrength * 0.7 || 1)),
+      hp: ownHp > 0 ? ownHp : ownMaxHp > 0 ? ownMaxHp : null,
+      speed: Number.isFinite(Number(army.speed)) && Number(army.speed) > 0
+        ? Number(army.speed)
+        : members.reduce((sum, unit) => sum + (Number(unit.speed) || 1), 0) / count,
+      attackRange: Number.isFinite(Number(army.attackRange)) && Number(army.attackRange) > 0
+        ? Number(army.attackRange)
+        : Math.max(1, Math.floor(members.reduce((sum, unit) => sum + (Number(unit.attackRange) || 1), 0) / count))
     };
   }
 
@@ -431,15 +473,68 @@ export class DiplomacySystem {
 
   _launchRaids(day, force = false) {
     let changed = false;
+    const settings = this._config.settings || {};
+    const startDay = Number(settings.raidStartDay) || 5;
+    const midDay = Number(settings.raidMidDay) || 10;
+    const allDay = Number(settings.raidAllDay) || 20;
+    const nearRaidCount = Number(settings.nearRaidCount) || 3;
+    const midRaidCount = Number(settings.midRaidCount) || 10;
+    const units = configRegistry.get('enemies')?.units || [];
     const playerSpawn = configRegistry.get('map')?.initialBuildings?.[0] || { gridX: 0, gridY: 0 };
-    for (const outpost of this.getAllOutposts()) {
+    // 距离排名(rank 1 = 离玩家最近的城邦)。不用 level 做闸门:
+    // level 会随玩家时代推进而增长(_syncEraDevelopment levelBonus),会被污染。
+    const ranked = this.getAllOutposts()
+      .map(outpost => ({
+        outpost,
+        rank: Math.abs(outpost.gridX - playerSpawn.gridX) + Math.abs(outpost.gridY - playerSpawn.gridY)
+      }))
+      .sort((a, b) => a.rank - b.rank)
+      .map((entry, index) => ({ ...entry, rank: index + 1 }));
+    // R3b: 按时间线分档出"出兵池 + 每日随机出兵数量",从池中随机抽取城邦派兵。
+    // 取代旧的"每个城邦独立 roll aggression"—— 让每天到达玩家家的波次数量均匀,
+    // 而不是几十个城邦独立概率叠加出的剧烈波动。
+    let pool = [];
+    let minRaids = 0;
+    let maxRaids = 0;
+    if (day >= allDay) {
+      pool = ranked;
+      minRaids = Number(settings.raidCountMinAll) || 1;
+      maxRaids = Number(settings.raidCountMaxAll) || 3;
+    } else if (day >= midDay) {
+      pool = ranked.filter(entry => entry.rank <= midRaidCount);
+      minRaids = Number(settings.raidCountMinMid) || 1;
+      maxRaids = Number(settings.raidCountMaxMid) || 2;
+    } else if (day >= startDay) {
+      pool = ranked.filter(entry => entry.rank <= nearRaidCount);
+      minRaids = Number(settings.raidCountMinNear) || 0;
+      maxRaids = Number(settings.raidCountMaxNear) || 1;
+    } else {
+      return false; // 前 startDay 天不派兵
+    }
+    const eligible = pool.filter(entry => {
+      const state = this._states[entry.outpost.id];
+      return state?.active && state.status !== 'defeated' && (state.armies || []).length > 0;
+    });
+    if (eligible.length === 0) return false;
+    const targetCount = force
+      ? eligible.length
+      : this._randomBetween(Math.min(minRaids, maxRaids), Math.max(minRaids, maxRaids));
+    // 随机抽取(不重复)
+    const chosen = [...eligible].sort(() => Math.random() - 0.5).slice(0, Math.min(targetCount, eligible.length));
+    for (const { outpost } of chosen) {
       const state = this._states[outpost.id];
-      if (!state?.active || state.status === 'defeated') continue;
-      const roll = (([...outpost.id].reduce((sum, char) => sum + char.charCodeAt(0), 0) * 37 + day * 101) % 1000) / 1000;
-      if (!force && roll >= (state.aggression || 0)) continue;
       const dispatchedArmy = state.armies?.[0] || null;
       if (!dispatchedArmy) continue;
+      const level = Math.max(1, Number(state.level) || 1);
       const stats = this._garrisonStats(dispatchedArmy);
+      // 派兵强度按"当天"玩家基准现算(守军实例的 buff 可能已过期),加成可 < 1
+      const raidTarget = this._playerPowerBase()
+        * ((Number(settings.raidPowerBase) || 0.6) + level * (Number(settings.raidPowerPerLevel) || 0.2));
+      const unit = units.find(item => item.id === dispatchedArmy.unitIds?.[0]) || {};
+      const baseMaxHp = Math.max(1, Number(unit.maxHp ?? unit.hp) || 1);
+      const baseAttack = Math.max(0, Number(unit.attack) || 0);
+      const buffs = [makePowerScaleBuff(raidTarget, unit, settings.powerScaleMin)];
+      const applied = applyEnemyBuffs({ maxHp: baseMaxHp, hp: baseMaxHp, attack: baseAttack }, buffs);
       const candidates = [
         { x: dispatchedArmy.x, y: dispatchedArmy.y },
         ...(state.controlledCells || []),
@@ -454,9 +549,12 @@ export class DiplomacySystem {
           gridY: cell.y,
           targetX: playerSpawn.gridX,
           targetY: playerSpawn.gridY,
-          strength: Math.max(1, Number(dispatchedArmy.compositeStrength) || state.compositeStrength),
+          strength: Math.max(1, Math.round(raidTarget)),
           enemyId: dispatchedArmy.enemyId || null,
-          combatStats: { ...stats, hp: dispatchedArmy.hp || stats.maxHp, maxHp: stats.maxHp, cp: dispatchedArmy.cp || 1, raidKind: 'city_state' }
+          combatStats: {
+            ...stats, hp: applied.hp, maxHp: applied.maxHp, attack: applied.attack,
+            buffs, cp: dispatchedArmy.cp || 1, raidKind: 'city_state'
+          }
         }) === true;
         if (spawned) break;
       }
@@ -471,6 +569,8 @@ export class DiplomacySystem {
     if (changed && force) this._notify();
     return changed;
   }
+
+  _randomBetween(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
   getUsableLuxuryDeposits(outpostId) {
     const state = this.getOutpostState(outpostId);

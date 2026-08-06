@@ -8,6 +8,7 @@ import {
   getFormationStatusText,
   getFormationBonusText
 } from '../../utils/FormationUtils.js';
+import { calculateCombatStrength } from '../../domain/CombatStrength.js';
 import { eventBus } from '../../core/EventBus.js';
 
 function _cfg() { return window.__game?.configRegistry?.get('enemies')?.units || []; }
@@ -124,10 +125,36 @@ function _renderAssemblyPanel(data, body, pm) {
   nameInput.addEventListener('input', event => { draft.name = event.currentTarget.value; });
   body.appendChild(nameInput);
 
+  const reserveTitleRow = document.createElement('div');
+  reserveTitleRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;';
   const reserveTitle = document.createElement('div');
-  reserveTitle.style.cssText = 'font-size:13px;font-weight:700;color:#d6bb7a;margin-bottom:8px;';
+  reserveTitle.style.cssText = 'font-size:13px;font-weight:700;color:#d6bb7a;';
   reserveTitle.textContent = '预备队编成';
-  body.appendChild(reserveTitle);
+  reserveTitleRow.appendChild(reserveTitle);
+  // R1: 自动集结——按综合战斗力从高到低填满军团（只取该集结建筑支持的军种域）
+  if (reserveUnits.length > 0) {
+    const autoBtn = document.createElement('button');
+    autoBtn.textContent = '自动集结 · 高战力优先';
+    autoBtn.dataset.testid = 'auto-assemble';
+    autoBtn.style.cssText = 'padding:5px 10px;border:1px solid #4c7d61;border-radius:6px;background:#294939;color:#d9ffe5;cursor:pointer;font-size:11px;';
+    autoBtn.addEventListener('click', () => {
+      const capacity = _armySystem()?.getArmyUnitCapacity?.() || 5;
+      const supported = assemblyDomains.includes('naval') ? 'naval' : 'land';
+      const usedCount = () => Object.values(draft.unitCounts).reduce((sum, count) => sum + count, 0);
+      const sorted = [...reserveUnits]
+        .filter(unit => (unit.domain === 'naval' ? 'naval' : 'land') === supported)
+        .sort((a, b) => calculateCombatStrength(b) - calculateCombatStrength(a));
+      for (const unit of sorted) {
+        const remaining = capacity - usedCount();
+        if (remaining <= 0) break;
+        const take = Math.min((reserves[unit.id] || 0) - (draft.unitCounts[unit.id] || 0), remaining);
+        if (take > 0) draft.unitCounts[unit.id] = (draft.unitCounts[unit.id] || 0) + take;
+      }
+      rerender();
+    });
+    reserveTitleRow.appendChild(autoBtn);
+  }
+  body.appendChild(reserveTitleRow);
 
   if (reserveUnits.length === 0) {
     const empty = document.createElement('div');

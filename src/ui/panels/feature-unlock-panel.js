@@ -29,6 +29,8 @@ export function renderHestiaArrivalPanel(data, body, pm) {
   body.querySelector('[data-next]').addEventListener('click', () => {
     if (data.index < ARRIVAL_LINES.length - 1) { data.index += 1; pm.refresh(data); return; }
     window.__game?.systems?.hero?.completeHestiaArrival?.();
+    // 先入队再强制关闭当前剧情面板：关闭时队列排空会接着展示英雄系统解锁
     pm.open('feature_unlock', { blocking: true, icon: '🍺', title: '英雄系统', description: '主界面的英雄按钮已经解锁。你可以与赫斯提亚对话、查看能力，并在获得奢侈品后赠送礼物。\n\n🏆 胜利目标已更新：击败？？？' });
+    pm.close({ force: true });
   });
 }

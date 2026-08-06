@@ -19,7 +19,8 @@ log/*
 node_modules/
 .codex-tools/
 .worktrees/
-tmp/imagegen/
+tmp/
+!tmp/textwork/
 assets/generated/
 test-results/
 playwright-report/

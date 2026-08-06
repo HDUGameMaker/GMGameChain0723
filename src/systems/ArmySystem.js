@@ -7,6 +7,7 @@ import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
 import { findDeploymentTile, getDeploymentCandidates } from '../domain/MilitaryDeployment.js';
 import { getArmyCombatPower } from '../utils/FormationUtils.js';
+import { calculateCombatStrength } from '../domain/CombatStrength.js';
 import { previewStrategicBattle, resolveStrategicBattle } from './CombatResolver.js';
 import { evaluateTrainingEligibility } from './TrainingRules.js';
 
@@ -461,6 +462,7 @@ export class ArmySystem {
   }
 
   setCityStateSystem(system) { this._cityStateSystem = system || null; }
+  setPathfindingSystem(system) { this._pathfindingSystem = system || null; }
   setBlackMistSystem(system) { this._blackMistSystem = system || null; }
 
   _healArmiesPerTick() {
@@ -558,6 +560,23 @@ export class ArmySystem {
       attackRange: this.getArmyAttackRange(armyId),
       speed: Math.round(speed * 100) / 100
     };
+  }
+
+  /**
+   * 玩家军团平均综合强度(含英雄/建筑/时代加成)。
+   * 0 个军团时返回 0,由调用方配合时代保底使用。
+   * 供 R3b 敌人强度锚定(城邦派兵/守军基准)。
+   */
+  getAverageArmyPower() {
+    const armies = this.getArmies()
+      .filter(army => (!army.ownerId || army.ownerId === 'player') && (army.unitIds?.length || army.heroId));
+    const strengths = armies.map(army => {
+      const stats = this.getArmyStats(army.id) || army;
+      const cp = this.getArmyCpMax(army.id) || army.maxCp || army.cp || 1;
+      return calculateCombatStrength({ ...stats, cp });
+    }).filter(value => Number.isFinite(value) && value > 0);
+    if (strengths.length === 0) return 0;
+    return strengths.reduce((sum, value) => sum + value, 0) / strengths.length;
   }
 
   getArmyStatMultipliers() {
@@ -868,6 +887,16 @@ export class ArmySystem {
   }
 
   _findPath(army, targetX, targetY) {
+    // 共享 BFS 寻路系统(PathfindingSystem),规则按军团形态选择;
+    // 避开其他军团由 avoidUnits 传入(不做缓存,命令下达时新鲜计算)
+    if (this._pathfindingSystem) {
+      const rule = army.embarked ? 'embarked' : (this._armyIsNaval(army) ? 'naval' : 'land');
+      return this._pathfindingSystem.findPath(army.gridX, army.gridY, targetX, targetY, {
+        rule,
+        avoidUnits: this._armies.filter(other => other.id !== army.id && other.garrisonBuildingIndex == null)
+      });
+    }
+    // 回退:PathfindingSystem 未注入时的本地 BFS(与共享实现同规则)
     const map = this._getMap();
     if (!map) return [];
     const start = { x: army.gridX, y: army.gridY };

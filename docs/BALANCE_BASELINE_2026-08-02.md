@@ -1,3 +1,5 @@
+> ⚠️ **部分内容已过时**(2026-08-06 审计):文中数值/结构可能已与当前 `config/` 和 `src/` 不符,引用前请对照代码验证。
+
 # 《文明纪元》数值与平衡基线
 
 本文件记录 0.7.0 的平衡检查入口，供后续数值迭代使用。完整对象数据以 `config/historical_content.json`、`config/buildings.json`、`config/enemies.json` 和 `config/ea_integration.json` 为准。

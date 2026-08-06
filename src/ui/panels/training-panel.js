@@ -182,7 +182,7 @@ export function renderTrainingPanel(data, body, pm) {
   const research = document.createElement('button');
   research.textContent = '兵种研发';
   research.style.cssText = 'padding:7px 14px;border:none;border-radius:6px;background:rgba(91,141,239,0.18);color:#8fb1ff;cursor:pointer;font-size:12px;font-weight:600;';
-  research.addEventListener('click', () => pm.open('unit_research', {}));
+  research.addEventListener('click', () => pm.push('unit_research', {}));
   header.appendChild(research);
   body.appendChild(header);
 

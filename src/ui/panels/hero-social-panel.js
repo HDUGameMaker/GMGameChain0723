@@ -214,7 +214,11 @@ export function renderHeroInteractionPanel(data, body, pm) {
       content.title = '左键点击推进对话';
       content.onclick = event => { if (event.target.closest?.('button')) return; advance.click(); };
       if (state.finished) {
-        content.onclick = () => pm.open('feature_unlock', { blocking: true, icon: '🍺', title: '英雄系统', description: '主界面的英雄按钮已经解锁。你可以与赫斯提亚对话、查看能力，并在获得奢侈品后赠送礼物。\n\n🏆 胜利目标已更新：击败？？？' });
+        content.onclick = () => {
+          // 剧情面板不可关闭：先入队再强制关闭，关闭时队列排空接着展示英雄系统解锁
+          pm.open('feature_unlock', { blocking: true, icon: '🍺', title: '英雄系统', description: '主界面的英雄按钮已经解锁。你可以与赫斯提亚对话、查看能力，并在获得奢侈品后赠送礼物。\n\n🏆 胜利目标已更新：击败？？？' });
+          pm.close({ force: true });
+        };
       }
     }
     }

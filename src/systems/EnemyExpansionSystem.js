@@ -14,6 +14,7 @@ import { configRegistry } from '../core/ConfigRegistry.js';
 import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
 import { getCounterAdjustedArmyPower } from './CombatResolver.js';
+import { applyEnemyBuffs } from '../domain/EnemyBuffs.js';
 
 export class EnemyExpansionSystem {
   constructor() {
@@ -37,6 +38,7 @@ export class EnemyExpansionSystem {
   setSpellSystem(ss) { this._spellSystem = ss; }
   setHeroSystem(hs) { this._heroSystem = hs; }
   setLuxurySystem(ls) { this._luxurySystem = ls; }
+  setPathfindingSystem(ps) { this._pathfindingSystem = ps || null; }
   setBattlePreviewHandler(handler) { this._battlePreviewHandler = typeof handler === 'function' ? handler : null; }
 
   init() {
@@ -56,6 +58,37 @@ export class EnemyExpansionSystem {
   _enemyProfile(cell = null) {
     const profiles = configRegistry.get('enemies')?.enemies || [];
     return profiles.find(profile => profile.id === cell?.enemyId) || profiles.find(profile => profile.strategicOnly) || profiles[0] || null;
+  }
+
+  /**
+   * 敌人战斗数值统一取值:优先实例自身已叠加的数值(实例化时已算好 hp/maxHp/attack);
+   * 缺叠加值且有 buffs 时从 profile 基础 × buffs 现算(加成可 < 1);
+   * 无 buffs(远古遗迹波次/老存档)回退 cell 自身字段,再回退 profile。
+   * 所有战斗与显示入口必须走这里,保证加成生效。
+   */
+  _getEnemyStats(cell, profile = null) {
+    const p = profile || this._enemyProfile(cell) || {};
+    const ownMaxHp = Number.isFinite(Number(cell?.maxHp)) && Number(cell.maxHp) > 0 ? Number(cell.maxHp) : null;
+    const ownAttack = Number.isFinite(Number(cell?.attack)) && Number(cell.attack) > 0 ? Number(cell.attack) : null;
+    const profileMaxHp = Math.max(1, Number(p.maxHp) || Number(cell?.strength) || 1);
+    const profileAttack = Math.max(0, Number(p.attack) || Number(cell?.strength) || 1);
+    let maxHp = ownMaxHp ?? profileMaxHp;
+    let attack = ownAttack ?? profileAttack;
+    if ((ownMaxHp == null || ownAttack == null) && Array.isArray(cell?.buffs) && cell.buffs.length > 0) {
+      // 只有实例未携带叠加值时才用 profile 基础 × buffs 现算(老存档等边角情况)
+      const applied = applyEnemyBuffs({ maxHp: profileMaxHp, hp: profileMaxHp, attack: profileAttack }, cell.buffs);
+      maxHp = applied.maxHp;
+      attack = applied.attack;
+    }
+    const currentHp = Number.isFinite(Number(cell?.hp)) ? Number(cell.hp) : maxHp;
+    return {
+      maxHp,
+      hp: Math.max(0, Math.min(maxHp, currentHp)),
+      attack,
+      attackRange: Math.max(0, Math.floor(Number(cell?.attackRange) || Number(p.attackRange) || 1)),
+      speed: Math.max(0, Number(cell?.speed) || Number(p.speed) || 1),
+      cp: Math.max(1, Math.floor(Number(cell?.cp) || Number(p.cp) || 1))
+    };
   }
 
   _newEnemyCell(strength, countdown) {
@@ -93,25 +126,31 @@ export class EnemyExpansionSystem {
     for (const [key, cell] of this._cells) {
       if (!Number.isFinite(cell.raidTargetX) || !Number.isFinite(cell.raidTargetY)) continue;
       const [x, y] = key.split(',').map(Number);
-      if (Math.abs(x - cell.raidTargetX) + Math.abs(y - cell.raidTargetY) <= 1) continue;
-      const candidates = [[1, 0], [-1, 0], [0, 1], [0, -1]]
-        .map(([dx, dy]) => [x + dx, y + dy])
-        .sort((left, right) => (
-          Math.abs(left[0] - cell.raidTargetX) + Math.abs(left[1] - cell.raidTargetY)
-        ) - (
-          Math.abs(right[0] - cell.raidTargetX) + Math.abs(right[1] - cell.raidTargetY)
-        ));
-      const next = candidates.find(([nx, ny]) => this._inBounds(nx, ny)
-        && (this._armySystem?.isLandPassableAt?.(nx, ny) ?? !['S', 'W'].includes(this._mapConfig?.grid?.[ny]?.[nx]))
-        && !this._cells.has(this._key(nx, ny))
-        && !(this._armySystem?.getArmies?.() || []).some(army => army.gridX === nx && army.gridY === ny));
-      if (next) moves.push({ key, next, cell });
+      // 路径失效条件:无路径 / 寻路缓存版本已变(建筑/桥变化) / 起点与路径错位(被位移)
+      const path = cell.movePath;
+      const pathStale = !Array.isArray(path) || path.length === 0
+        || cell.movePathVersion !== (this._pathfindingSystem?.getVersion?.() ?? 0)
+        || (path.length > 1 && Math.abs(path[0].x - x) + Math.abs(path[0].y - y) !== 1);
+      if (pathStale) {
+        const found = this._pathfindingSystem?.findPath?.(x, y, cell.raidTargetX, cell.raidTargetY) || [];
+        cell.movePath = found;
+        cell.movePathVersion = this._pathfindingSystem?.getVersion?.() ?? 0;
+      }
+      const fresh = cell.movePath;
+      if (!fresh || fresh.length <= 1) continue; // 不可达或已贴脸(剩余目标格,交给射程攻击判定)
+      const next = fresh[0];
+      if (this._cells.has(this._key(next.x, next.y))) continue; // 被其他敌人占格,等待
+      if ((this._armySystem?.getArmies?.() || []).some(army => army.gridX === next.x && army.gridY === next.y)) continue;
+      moves.push({ key, next, cell });
     }
     if (!moves.length) return false;
     for (const move of moves) {
-      if (!this._cells.has(move.key) || this._cells.has(this._key(...move.next))) continue;
+      if (!this._cells.has(move.key) || this._cells.has(this._key(move.next.x, move.next.y))) continue;
       this._cells.delete(move.key);
-      this._cells.set(this._key(...move.next), move.cell);
+      this._cells.set(this._key(move.next.x, move.next.y), {
+        ...move.cell,
+        movePath: move.cell.movePath.slice(1) // 消耗一步
+      });
     }
     this._attackArmiesInRange();
     this._updateStore();
@@ -313,12 +352,7 @@ export class EnemyExpansionSystem {
     if (!army?.unitIds?.length) return { ok: false, reason: 'unknown_army' };
     const profile = this._enemyProfile(cell) || {};
     const armyStats = this._armySystem.getArmyStats?.(armyId) || army;
-    const enemyStats = {
-      attack: Math.max(0, Number(cell.attack) || Number(profile.attack) || cell.strength || 1),
-      attackRange: Math.max(0, Math.floor(Number(cell.attackRange) || Number(profile.attackRange) || 1)),
-      speed: Math.max(0, Number(cell.speed) || Number(profile.speed) || 1),
-      cp: Math.max(1, Math.floor(Number(cell.cp) || Number(profile.cp) || 1))
-    };
+    const enemyStats = this._getEnemyStats(cell, profile);
     const distance = Math.abs(army.gridX - x) + Math.abs(army.gridY - y);
     const playerCanAttack = distance <= (armyStats.attackRange || 0);
     const enemyCanAttack = distance <= enemyStats.attackRange;
@@ -459,14 +493,11 @@ export class EnemyExpansionSystem {
     return Array.from(this._cells.entries()).map(([k, v]) => {
       const parts = k.split(',');
       const profile = this._enemyProfile(v) || {};
+      const stats = this._getEnemyStats(v, profile);
       return {
         x: parseInt(parts[0], 10), y: parseInt(parts[1], 10), ...v,
         name: profile.name || '敌方部队', icon: profile.icon || '', faction: profile.faction || '敌对势力',
-        maxHp: Math.max(1, Number(v.maxHp) || Number(profile.maxHp) || v.strength || 1),
-        hp: Math.max(0, Number.isFinite(Number(v.hp)) ? Number(v.hp) : (Number(v.maxHp) || Number(profile.maxHp) || v.strength || 1)),
-        attack: Math.max(0, Number(v.attack) || Number(profile.attack) || v.strength || 1),
-        attackRange: Math.max(0, Math.floor(Number(v.attackRange) || Number(profile.attackRange) || 1)),
-        speed: Math.max(0, Number(v.speed) || Number(profile.speed) || 1), cp: Math.max(1, Math.floor(Number(v.cp) || Number(profile.cp) || 1))
+        ...stats
       };
     });
   }
@@ -504,7 +535,8 @@ export class EnemyExpansionSystem {
 
   // ===== 存档 =====
   getState() {
-    const cells = this.getAllCells();
+    // movePath/movePathVersion 是寻路缓存,不持久化;读档后首个 tick 自动重算
+    const cells = this.getAllCells().map(({ movePath, movePathVersion, ...rest }) => rest);
     return { cells, totalCleared: this._totalCleared };
   }
 

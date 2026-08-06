@@ -1,6 +1,12 @@
 /**
  * PopupManager - 弹窗系统
- * 统一外壳 + 导航栈 + 注册式面板渲染函数
+ * 统一外壳 + 导航栈 + 待显示队列 + 注册式面板渲染函数
+ *
+ * 弹窗请求统一走“待显示队列”：open() 只向队尾追加请求，
+ * 当前无弹窗时立即展示，有弹窗时等待其关闭后再按入队顺序展示。
+ * 避免多个来源（每日结算 / 赫斯提亚登场 / 奢侈品解锁 / 战斗预览……）
+ * 同时调用 open() 互相冲掉对方的弹窗。
+ * push()/pop() 仍是弹窗内部的导航栈，用于面板间的钻取与返回。
  */
 import { eventBus } from '../core/EventBus.js';
 import { renderTutorialPromptPanel } from './panels/tutorial-prompt-panel.js';
@@ -18,6 +24,8 @@ export class PopupManager {
     this._cultureSystem = cultureSystem || null;
     this._combatSystem = combatSystem || null;
     this._stack = [];
+    this._pendingQueue = []; // 待显示队列：所有“打开弹窗”请求先入队，串行展示
+    this._closing = false;   // 关闭流程中暂不排空，popupClosed 回调里新请求先入队
     this._panels = {}; // 注册的面板渲染函数
     this._isOpen = false;
     this._currentType = null;
@@ -58,22 +66,35 @@ export class PopupManager {
   }
 
   /**
-   * 打开面板（清空栈）
+   * 打开面板（入队）
+   *
+   * 所有“打开弹窗”请求统一进入待显示队列：当前无弹窗时立即展示；
+   * 已有弹窗时等待其关闭后再按入队顺序展示，互不冲掉。
    */
   open(type, data) {
-    const wasOpen = this._isOpen;
-    const wasBlocking = wasOpen && this._isBlocking();
-    if (wasOpen) this._cleanupAnimations();
-    this._stack = [{ type, data }];
-    const isBlocking = this._isBlocking();
-    if (!wasOpen) {
-      this._show();
-    } else if (!wasBlocking && isBlocking) {
-      this._gameLoop.pause();
-    } else if (wasBlocking && !isBlocking && this._gameLoop.isPaused()) {
-      this._gameLoop.resume();
-    }
+    this._pendingQueue.push({ type, data });
+    this._drainQueue();
+  }
+
+  /**
+   * 排空待显示队列：仅在没有弹窗展示时，按入队顺序取下一个请求展示
+   */
+  _drainQueue() {
+    if (this._isOpen || this._closing) return;
+    if (this._pendingQueue.length === 0) return;
+    const req = this._pendingQueue.shift();
+    this._stack = [{ type: req.type, data: req.data }];
+    this._show();
     this._render();
+  }
+
+  /**
+   * 队列条目是否为阻塞弹窗（与 _isBlocking 相同的判定，作用于尚未展示的请求）
+   */
+  _isRequestBlocking(req) {
+    if (req.data?.blocking === true) return true;
+    if (req.data?.blocking === false) return false;
+    return BLOCKING_TYPES.includes(req.type);
   }
 
   openArmyDetail(armyId) {
@@ -122,10 +143,13 @@ export class PopupManager {
 
   /**
    * 关闭弹窗
+   * @param {{force?: boolean}} [options] force 允许程序化强制关闭
+   * 不可关闭面板（game_over / hestia_arrival / nonClosable）只拦截玩家操作，
+   * 面板自身流程（如赫斯提亚剧情结束时链入下一个弹窗）需要 force 关闭
    */
-  close() {
+  close({ force = false } = {}) {
     const current = this._stack[this._stack.length - 1];
-    if (current?.type === 'game_over' || current?.type === 'hestia_arrival' || current?.data?.nonClosable) return;
+    if (!force && (current?.type === 'game_over' || current?.type === 'hestia_arrival' || current?.data?.nonClosable)) return;
     if (current?.type === SYSTEM_DIALOG_TYPE) {
       this._resolveSystemDialog(this._getDialogCancelValue(current.data));
       return;
@@ -144,13 +168,20 @@ export class PopupManager {
     this.footer.style.display = 'none';
     this.footer.innerHTML = '';
 
-    // 通知弹窗已关闭（EventSystem 用此事件驱动队列处理）
+    // 通知弹窗已关闭（EventSystem 用此事件驱动队列处理）；
+    // 关闭期间回调可能再次请求弹窗：先入队，待关闭完成后统一排空
+    this._closing = true;
     eventBus.emit('popupClosed');
+    this._closing = false;
 
-    // 恢复游戏时间（如果事件队列中还有待处理事件，EventSystem 会同步重新暂停）
-    if (this._gameLoop.isPaused()) {
+    // 恢复游戏时间；若队列中下一个请求是阻塞弹窗则保持暂停（避免 BGM 淡入淡出抖动）
+    const nextBlocking = this._pendingQueue.length > 0 && this._isRequestBlocking(this._pendingQueue[0]);
+    if (this._gameLoop.isPaused() && !nextBlocking) {
       this._gameLoop.resume();
     }
+
+    // 展示下一个待显示弹窗（阻塞弹窗会通过 _show 重新暂停）
+    this._drainQueue();
   }
 
   alert(message, options = {}) {
@@ -193,9 +224,8 @@ export class PopupManager {
         this._stack.push({ type: SYSTEM_DIALOG_TYPE, data: dialogData });
         this._render();
       } else {
-        this._stack = [{ type: SYSTEM_DIALOG_TYPE, data: dialogData }];
-        this._show();
-        this._render();
+        this._pendingQueue.push({ type: SYSTEM_DIALOG_TYPE, data: dialogData });
+        this._drainQueue();
       }
     });
   }
@@ -215,8 +245,12 @@ export class PopupManager {
       this.body.innerHTML = '';
       this.footer.style.display = 'none';
       this.footer.innerHTML = '';
+      this._closing = true;
       eventBus.emit('popupClosed');
-      if (this._gameLoop.isPaused()) this._gameLoop.resume();
+      this._closing = false;
+      const nextBlocking = this._pendingQueue.length > 0 && this._isRequestBlocking(this._pendingQueue[0]);
+      if (this._gameLoop.isPaused() && !nextBlocking) this._gameLoop.resume();
+      this._drainQueue();
     } else {
       this._render();
     }
@@ -251,8 +285,9 @@ export class PopupManager {
     this._isOpen = true;
     this.overlay.classList.add('active');
 
-    // 阻塞弹窗暂停游戏
-    if (this._isBlocking()) {
+    // 阻塞弹窗暂停游戏；若已处于暂停（前一个阻塞弹窗刚关闭、队列中仍有阻塞弹窗），
+    // 不重复计数，保证 _pauseCount 只在 0/1 之间变化
+    if (this._isBlocking() && !this._gameLoop.isPaused()) {
       this._gameLoop.pause();
     }
 
@@ -388,7 +423,8 @@ export class PopupManager {
       'army_panel': '军团详情',
       'enemy_detail': '敌人详情',
       'battle_preview': '战斗预估',
-      'training_panel': '兵种训练'
+      'training_panel': '兵种训练',
+      'feature_unlock': data?.title || '新系统解锁'
     };
     if (type === SYSTEM_DIALOG_TYPE) return data?.title || '提示';
     return titles[type] || '';

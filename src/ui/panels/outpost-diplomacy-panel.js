@@ -78,6 +78,6 @@ export function renderOutpostDiplomacyPanel(data, body, pm) {
   const tradeLuxury = document.createElement('button');
   tradeLuxury.style.cssText = 'margin-top:9px;width:100%;padding:10px;border:1px solid #aa8748;border-radius:8px;background:rgba(170,135,72,.14);color:#ead49d;cursor:pointer;font-weight:700';
   tradeLuxury.textContent = '打开奢侈品贸易';
-  tradeLuxury.addEventListener('click', () => pm.open('luxury_trade', { outpostId: outpost.id }));
+  tradeLuxury.addEventListener('click', () => pm.push('luxury_trade', { outpostId: outpost.id }));
   body.appendChild(tradeLuxury);
 }

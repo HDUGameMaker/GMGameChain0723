@@ -1,2697 +1,2722 @@
 {
-  "cityStateGeneration": {
-    "spawnDensity": 0.001,
-    "maxCityStates": 256,
-    "maxLevel": 5,
-    "minEnemyStrength": 200,
-    "maxEnemyStrength": 1000,
-    "minArea": 12,
-    "maxArea": 20,
-    "eraStrengthMultiplier": 2.5,
-    "baseAggression": 0.05,
-    "aggressionPerEra": 0.08
+ "cityStateGeneration": {
+  "spawnDensity": 0.001,
+  "maxCityStates": 256,
+  "maxLevel": 5,
+  "minEnemyStrength": 200,
+  "maxEnemyStrength": 1000,
+  "minArea": 12,
+  "maxArea": 20,
+  "eraStrengthMultiplier": 2.5,
+  "baseAggression": 0.05,
+  "aggressionPerEra": 0.08,
+  "settings": {
+   "garrisonPowerBase": 0.5,
+   "garrisonPowerPerLevel": 0.15,
+   "raidPowerBase": 0.6,
+   "raidPowerPerLevel": 0.2,
+   "powerBaseFloor": [
+    200,
+    400,
+    800,
+    1500,
+    2500
+   ],
+   "powerScaleMin": 0.2,
+   "raidStartDay": 5,
+   "raidMidDay": 10,
+   "raidAllDay": 20,
+   "nearRaidCount": 3,
+   "midRaidCount": 10,
+   "raidCountMinNear": 0,
+   "raidCountMaxNear": 1,
+   "raidCountMinMid": 1,
+   "raidCountMaxMid": 2,
+   "raidCountMinAll": 1,
+   "raidCountMaxAll": 3
+  }
+ },
+ "cityStates": [
+  {
+   "id": "northern_timber_league",
+   "name": "北境木业同盟",
+   "icon": "🪵",
+   "description": "由林场与猎户组成的自治同盟，擅长木材贸易与轻步兵。",
+   "gridX": 37,
+   "gridY": 127,
+   "domain": "land",
+   "faction": "timber_league",
+   "develops": "limited",
+   "initialRelation": 5,
+   "militaryStrength": 28,
+   "garrison": [
+    {
+     "enemyId": "outpost_guard",
+     "count": 3
+    }
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "trade",
+    "open_borders",
+    "non_aggression",
+    "alliance"
+   ],
+   "specialty": "wood_trade",
+   "developmentProfile": {
+    "military": 0.8,
+    "economy": 1.15,
+    "diplomacy": 1
+   },
+   "eraUnitBranch": "infantry",
+   "personality": "merchant",
+   "emblem": "assets/historical-icons/civilizations/han.svg",
+   "dailyActionProfile": {
+    "economy": 3,
+    "military": 2,
+    "diplomacy": 3
+   }
   },
-  "cityStates": [
+  {
+   "id": "desert_caravan_council",
+   "name": "沙海商旅议会",
+   "icon": "🐪",
+   "description": "掌握荒漠商路和水源的商旅议会，偏好贸易与互不侵犯。",
+   "gridX": 99,
+   "gridY": 133,
+   "domain": "land",
+   "faction": "caravan_council",
+   "develops": "limited",
+   "initialRelation": 18,
+   "militaryStrength": 24,
+   "garrison": [
     {
-      "id": "northern_timber_league",
-      "name": "北境木业同盟",
-      "icon": "🪵",
-      "description": "由林场与猎户组成的自治同盟，擅长木材贸易与轻步兵。",
-      "gridX": 37,
-      "gridY": 127,
-      "domain": "land",
-      "faction": "timber_league",
-      "develops": "limited",
-      "initialRelation": 5,
-      "militaryStrength": 28,
-      "garrison": [
-        {
-          "enemyId": "outpost_guard",
-          "count": 3
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "trade",
-        "open_borders",
-        "non_aggression",
-        "alliance"
-      ],
-      "specialty": "wood_trade",
-      "developmentProfile": {
-        "military": 0.8,
-        "economy": 1.15,
-        "diplomacy": 1
-      },
-      "eraUnitBranch": "infantry",
-      "personality": "merchant",
-      "emblem": "assets/historical-icons/civilizations/han.svg",
-      "dailyActionProfile": {
-        "economy": 3,
-        "military": 2,
-        "diplomacy": 3
-      }
-    },
-    {
-      "id": "desert_caravan_council",
-      "name": "沙海商旅议会",
-      "icon": "🐪",
-      "description": "掌握荒漠商路和水源的商旅议会，偏好贸易与互不侵犯。",
-      "gridX": 99,
-      "gridY": 133,
-      "domain": "land",
-      "faction": "caravan_council",
-      "develops": "limited",
-      "initialRelation": 18,
-      "militaryStrength": 24,
-      "garrison": [
-        {
-          "enemyId": "outpost_guard",
-          "count": 2
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "trade",
-        "open_borders",
-        "non_aggression",
-        "alliance"
-      ],
-      "specialty": "gold_trade",
-      "developmentProfile": {
-        "military": 0.7,
-        "economy": 1.25,
-        "diplomacy": 1.15
-      },
-      "eraUnitBranch": "cavalry",
-      "personality": "guardian",
-      "emblem": "assets/historical-icons/civilizations/venice.svg",
-      "dailyActionProfile": {
-        "economy": 3,
-        "military": 2,
-        "diplomacy": 3
-      }
-    },
-    {
-      "id": "highland_republic",
-      "name": "高地自由邦",
-      "icon": "⛰️",
-      "description": "依托矿山和隘口形成的自由邦，防御顽强但扩张缓慢。",
-      "gridX": 161,
-      "gridY": 116,
-      "domain": "land",
-      "faction": "highlanders",
-      "develops": "limited",
-      "initialRelation": -8,
-      "militaryStrength": 38,
-      "garrison": [
-        {
-          "enemyId": "outpost_guard",
-          "count": 4
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "negotiate",
-        "ceasefire",
-        "trade",
-        "non_aggression",
-        "alliance"
-      ],
-      "specialty": "stone_trade",
-      "developmentProfile": {
-        "military": 1.05,
-        "economy": 0.9,
-        "diplomacy": 0.9
-      },
-      "eraUnitBranch": "anti_cavalry",
-      "personality": "scholar",
-      "emblem": "assets/historical-icons/civilizations/mongol.svg",
-      "dailyActionProfile": {
-        "economy": 3,
-        "military": 2,
-        "diplomacy": 3
-      }
-    },
-    {
-      "id": "steppe_khanate",
-      "name": "草原汗庭",
-      "icon": "🏇",
-      "description": "逐水草而居的骑乘共同体，随时代更新骑兵但不建设完整城市。",
-      "gridX": 223,
-      "gridY": 122,
-      "domain": "land",
-      "faction": "steppe",
-      "develops": "limited",
-      "initialRelation": -22,
-      "militaryStrength": 44,
-      "garrison": [
-        {
-          "enemyId": "outpost_guard",
-          "count": 4
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "negotiate",
-        "ceasefire",
-        "trade",
-        "non_aggression",
-        "joint_patrol",
-        "alliance"
-      ],
-      "specialty": "cavalry_contract",
-      "developmentProfile": {
-        "military": 1.15,
-        "economy": 0.75,
-        "diplomacy": 0.85
-      },
-      "eraUnitBranch": "cavalry",
-      "personality": "expansionist",
-      "emblem": "assets/historical-icons/civilizations/old_egypt.svg",
-      "dailyActionProfile": {
-        "economy": 3,
-        "military": 2,
-        "diplomacy": 3
-      }
-    },
-    {
-      "id": "scholarly_enclave",
-      "name": "学者城社",
-      "icon": "📚",
-      "description": "由档案馆、书院与抄写工坊组成的小型城社，重视知识交流。",
-      "gridX": 304,
-      "gridY": 128,
-      "domain": "land",
-      "faction": "scholars",
-      "develops": "limited",
-      "initialRelation": 22,
-      "militaryStrength": 20,
-      "garrison": [
-        {
-          "enemyId": "outpost_guard",
-          "count": 2
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "trade",
-        "open_borders",
-        "non_aggression",
-        "alliance"
-      ],
-      "specialty": "knowledge_exchange",
-      "developmentProfile": {
-        "military": 0.65,
-        "economy": 1,
-        "diplomacy": 1.2
-      },
-      "eraUnitBranch": "ranged",
-      "personality": "diplomat",
-      "emblem": "assets/historical-icons/civilizations/rome.svg",
-      "dailyActionProfile": {
-        "economy": 3,
-        "military": 2,
-        "diplomacy": 3
-      }
-    },
-    {
-      "id": "sea_republic",
-      "name": "群岛海贸共和国",
-      "icon": "⛵",
-      "description": "控制河海节点的海贸共和国，舰队和港口会随玩家时代升级。",
-      "gridX": 376,
-      "gridY": 124,
-      "domain": "naval",
-      "faction": "sea_republic",
-      "develops": "limited",
-      "initialRelation": 10,
-      "militaryStrength": 40,
-      "garrison": [
-        {
-          "enemyId": "corsair_galley",
-          "count": 3
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "trade",
-        "open_borders",
-        "non_aggression",
-        "joint_patrol",
-        "alliance"
-      ],
-      "specialty": "naval_trade",
-      "developmentProfile": {
-        "military": 1,
-        "economy": 1.2,
-        "diplomacy": 1.05
-      },
-      "eraUnitBranch": "ranged",
-      "personality": "traditionalist",
-      "emblem": "assets/historical-icons/civilizations/ghana_empire.svg",
-      "dailyActionProfile": {
-        "economy": 3,
-        "military": 2,
-        "diplomacy": 3
-      }
-    },
-    {
-      "id": "amber_coast_league",
-      "name": "琥珀海岸同盟",
-      "icon": "🏛️",
-      "description": "琥珀海岸同盟在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
-      "domain": "land",
-      "faction": "amber_coast_league",
-      "develops": "limited",
-      "initialRelation": -18,
-      "militaryStrength": 24,
-      "garrison": [
-        {
-          "enemyId": "outpost_guard",
-          "count": 2
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "trade",
-        "open_borders",
-        "non_aggression",
-        "alliance"
-      ],
-      "specialty": "wood_trade",
-      "personality": "merchant",
-      "emblem": "assets/historical-icons/civilizations/han.svg",
-      "developmentProfile": {
-        "military": 0.8,
-        "economy": 0.9,
-        "diplomacy": 0.85
-      },
-      "dailyActionProfile": {
-        "economy": 3,
-        "military": 2,
-        "diplomacy": 2
-      },
-      "eraUnitBranch": "infantry",
-      "gridX": 44,
-      "gridY": 199
-    },
-    {
-      "id": "red_cliff_council",
-      "name": "赤岩议会",
-      "icon": "🏛️",
-      "description": "赤岩议会在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
-      "domain": "land",
-      "faction": "red_cliff_council",
-      "develops": "limited",
-      "initialRelation": -11,
-      "militaryStrength": 27,
-      "garrison": [
-        {
-          "enemyId": "outpost_guard",
-          "count": 3
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "trade",
-        "open_borders",
-        "non_aggression",
-        "alliance"
-      ],
-      "specialty": "gold_trade",
-      "personality": "guardian",
-      "emblem": "assets/historical-icons/civilizations/venice.svg",
-      "developmentProfile": {
-        "military": 0.9,
-        "economy": 1,
-        "diplomacy": 0.9299999999999999
-      },
-      "dailyActionProfile": {
-        "economy": 4,
-        "military": 3,
-        "diplomacy": 3
-      },
-      "eraUnitBranch": "ranged",
-      "gridX": 106,
-      "gridY": 205
-    },
-    {
-      "id": "cloudpeak_academy",
-      "name": "云岭学社",
-      "icon": "🏛️",
-      "description": "云岭学社在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
-      "domain": "land",
-      "faction": "cloudpeak_academy",
-      "develops": "limited",
-      "initialRelation": -4,
-      "militaryStrength": 30,
-      "garrison": [
-        {
-          "enemyId": "outpost_guard",
-          "count": 4
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "trade",
-        "open_borders",
-        "non_aggression",
-        "alliance"
-      ],
-      "specialty": "stone_trade",
-      "personality": "scholar",
-      "emblem": "assets/historical-icons/civilizations/mongol.svg",
-      "developmentProfile": {
-        "military": 1,
-        "economy": 1.1,
-        "diplomacy": 1.01
-      },
-      "dailyActionProfile": {
-        "economy": 5,
-        "military": 4,
-        "diplomacy": 4
-      },
-      "eraUnitBranch": "cavalry",
-      "gridX": 168,
-      "gridY": 211
-    },
-    {
-      "id": "black_tide_republic",
-      "name": "黑潮共和国",
-      "icon": "⚓",
-      "description": "黑潮共和国在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
-      "domain": "naval",
-      "faction": "black_tide_republic",
-      "develops": "limited",
-      "initialRelation": 3,
-      "militaryStrength": 33,
-      "garrison": [
-        {
-          "enemyId": "corsair_galley",
-          "count": 5
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "trade",
-        "open_borders",
-        "non_aggression",
-        "alliance"
-      ],
-      "specialty": "food_trade",
-      "personality": "expansionist",
-      "emblem": "assets/historical-icons/civilizations/old_egypt.svg",
-      "developmentProfile": {
-        "military": 1.1,
-        "economy": 0.9,
-        "diplomacy": 1.0899999999999999
-      },
-      "dailyActionProfile": {
-        "economy": 3,
-        "military": 5,
-        "diplomacy": 5
-      },
-      "eraUnitBranch": "ranged",
-      "gridX": 230,
-      "gridY": 230
-    },
-    {
-      "id": "silver_bay_port",
-      "name": "银湾商港",
-      "icon": "⚓",
-      "description": "银湾商港在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
-      "domain": "naval",
-      "faction": "silver_bay_port",
-      "develops": "limited",
-      "initialRelation": 10,
-      "militaryStrength": 36,
-      "garrison": [
-        {
-          "enemyId": "corsair_galley",
-          "count": 2
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "trade",
-        "open_borders",
-        "non_aggression",
-        "alliance"
-      ],
-      "specialty": "knowledge_exchange",
-      "personality": "diplomat",
-      "emblem": "assets/historical-icons/civilizations/rome.svg",
-      "developmentProfile": {
-        "military": 0.8,
-        "economy": 1,
-        "diplomacy": 1.17
-      },
-      "dailyActionProfile": {
-        "economy": 4,
-        "military": 2,
-        "diplomacy": 6
-      },
-      "eraUnitBranch": "ranged",
-      "gridX": 264,
-      "gridY": 172
-    },
-    {
-      "id": "azure_steppe_court",
-      "name": "苍原汗庭",
-      "icon": "🏛️",
-      "description": "苍原汗庭在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
-      "domain": "land",
-      "faction": "azure_steppe_court",
-      "develops": "limited",
-      "initialRelation": 17,
-      "militaryStrength": 39,
-      "garrison": [
-        {
-          "enemyId": "outpost_guard",
-          "count": 3
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "trade",
-        "open_borders",
-        "non_aggression",
-        "alliance"
-      ],
-      "specialty": "naval_trade",
-      "personality": "traditionalist",
-      "emblem": "assets/historical-icons/civilizations/ghana_empire.svg",
-      "developmentProfile": {
-        "military": 0.9,
-        "economy": 1.1,
-        "diplomacy": 0.85
-      },
-      "dailyActionProfile": {
-        "economy": 5,
-        "military": 3,
-        "diplomacy": 2
-      },
-      "eraUnitBranch": "ranged",
-      "gridX": 354,
-      "gridY": 206
-    },
-    {
-      "id": "riverbend_federation",
-      "name": "河套谷仓联邦",
-      "icon": "🏛️",
-      "description": "河套谷仓联邦在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
-      "domain": "land",
-      "faction": "riverbend_federation",
-      "develops": "limited",
-      "initialRelation": 24,
-      "militaryStrength": 42,
-      "garrison": [
-        {
-          "enemyId": "outpost_guard",
-          "count": 4
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "trade",
-        "open_borders",
-        "non_aggression",
-        "alliance"
-      ],
-      "specialty": "wood_trade",
-      "personality": "merchant",
-      "emblem": "assets/historical-icons/civilizations/han.svg",
-      "developmentProfile": {
-        "military": 1,
-        "economy": 0.9,
-        "diplomacy": 0.9299999999999999
-      },
-      "dailyActionProfile": {
-        "economy": 3,
-        "military": 4,
-        "diplomacy": 3
-      },
-      "eraUnitBranch": "cavalry",
-      "gridX": 32,
-      "gridY": 294
-    },
-    {
-      "id": "white_tower_order",
-      "name": "白塔修会",
-      "icon": "🏛️",
-      "description": "白塔修会在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
-      "domain": "land",
-      "faction": "white_tower_order",
-      "develops": "limited",
-      "initialRelation": -17,
-      "militaryStrength": 45,
-      "garrison": [
-        {
-          "enemyId": "outpost_guard",
-          "count": 5
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "trade",
-        "open_borders",
-        "non_aggression",
-        "alliance"
-      ],
-      "specialty": "gold_trade",
-      "personality": "guardian",
-      "emblem": "assets/historical-icons/civilizations/venice.svg",
-      "developmentProfile": {
-        "military": 1.1,
-        "economy": 1,
-        "diplomacy": 1.01
-      },
-      "dailyActionProfile": {
-        "economy": 4,
-        "military": 5,
-        "diplomacy": 4
-      },
-      "eraUnitBranch": "anti_cavalry",
-      "gridX": 94,
-      "gridY": 300
-    },
-    {
-      "id": "golden_sheaf_city",
-      "name": "金穗自由市",
-      "icon": "🏛️",
-      "description": "金穗自由市在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
-      "domain": "land",
-      "faction": "golden_sheaf_city",
-      "develops": "limited",
-      "initialRelation": -10,
-      "militaryStrength": 48,
-      "garrison": [
-        {
-          "enemyId": "outpost_guard",
-          "count": 2
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "trade",
-        "open_borders",
-        "non_aggression",
-        "alliance"
-      ],
-      "specialty": "stone_trade",
-      "personality": "scholar",
-      "emblem": "assets/historical-icons/civilizations/mongol.svg",
-      "developmentProfile": {
-        "military": 0.8,
-        "economy": 1.1,
-        "diplomacy": 1.0899999999999999
-      },
-      "dailyActionProfile": {
-        "economy": 5,
-        "military": 2,
-        "diplomacy": 5
-      },
-      "eraUnitBranch": "infantry",
-      "gridX": 175,
-      "gridY": 283
-    },
-    {
-      "id": "mistwood_commune",
-      "name": "雾林公社",
-      "icon": "🏛️",
-      "description": "雾林公社在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
-      "domain": "land",
-      "faction": "mistwood_commune",
-      "develops": "limited",
-      "initialRelation": -3,
-      "militaryStrength": 51,
-      "garrison": [
-        {
-          "enemyId": "outpost_guard",
-          "count": 3
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "trade",
-        "open_borders",
-        "non_aggression",
-        "alliance"
-      ],
-      "specialty": "food_trade",
-      "personality": "expansionist",
-      "emblem": "assets/historical-icons/civilizations/old_egypt.svg",
-      "developmentProfile": {
-        "military": 0.9,
-        "economy": 0.9,
-        "diplomacy": 1.17
-      },
-      "dailyActionProfile": {
-        "economy": 3,
-        "military": 3,
-        "diplomacy": 6
-      },
-      "eraUnitBranch": "ranged",
-      "gridX": 237,
-      "gridY": 289
-    },
-    {
-      "id": "obsidian_mining_state",
-      "name": "曜石矿邦",
-      "icon": "🏛️",
-      "description": "曜石矿邦在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
-      "domain": "land",
-      "faction": "obsidian_mining_state",
-      "develops": "limited",
-      "initialRelation": 4,
-      "militaryStrength": 54,
-      "garrison": [
-        {
-          "enemyId": "outpost_guard",
-          "count": 4
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "trade",
-        "open_borders",
-        "non_aggression",
-        "alliance"
-      ],
-      "specialty": "knowledge_exchange",
-      "personality": "diplomat",
-      "emblem": "assets/historical-icons/civilizations/rome.svg",
-      "developmentProfile": {
-        "military": 1,
-        "economy": 1,
-        "diplomacy": 0.85
-      },
-      "dailyActionProfile": {
-        "economy": 4,
-        "military": 4,
-        "diplomacy": 2
-      },
-      "eraUnitBranch": "cavalry",
-      "gridX": 299,
-      "gridY": 295
-    },
-    {
-      "id": "longbridge_artisans",
-      "name": "长桥工匠邦",
-      "icon": "🏛️",
-      "description": "长桥工匠邦在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
-      "domain": "land",
-      "faction": "longbridge_artisans",
-      "develops": "limited",
-      "initialRelation": 11,
-      "militaryStrength": 57,
-      "garrison": [
-        {
-          "enemyId": "outpost_guard",
-          "count": 5
-        }
-      ],
-      "actions": [
-        "talk",
-        "gift",
-        "aid",
-        "trade",
-        "open_borders",
-        "non_aggression",
-        "alliance"
-      ],
-      "specialty": "naval_trade",
-      "personality": "traditionalist",
-      "emblem": "assets/historical-icons/civilizations/ghana_empire.svg",
-      "developmentProfile": {
-        "military": 1.1,
-        "economy": 1.1,
-        "diplomacy": 0.9299999999999999
-      },
-      "dailyActionProfile": {
-        "economy": 5,
-        "military": 5,
-        "diplomacy": 3
-      },
-      "eraUnitBranch": "anti_cavalry",
-      "gridX": 361,
-      "gridY": 278
+     "enemyId": "outpost_guard",
+     "count": 2
     }
-  ],
-  "wildSites": [
-    {
-      "id": "wild_wood_1",
-      "name": "盗木营地",
-      "description": "一群在林区盗伐的流民，木料与栅栏之间堆着他们的赃物。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 41,
-      "gridY": 57,
-      "baseStrength": 16,
-      "respawnDays": 4,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 24
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_food_1",
-      "name": "荒野猎团",
-      "description": "以狩猎为生的野人部落，猎获的兽肉晾晒在营火旁。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 123,
-      "gridY": 193,
-      "baseStrength": 18,
-      "respawnDays": 5,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 28
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_gold_1",
-      "name": "私铸窝点",
-      "description": "私自铸币的地下作坊，熔炉的火光映着假币与真金。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 207,
-      "gridY": 331,
-      "baseStrength": 20,
-      "respawnDays": 6,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 32
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_bandit_1",
-      "name": "林道匪寨",
-      "description": "盘踞林道的匪寨，专劫过往商旅，寨墙后堆满抢来的货物。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 290,
-      "gridY": 104,
-      "baseStrength": 22,
-      "respawnDays": 7,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 36
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_food_2",
-      "name": "野牛群地",
-      "description": "野牛群聚集的草场，看守者驱赶兽群，也守卫这片丰饶。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 373,
-      "gridY": 241,
-      "baseStrength": 24,
-      "respawnDays": 8,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 40
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_stone_1",
-      "name": "山贼石寨",
-      "description": "据山而守的贼寇，以石块和滚木封锁山路。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 92,
-      "gridY": 14,
-      "baseStrength": 26,
-      "respawnDays": 9,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 44
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_nomad_1",
-      "name": "流动掠骑",
-      "description": "逐水草而居的游牧劫掠者，马队来去无踪。",
-      "category": "roaming_host",
-      "domain": "land",
-      "gridX": 175,
-      "gridY": 151,
-      "baseStrength": 28,
-      "respawnDays": 10,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 48
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
-    },
-    {
-      "id": "wild_mine_1",
-      "name": "废弃矿坑守军",
-      "description": "占据废弃矿坑的守军，坑道深处或许藏着未采尽的矿脉。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 262,
-      "gridY": 284,
-      "baseStrength": 30,
-      "respawnDays": 4,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 52
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_bandit_2",
-      "name": "南道劫掠营",
-      "description": "盘踞南道要冲的劫掠营地，是过往车队的必经之险。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 341,
-      "gridY": 61,
-      "baseStrength": 32,
-      "respawnDays": 5,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 56
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_ruin_1",
-      "name": "古战场守卫",
-      "description": "古战场废墟中的守灵者，据说亡者的兵器仍埋在地下。",
-      "category": "ruin_guard",
-      "domain": "land",
-      "gridX": 60,
-      "gridY": 198,
-      "baseStrength": 34,
-      "respawnDays": 6,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 24
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
-    },
-    {
-      "id": "wild_wood_2",
-      "name": "密林盗猎团",
-      "description": "潜伏密林的盗猎者，陷阱遍布，猎物与行人皆入其网。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 143,
-      "gridY": 335,
-      "baseStrength": 36,
-      "respawnDays": 7,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 28
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_fort_1",
-      "name": "旧边塞叛军",
-      "description": "叛离旧主的边塞守军，占据废弃要塞自立为王。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 226,
-      "gridY": 108,
-      "baseStrength": 38,
-      "respawnDays": 8,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 32
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_food_3",
-      "name": "丰饶谷地守卫",
-      "description": "看守丰饶谷地的武装，良田沃土是他们最硬的底气。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 309,
-      "gridY": 245,
-      "baseStrength": 40,
-      "respawnDays": 9,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 36
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_mine_2",
-      "name": "高地矿团",
-      "description": "盘踞高地矿脉的矿团，铁镐与刀剑随时准备切换。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 28,
-      "gridY": 18,
-      "baseStrength": 42,
-      "respawnDays": 10,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 40
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_pirate_1",
-      "name": "浅湾海盗",
-      "description": "藏身浅湾的海盗，帆影一起便扑向过路的商船。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 124,
-      "gridY": 142,
-      "baseStrength": 44,
-      "respawnDays": 4,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 44
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_pirate_2",
-      "name": "河口劫船团",
-      "description": "封锁河口的劫船团伙，扼住了水运的咽喉。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 230,
-      "gridY": 256,
-      "baseStrength": 46,
-      "respawnDays": 5,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 48
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_pirate_3",
-      "name": "外海私掠队",
-      "description": "活动于外海的私掠船队，挂着来历不明的旗号。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 259,
-      "gridY": 47,
-      "baseStrength": 48,
-      "respawnDays": 6,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 52
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_pirate_4",
-      "name": "北水道封锁舰",
-      "description": "封锁北水道的武装舰船，胆敢通行的船只都会被拦下。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 355,
-      "gridY": 197,
-      "baseStrength": 50,
-      "respawnDays": 7,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 56
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_site_019",
-      "name": "边地营寨·19",
-      "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 79,
-      "gridY": 339,
-      "baseStrength": 16,
-      "respawnDays": 8,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 24
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_site_020",
-      "name": "资源守卫·20",
-      "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 162,
-      "gridY": 112,
-      "baseStrength": 18,
-      "respawnDays": 9,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 28
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_site_021",
-      "name": "游荡军团·21",
-      "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
-      "category": "roaming_host",
-      "domain": "land",
-      "gridX": 245,
-      "gridY": 249,
-      "baseStrength": 20,
-      "respawnDays": 10,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 32
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
-    },
-    {
-      "id": "wild_site_022",
-      "name": "遗迹守卫·22",
-      "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
-      "category": "ruin_guard",
-      "domain": "land",
-      "gridX": 328,
-      "gridY": 22,
-      "baseStrength": 22,
-      "respawnDays": 4,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 36
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
-    },
-    {
-      "id": "wild_site_023",
-      "name": "海盗舰队·23",
-      "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 68,
-      "gridY": 138,
-      "baseStrength": 24,
-      "respawnDays": 5,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 40
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_site_024",
-      "name": "荒野兽群·24",
-      "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
-      "category": "ancient_beast",
-      "domain": "land",
-      "gridX": 132,
-      "gridY": 294,
-      "baseStrength": 26,
-      "respawnDays": 6,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 44
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
-    },
-    {
-      "id": "wild_site_025",
-      "name": "边地营寨·25",
-      "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 213,
-      "gridY": 69,
-      "baseStrength": 28,
-      "respawnDays": 7,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 48
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_site_026",
-      "name": "资源守卫·26",
-      "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 296,
-      "gridY": 206,
-      "baseStrength": 30,
-      "respawnDays": 8,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 52
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_site_027",
-      "name": "游荡军团·27",
-      "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
-      "category": "roaming_host",
-      "domain": "land",
-      "gridX": 17,
-      "gridY": 340,
-      "baseStrength": 32,
-      "respawnDays": 9,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 56
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
-    },
-    {
-      "id": "wild_site_028",
-      "name": "遗迹守卫·28",
-      "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
-      "category": "ruin_guard",
-      "domain": "land",
-      "gridX": 98,
-      "gridY": 116,
-      "baseStrength": 34,
-      "respawnDays": 10,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 24
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
-    },
-    {
-      "id": "wild_site_029",
-      "name": "海盗舰队·29",
-      "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 230,
-      "gridY": 302,
-      "baseStrength": 36,
-      "respawnDays": 4,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 28
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_site_030",
-      "name": "荒野兽群·30",
-      "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
-      "category": "ancient_beast",
-      "domain": "land",
-      "gridX": 264,
-      "gridY": 26,
-      "baseStrength": 38,
-      "respawnDays": 5,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 32
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
-    },
-    {
-      "id": "wild_site_031",
-      "name": "边地营寨·31",
-      "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 347,
-      "gridY": 163,
-      "baseStrength": 40,
-      "respawnDays": 6,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 36
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_site_032",
-      "name": "资源守卫·32",
-      "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 66,
-      "gridY": 300,
-      "baseStrength": 42,
-      "respawnDays": 7,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 40
-        }
-      ],
-      "threatBand": "low",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_site_033",
-      "name": "游荡军团·33",
-      "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
-      "category": "roaming_host",
-      "domain": "land",
-      "gridX": 149,
-      "gridY": 73,
-      "baseStrength": 68,
-      "respawnDays": 8,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 44
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
-    },
-    {
-      "id": "wild_site_034",
-      "name": "遗迹守卫·34",
-      "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
-      "category": "ruin_guard",
-      "domain": "naval",
-      "gridX": 230,
-      "gridY": 218,
-      "baseStrength": 71,
-      "respawnDays": 9,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 48
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
-    },
-    {
-      "id": "wild_site_035",
-      "name": "海盗舰队·35",
-      "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 286,
-      "gridY": 376,
-      "baseStrength": 74,
-      "respawnDays": 10,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 52
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_site_036",
-      "name": "荒野兽群·36",
-      "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
-      "category": "ancient_beast",
-      "domain": "land",
-      "gridX": 34,
-      "gridY": 120,
-      "baseStrength": 78,
-      "respawnDays": 4,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 56
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
-    },
-    {
-      "id": "wild_site_037",
-      "name": "边地营寨·37",
-      "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 117,
-      "gridY": 257,
-      "baseStrength": 25,
-      "respawnDays": 5,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 24
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_site_038",
-      "name": "资源守卫·38",
-      "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 200,
-      "gridY": 30,
-      "baseStrength": 28,
-      "respawnDays": 6,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 28
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_site_039",
-      "name": "游荡军团·39",
-      "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
-      "category": "roaming_host",
-      "domain": "land",
-      "gridX": 283,
-      "gridY": 167,
-      "baseStrength": 31,
-      "respawnDays": 7,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 32
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
-    },
-    {
-      "id": "wild_site_040",
-      "name": "遗迹守卫·40",
-      "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
-      "category": "ruin_guard",
-      "domain": "land",
-      "gridX": 362,
-      "gridY": 308,
-      "baseStrength": 34,
-      "respawnDays": 8,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 36
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
-    },
-    {
-      "id": "wild_site_041",
-      "name": "海盗舰队·41",
-      "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 83,
-      "gridY": 79,
-      "baseStrength": 37,
-      "respawnDays": 9,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 40
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_site_042",
-      "name": "荒野兽群·42",
-      "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
-      "category": "ancient_beast",
-      "domain": "land",
-      "gridX": 167,
-      "gridY": 215,
-      "baseStrength": 40,
-      "respawnDays": 10,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 44
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
-    },
-    {
-      "id": "wild_site_043",
-      "name": "边地营寨·43",
-      "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 243,
-      "gridY": 343,
-      "baseStrength": 43,
-      "respawnDays": 4,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 48
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_site_044",
-      "name": "资源守卫·44",
-      "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 334,
-      "gridY": 124,
-      "baseStrength": 47,
-      "respawnDays": 5,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 52
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_site_045",
-      "name": "游荡军团·45",
-      "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
-      "category": "roaming_host",
-      "domain": "naval",
-      "gridX": 12,
-      "gridY": 220,
-      "baseStrength": 50,
-      "respawnDays": 6,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 56
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
-    },
-    {
-      "id": "wild_site_046",
-      "name": "遗迹守卫·46",
-      "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
-      "category": "ruin_guard",
-      "domain": "land",
-      "gridX": 137,
-      "gridY": 33,
-      "baseStrength": 53,
-      "respawnDays": 7,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 24
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
-    },
-    {
-      "id": "wild_site_047",
-      "name": "海盗舰队·47",
-      "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 194,
-      "gridY": 196,
-      "baseStrength": 56,
-      "respawnDays": 8,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 28
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_site_048",
-      "name": "荒野兽群·48",
-      "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
-      "category": "ancient_beast",
-      "domain": "land",
-      "gridX": 302,
-      "gridY": 308,
-      "baseStrength": 59,
-      "respawnDays": 9,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 32
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
-    },
-    {
-      "id": "wild_site_049",
-      "name": "边地营寨·49",
-      "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 21,
-      "gridY": 81,
-      "baseStrength": 62,
-      "respawnDays": 10,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 36
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_site_050",
-      "name": "资源守卫·50",
-      "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 104,
-      "gridY": 218,
-      "baseStrength": 65,
-      "respawnDays": 4,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 40
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_site_051",
-      "name": "游荡军团·51",
-      "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
-      "category": "roaming_host",
-      "domain": "land",
-      "gridX": 187,
-      "gridY": 355,
-      "baseStrength": 68,
-      "respawnDays": 5,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 44
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
-    },
-    {
-      "id": "wild_site_052",
-      "name": "遗迹守卫·52",
-      "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
-      "category": "ruin_guard",
-      "domain": "land",
-      "gridX": 270,
-      "gridY": 128,
-      "baseStrength": 71,
-      "respawnDays": 6,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 48
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
-    },
-    {
-      "id": "wild_site_053",
-      "name": "海盗舰队·53",
-      "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 363,
-      "gridY": 274,
-      "baseStrength": 74,
-      "respawnDays": 7,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 52
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_site_054",
-      "name": "荒野兽群·54",
-      "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
-      "category": "ancient_beast",
-      "domain": "land",
-      "gridX": 72,
-      "gridY": 38,
-      "baseStrength": 78,
-      "respawnDays": 8,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 56
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
-    },
-    {
-      "id": "wild_site_055",
-      "name": "边地营寨·55",
-      "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 155,
-      "gridY": 175,
-      "baseStrength": 25,
-      "respawnDays": 9,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 24
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_site_056",
-      "name": "资源守卫·56",
-      "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
-      "category": "resource_guard",
-      "domain": "naval",
-      "gridX": 230,
-      "gridY": 320,
-      "baseStrength": 28,
-      "respawnDays": 10,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 28
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_site_057",
-      "name": "游荡军团·57",
-      "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
-      "category": "roaming_host",
-      "domain": "land",
-      "gridX": 321,
-      "gridY": 85,
-      "baseStrength": 31,
-      "respawnDays": 4,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 32
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
-    },
-    {
-      "id": "wild_site_058",
-      "name": "遗迹守卫·58",
-      "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
-      "category": "ruin_guard",
-      "domain": "land",
-      "gridX": 40,
-      "gridY": 222,
-      "baseStrength": 34,
-      "respawnDays": 5,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 36
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
-    },
-    {
-      "id": "wild_site_059",
-      "name": "海盗舰队·59",
-      "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 123,
-      "gridY": 359,
-      "baseStrength": 37,
-      "respawnDays": 6,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 40
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_site_060",
-      "name": "荒野兽群·60",
-      "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
-      "category": "ancient_beast",
-      "domain": "land",
-      "gridX": 206,
-      "gridY": 132,
-      "baseStrength": 40,
-      "respawnDays": 7,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 44
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
-    },
-    {
-      "id": "wild_site_061",
-      "name": "边地营寨·61",
-      "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 289,
-      "gridY": 269,
-      "baseStrength": 43,
-      "respawnDays": 8,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 48
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_site_062",
-      "name": "资源守卫·62",
-      "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 372,
-      "gridY": 42,
-      "baseStrength": 47,
-      "respawnDays": 9,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 52
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_site_063",
-      "name": "游荡军团·63",
-      "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
-      "category": "roaming_host",
-      "domain": "land",
-      "gridX": 91,
-      "gridY": 179,
-      "baseStrength": 50,
-      "respawnDays": 10,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 56
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
-    },
-    {
-      "id": "wild_site_064",
-      "name": "遗迹守卫·64",
-      "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
-      "category": "ruin_guard",
-      "domain": "land",
-      "gridX": 174,
-      "gridY": 316,
-      "baseStrength": 53,
-      "respawnDays": 4,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 24
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
-    },
-    {
-      "id": "wild_site_065",
-      "name": "海盗舰队·65",
-      "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 257,
-      "gridY": 89,
-      "baseStrength": 56,
-      "respawnDays": 5,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 28
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_site_066",
-      "name": "荒野兽群·66",
-      "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
-      "category": "ancient_beast",
-      "domain": "land",
-      "gridX": 340,
-      "gridY": 226,
-      "baseStrength": 59,
-      "respawnDays": 6,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 32
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
-    },
-    {
-      "id": "wild_site_067",
-      "name": "边地营寨·67",
-      "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
-      "category": "barbarian_camp",
-      "domain": "naval",
-      "gridX": 46,
-      "gridY": 376,
-      "baseStrength": 62,
-      "respawnDays": 7,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 36
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_site_068",
-      "name": "资源守卫·68",
-      "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 142,
-      "gridY": 136,
-      "baseStrength": 65,
-      "respawnDays": 8,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 40
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_site_069",
-      "name": "游荡军团·69",
-      "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
-      "category": "roaming_host",
-      "domain": "land",
-      "gridX": 225,
-      "gridY": 273,
-      "baseStrength": 68,
-      "respawnDays": 9,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 44
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
-    },
-    {
-      "id": "wild_site_070",
-      "name": "遗迹守卫·70",
-      "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
-      "category": "ruin_guard",
-      "domain": "land",
-      "gridX": 308,
-      "gridY": 46,
-      "baseStrength": 71,
-      "respawnDays": 10,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 48
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
-    },
-    {
-      "id": "wild_site_071",
-      "name": "海盗舰队·71",
-      "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 11,
-      "gridY": 199,
-      "baseStrength": 74,
-      "respawnDays": 4,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 52
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_site_072",
-      "name": "荒野兽群·72",
-      "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
-      "category": "ancient_beast",
-      "domain": "land",
-      "gridX": 110,
-      "gridY": 320,
-      "baseStrength": 78,
-      "respawnDays": 5,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 56
-        }
-      ],
-      "threatBand": "medium",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
-    },
-    {
-      "id": "wild_site_073",
-      "name": "边地营寨·73",
-      "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 193,
-      "gridY": 93,
-      "baseStrength": 34,
-      "respawnDays": 6,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 24
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_site_074",
-      "name": "资源守卫·74",
-      "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 276,
-      "gridY": 230,
-      "baseStrength": 39,
-      "respawnDays": 7,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 28
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_site_075",
-      "name": "游荡军团·75",
-      "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
-      "category": "roaming_host",
-      "domain": "land",
-      "gridX": 359,
-      "gridY": 367,
-      "baseStrength": 43,
-      "respawnDays": 8,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 32
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
-    },
-    {
-      "id": "wild_site_076",
-      "name": "遗迹守卫·76",
-      "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
-      "category": "ruin_guard",
-      "domain": "land",
-      "gridX": 78,
-      "gridY": 140,
-      "baseStrength": 47,
-      "respawnDays": 9,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 36
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
-    },
-    {
-      "id": "wild_site_077",
-      "name": "海盗舰队·77",
-      "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 131,
-      "gridY": 247,
-      "baseStrength": 52,
-      "respawnDays": 10,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 40
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_site_078",
-      "name": "荒野兽群·78",
-      "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
-      "category": "ancient_beast",
-      "domain": "naval",
-      "gridX": 244,
-      "gridY": 50,
-      "baseStrength": 56,
-      "respawnDays": 4,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 44
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
-    },
-    {
-      "id": "wild_site_079",
-      "name": "边地营寨·79",
-      "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 327,
-      "gridY": 187,
-      "baseStrength": 60,
-      "respawnDays": 5,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 48
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_site_080",
-      "name": "资源守卫·80",
-      "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 46,
-      "gridY": 324,
-      "baseStrength": 65,
-      "respawnDays": 6,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 52
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_site_081",
-      "name": "游荡军团·81",
-      "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
-      "category": "roaming_host",
-      "domain": "land",
-      "gridX": 123,
-      "gridY": 103,
-      "baseStrength": 69,
-      "respawnDays": 7,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 56
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
-    },
-    {
-      "id": "wild_site_082",
-      "name": "遗迹守卫·82",
-      "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
-      "category": "ruin_guard",
-      "domain": "land",
-      "gridX": 212,
-      "gridY": 234,
-      "baseStrength": 73,
-      "respawnDays": 8,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 24
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
-    },
-    {
-      "id": "wild_site_083",
-      "name": "海盗舰队·83",
-      "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 290,
-      "gridY": 376,
-      "baseStrength": 77,
-      "respawnDays": 9,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 28
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_site_084",
-      "name": "荒野兽群·84",
-      "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
-      "category": "ancient_beast",
-      "domain": "land",
-      "gridX": 14,
-      "gridY": 144,
-      "baseStrength": 82,
-      "respawnDays": 10,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 32
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
-    },
-    {
-      "id": "wild_site_085",
-      "name": "边地营寨·85",
-      "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 97,
-      "gridY": 281,
-      "baseStrength": 86,
-      "respawnDays": 4,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 36
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_site_086",
-      "name": "资源守卫·86",
-      "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 180,
-      "gridY": 54,
-      "baseStrength": 90,
-      "respawnDays": 5,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 40
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_site_087",
-      "name": "游荡军团·87",
-      "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
-      "category": "roaming_host",
-      "domain": "land",
-      "gridX": 263,
-      "gridY": 191,
-      "baseStrength": 95,
-      "respawnDays": 6,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 44
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
-    },
-    {
-      "id": "wild_site_088",
-      "name": "遗迹守卫·88",
-      "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
-      "category": "ruin_guard",
-      "domain": "land",
-      "gridX": 346,
-      "gridY": 328,
-      "baseStrength": 99,
-      "respawnDays": 7,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 48
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
-    },
-    {
-      "id": "wild_site_089",
-      "name": "海盗舰队·89",
-      "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 68,
-      "gridY": 98,
-      "baseStrength": 103,
-      "respawnDays": 8,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 52
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_site_090",
-      "name": "荒野兽群·90",
-      "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
-      "category": "ancient_beast",
-      "domain": "land",
-      "gridX": 148,
-      "gridY": 238,
-      "baseStrength": 108,
-      "respawnDays": 9,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 56
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
-    },
-    {
-      "id": "wild_site_091",
-      "name": "边地营寨·91",
-      "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
-      "category": "barbarian_camp",
-      "domain": "land",
-      "gridX": 231,
-      "gridY": 11,
-      "baseStrength": 34,
-      "respawnDays": 10,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 24
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
-    },
-    {
-      "id": "wild_site_092",
-      "name": "资源守卫·92",
-      "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
-      "category": "resource_guard",
-      "domain": "land",
-      "gridX": 314,
-      "gridY": 148,
-      "baseStrength": 39,
-      "respawnDays": 4,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 28
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
-    },
-    {
-      "id": "wild_site_093",
-      "name": "游荡军团·93",
-      "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
-      "category": "roaming_host",
-      "domain": "land",
-      "gridX": 33,
-      "gridY": 285,
-      "baseStrength": 43,
-      "respawnDays": 5,
-      "rewards": [
-        {
-          "resourceId": "wood",
-          "amount": 32
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 2,
-      "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
-    },
-    {
-      "id": "wild_site_094",
-      "name": "遗迹守卫·94",
-      "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
-      "category": "ruin_guard",
-      "domain": "land",
-      "gridX": 116,
-      "gridY": 58,
-      "baseStrength": 47,
-      "respawnDays": 6,
-      "rewards": [
-        {
-          "resourceId": "food",
-          "amount": 36
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 3,
-      "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
-    },
-    {
-      "id": "wild_site_095",
-      "name": "海盗舰队·95",
-      "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
-      "category": "pirate_fleet",
-      "domain": "naval",
-      "gridX": 198,
-      "gridY": 196,
-      "baseStrength": 52,
-      "respawnDays": 7,
-      "rewards": [
-        {
-          "resourceId": "stone",
-          "amount": 40
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 4,
-      "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
-    },
-    {
-      "id": "wild_site_096",
-      "name": "荒野兽群·96",
-      "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
-      "category": "ancient_beast",
-      "domain": "land",
-      "gridX": 282,
-      "gridY": 332,
-      "baseStrength": 56,
-      "respawnDays": 8,
-      "rewards": [
-        {
-          "resourceId": "gold",
-          "amount": 44
-        }
-      ],
-      "threatBand": "high",
-      "territoryRadius": 5,
-      "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "trade",
+    "open_borders",
+    "non_aggression",
+    "alliance"
+   ],
+   "specialty": "gold_trade",
+   "developmentProfile": {
+    "military": 0.7,
+    "economy": 1.25,
+    "diplomacy": 1.15
+   },
+   "eraUnitBranch": "cavalry",
+   "personality": "guardian",
+   "emblem": "assets/historical-icons/civilizations/venice.svg",
+   "dailyActionProfile": {
+    "economy": 3,
+    "military": 2,
+    "diplomacy": 3
+   }
+  },
+  {
+   "id": "highland_republic",
+   "name": "高地自由邦",
+   "icon": "⛰️",
+   "description": "依托矿山和隘口形成的自由邦，防御顽强但扩张缓慢。",
+   "gridX": 161,
+   "gridY": 116,
+   "domain": "land",
+   "faction": "highlanders",
+   "develops": "limited",
+   "initialRelation": -8,
+   "militaryStrength": 38,
+   "garrison": [
+    {
+     "enemyId": "outpost_guard",
+     "count": 4
     }
-  ]
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "negotiate",
+    "ceasefire",
+    "trade",
+    "non_aggression",
+    "alliance"
+   ],
+   "specialty": "stone_trade",
+   "developmentProfile": {
+    "military": 1.05,
+    "economy": 0.9,
+    "diplomacy": 0.9
+   },
+   "eraUnitBranch": "anti_cavalry",
+   "personality": "scholar",
+   "emblem": "assets/historical-icons/civilizations/mongol.svg",
+   "dailyActionProfile": {
+    "economy": 3,
+    "military": 2,
+    "diplomacy": 3
+   }
+  },
+  {
+   "id": "steppe_khanate",
+   "name": "草原汗庭",
+   "icon": "🏇",
+   "description": "逐水草而居的骑乘共同体，随时代更新骑兵但不建设完整城市。",
+   "gridX": 223,
+   "gridY": 122,
+   "domain": "land",
+   "faction": "steppe",
+   "develops": "limited",
+   "initialRelation": -22,
+   "militaryStrength": 44,
+   "garrison": [
+    {
+     "enemyId": "outpost_guard",
+     "count": 4
+    }
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "negotiate",
+    "ceasefire",
+    "trade",
+    "non_aggression",
+    "joint_patrol",
+    "alliance"
+   ],
+   "specialty": "cavalry_contract",
+   "developmentProfile": {
+    "military": 1.15,
+    "economy": 0.75,
+    "diplomacy": 0.85
+   },
+   "eraUnitBranch": "cavalry",
+   "personality": "expansionist",
+   "emblem": "assets/historical-icons/civilizations/old_egypt.svg",
+   "dailyActionProfile": {
+    "economy": 3,
+    "military": 2,
+    "diplomacy": 3
+   }
+  },
+  {
+   "id": "scholarly_enclave",
+   "name": "学者城社",
+   "icon": "📚",
+   "description": "由档案馆、书院与抄写工坊组成的小型城社，重视知识交流。",
+   "gridX": 304,
+   "gridY": 128,
+   "domain": "land",
+   "faction": "scholars",
+   "develops": "limited",
+   "initialRelation": 22,
+   "militaryStrength": 20,
+   "garrison": [
+    {
+     "enemyId": "outpost_guard",
+     "count": 2
+    }
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "trade",
+    "open_borders",
+    "non_aggression",
+    "alliance"
+   ],
+   "specialty": "knowledge_exchange",
+   "developmentProfile": {
+    "military": 0.65,
+    "economy": 1,
+    "diplomacy": 1.2
+   },
+   "eraUnitBranch": "ranged",
+   "personality": "diplomat",
+   "emblem": "assets/historical-icons/civilizations/rome.svg",
+   "dailyActionProfile": {
+    "economy": 3,
+    "military": 2,
+    "diplomacy": 3
+   }
+  },
+  {
+   "id": "sea_republic",
+   "name": "群岛海贸共和国",
+   "icon": "⛵",
+   "description": "控制河海节点的海贸共和国，舰队和港口会随玩家时代升级。",
+   "gridX": 376,
+   "gridY": 124,
+   "domain": "naval",
+   "faction": "sea_republic",
+   "develops": "limited",
+   "initialRelation": 10,
+   "militaryStrength": 40,
+   "garrison": [
+    {
+     "enemyId": "corsair_galley",
+     "count": 3
+    }
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "trade",
+    "open_borders",
+    "non_aggression",
+    "joint_patrol",
+    "alliance"
+   ],
+   "specialty": "naval_trade",
+   "developmentProfile": {
+    "military": 1,
+    "economy": 1.2,
+    "diplomacy": 1.05
+   },
+   "eraUnitBranch": "ranged",
+   "personality": "traditionalist",
+   "emblem": "assets/historical-icons/civilizations/ghana_empire.svg",
+   "dailyActionProfile": {
+    "economy": 3,
+    "military": 2,
+    "diplomacy": 3
+   }
+  },
+  {
+   "id": "amber_coast_league",
+   "name": "琥珀海岸同盟",
+   "icon": "🏛️",
+   "description": "琥珀海岸同盟在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+   "domain": "land",
+   "faction": "amber_coast_league",
+   "develops": "limited",
+   "initialRelation": -18,
+   "militaryStrength": 24,
+   "garrison": [
+    {
+     "enemyId": "outpost_guard",
+     "count": 2
+    }
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "trade",
+    "open_borders",
+    "non_aggression",
+    "alliance"
+   ],
+   "specialty": "wood_trade",
+   "personality": "merchant",
+   "emblem": "assets/historical-icons/civilizations/han.svg",
+   "developmentProfile": {
+    "military": 0.8,
+    "economy": 0.9,
+    "diplomacy": 0.85
+   },
+   "dailyActionProfile": {
+    "economy": 3,
+    "military": 2,
+    "diplomacy": 2
+   },
+   "eraUnitBranch": "infantry",
+   "gridX": 44,
+   "gridY": 199
+  },
+  {
+   "id": "red_cliff_council",
+   "name": "赤岩议会",
+   "icon": "🏛️",
+   "description": "赤岩议会在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+   "domain": "land",
+   "faction": "red_cliff_council",
+   "develops": "limited",
+   "initialRelation": -11,
+   "militaryStrength": 27,
+   "garrison": [
+    {
+     "enemyId": "outpost_guard",
+     "count": 3
+    }
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "trade",
+    "open_borders",
+    "non_aggression",
+    "alliance"
+   ],
+   "specialty": "gold_trade",
+   "personality": "guardian",
+   "emblem": "assets/historical-icons/civilizations/venice.svg",
+   "developmentProfile": {
+    "military": 0.9,
+    "economy": 1,
+    "diplomacy": 0.9299999999999999
+   },
+   "dailyActionProfile": {
+    "economy": 4,
+    "military": 3,
+    "diplomacy": 3
+   },
+   "eraUnitBranch": "ranged",
+   "gridX": 106,
+   "gridY": 205
+  },
+  {
+   "id": "cloudpeak_academy",
+   "name": "云岭学社",
+   "icon": "🏛️",
+   "description": "云岭学社在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+   "domain": "land",
+   "faction": "cloudpeak_academy",
+   "develops": "limited",
+   "initialRelation": -4,
+   "militaryStrength": 30,
+   "garrison": [
+    {
+     "enemyId": "outpost_guard",
+     "count": 4
+    }
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "trade",
+    "open_borders",
+    "non_aggression",
+    "alliance"
+   ],
+   "specialty": "stone_trade",
+   "personality": "scholar",
+   "emblem": "assets/historical-icons/civilizations/mongol.svg",
+   "developmentProfile": {
+    "military": 1,
+    "economy": 1.1,
+    "diplomacy": 1.01
+   },
+   "dailyActionProfile": {
+    "economy": 5,
+    "military": 4,
+    "diplomacy": 4
+   },
+   "eraUnitBranch": "cavalry",
+   "gridX": 168,
+   "gridY": 211
+  },
+  {
+   "id": "black_tide_republic",
+   "name": "黑潮共和国",
+   "icon": "⚓",
+   "description": "黑潮共和国在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+   "domain": "naval",
+   "faction": "black_tide_republic",
+   "develops": "limited",
+   "initialRelation": 3,
+   "militaryStrength": 33,
+   "garrison": [
+    {
+     "enemyId": "corsair_galley",
+     "count": 5
+    }
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "trade",
+    "open_borders",
+    "non_aggression",
+    "alliance"
+   ],
+   "specialty": "food_trade",
+   "personality": "expansionist",
+   "emblem": "assets/historical-icons/civilizations/old_egypt.svg",
+   "developmentProfile": {
+    "military": 1.1,
+    "economy": 0.9,
+    "diplomacy": 1.0899999999999999
+   },
+   "dailyActionProfile": {
+    "economy": 3,
+    "military": 5,
+    "diplomacy": 5
+   },
+   "eraUnitBranch": "ranged",
+   "gridX": 230,
+   "gridY": 230
+  },
+  {
+   "id": "silver_bay_port",
+   "name": "银湾商港",
+   "icon": "⚓",
+   "description": "银湾商港在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+   "domain": "naval",
+   "faction": "silver_bay_port",
+   "develops": "limited",
+   "initialRelation": 10,
+   "militaryStrength": 36,
+   "garrison": [
+    {
+     "enemyId": "corsair_galley",
+     "count": 2
+    }
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "trade",
+    "open_borders",
+    "non_aggression",
+    "alliance"
+   ],
+   "specialty": "knowledge_exchange",
+   "personality": "diplomat",
+   "emblem": "assets/historical-icons/civilizations/rome.svg",
+   "developmentProfile": {
+    "military": 0.8,
+    "economy": 1,
+    "diplomacy": 1.17
+   },
+   "dailyActionProfile": {
+    "economy": 4,
+    "military": 2,
+    "diplomacy": 6
+   },
+   "eraUnitBranch": "ranged",
+   "gridX": 264,
+   "gridY": 172
+  },
+  {
+   "id": "azure_steppe_court",
+   "name": "苍原汗庭",
+   "icon": "🏛️",
+   "description": "苍原汗庭在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+   "domain": "land",
+   "faction": "azure_steppe_court",
+   "develops": "limited",
+   "initialRelation": 17,
+   "militaryStrength": 39,
+   "garrison": [
+    {
+     "enemyId": "outpost_guard",
+     "count": 3
+    }
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "trade",
+    "open_borders",
+    "non_aggression",
+    "alliance"
+   ],
+   "specialty": "naval_trade",
+   "personality": "traditionalist",
+   "emblem": "assets/historical-icons/civilizations/ghana_empire.svg",
+   "developmentProfile": {
+    "military": 0.9,
+    "economy": 1.1,
+    "diplomacy": 0.85
+   },
+   "dailyActionProfile": {
+    "economy": 5,
+    "military": 3,
+    "diplomacy": 2
+   },
+   "eraUnitBranch": "ranged",
+   "gridX": 354,
+   "gridY": 206
+  },
+  {
+   "id": "riverbend_federation",
+   "name": "河套谷仓联邦",
+   "icon": "🏛️",
+   "description": "河套谷仓联邦在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+   "domain": "land",
+   "faction": "riverbend_federation",
+   "develops": "limited",
+   "initialRelation": 24,
+   "militaryStrength": 42,
+   "garrison": [
+    {
+     "enemyId": "outpost_guard",
+     "count": 4
+    }
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "trade",
+    "open_borders",
+    "non_aggression",
+    "alliance"
+   ],
+   "specialty": "wood_trade",
+   "personality": "merchant",
+   "emblem": "assets/historical-icons/civilizations/han.svg",
+   "developmentProfile": {
+    "military": 1,
+    "economy": 0.9,
+    "diplomacy": 0.9299999999999999
+   },
+   "dailyActionProfile": {
+    "economy": 3,
+    "military": 4,
+    "diplomacy": 3
+   },
+   "eraUnitBranch": "cavalry",
+   "gridX": 32,
+   "gridY": 294
+  },
+  {
+   "id": "white_tower_order",
+   "name": "白塔修会",
+   "icon": "🏛️",
+   "description": "白塔修会在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+   "domain": "land",
+   "faction": "white_tower_order",
+   "develops": "limited",
+   "initialRelation": -17,
+   "militaryStrength": 45,
+   "garrison": [
+    {
+     "enemyId": "outpost_guard",
+     "count": 5
+    }
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "trade",
+    "open_borders",
+    "non_aggression",
+    "alliance"
+   ],
+   "specialty": "gold_trade",
+   "personality": "guardian",
+   "emblem": "assets/historical-icons/civilizations/venice.svg",
+   "developmentProfile": {
+    "military": 1.1,
+    "economy": 1,
+    "diplomacy": 1.01
+   },
+   "dailyActionProfile": {
+    "economy": 4,
+    "military": 5,
+    "diplomacy": 4
+   },
+   "eraUnitBranch": "anti_cavalry",
+   "gridX": 94,
+   "gridY": 300
+  },
+  {
+   "id": "golden_sheaf_city",
+   "name": "金穗自由市",
+   "icon": "🏛️",
+   "description": "金穗自由市在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+   "domain": "land",
+   "faction": "golden_sheaf_city",
+   "develops": "limited",
+   "initialRelation": -10,
+   "militaryStrength": 48,
+   "garrison": [
+    {
+     "enemyId": "outpost_guard",
+     "count": 2
+    }
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "trade",
+    "open_borders",
+    "non_aggression",
+    "alliance"
+   ],
+   "specialty": "stone_trade",
+   "personality": "scholar",
+   "emblem": "assets/historical-icons/civilizations/mongol.svg",
+   "developmentProfile": {
+    "military": 0.8,
+    "economy": 1.1,
+    "diplomacy": 1.0899999999999999
+   },
+   "dailyActionProfile": {
+    "economy": 5,
+    "military": 2,
+    "diplomacy": 5
+   },
+   "eraUnitBranch": "infantry",
+   "gridX": 175,
+   "gridY": 283
+  },
+  {
+   "id": "mistwood_commune",
+   "name": "雾林公社",
+   "icon": "🏛️",
+   "description": "雾林公社在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+   "domain": "land",
+   "faction": "mistwood_commune",
+   "develops": "limited",
+   "initialRelation": -3,
+   "militaryStrength": 51,
+   "garrison": [
+    {
+     "enemyId": "outpost_guard",
+     "count": 3
+    }
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "trade",
+    "open_borders",
+    "non_aggression",
+    "alliance"
+   ],
+   "specialty": "food_trade",
+   "personality": "expansionist",
+   "emblem": "assets/historical-icons/civilizations/old_egypt.svg",
+   "developmentProfile": {
+    "military": 0.9,
+    "economy": 0.9,
+    "diplomacy": 1.17
+   },
+   "dailyActionProfile": {
+    "economy": 3,
+    "military": 3,
+    "diplomacy": 6
+   },
+   "eraUnitBranch": "ranged",
+   "gridX": 237,
+   "gridY": 289
+  },
+  {
+   "id": "obsidian_mining_state",
+   "name": "曜石矿邦",
+   "icon": "🏛️",
+   "description": "曜石矿邦在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+   "domain": "land",
+   "faction": "obsidian_mining_state",
+   "develops": "limited",
+   "initialRelation": 4,
+   "militaryStrength": 54,
+   "garrison": [
+    {
+     "enemyId": "outpost_guard",
+     "count": 4
+    }
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "trade",
+    "open_borders",
+    "non_aggression",
+    "alliance"
+   ],
+   "specialty": "knowledge_exchange",
+   "personality": "diplomat",
+   "emblem": "assets/historical-icons/civilizations/rome.svg",
+   "developmentProfile": {
+    "military": 1,
+    "economy": 1,
+    "diplomacy": 0.85
+   },
+   "dailyActionProfile": {
+    "economy": 4,
+    "military": 4,
+    "diplomacy": 2
+   },
+   "eraUnitBranch": "cavalry",
+   "gridX": 299,
+   "gridY": 295
+  },
+  {
+   "id": "longbridge_artisans",
+   "name": "长桥工匠邦",
+   "icon": "🏛️",
+   "description": "长桥工匠邦在固定大世界中经营领地，并依据自身性格采取每日战略行动。",
+   "domain": "land",
+   "faction": "longbridge_artisans",
+   "develops": "limited",
+   "initialRelation": 11,
+   "militaryStrength": 57,
+   "garrison": [
+    {
+     "enemyId": "outpost_guard",
+     "count": 5
+    }
+   ],
+   "actions": [
+    "talk",
+    "gift",
+    "aid",
+    "trade",
+    "open_borders",
+    "non_aggression",
+    "alliance"
+   ],
+   "specialty": "naval_trade",
+   "personality": "traditionalist",
+   "emblem": "assets/historical-icons/civilizations/ghana_empire.svg",
+   "developmentProfile": {
+    "military": 1.1,
+    "economy": 1.1,
+    "diplomacy": 0.9299999999999999
+   },
+   "dailyActionProfile": {
+    "economy": 5,
+    "military": 5,
+    "diplomacy": 3
+   },
+   "eraUnitBranch": "anti_cavalry",
+   "gridX": 361,
+   "gridY": 278
+  }
+ ],
+ "wildSites": [
+  {
+   "id": "wild_wood_1",
+   "name": "盗木营地",
+   "description": "一群在林区盗伐的流民，木料与栅栏之间堆着他们的赃物。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 41,
+   "gridY": 57,
+   "baseStrength": 16,
+   "respawnDays": 4,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 24
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_food_1",
+   "name": "荒野猎团",
+   "description": "以狩猎为生的野人部落，猎获的兽肉晾晒在营火旁。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 123,
+   "gridY": 193,
+   "baseStrength": 18,
+   "respawnDays": 5,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 28
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_gold_1",
+   "name": "私铸窝点",
+   "description": "私自铸币的地下作坊，熔炉的火光映着假币与真金。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 207,
+   "gridY": 331,
+   "baseStrength": 20,
+   "respawnDays": 6,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 32
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_bandit_1",
+   "name": "林道匪寨",
+   "description": "盘踞林道的匪寨，专劫过往商旅，寨墙后堆满抢来的货物。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 290,
+   "gridY": 104,
+   "baseStrength": 22,
+   "respawnDays": 7,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 36
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_food_2",
+   "name": "野牛群地",
+   "description": "野牛群聚集的草场，看守者驱赶兽群，也守卫这片丰饶。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 373,
+   "gridY": 241,
+   "baseStrength": 24,
+   "respawnDays": 8,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 40
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_stone_1",
+   "name": "山贼石寨",
+   "description": "据山而守的贼寇，以石块和滚木封锁山路。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 92,
+   "gridY": 14,
+   "baseStrength": 26,
+   "respawnDays": 9,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 44
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_nomad_1",
+   "name": "流动掠骑",
+   "description": "逐水草而居的游牧劫掠者，马队来去无踪。",
+   "category": "roaming_host",
+   "domain": "land",
+   "gridX": 175,
+   "gridY": 151,
+   "baseStrength": 28,
+   "respawnDays": 10,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 48
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+  },
+  {
+   "id": "wild_mine_1",
+   "name": "废弃矿坑守军",
+   "description": "占据废弃矿坑的守军，坑道深处或许藏着未采尽的矿脉。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 262,
+   "gridY": 284,
+   "baseStrength": 30,
+   "respawnDays": 4,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 52
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_bandit_2",
+   "name": "南道劫掠营",
+   "description": "盘踞南道要冲的劫掠营地，是过往车队的必经之险。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 341,
+   "gridY": 61,
+   "baseStrength": 32,
+   "respawnDays": 5,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 56
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_ruin_1",
+   "name": "古战场守卫",
+   "description": "古战场废墟中的守灵者，据说亡者的兵器仍埋在地下。",
+   "category": "ruin_guard",
+   "domain": "land",
+   "gridX": 60,
+   "gridY": 198,
+   "baseStrength": 34,
+   "respawnDays": 6,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 24
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+  },
+  {
+   "id": "wild_wood_2",
+   "name": "密林盗猎团",
+   "description": "潜伏密林的盗猎者，陷阱遍布，猎物与行人皆入其网。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 143,
+   "gridY": 335,
+   "baseStrength": 36,
+   "respawnDays": 7,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 28
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_fort_1",
+   "name": "旧边塞叛军",
+   "description": "叛离旧主的边塞守军，占据废弃要塞自立为王。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 226,
+   "gridY": 108,
+   "baseStrength": 38,
+   "respawnDays": 8,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 32
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_food_3",
+   "name": "丰饶谷地守卫",
+   "description": "看守丰饶谷地的武装，良田沃土是他们最硬的底气。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 309,
+   "gridY": 245,
+   "baseStrength": 40,
+   "respawnDays": 9,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 36
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_mine_2",
+   "name": "高地矿团",
+   "description": "盘踞高地矿脉的矿团，铁镐与刀剑随时准备切换。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 28,
+   "gridY": 18,
+   "baseStrength": 42,
+   "respawnDays": 10,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 40
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_pirate_1",
+   "name": "浅湾海盗",
+   "description": "藏身浅湾的海盗，帆影一起便扑向过路的商船。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 124,
+   "gridY": 142,
+   "baseStrength": 44,
+   "respawnDays": 4,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 44
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_pirate_2",
+   "name": "河口劫船团",
+   "description": "封锁河口的劫船团伙，扼住了水运的咽喉。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 230,
+   "gridY": 256,
+   "baseStrength": 46,
+   "respawnDays": 5,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 48
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_pirate_3",
+   "name": "外海私掠队",
+   "description": "活动于外海的私掠船队，挂着来历不明的旗号。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 259,
+   "gridY": 47,
+   "baseStrength": 48,
+   "respawnDays": 6,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 52
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_pirate_4",
+   "name": "北水道封锁舰",
+   "description": "封锁北水道的武装舰船，胆敢通行的船只都会被拦下。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 355,
+   "gridY": 197,
+   "baseStrength": 50,
+   "respawnDays": 7,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 56
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_site_019",
+   "name": "边地营寨·19",
+   "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 79,
+   "gridY": 339,
+   "baseStrength": 16,
+   "respawnDays": 8,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 24
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_site_020",
+   "name": "资源守卫·20",
+   "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 162,
+   "gridY": 112,
+   "baseStrength": 18,
+   "respawnDays": 9,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 28
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_site_021",
+   "name": "游荡军团·21",
+   "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
+   "category": "roaming_host",
+   "domain": "land",
+   "gridX": 245,
+   "gridY": 249,
+   "baseStrength": 20,
+   "respawnDays": 10,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 32
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+  },
+  {
+   "id": "wild_site_022",
+   "name": "遗迹守卫·22",
+   "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
+   "category": "ruin_guard",
+   "domain": "land",
+   "gridX": 328,
+   "gridY": 22,
+   "baseStrength": 22,
+   "respawnDays": 4,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 36
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+  },
+  {
+   "id": "wild_site_023",
+   "name": "海盗舰队·23",
+   "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 68,
+   "gridY": 138,
+   "baseStrength": 24,
+   "respawnDays": 5,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 40
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_site_024",
+   "name": "荒野兽群·24",
+   "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
+   "category": "ancient_beast",
+   "domain": "land",
+   "gridX": 132,
+   "gridY": 294,
+   "baseStrength": 26,
+   "respawnDays": 6,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 44
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+  },
+  {
+   "id": "wild_site_025",
+   "name": "边地营寨·25",
+   "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 213,
+   "gridY": 69,
+   "baseStrength": 28,
+   "respawnDays": 7,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 48
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_site_026",
+   "name": "资源守卫·26",
+   "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 296,
+   "gridY": 206,
+   "baseStrength": 30,
+   "respawnDays": 8,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 52
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_site_027",
+   "name": "游荡军团·27",
+   "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
+   "category": "roaming_host",
+   "domain": "land",
+   "gridX": 17,
+   "gridY": 340,
+   "baseStrength": 32,
+   "respawnDays": 9,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 56
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+  },
+  {
+   "id": "wild_site_028",
+   "name": "遗迹守卫·28",
+   "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
+   "category": "ruin_guard",
+   "domain": "land",
+   "gridX": 98,
+   "gridY": 116,
+   "baseStrength": 34,
+   "respawnDays": 10,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 24
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+  },
+  {
+   "id": "wild_site_029",
+   "name": "海盗舰队·29",
+   "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 230,
+   "gridY": 302,
+   "baseStrength": 36,
+   "respawnDays": 4,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 28
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_site_030",
+   "name": "荒野兽群·30",
+   "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
+   "category": "ancient_beast",
+   "domain": "land",
+   "gridX": 264,
+   "gridY": 26,
+   "baseStrength": 38,
+   "respawnDays": 5,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 32
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+  },
+  {
+   "id": "wild_site_031",
+   "name": "边地营寨·31",
+   "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 347,
+   "gridY": 163,
+   "baseStrength": 40,
+   "respawnDays": 6,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 36
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_site_032",
+   "name": "资源守卫·32",
+   "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 66,
+   "gridY": 300,
+   "baseStrength": 42,
+   "respawnDays": 7,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 40
+    }
+   ],
+   "threatBand": "low",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_site_033",
+   "name": "游荡军团·33",
+   "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
+   "category": "roaming_host",
+   "domain": "land",
+   "gridX": 149,
+   "gridY": 73,
+   "baseStrength": 68,
+   "respawnDays": 8,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 44
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+  },
+  {
+   "id": "wild_site_034",
+   "name": "遗迹守卫·34",
+   "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
+   "category": "ruin_guard",
+   "domain": "naval",
+   "gridX": 230,
+   "gridY": 218,
+   "baseStrength": 71,
+   "respawnDays": 9,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 48
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+  },
+  {
+   "id": "wild_site_035",
+   "name": "海盗舰队·35",
+   "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 286,
+   "gridY": 376,
+   "baseStrength": 74,
+   "respawnDays": 10,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 52
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_site_036",
+   "name": "荒野兽群·36",
+   "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
+   "category": "ancient_beast",
+   "domain": "land",
+   "gridX": 34,
+   "gridY": 120,
+   "baseStrength": 78,
+   "respawnDays": 4,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 56
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+  },
+  {
+   "id": "wild_site_037",
+   "name": "边地营寨·37",
+   "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 117,
+   "gridY": 257,
+   "baseStrength": 25,
+   "respawnDays": 5,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 24
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_site_038",
+   "name": "资源守卫·38",
+   "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 200,
+   "gridY": 30,
+   "baseStrength": 28,
+   "respawnDays": 6,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 28
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_site_039",
+   "name": "游荡军团·39",
+   "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
+   "category": "roaming_host",
+   "domain": "land",
+   "gridX": 283,
+   "gridY": 167,
+   "baseStrength": 31,
+   "respawnDays": 7,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 32
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+  },
+  {
+   "id": "wild_site_040",
+   "name": "遗迹守卫·40",
+   "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
+   "category": "ruin_guard",
+   "domain": "land",
+   "gridX": 362,
+   "gridY": 308,
+   "baseStrength": 34,
+   "respawnDays": 8,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 36
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+  },
+  {
+   "id": "wild_site_041",
+   "name": "海盗舰队·41",
+   "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 83,
+   "gridY": 79,
+   "baseStrength": 37,
+   "respawnDays": 9,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 40
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_site_042",
+   "name": "荒野兽群·42",
+   "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
+   "category": "ancient_beast",
+   "domain": "land",
+   "gridX": 167,
+   "gridY": 215,
+   "baseStrength": 40,
+   "respawnDays": 10,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 44
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+  },
+  {
+   "id": "wild_site_043",
+   "name": "边地营寨·43",
+   "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 243,
+   "gridY": 343,
+   "baseStrength": 43,
+   "respawnDays": 4,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 48
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_site_044",
+   "name": "资源守卫·44",
+   "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 334,
+   "gridY": 124,
+   "baseStrength": 47,
+   "respawnDays": 5,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 52
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_site_045",
+   "name": "游荡军团·45",
+   "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
+   "category": "roaming_host",
+   "domain": "naval",
+   "gridX": 12,
+   "gridY": 220,
+   "baseStrength": 50,
+   "respawnDays": 6,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 56
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+  },
+  {
+   "id": "wild_site_046",
+   "name": "遗迹守卫·46",
+   "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
+   "category": "ruin_guard",
+   "domain": "land",
+   "gridX": 137,
+   "gridY": 33,
+   "baseStrength": 53,
+   "respawnDays": 7,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 24
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+  },
+  {
+   "id": "wild_site_047",
+   "name": "海盗舰队·47",
+   "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 194,
+   "gridY": 196,
+   "baseStrength": 56,
+   "respawnDays": 8,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 28
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_site_048",
+   "name": "荒野兽群·48",
+   "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
+   "category": "ancient_beast",
+   "domain": "land",
+   "gridX": 302,
+   "gridY": 308,
+   "baseStrength": 59,
+   "respawnDays": 9,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 32
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+  },
+  {
+   "id": "wild_site_049",
+   "name": "边地营寨·49",
+   "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 21,
+   "gridY": 81,
+   "baseStrength": 62,
+   "respawnDays": 10,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 36
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_site_050",
+   "name": "资源守卫·50",
+   "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 104,
+   "gridY": 218,
+   "baseStrength": 65,
+   "respawnDays": 4,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 40
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_site_051",
+   "name": "游荡军团·51",
+   "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
+   "category": "roaming_host",
+   "domain": "land",
+   "gridX": 187,
+   "gridY": 355,
+   "baseStrength": 68,
+   "respawnDays": 5,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 44
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+  },
+  {
+   "id": "wild_site_052",
+   "name": "遗迹守卫·52",
+   "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
+   "category": "ruin_guard",
+   "domain": "land",
+   "gridX": 270,
+   "gridY": 128,
+   "baseStrength": 71,
+   "respawnDays": 6,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 48
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+  },
+  {
+   "id": "wild_site_053",
+   "name": "海盗舰队·53",
+   "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 363,
+   "gridY": 274,
+   "baseStrength": 74,
+   "respawnDays": 7,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 52
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_site_054",
+   "name": "荒野兽群·54",
+   "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
+   "category": "ancient_beast",
+   "domain": "land",
+   "gridX": 72,
+   "gridY": 38,
+   "baseStrength": 78,
+   "respawnDays": 8,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 56
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+  },
+  {
+   "id": "wild_site_055",
+   "name": "边地营寨·55",
+   "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 155,
+   "gridY": 175,
+   "baseStrength": 25,
+   "respawnDays": 9,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 24
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_site_056",
+   "name": "资源守卫·56",
+   "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
+   "category": "resource_guard",
+   "domain": "naval",
+   "gridX": 230,
+   "gridY": 320,
+   "baseStrength": 28,
+   "respawnDays": 10,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 28
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_site_057",
+   "name": "游荡军团·57",
+   "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
+   "category": "roaming_host",
+   "domain": "land",
+   "gridX": 321,
+   "gridY": 85,
+   "baseStrength": 31,
+   "respawnDays": 4,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 32
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+  },
+  {
+   "id": "wild_site_058",
+   "name": "遗迹守卫·58",
+   "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
+   "category": "ruin_guard",
+   "domain": "land",
+   "gridX": 40,
+   "gridY": 222,
+   "baseStrength": 34,
+   "respawnDays": 5,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 36
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+  },
+  {
+   "id": "wild_site_059",
+   "name": "海盗舰队·59",
+   "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 123,
+   "gridY": 359,
+   "baseStrength": 37,
+   "respawnDays": 6,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 40
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_site_060",
+   "name": "荒野兽群·60",
+   "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
+   "category": "ancient_beast",
+   "domain": "land",
+   "gridX": 206,
+   "gridY": 132,
+   "baseStrength": 40,
+   "respawnDays": 7,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 44
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+  },
+  {
+   "id": "wild_site_061",
+   "name": "边地营寨·61",
+   "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 289,
+   "gridY": 269,
+   "baseStrength": 43,
+   "respawnDays": 8,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 48
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_site_062",
+   "name": "资源守卫·62",
+   "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 372,
+   "gridY": 42,
+   "baseStrength": 47,
+   "respawnDays": 9,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 52
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_site_063",
+   "name": "游荡军团·63",
+   "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
+   "category": "roaming_host",
+   "domain": "land",
+   "gridX": 91,
+   "gridY": 179,
+   "baseStrength": 50,
+   "respawnDays": 10,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 56
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+  },
+  {
+   "id": "wild_site_064",
+   "name": "遗迹守卫·64",
+   "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
+   "category": "ruin_guard",
+   "domain": "land",
+   "gridX": 174,
+   "gridY": 316,
+   "baseStrength": 53,
+   "respawnDays": 4,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 24
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+  },
+  {
+   "id": "wild_site_065",
+   "name": "海盗舰队·65",
+   "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 257,
+   "gridY": 89,
+   "baseStrength": 56,
+   "respawnDays": 5,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 28
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_site_066",
+   "name": "荒野兽群·66",
+   "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
+   "category": "ancient_beast",
+   "domain": "land",
+   "gridX": 340,
+   "gridY": 226,
+   "baseStrength": 59,
+   "respawnDays": 6,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 32
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+  },
+  {
+   "id": "wild_site_067",
+   "name": "边地营寨·67",
+   "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
+   "category": "barbarian_camp",
+   "domain": "naval",
+   "gridX": 46,
+   "gridY": 376,
+   "baseStrength": 62,
+   "respawnDays": 7,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 36
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_site_068",
+   "name": "资源守卫·68",
+   "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 142,
+   "gridY": 136,
+   "baseStrength": 65,
+   "respawnDays": 8,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 40
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_site_069",
+   "name": "游荡军团·69",
+   "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
+   "category": "roaming_host",
+   "domain": "land",
+   "gridX": 225,
+   "gridY": 273,
+   "baseStrength": 68,
+   "respawnDays": 9,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 44
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+  },
+  {
+   "id": "wild_site_070",
+   "name": "遗迹守卫·70",
+   "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
+   "category": "ruin_guard",
+   "domain": "land",
+   "gridX": 308,
+   "gridY": 46,
+   "baseStrength": 71,
+   "respawnDays": 10,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 48
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+  },
+  {
+   "id": "wild_site_071",
+   "name": "海盗舰队·71",
+   "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 11,
+   "gridY": 199,
+   "baseStrength": 74,
+   "respawnDays": 4,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 52
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_site_072",
+   "name": "荒野兽群·72",
+   "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
+   "category": "ancient_beast",
+   "domain": "land",
+   "gridX": 110,
+   "gridY": 320,
+   "baseStrength": 78,
+   "respawnDays": 5,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 56
+    }
+   ],
+   "threatBand": "medium",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+  },
+  {
+   "id": "wild_site_073",
+   "name": "边地营寨·73",
+   "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 193,
+   "gridY": 93,
+   "baseStrength": 34,
+   "respawnDays": 6,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 24
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_site_074",
+   "name": "资源守卫·74",
+   "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 276,
+   "gridY": 230,
+   "baseStrength": 39,
+   "respawnDays": 7,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 28
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_site_075",
+   "name": "游荡军团·75",
+   "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
+   "category": "roaming_host",
+   "domain": "land",
+   "gridX": 359,
+   "gridY": 367,
+   "baseStrength": 43,
+   "respawnDays": 8,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 32
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+  },
+  {
+   "id": "wild_site_076",
+   "name": "遗迹守卫·76",
+   "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
+   "category": "ruin_guard",
+   "domain": "land",
+   "gridX": 78,
+   "gridY": 140,
+   "baseStrength": 47,
+   "respawnDays": 9,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 36
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+  },
+  {
+   "id": "wild_site_077",
+   "name": "海盗舰队·77",
+   "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 131,
+   "gridY": 247,
+   "baseStrength": 52,
+   "respawnDays": 10,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 40
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_site_078",
+   "name": "荒野兽群·78",
+   "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
+   "category": "ancient_beast",
+   "domain": "naval",
+   "gridX": 244,
+   "gridY": 50,
+   "baseStrength": 56,
+   "respawnDays": 4,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 44
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+  },
+  {
+   "id": "wild_site_079",
+   "name": "边地营寨·79",
+   "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 327,
+   "gridY": 187,
+   "baseStrength": 60,
+   "respawnDays": 5,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 48
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_site_080",
+   "name": "资源守卫·80",
+   "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 46,
+   "gridY": 324,
+   "baseStrength": 65,
+   "respawnDays": 6,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 52
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_site_081",
+   "name": "游荡军团·81",
+   "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
+   "category": "roaming_host",
+   "domain": "land",
+   "gridX": 123,
+   "gridY": 103,
+   "baseStrength": 69,
+   "respawnDays": 7,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 56
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+  },
+  {
+   "id": "wild_site_082",
+   "name": "遗迹守卫·82",
+   "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
+   "category": "ruin_guard",
+   "domain": "land",
+   "gridX": 212,
+   "gridY": 234,
+   "baseStrength": 73,
+   "respawnDays": 8,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 24
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+  },
+  {
+   "id": "wild_site_083",
+   "name": "海盗舰队·83",
+   "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 290,
+   "gridY": 376,
+   "baseStrength": 77,
+   "respawnDays": 9,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 28
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_site_084",
+   "name": "荒野兽群·84",
+   "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
+   "category": "ancient_beast",
+   "domain": "land",
+   "gridX": 14,
+   "gridY": 144,
+   "baseStrength": 82,
+   "respawnDays": 10,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 32
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+  },
+  {
+   "id": "wild_site_085",
+   "name": "边地营寨·85",
+   "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 97,
+   "gridY": 281,
+   "baseStrength": 86,
+   "respawnDays": 4,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 36
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_site_086",
+   "name": "资源守卫·86",
+   "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 180,
+   "gridY": 54,
+   "baseStrength": 90,
+   "respawnDays": 5,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 40
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_site_087",
+   "name": "游荡军团·87",
+   "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
+   "category": "roaming_host",
+   "domain": "land",
+   "gridX": 263,
+   "gridY": 191,
+   "baseStrength": 95,
+   "respawnDays": 6,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 44
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+  },
+  {
+   "id": "wild_site_088",
+   "name": "遗迹守卫·88",
+   "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
+   "category": "ruin_guard",
+   "domain": "land",
+   "gridX": 346,
+   "gridY": 328,
+   "baseStrength": 99,
+   "respawnDays": 7,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 48
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+  },
+  {
+   "id": "wild_site_089",
+   "name": "海盗舰队·89",
+   "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 68,
+   "gridY": 98,
+   "baseStrength": 103,
+   "respawnDays": 8,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 52
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_site_090",
+   "name": "荒野兽群·90",
+   "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
+   "category": "ancient_beast",
+   "domain": "land",
+   "gridX": 148,
+   "gridY": 238,
+   "baseStrength": 108,
+   "respawnDays": 9,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 56
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+  },
+  {
+   "id": "wild_site_091",
+   "name": "边地营寨·91",
+   "description": "边地流寇的营寨，火堆与瞭望塔之间，堆着劫掠来的辎重。",
+   "category": "barbarian_camp",
+   "domain": "land",
+   "gridX": 231,
+   "gridY": 11,
+   "baseStrength": 34,
+   "respawnDays": 10,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 24
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_border_incident.svg"
+  },
+  {
+   "id": "wild_site_092",
+   "name": "资源守卫·92",
+   "description": "把守资源点的武装据点，守卫者对任何靠近的陌生人都充满敌意。",
+   "category": "resource_guard",
+   "domain": "land",
+   "gridX": 314,
+   "gridY": 148,
+   "baseStrength": 39,
+   "respawnDays": 4,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 28
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_herb_patch.svg"
+  },
+  {
+   "id": "wild_site_093",
+   "name": "游荡军团·93",
+   "description": "无固定据点的游荡队伍，行踪飘忽，随时可能出现在任何一条路上。",
+   "category": "roaming_host",
+   "domain": "land",
+   "gridX": 33,
+   "gridY": 285,
+   "baseStrength": 43,
+   "respawnDays": 5,
+   "rewards": [
+    {
+     "resourceId": "wood",
+     "amount": 32
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 2,
+   "markerArt": "assets/historical-icons/events/ea_deserter_warning.svg"
+  },
+  {
+   "id": "wild_site_094",
+   "name": "遗迹守卫·94",
+   "description": "守护古老遗迹的守卫者，或许是在看守先人留下的秘密与财宝。",
+   "category": "ruin_guard",
+   "domain": "land",
+   "gridX": 116,
+   "gridY": 58,
+   "baseStrength": 47,
+   "respawnDays": 6,
+   "rewards": [
+    {
+     "resourceId": "food",
+     "amount": 36
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 3,
+   "markerArt": "assets/historical-icons/events/ea_old_battlefield.svg"
+  },
+  {
+   "id": "wild_site_095",
+   "name": "海盗舰队·95",
+   "description": "结伙而行的海盗船队，以劫掠为生，是海上贸易的宿敌。",
+   "category": "pirate_fleet",
+   "domain": "naval",
+   "gridX": 198,
+   "gridY": 196,
+   "baseStrength": 52,
+   "respawnDays": 7,
+   "rewards": [
+    {
+     "resourceId": "stone",
+     "amount": 40
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 4,
+   "markerArt": "assets/historical-icons/events/ea_pirate_rumor.svg"
+  },
+  {
+   "id": "wild_site_096",
+   "name": "荒野兽群·96",
+   "description": "盘踞此地的远古野兽，领地意识极强，踏入即被视作挑衅。",
+   "category": "ancient_beast",
+   "domain": "land",
+   "gridX": 282,
+   "gridY": 332,
+   "baseStrength": 56,
+   "respawnDays": 8,
+   "rewards": [
+    {
+     "resourceId": "gold",
+     "amount": 44
+    }
+   ],
+   "threatBand": "high",
+   "territoryRadius": 5,
+   "markerArt": "assets/historical-icons/events/ea_tavern_challenge.svg"
+  }
+ ]
 }

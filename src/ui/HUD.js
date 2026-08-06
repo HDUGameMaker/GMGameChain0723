@@ -43,6 +43,10 @@ export class HUD {
     this.populationDisplay = document.getElementById('population-display');
     this.timeDisplay = document.getElementById('time-display');
     this.btnBuild = document.getElementById('btn-build');
+    this.btnRecruit1 = document.getElementById('btn-recruit-1');
+    this.btnRecruitMax = document.getElementById('btn-recruit-max');
+    this.btnFillWorkers = document.getElementById('btn-fill-workers');
+    this.btnAssembly = document.getElementById('btn-assembly');
     this.btnObjective = document.getElementById('btn-objective');
     this.btnTech = document.getElementById('btn-tech');
     this.btnCulture = document.getElementById('btn-culture');
@@ -103,6 +107,36 @@ export class HUD {
     });
     this.btnArmy.addEventListener('click', () => {
       this.popupManager.open('army_panel', {});
+    });
+    // R1: 招募工人(1个 / 尽可能)—— 锚定大本营(有 workerRecruitment 功能的建筑)
+    this.btnRecruit1?.addEventListener('click', () => {
+      const idx = this._recruitmentBuildingIndex();
+      if (idx < 0) { this.popupManager.alert('大本营尚未投入使用'); return; }
+      const result = this.systems.building.recruitWorker(idx);
+      if (!result.ok) {
+        this.popupManager.alert({ housing_full: '住房已满', insufficient_resources: '食物不足' }[result.reason] || '无法招募工人');
+      }
+    });
+    this.btnRecruitMax?.addEventListener('click', () => {
+      const idx = this._recruitmentBuildingIndex();
+      if (idx < 0) { this.popupManager.alert('大本营尚未投入使用'); return; }
+      const result = this.systems.building.recruitWorkersMax(idx);
+      if (!result.ok) {
+        this.popupManager.alert({ housing_full: '住房已满', insufficient_resources: '食物不足' }[result.reason] || '无法招募工人');
+      } else {
+        this.popupManager.alert(`招募了 ${result.recruited} 名工人`);
+      }
+    });
+    // R1: 自动填充——空闲工人按顺序填入已有生产建筑
+    this.btnFillWorkers?.addEventListener('click', () => {
+      const filled = this.systems.building.fillAllWorkers();
+      this.popupManager.alert(filled > 0 ? `已自动填充 ${filled} 名工人` : '没有空闲工人可填充');
+    });
+    // R1: 集结——与大本营详情面板的"打开军团集结"完全相同
+    this.btnAssembly?.addEventListener('click', () => {
+      const idx = this._assemblyBuildingIndex();
+      if (idx < 0) { this.popupManager.alert('没有可用的集结建筑'); return; }
+      this.popupManager.push('army_panel', { assemblyBuildingIndex: idx });
     });
     this.btnUnitResearch?.addEventListener('click', () => {
       this.popupManager.open('unit_research', {});
@@ -223,6 +257,25 @@ export class HUD {
       this.btnFullscreen.textContent = document.fullscreenElement ? '⛶' : '⛶';
       eventBus.emit('fullscreenToggled');
     });
+  }
+
+  /** 找可招募工人的建筑（大本营）index，-1 表示不可用 */
+  _recruitmentBuildingIndex() {
+    const bs = this.systems.building;
+    if (!bs?.buildings) return -1;
+    const byId = bs.buildings.findIndex(b => b.status === 'active' && b.buildingId === 'warehouse');
+    if (byId >= 0) return byId;
+    return bs.buildings.findIndex(b => b.status === 'active'
+      && configRegistry.getBuilding(b.buildingId)?.uniqueFunction?.workerRecruitment);
+  }
+
+  /** 找可集结军团的建筑 index（与详情面板"打开军团集结"一致），-1 表示不可用 */
+  _assemblyBuildingIndex() {
+    const bs = this.systems.building;
+    if (!bs?.buildings) return -1;
+    return bs.buildings.findIndex(b => b.status === 'active'
+      && Array.isArray(configRegistry.getBuilding(b.buildingId)?.uniqueFunction?.armyAssemblyDomains)
+      && configRegistry.getBuilding(b.buildingId).uniqueFunction.armyAssemblyDomains.length > 0);
   }
 
   _updateLuxuryButtonVisibility() {

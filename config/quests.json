@@ -3,6 +3,7 @@
 {"id":"tutorial_logging_worker","name":"派遣居民工作","description":"点击刚建好的伐木集散点，派遣至少一名居民在其中工作。","type":"assign_worker","icon":"👷","target":{"buildingId":"logging_camp","count":1}},
 {"id":"tutorial_farm","name":"建立食物来源","description":"建造一座农田，为聚落提供稳定的食物。","type":"build_specific","icon":"🌾","target":{"buildingId":"farm","count":1}},
 {"id":"tutorial_population","name":"扩充聚落人口","description":"打开大本营，在大本营中提升一次人口。","type":"recruit_population","icon":"👥","target":{"count":1}},
+{"id":"tutorial_fill_workers","name":"一键安排生产","description":"点击底部右侧的「自动填充」按钮。新建筑落成时会自动安排工人，这个按钮能把剩余的空闲居民批量填入已有生产建筑。","type":"fill_workers","icon":"🛠️","target":{"count":1}},
 {"id":"tutorial_train_warriors","name":"训练战士","description":"在军营中训练至少两名战士。","type":"train_units","icon":"⚔️","target":{"unitId":"warrior","count":2}},
 {"id":"tutorial_assemble_army","name":"集结军团","description":"打开大本营，选择至少两名战士并部署军团。","type":"assemble_army","icon":"🛡️","target":{"minUnits":2,"count":1}},
 {"id":"tutorial_tavern","name":"历史酒馆","description":"建造历史酒馆。酒馆会吸引来自远方、甚至异界的访客。","type":"build_specific","icon":"🍺","target":{"buildingId":"tavern_hall","count":1}}

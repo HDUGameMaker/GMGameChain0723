@@ -275,6 +275,8 @@ export class BuildingSystem {
     };
 
     this.buildings.push(building);
+    // R4: 新建筑落成即自动填充空闲工人（先填，让 buildingComplete 事件时已是填充后状态）
+    this._autoFillWorkers(building);
     if (!options.keepPlacing) {
       this.exitPlacingMode();
     }
@@ -415,6 +417,66 @@ export class BuildingSystem {
 
     eventBus.emit('populationRecruited', { buildingIndex, amount });
     return { ok: true, population: this._populationSystem.current };
+  }
+
+  /**
+   * R1: 尽可能招募工人——循环调用 recruitWorker，直到住房满或资源不足为止。
+   */
+  recruitWorkersMax(buildingIndex) {
+    let recruited = 0;
+    let reason = null;
+    for (;;) {
+      const result = this.recruitWorker(buildingIndex);
+      if (result.ok) { recruited++; continue; }
+      reason = result.reason;
+      break;
+    }
+    return { ok: recruited > 0, recruited, reason };
+  }
+
+  /**
+   * R1: 自动填充——按建筑顺序把空闲工人填入已有生产建筑（填满 maxWorkers）。
+   * 返回实际填充的工人数；无可填建筑或空闲工人为 0 时返回 0。
+   */
+  fillAllWorkers() {
+    let filled = 0;
+    for (const building of this.buildings) {
+      if (building.status !== 'active') continue;
+      const config = configRegistry.getBuilding(building.buildingId);
+      if (!config || !config.maxWorkers || config.maxWorkers <= 0) continue;
+      if (building.currentWorkers >= config.maxWorkers) continue;
+      const available = this._populationSystem?.getAvailableWorkers?.() || 0;
+      if (available <= 0) break;
+      const fill = Math.min(config.maxWorkers - building.currentWorkers, available);
+      building.currentWorkers += fill;
+      filled += fill;
+    }
+    if (filled > 0) {
+      this._updateStore();
+      this._populationSystem.refresh();
+      eventBus.emit('workerChanged', { buildingIndex: -1 });
+    }
+    // 无论是否填入工人,都通知"执行过自动填充"(教程/统计用,避免无空闲工人时任务卡死)
+    eventBus.emit('workersAutoFilled', { filled });
+    return filled;
+  }
+
+  /**
+   * R4: 新建筑落成后自动填充空闲工人（填满 maxWorkers，或空闲工人耗尽为止）。
+   * 只用于玩家新放置的建筑；初始建筑 / 升级 / 存档恢复不走这里。
+   */
+  _autoFillWorkers(building) {
+    if (!building || building.status !== 'active') return;
+    const config = configRegistry.getBuilding(building.buildingId);
+    if (!config || !config.maxWorkers || config.maxWorkers <= 0) return;
+    if (building.currentWorkers >= config.maxWorkers) return;
+    const available = this._populationSystem?.getAvailableWorkers?.() || 0;
+    if (available <= 0) return;
+
+    building.currentWorkers += Math.min(config.maxWorkers, available);
+    this._updateStore();
+    this._populationSystem.refresh();
+    eventBus.emit('workerChanged', { buildingIndex: this.buildings.indexOf(building) });
   }
 
   assignWorker(buildingIndex) {
@@ -1189,7 +1251,7 @@ export class BuildingSystem {
     building.buildProgress = null;
     building.startTick = undefined;
     building.startTimeProgress = undefined;
-    // 岗位由玩家显式分配；建筑落成只保留合法的既有岗位数。
+    // 新放置的建筑已由 _autoFillWorkers 填充；这里只钳制合法的岗位数上限。
     building.currentWorkers = Math.min(building.currentWorkers || 0, config.maxWorkers || 0);
     eventBus.emit('buildingComplete', { building });
     this._updateStorageMultiplier();
