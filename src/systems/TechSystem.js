@@ -207,8 +207,12 @@ export class TechSystem {
       if (unitEra && currentEra && unitEra.order > currentEra.order) return { valid: false, reason: '尚未进入该兵种所属时代' };
     }
     if (unit.civilizationId) {
-      const selectedId = this._eraSystem?.getSelectedCivilization?.()?.id;
-      if (selectedId !== unit.civilizationId) return { valid: false, reason: '该特色兵种属于其他文明' };
+      // 归属文明 = 当前时代所选 + 历代已选(与训练面板/建筑面板的文明可见性规则一致)
+      const owned = new Set([
+        ...(this._eraSystem?.getLegacyCivilizationIds?.() || []),
+        this._eraSystem?.getSelectedCivilization?.()?.id
+      ].filter(Boolean));
+      if (!owned.has(unit.civilizationId)) return { valid: false, reason: '该特色兵种属于其他文明' };
     }
     if (this._unitResearch.has(unitId)) return { valid: false, reason: '已研发完成' };
     // 兵种链前置（prerequisiteTechs 来自已休眠的科技树，不再检查）

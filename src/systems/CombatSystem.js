@@ -24,7 +24,6 @@ export class CombatSystem {
     this._mapConfig = null;
     this._editMode = null;
     this._armySystem = null;
-    this._battleLog = null;
 
     eventBus.on('tick', (data) => this._onTick(data));
     eventBus.on('dayStart', (data) => this._onDayStart(data));
@@ -44,7 +43,6 @@ export class CombatSystem {
   setHeroSystem(hs) { this._heroSystem = hs; }
   setArmySystem(system) { this._armySystem = system || null; }
   setLuxurySystem(system) { this._luxurySystem = system || null; }
-  setBattleLogSystem(bl) { this._battleLog = bl || null; }
 
   damageEnemyAt(gridX, gridY, amount) {
     const enemy = this.getEnemyAt(gridX, gridY);
@@ -399,21 +397,6 @@ export class CombatSystem {
       if (this.enemies.includes(boss) && this._armySystem.getArmy?.(armyId) && boss.speed - army.speed >= 2 && distance <= boss.attackRange) bossAttack();
     }
     const healed = this._armySystem.healArmyAfterBattle?.(armyId)?.healed || 0;
-    const armyAfter = this._armySystem?.getArmy?.(armyId);
-    this._battleLog?.record({
-      attacker: { name: army.name, type: 'player_army', summary: `${army.unitIds?.length || 0} 队` },
-      defender: { name: boss.name || '遗迹BOSS', type: 'combat_enemy', summary: '' },
-      initiator: 'player',
-      auto,
-      distance,
-      firstStrike: playerFirst ? 'attacker' : 'defender',
-      turns: attacks.map(attack => ({ side: attack.side === 'player' ? 'attacker' : 'defender', damage: attack.damage, hpAfter: Number.isFinite(attack.hp) ? attack.hp : null, bonusStrike: attack.bonusStrike === true })),
-      result: boss.hp <= 0 ? 'victory' : (!armyAfter ? 'defeat' : 'draw'),
-      casualties: null,
-      rewards: [],
-      luxuryDrop: null,
-      hpRemaining: armyAfter?.hp ?? null
-    });
     this._notify();
     eventBus.emit('bossBattleResolved', { bossId: boss.id, armyId, attacks, healed, bossHp: boss.hp });
     return { ok: true, bossId: boss.id, armyId, attacks, healed, bossHp: boss.hp, hostile: boss.hostile };
@@ -475,21 +458,6 @@ export class CombatSystem {
       if (enemySurvived && this._armySystem.getArmy?.(armyId) && (enemy.speed || 1) - army.speed >= 2 && distance <= (enemy.attackRange || 1)) enemyAttack();
     }
     const healed = this._armySystem.getArmy?.(armyId) ? (this._armySystem.healArmyAfterBattle?.(armyId)?.healed || 0) : 0;
-    const armyAfter = this._armySystem?.getArmy?.(armyId);
-    this._battleLog?.record({
-      attacker: { name: army.name, type: 'player_army', summary: `${army.unitIds?.length || 0} 队` },
-      defender: { name: enemy.name || '野怪', type: 'combat_enemy', summary: '' },
-      initiator: 'player',
-      auto,
-      distance,
-      firstStrike: playerFirst ? 'attacker' : 'defender',
-      turns: attacks.map(attack => ({ side: attack.side === 'player' ? 'attacker' : 'defender', damage: attack.damage, hpAfter: Number.isFinite(attack.hp) ? attack.hp : null, bonusStrike: attack.bonusStrike === true })),
-      result: enemy.hp <= 0 ? 'victory' : (!armyAfter ? 'defeat' : 'draw'),
-      casualties: null,
-      rewards: rewards.map(reward => `${reward.resourceId}×${reward.amount}`),
-      luxuryDrop,
-      hpRemaining: armyAfter?.hp ?? null
-    });
     this._notify();
     eventBus.emit('enemyBattleResolved', { enemyId: enemy.id, armyId, attacks, healed, enemyHp: Math.max(0, enemy.hp) });
     return { ok: true, enemyId: enemy.id, armyId, attacks, healed, enemyHp: Math.max(0, enemy.hp), destroyed: enemy.hp <= 0, victory: enemy.hp <= 0, rewards, luxuryDrop };

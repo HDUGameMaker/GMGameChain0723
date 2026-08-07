@@ -1,4 +1,5 @@
-const WATER_GROUNDS = new Set(['S', 'W']);
+// 不可通行地形:S/W 为水、M/B/R 为山脉石头(海军部署仅认可水面,陆军避开山体)
+const WATER_GROUNDS = new Set(['S', 'W', 'M', 'B', 'R']);
 
 function footprintSize(config) {
   return {

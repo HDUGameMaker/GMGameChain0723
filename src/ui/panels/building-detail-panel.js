@@ -4,6 +4,7 @@
  */
 import { configRegistry } from '../../core/ConfigRegistry.js';
 import { eventBus } from '../../core/EventBus.js';
+import { formatCostHtml } from './cost-format.js';
 import { progressManager } from '../../utils/ProgressManager.js';
 import { getBuildingPresentation, getBuildingPrimaryFunctionRows } from '../../domain/BuildingPresentation.js';
 
@@ -359,7 +360,7 @@ export function renderBuildingDetailPanel(data, body, pm) {
     summary.style.cssText = 'display:grid;grid-template-columns:1fr auto;gap:7px;font-size:12px;color:#aeb8c5;margin-bottom:10px;';
     summary.innerHTML = `
       <span>招募数量</span><b style="color:#ececf0">${amount}</b>
-      <span>招募成本</span><b style="color:#e3bd73">${formatResourceList(cost)}</b>
+      <span>招募成本</span><b>${formatCostHtml(cost, { resourceSystem, configRegistry })}</b>
       <span>当前人口 / 住房</span><b style="color:#ececf0">${population} / ${housing}</b>
       <span>可用工人</span><b style="color:#79d89b">${availableWorkers}</b>
     `;
@@ -582,10 +583,7 @@ export function renderBuildingDetailPanel(data, body, pm) {
 
     for (const recipe of config.synthesisRecipes) {
       const canSynth = buildingSystem.canSynthesize(buildingIndex, recipe.id);
-      const costText = (recipe.resourceCost || []).map(c => {
-        const r = configRegistry.getResource(c.resourceId);
-        return `${r ? r.name : c.resourceId}×${c.amount}`;
-      }).join('  ');
+      const costText = formatCostHtml(recipe.resourceCost || [], { resourceSystem, configRegistry });
 
       const recipeDiv = document.createElement('div');
       recipeDiv.style.cssText = `
@@ -660,16 +658,13 @@ export function renderBuildingDetailPanel(data, body, pm) {
     const targetConfig = configRegistry.getBuilding(config.upgradesTo);
     const upgradeSection = section('升级', '⬆️');
 
-    const costText = (targetConfig?.upgradeCost || []).map(c => {
-      const r = configRegistry.getResource(c.resourceId);
-      return `${r ? r.name : c.resourceId}×${c.amount}`;
-    }).join('  ');
+    const costText = formatCostHtml(targetConfig?.upgradeCost || [], { resourceSystem, configRegistry });
 
     upgradeSection.innerHTML += `
       <div style="font-size:12px;color:#a0a0ba;margin-bottom:8px;">
         目标: <span style="color:#ececf0;">${targetConfig ? targetConfig.name : config.upgradesTo}</span>
       </div>
-      <div style="font-size:12px;color:${upgradeCheck.valid ? '#4ecb71' : '#ff6b6b'};margin-bottom:10px;">
+      <div style="font-size:12px;color:#a0a0ba;margin-bottom:10px;">
         消耗: ${costText}
       </div>
     `;

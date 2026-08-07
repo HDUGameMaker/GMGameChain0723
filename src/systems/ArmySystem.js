@@ -29,17 +29,16 @@ export class ArmySystem {
     this._tech = null;
     this._movementSpeedMultiplier = 1;
     this._cityStateSystem = null;
-    this._battleLog = null;
     // 帧级移动的渲染插值侧表(内存字段,不持久化):armyId -> { moveVector:{dx,dy}, autoFireCooldown }
     this._armyMotion = new Map();
     this._lastMovementNotifyAt = 0;
     this._movementDirty = false;
     // 移动已帧级化(update 驱动);tick 只保留慢节奏结算
-    eventBus.on('tick', () => { this.restoreArmyCp(); this._tickHeroSkillCooldowns(); this._healArmiesPerTick(); this._applyBlackMistDamage(); });
+    eventBus.on('tick', () => { this.restoreArmyCp(); this._tickHeroSkillCooldowns(); this._healArmiesPerTick(); this._regenArmiesPerTick(); this._applyBlackMistDamage(); });
     eventBus.on('dayStart', () => this._resupplyGarrisons());
   }
 
-  setSystems({ building, hero, culture, era, resource, population, tech, enemyExpansion, ruins, luxury, combat, diplomacy, battleLog } = {}) {
+  setSystems({ building, hero, culture, era, resource, population, tech, enemyExpansion, ruins, luxury, combat, diplomacy } = {}) {
     this._building = building || null;
     this._hero = hero || null;
     this._culture = culture || null;
@@ -52,7 +51,6 @@ export class ArmySystem {
     this._luxury = luxury || null;
     this._combat = combat || null;
     this._diplomacy = diplomacy || null;
-    this._battleLog = battleLog || null;
   }
 
   initNew() {
@@ -89,7 +87,13 @@ export class ArmySystem {
   getArmyUnitCapacity() {
     const techBonus = Math.max(0, Number(this._tech?.getEffects?.().armyUnitCapacityBonus) || 0);
     const cultureBonus = Math.max(0, Number(this._culture?.getEffects?.().armyUnitCapacityBonus) || 0);
-    return Math.min(10, 5 + Math.floor(techBonus + cultureBonus));
+    // 防御/军事建筑(城堡、大型城垒、军事学院等)可增加每支军团的单位数量上限
+    let buildingBonus = 0;
+    for (const building of this._activeBuildings()) {
+      const config = configRegistry.getBuilding?.(building.buildingId);
+      buildingBonus += Math.max(0, Number(config?.uniqueFunction?.armyUnitCapacityBonus) || 0);
+    }
+    return Math.min(15, 5 + Math.floor(techBonus + cultureBonus + buildingBonus));
   }
 
   _isArmyTileOccupied(x, y, exceptId = null) {
@@ -358,10 +362,22 @@ export class ArmySystem {
     return { building, config, branches };
   }
 
+  /** 玩家拥有的文明:历代已选 + 当前时代所选(与建筑建造面板可见性规则一致) */
+  _ownedCivilizationIds() {
+    const ids = new Set(this._era?.getLegacyCivilizationIds?.() || []);
+    const selected = this._era?.getSelectedCivilization?.()?.id;
+    if (selected) ids.add(selected);
+    return ids;
+  }
+
   getTrainableUnitsAt(buildingIndex) {
     const trainingBuilding = this._trainingBuildingAt(buildingIndex);
     if (!trainingBuilding) return [];
-    return (configRegistry.get('enemies')?.units || []).filter(unit => trainingBuilding.branches.includes(unit.branch));
+    const ownedCivIds = this._ownedCivilizationIds();
+    return (configRegistry.get('enemies')?.units || []).filter(unit =>
+      trainingBuilding.branches.includes(unit.branch)
+      && (!unit.civilizationId || ownedCivIds.has(unit.civilizationId)) // 非本文明特色兵种隐藏
+    );
   }
 
   _hasActiveNavalTrainingFacility() {
@@ -395,6 +411,7 @@ export class ArmySystem {
       currentEraOrder: currentEra?.order ?? null,
       unitEraOrder: unitEra?.order ?? null,
       selectedCivilizationId: this._era?.getSelectedCivilization?.()?.id || null,
+      legacyCivilizationIds: this._era?.getLegacyCivilizationIds?.() || [],
       availablePopulation: this._population?.getAvailableWorkers?.() ?? null
     });
     if (!eligibility.ok) {
@@ -490,6 +507,22 @@ export class ArmySystem {
       eventBus.emit('armyHealed', { armyId: army.id, healed, source: 'healer_tick' });
     }
     if (changed) this._notify('healer_tick');
+  }
+
+  /** 大地图缓慢回血:所有受伤军团每 tick 回复最大生命值的 2%。 */
+  _regenArmiesPerTick() {
+    let changed = false;
+    for (const army of this._armies) {
+      if (!(army.hpDamage > 0)) continue;
+      const maxHp = this.getArmyStats(army.id).maxHp;
+      const amount = Math.max(1, Math.round(maxHp * 0.02));
+      if (amount <= 0) continue;
+      const healed = Math.min(army.hpDamage, amount);
+      army.hpDamage -= healed;
+      changed = true;
+      eventBus.emit('armyHealed', { armyId: army.id, healed, source: 'regen_tick' });
+    }
+    if (changed) this._notify('regen_tick');
   }
 
   _applyBlackMistDamage() {
@@ -818,7 +851,7 @@ export class ArmySystem {
     });
   }
 
-  _isWater(x, y) { return ['S', 'W'].includes(this._groundAt(x, y)) && !this._hasPassableBridge(x, y); }
+  _isWater(x, y) { return ['S', 'W', 'M', 'B', 'R'].includes(this._groundAt(x, y)) && !this._hasPassableBridge(x, y); }
 
   isLandPassableAt(x, y) {
     return Boolean(this._groundAt(x, y)) && !this._isWater(x, y) && !this.isTileOccupiedByBuilding(x, y);
@@ -1293,20 +1326,6 @@ export class ArmySystem {
     const record = { id: prepared.battleId, attackerId: attacker.id, defenderId: defender.id, ...result };
     this._battleHistory.push(record);
     this._battleHistory = this._battleHistory.slice(-20);
-    this._battleLog?.record({
-      attacker: { name: attacker.name, type: 'player_army', summary: this._unitSummary(attacker) },
-      defender: { name: defender.name, type: 'army', summary: this._unitSummary(defender) },
-      initiator: 'player',
-      auto: false,
-      distance: Number.isFinite(prepared.context?.distance) ? prepared.context.distance : null,
-      firstStrike: null,
-      turns: [],
-      result: result.winner === 'attacker' ? 'victory' : result.winner === 'defender' ? 'defeat' : 'draw',
-      casualties: result.casualties,
-      rewards: [],
-      luxuryDrop: null,
-      hpRemaining: null
-    });
     this._resolvedBattleIds.add(prepared.battleId);
     this._nextBattleId += 1;
     this._notify('battle');
@@ -1354,28 +1373,6 @@ export class ArmySystem {
       attacker: this.healArmyAfterBattle(attackerId).healed,
       defender: this.healArmyAfterBattle(defenderId).healed
     };
-    // 战报(attacker = 玩家军团视角)
-    const attackerAfter = this._findArmy(attackerId);
-    const defenderAfter = this._findArmy(defenderId);
-    this._battleLog?.record({
-      attacker: { name: attacker.name, type: 'player_army', summary: this._unitSummary(attacker) },
-      defender: { name: defender.name, type: 'army', summary: this._unitSummary(defender) },
-      initiator: 'player',
-      auto: options.auto === true,
-      distance,
-      firstStrike: order[0]?.id === attackerId ? 'attacker' : 'defender',
-      turns: attacks.map(attack => ({
-        side: attack.attackerId === attackerId ? 'attacker' : 'defender',
-        damage: attack.damage,
-        hpAfter: attack.destroyed ? 0 : null,
-        bonusStrike: attack.bonusStrike === true
-      })),
-      result: !attackerAfter ? 'defeat' : (!defenderAfter ? 'victory' : 'draw'),
-      casualties: null,
-      rewards: [],
-      luxuryDrop: null,
-      hpRemaining: attackerAfter?.hp ?? null
-    });
     eventBus.emit('combatBroadcast', { message: `⚔️ ${attacker.name}向${defender.name}发动攻击${defenderCanAttack ? '，双方完成交锋' : '，敌军射程不足无法反击'}` });
     return { ok: true, attackerId, defenderId, distance, attacks, healing };
   }

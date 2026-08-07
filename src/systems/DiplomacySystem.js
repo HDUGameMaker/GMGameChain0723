@@ -25,7 +25,6 @@ export class DiplomacySystem {
     this._enemyExpansionSystem = null;
     this._factionRelations = {};
     this._lastProcessedDay = 0;
-    this._battleLog = null;
     // 帧级驻军推进侧表(内存,不持久化):armyId -> { moveProgress, attackCooldown }
     this._garrisonMotion = new Map();
     eventBus.on('dayStart', ({ day } = {}) => this.advanceDay(day || 1));
@@ -43,7 +42,6 @@ export class DiplomacySystem {
     if (systems.enemyExpansion) this._enemyExpansionSystem = systems.enemyExpansion;
   }
 
-  setBattleLogSystem(bl) { this._battleLog = bl || null; }
 
   /** 军团连续渲染坐标(旧存档无 renderX 时回落格点),距离判定用 */
   _armyX(army) { return Number.isFinite(army?.renderX) ? army.renderX : (army?.gridX ?? 0); }
@@ -285,7 +283,7 @@ export class DiplomacySystem {
       if (seen.has(key)) continue;
       seen.add(key);
       if (cell.x < 0 || cell.y < 0 || cell.x >= (map.gridWidth || 0) || cell.y >= (map.gridHeight || 0)) continue;
-      if (['S', 'W'].includes(map.grid?.[cell.y]?.[cell.x])) continue;
+      if (['S', 'W', 'M', 'B', 'R'].includes(map.grid?.[cell.y]?.[cell.x])) continue;
       cells.push(cell);
       queue.push({ x: cell.x + 1, y: cell.y }, { x: cell.x - 1, y: cell.y }, { x: cell.x, y: cell.y + 1 }, { x: cell.x, y: cell.y - 1 });
     }
@@ -390,21 +388,6 @@ export class DiplomacySystem {
       }
       if (army.hp <= 0) state.armies.splice(index, 1);
       const healed = this._armySystem?.getArmy?.(playerArmyId) ? (this._armySystem?.healArmyAfterBattle?.(playerArmyId)?.healed || 0) : 0;
-      const playerAfter = this._armySystem?.getArmy?.(playerArmyId);
-      this._battleLog?.record({
-        attacker: { name: playerArmy?.name || '军团', type: 'player_army', summary: `${playerArmy?.unitIds?.length || 0} 队` },
-        defender: { name: army.name || '城邦驻军', type: 'garrison', summary: '' },
-        initiator: 'player',
-        auto,
-        distance,
-        firstStrike: enemyFirst ? 'defender' : 'attacker',
-        turns: [],
-        result: army.hp <= 0 ? 'victory' : (!playerAfter ? 'defeat' : 'draw'),
-        casualties: null,
-        rewards: [],
-        luxuryDrop: null,
-        hpRemaining: playerAfter?.hp ?? null
-      });
       this._notify();
       return { ok: true, enemyDefeated: army.hp <= 0, enemyHp: army.hp, healed };
     }
@@ -496,7 +479,7 @@ export class DiplomacySystem {
     return changed;
   }
 
-  /** 驻军自动攻击结算(原 _advanceGarrisons 内联 resolveBattle,同步直结 + 战报) */
+  /** 驻军自动攻击结算(原 _advanceGarrisons 内联 resolveBattle,同步直结) */
   _resolveGarrisonBattle(army, state, target, stats) {
     const playerStats = this._armySystem?.getArmyStats?.(target.player.id) || {};
     const playerFirst = playerStats.speed > stats.speed && target.distance <= (playerStats.attackRange || 0);
@@ -515,22 +498,6 @@ export class DiplomacySystem {
     }
     const enemyDefeated = army.hp <= 0;
     if (enemyDefeated) state.armies = state.armies.filter(item => item.id !== army.id);
-    const playerAlive = !!this._armySystem?.getArmy?.(target.player.id);
-    const playerAfter = playerAlive ? this._armySystem.getArmy(target.player.id) : null;
-    this._battleLog?.record({
-      attacker: { name: army.name || '城邦驻军', type: 'garrison', summary: '' },
-      defender: { name: target.player.name || '军团', type: 'player_army', summary: `${target.player.unitIds?.length || 0} 队` },
-      initiator: 'enemy',
-      auto: true,
-      distance: target.distance,
-      firstStrike: playerFirst ? 'defender' : 'attacker',
-      turns: attacks.map(attack => ({ side: attack.side, damage: attack.damage, hpAfter: attack.hpAfter ?? null, bonusStrike: false })),
-      result: enemyDefeated ? 'defeat' : (!playerAlive ? 'victory' : 'draw'),
-      casualties: null,
-      rewards: [],
-      luxuryDrop: null,
-      hpRemaining: playerAfter?.hp ?? null
-    });
     this._notify();
     return { ok: true, enemyDefeated, enemyHp: army.hp };
   }
@@ -591,9 +558,19 @@ export class DiplomacySystem {
       if (!dispatchedArmy) continue;
       const level = Math.max(1, Number(state.level) || 1);
       const stats = this._garrisonStats(dispatchedArmy);
-      // 派兵强度按"当天"玩家基准现算(守军实例的 buff 可能已过期),加成可 < 1
-      const raidTarget = this._playerPowerBase()
-        * ((Number(settings.raidPowerBase) || 0.6) + level * (Number(settings.raidPowerPerLevel) || 0.2));
+      // 派兵强度 = 时代保底 × 等级系数 × (玩家战力/时代保底)^exponent,下限为时代保底 × 等级系数 × minRatio。
+      // 收益递减(exponent 默认 0.7):战力≈保底时与线性一致(练兵立刻见效,不重蹈 1.2 上限挠痒覆辙);
+      // 战力远超保底时增长放缓——练兵 2 倍战力袭击只涨 1.62 倍,避免后期数值无限膨胀。
+      const multiplier = (Number(settings.raidPowerBase) || 0.6) + level * (Number(settings.raidPowerPerLevel) || 0.2);
+      const floors = settings.powerBaseFloor || [200, 400, 800, 1500, 2500];
+      const eraOrder = this._eraSystem?.getCurrentEra?.()?.order || 0;
+      const basePower = Number(floors[eraOrder]) || 200;
+      const base = basePower * multiplier;
+      const minRatio = Number(settings.raidPowerMinRatio) ?? 0.8;
+      const playerPower = this._playerPowerBase();
+      const ratio = Math.max(1, playerPower / basePower); // _playerPowerBase 恒 ≥ 保底,比值下限 1
+      const exponent = Number(settings.raidPowerDiminishExponent) || 0.7;
+      const raidTarget = Math.max(base * minRatio, Math.round(base * Math.pow(ratio, exponent)));
       const unit = units.find(item => item.id === dispatchedArmy.unitIds?.[0]) || {};
       const baseMaxHp = Math.max(1, Number(unit.maxHp ?? unit.hp) || 1);
       const baseAttack = Math.max(0, Number(unit.attack) || 0);
@@ -604,7 +581,8 @@ export class DiplomacySystem {
         ...(state.controlledCells || []),
         { x: outpost.gridX + 2, y: outpost.gridY + 1 },
         { x: outpost.gridX - 1, y: outpost.gridY + 1 }
-      ].filter(cell => Number.isFinite(cell.x) && Number.isFinite(cell.y));
+      ].filter(cell => Number.isFinite(cell.x) && Number.isFinite(cell.y)
+        && !['S', 'W', 'M', 'B', 'R'].includes(configRegistry.get('map')?.grid?.[cell.y]?.[cell.x]));
       let spawned = false;
       for (const cell of candidates) {
         spawned = this._enemyExpansionSystem?.spawnCityStateRaid?.({
@@ -670,6 +648,7 @@ export class DiplomacySystem {
         if (target.x < 0 || target.y < 0 || target.x >= 200 || target.y >= 200) continue;
         if (Math.abs(target.x - outpost.gridX) + Math.abs(target.y - outpost.gridY) > 5) continue;
         if (occupied.has(`${target.x},${target.y}`)) continue;
+        if (['S', 'W', 'M', 'B', 'R'].includes(configRegistry.get('map')?.grid?.[target.y]?.[target.x])) continue;
         state.controlledCells.push(target);
         state.lastExpansionDay = day;
         return true;

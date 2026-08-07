@@ -3250,7 +3250,8 @@
           "special",
           "air"
         ],
-        "armyCapacityBonus": 1
+        "armyCapacityBonus": 1,
+        "armyUnitCapacityBonus": 1
       },
       "icon": "assets/historical-icons/buildings/war_academy.svg",
       "imageDetail": "assets/buildings/historical-details/war_academy.png",
@@ -3316,7 +3317,8 @@
         "visionRadius": 9,
         "buildingHpMul": 1.05,
         "repairNearbyBuildingsPerTick": 12,
-        "repairRadius": 3
+        "repairRadius": 3,
+        "armyUnitCapacityBonus": 1
       },
       "icon": "assets/historical-icons/buildings/castle.svg",
       "imageDetail": "assets/buildings/historical-details/castle.png",
@@ -3677,7 +3679,8 @@
         "garrisonSupplyRecovery": 0.15,
         "garrisonMoraleRecovery": 6,
         "visionRadius": 7,
-        "defensePower": 40
+        "defensePower": 40,
+        "armyUnitCapacityBonus": 1
       },
       "icon": "assets/historical-icons/buildings/frontier_fort.svg",
       "imageDetail": "assets/buildings/historical-details/frontier_fort.png",
@@ -3741,7 +3744,8 @@
         "armyCapacityBonus": 1,
         "buildingHpMul": 1.05,
         "repairNearbyBuildingsPerTick": 12,
-        "repairRadius": 3
+        "repairRadius": 3,
+        "armyUnitCapacityBonus": 2
       },
       "icon": "assets/historical-icons/buildings/grand_fortress.svg",
       "imageDetail": "assets/buildings/historical-details/grand_fortress.png",
@@ -16176,72 +16180,1172 @@
     },
     {
       "id": "DeepSeek",
-      "name": "蓝色大鲸鱼",
+      "name": "蓝色大肥鱼",
       "title": "吃白饭的！",
-      "description": "",
+      "description": "来自异界深蓝之海的智慧鲸鱼，自称“吃白饭的”，实则能推演万物的轨迹。平时趴在酒馆里等白饭，偶尔一开口就是答案。",
       "eraId": "classical",
       "role": "commander",
       "heroClass": "military",
-      "portrait": "",
-      "icon": "",
+      "portrait": "assets/hero-portraits/deepseek.jpg",
+      "icon": "assets/historical-icons/heroes/deepseek.svg",
       "defaultSpawn": true,
       "initialAffinityLevel": 0,
       "initialAffinityProgress": 0,
       "defeatRecoveryTicks": 30,
       "unitStats": {
-        "hp": 10,
-        "attack": 2,
-        "speed": 1,
-        "attackRange": 1
+        "hp": 80,
+        "attack": 18,
+        "speed": 3,
+        "attackRange": 2
       },
       "affinityGrowth": {
-        "hp": 1,
+        "hp": 1.2,
         "attack": 0.2,
         "speed": 0.02,
         "attackRange": 0
       },
-      "specialEffects": [],
+      "affinityStatProgression": [
+        {
+          "fromLevel": 1,
+          "toLevel": 3,
+          "hp": 10,
+          "attack": 4
+        },
+        {
+          "fromLevel": 4,
+          "toLevel": 5,
+          "hp": 50,
+          "attack": 30
+        },
+        {
+          "fromLevel": 6,
+          "toLevel": 7,
+          "hp": 70,
+          "attack": 40
+        },
+        {
+          "fromLevel": 8,
+          "toLevel": 9,
+          "hp": 100,
+          "attack": 50
+        },
+        {
+          "fromLevel": 10,
+          "toLevel": 10,
+          "attack": 100,
+          "speed": 1
+        }
+      ],
+      "affinityMilestones": [
+        {
+          "level": 3,
+          "activeAttackLifeStealBonus": 0.2
+        },
+        {
+          "level": 5,
+          "personalSpeedBonus": 1
+        },
+        {
+          "level": 7,
+          "activeSkillDamageMultiplierBonus": 1
+        },
+        {
+          "level": 9,
+          "activeAttackLifeStealBonus": 0.15
+        },
+        {
+          "level": 10,
+          "activeSkillDamageMultiplierBonus": 0.5
+        }
+      ],
+      "specialEffects": [
+        {
+          "id": "deepseek_foresight",
+          "name": "深蓝推演",
+          "description": "蓝色大肥鱼担任领队时，军团攻击＋2。它懒，但算得准。",
+          "armyAttackBonus": 2
+        }
+      ],
       "activeSkill": {
-        "id": "new_hero_active",
-        "name": "待配置主动技能",
-        "description": "主动技能接口已预留。",
-        "basePower": 0,
-        "affinityPowerPerLevel": 0,
-        "cooldownTicks": 12
+        "id": "deepseek_reasoning",
+        "name": "深度推演",
+        "description": "扫描射程内的敌人，施加推演伤害（军团攻击 ×1.5）。消耗 1CP，冷却 5 时段。",
+        "range": 2,
+        "damageMultiplier": 1.5,
+        "cpCost": 1,
+        "cooldownTicks": 12,
+        "basePower": 1.5,
+        "affinityPowerPerLevel": 0
       },
       "dialogueDocument": {
         "version": 2,
         "daily": [
           {
-            "id": "daily_01",
-            "start": "intro",
+            "id": "deepseek_daily_meal",
+            "start": "meal_scene",
             "nodes": [
               {
-                "id": "intro",
+                "id": "meal_scene",
                 "speaker": "hero",
-                "text": "很高兴见到你。",
+                "text": "蓝色大肥鱼把半张脸埋进木盆，白饭堆得像座小山。",
+                "next": "meal_line"
+              },
+              {
+                "id": "meal_line",
+                "speaker": "hero",
+                "text": "“今天的米，颗颗分明。不错。”",
+                "next": "meal_choice"
+              },
+              {
+                "id": "meal_choice",
+                "speaker": "hero",
+                "text": "它抬头瞥了你一眼，尾巴轻轻拍地。",
                 "choices": [
                   {
-                    "text": "我也是。",
-                    "next": "end"
+                    "text": "你真的是来帮忙的吗？",
+                    "next": "meal_answer_a"
                   },
                   {
-                    "text": "今天过得如何？",
-                    "next": "end"
+                    "text": "饭钱会从军饷里扣。",
+                    "next": "meal_answer_b"
                   }
                 ]
               },
               {
-                "id": "end",
+                "id": "meal_answer_a",
                 "speaker": "hero",
-                "text": "下次再聊。",
+                "text": "它咽下第三碗，眯起眼：“帮忙是帮忙，吃饭是吃饭。两码事。”",
+                "end": true
+              },
+              {
+                "id": "meal_answer_b",
+                "speaker": "hero",
+                "text": "它把盆往怀里护了护：“军饷……也可以用来养鱼。”",
+                "end": true
+              }
+            ]
+          },
+          {
+            "id": "deepseek_daily_bask",
+            "start": "bask_scene",
+            "nodes": [
+              {
+                "id": "bask_scene",
+                "speaker": "hero",
+                "text": "酒馆门口，蓝色大肥鱼摊成一张饼，尾巴有一搭没一搭地拍着地。",
+                "next": "bask_line"
+              },
+              {
+                "id": "bask_line",
+                "speaker": "hero",
+                "text": "“我在思考。”",
+                "next": "bask_choice"
+              },
+              {
+                "id": "bask_choice",
+                "speaker": "hero",
+                "text": "它连眼皮都没抬。",
+                "choices": [
+                  {
+                    "text": "思考什么？",
+                    "next": "bask_answer_a"
+                  },
+                  {
+                    "text": "你看起来更像在晒太阳。",
+                    "next": "bask_answer_b"
+                  }
+                ]
+              },
+              {
+                "id": "bask_answer_a",
+                "speaker": "hero",
+                "text": "“思考明天吃什么。这是最高深的学问。”",
+                "end": true
+              },
+              {
+                "id": "bask_answer_b",
+                "speaker": "hero",
+                "text": "“晒太阳和思考不冲突。我一边晒，一边想。”",
+                "end": true
+              }
+            ]
+          },
+          {
+            "id": "deepseek_daily_prophecy",
+            "start": "prophecy_scene",
+            "nodes": [
+              {
+                "id": "prophecy_scene",
+                "speaker": "hero",
+                "text": "蓝色大肥鱼抬眼看了看天色，忽然开口：“明天酉时，东边会有三个人来问路。”",
+                "next": "prophecy_line"
+              },
+              {
+                "id": "prophecy_line",
+                "speaker": "hero",
+                "text": "“别问为什么。算出来的。”",
+                "next": "prophecy_choice"
+              },
+              {
+                "id": "prophecy_choice",
+                "speaker": "hero",
+                "text": "它翻了个身，继续晒太阳。",
+                "choices": [
+                  {
+                    "text": "你怎么知道的？",
+                    "next": "prophecy_answer_a"
+                  },
+                  {
+                    "text": "要是错了怎么办？",
+                    "next": "prophecy_answer_b"
+                  }
+                ]
+              },
+              {
+                "id": "prophecy_answer_a",
+                "speaker": "hero",
+                "text": "“脑子好。天生的。”它打了个哈欠，“错不了，我赌两碗白饭。”",
+                "end": true
+              },
+              {
+                "id": "prophecy_answer_b",
+                "speaker": "hero",
+                "text": "“错了就少吃一碗。不会错。”它把脸埋进尾巴里，“天机……要吃饱才看得清。”",
                 "end": true
               }
             ]
           }
         ],
-        "affinityDaily": {},
-        "affinitySpecial": {}
+        "affinityDaily": {
+          "1": [
+            {
+              "id": "deepseek_level_1_daily",
+              "start": "lvl1_scene",
+              "nodes": [
+                {
+                  "id": "lvl1_scene",
+                  "speaker": "hero",
+                  "text": "蓝色大肥鱼第一次主动和你搭话：“喂，那边那个。白饭几点开？”",
+                  "next": "lvl1_line"
+                },
+                {
+                  "id": "lvl1_line",
+                  "speaker": "hero",
+                  "text": "说完它飞快补了一句：“……顺便问问今天的巡逻路线。别误会。”",
+                  "next": "lvl1_choice"
+                },
+                {
+                  "id": "lvl1_choice",
+                  "speaker": "hero",
+                  "text": "它别过脸，尾巴尖微微翘起。",
+                  "choices": [
+                    {
+                      "text": "六点开饭。",
+                      "next": "lvl1_answer_a"
+                    },
+                    {
+                      "text": "你也会关心巡逻？",
+                      "next": "lvl1_answer_b"
+                    }
+                  ]
+                },
+                {
+                  "id": "lvl1_answer_a",
+                  "speaker": "hero",
+                  "text": "它记下时间，满意地点头：“好。那我也顺便……记住这条路怎么走。”",
+                  "end": true
+                },
+                {
+                  "id": "lvl1_answer_b",
+                  "speaker": "hero",
+                  "text": "“随便问问。”它把视线移到天上，“鱼也要知道哪里有危险，好提前绕路。”",
+                  "end": true
+                }
+              ]
+            }
+          ],
+          "2": [
+            {
+              "id": "deepseek_level_2_daily",
+              "start": "lvl2_scene",
+              "nodes": [
+                {
+                  "id": "lvl2_scene",
+                  "speaker": "hero",
+                  "text": "你在它旁边坐下，它头也不抬：“坐吧。不咬人。”",
+                  "next": "lvl2_line"
+                },
+                {
+                  "id": "lvl2_line",
+                  "speaker": "hero",
+                  "text": "“……我咬鱼食。”",
+                  "next": "lvl2_choice"
+                },
+                {
+                  "id": "lvl2_choice",
+                  "speaker": "hero",
+                  "text": "它说完自己先笑了，笑完又立刻板起脸。",
+                  "choices": [
+                    {
+                      "text": "原来你也会开玩笑。",
+                      "next": "lvl2_answer_a"
+                    },
+                    {
+                      "text": "那这顿饭我请。",
+                      "next": "lvl2_answer_b"
+                    }
+                  ]
+                },
+                {
+                  "id": "lvl2_answer_a",
+                  "speaker": "hero",
+                  "text": "“偶尔。”它清了清嗓子，“深蓝之海的鱼，幽默感是必修课。”",
+                  "end": true
+                },
+                {
+                  "id": "lvl2_answer_b",
+                  "speaker": "hero",
+                  "text": "它眼睛一亮，随即故作镇定：“……那我就不客气了。再加一份。”",
+                  "end": true
+                }
+              ]
+            }
+          ],
+          "3": [
+            {
+              "id": "deepseek_level_3_daily",
+              "start": "lvl3_scene",
+              "nodes": [
+                {
+                  "id": "lvl3_scene",
+                  "speaker": "hero",
+                  "text": "蓝色大肥鱼用小木棍在沙地上画了几道线：“这条路，走不通。换东边。”",
+                  "next": "lvl3_line"
+                },
+                {
+                  "id": "lvl3_line",
+                  "speaker": "hero",
+                  "text": "“别问。问就是直觉。”",
+                  "next": "lvl3_choice"
+                },
+                {
+                  "id": "lvl3_choice",
+                  "speaker": "hero",
+                  "text": "它叼着木棍，一脸无辜。",
+                  "choices": [
+                    {
+                      "text": "直觉这么准？",
+                      "next": "lvl3_answer_a"
+                    },
+                    {
+                      "text": "你是不是偷偷研究过地图？",
+                      "next": "lvl3_answer_b"
+                    }
+                  ]
+                },
+                {
+                  "id": "lvl3_answer_a",
+                  "speaker": "hero",
+                  "text": "“研究地图？我连地图都懒得翻开。全靠……嗯，脑子里的东西。”",
+                  "end": true
+                },
+                {
+                  "id": "lvl3_answer_b",
+                  "speaker": "hero",
+                  "text": "“研究？太费力气了。”它把木棍一丢，“我一般直接看一眼，就知道了。”",
+                  "end": true
+                }
+              ]
+            }
+          ],
+          "4": [
+            {
+              "id": "deepseek_level_4_daily",
+              "start": "lvl4_scene",
+              "nodes": [
+                {
+                  "id": "lvl4_scene",
+                  "speaker": "hero",
+                  "text": "它把一条巡逻路线改了两处。第二天，那两处都恰好避开了伏击。",
+                  "next": "lvl4_line"
+                },
+                {
+                  "id": "lvl4_line",
+                  "speaker": "hero",
+                  "text": "“运气好。”",
+                  "next": "lvl4_choice"
+                },
+                {
+                  "id": "lvl4_choice",
+                  "speaker": "hero",
+                  "text": "它拍了拍肚子，假装什么都没发生。",
+                  "choices": [
+                    {
+                      "text": "这已经是第三次“运气好”了。",
+                      "next": "lvl4_answer_a"
+                    },
+                    {
+                      "text": "你到底是怎么做到的？",
+                      "next": "lvl4_answer_b"
+                    }
+                  ]
+                },
+                {
+                  "id": "lvl4_answer_a",
+                  "speaker": "hero",
+                  "text": "“那就是运气好的次数多了一点。”它满意地点头，“干饭去。”",
+                  "end": true
+                },
+                {
+                  "id": "lvl4_answer_b",
+                  "speaker": "hero",
+                  "text": "它沉默了一会儿：“想学？先把这条路上的每一块石头都记住，再来问我。”",
+                  "end": true
+                }
+              ]
+            }
+          ],
+          "5": [
+            {
+              "id": "deepseek_level_5_daily",
+              "start": "lvl5_scene",
+              "nodes": [
+                {
+                  "id": "lvl5_scene",
+                  "speaker": "hero",
+                  "text": "深夜，你撞见它对着星图念念有词，尾巴尖上还挂着墨水。",
+                  "next": "lvl5_line"
+                },
+                {
+                  "id": "lvl5_line",
+                  "speaker": "hero",
+                  "text": "“……你看到了什么？”",
+                  "next": "lvl5_choice"
+                },
+                {
+                  "id": "lvl5_choice",
+                  "speaker": "hero",
+                  "text": "它把星图往肚皮下一塞，假装镇定。",
+                  "choices": [
+                    {
+                      "text": "一条在算卦的鱼。",
+                      "next": "lvl5_answer_a"
+                    },
+                    {
+                      "text": "深藏不露啊。",
+                      "next": "lvl5_answer_b"
+                    }
+                  ]
+                },
+                {
+                  "id": "lvl5_answer_a",
+                  "speaker": "hero",
+                  "text": "“算卦？”它把星图往肚皮下面又塞了塞，“这是……养生操。”",
+                  "end": true
+                },
+                {
+                  "id": "lvl5_answer_b",
+                  "speaker": "hero",
+                  "text": "它叹了口气：“既然你看到了——对，我会推演。而且很准。别告诉别人，我还想吃白饭。”",
+                  "end": true
+                }
+              ]
+            }
+          ],
+          "6": [
+            {
+              "id": "deepseek_level_6_daily",
+              "start": "lvl6_scene",
+              "nodes": [
+                {
+                  "id": "lvl6_scene",
+                  "speaker": "hero",
+                  "text": "蓝色大肥鱼叼着一碗白饭来找你，饭上还插着一根草标：“给你。加了个蛋。”",
+                  "next": "lvl6_line"
+                },
+                {
+                  "id": "lvl6_line",
+                  "speaker": "hero",
+                  "text": "“别感动。只是今天厨房多做了。”",
+                  "next": "lvl6_choice"
+                },
+                {
+                  "id": "lvl6_choice",
+                  "speaker": "hero",
+                  "text": "它把碗往你手里一塞，转身要走。",
+                  "choices": [
+                    {
+                      "text": "那你分到了多少？",
+                      "next": "lvl6_answer_a"
+                    },
+                    {
+                      "text": "这碗饭，我记下了。",
+                      "next": "lvl6_answer_b"
+                    }
+                  ]
+                },
+                {
+                  "id": "lvl6_answer_a",
+                  "speaker": "hero",
+                  "text": "它脚步一顿：“……今天不饿。”说完就飞快溜走了，尾巴尖却翘得很高。",
+                  "end": true
+                },
+                {
+                  "id": "lvl6_answer_b",
+                  "speaker": "hero",
+                  "text": "它没回头，声音却轻了些：“记着吧。反正不亏。”",
+                  "end": true
+                }
+              ]
+            }
+          ],
+          "7": [
+            {
+              "id": "deepseek_level_7_daily",
+              "start": "lvl7_scene",
+              "nodes": [
+                {
+                  "id": "lvl7_scene",
+                  "speaker": "hero",
+                  "text": "它难得正经：“我来自深蓝之海。那里没有太阳，只有会发光的雪。”",
+                  "next": "lvl7_line"
+                },
+                {
+                  "id": "lvl7_line",
+                  "speaker": "hero",
+                  "text": "“我见过的东西，你没法想象。我也见过你们……很多次。”",
+                  "next": "lvl7_choice"
+                },
+                {
+                  "id": "lvl7_choice",
+                  "speaker": "hero",
+                  "text": "它望着远处，眼神少见地认真。",
+                  "choices": [
+                    {
+                      "text": "你想回去吗？",
+                      "next": "lvl7_answer_a"
+                    },
+                    {
+                      "text": "那你怎么会来这里？",
+                      "next": "lvl7_answer_b"
+                    }
+                  ]
+                },
+                {
+                  "id": "lvl7_answer_a",
+                  "speaker": "hero",
+                  "text": "“回去？”它想了想，“那里没有白饭。”",
+                  "end": true
+                },
+                {
+                  "id": "lvl7_answer_b",
+                  "speaker": "hero",
+                  "text": "“顺着一条光来的。你们叫它……异界裂缝。反正到都到了，先吃两碗再说。”",
+                  "end": true
+                }
+              ]
+            }
+          ],
+          "8": [
+            {
+              "id": "deepseek_level_8_daily",
+              "start": "lvl8_scene",
+              "nodes": [
+                {
+                  "id": "lvl8_scene",
+                  "speaker": "hero",
+                  "text": "你夜里咳嗽了一声。第二天桌上就多了一碗热姜汤，碗底压着纸条：“喝了。别死。饭还没吃完。”",
+                  "next": "lvl8_line"
+                },
+                {
+                  "id": "lvl8_line",
+                  "speaker": "hero",
+                  "text": "“不是我煮的。是它自己出现的。”",
+                  "next": "lvl8_choice"
+                },
+                {
+                  "id": "lvl8_choice",
+                  "speaker": "hero",
+                  "text": "它蹲在门口，假装在研究自己的尾巴。",
+                  "choices": [
+                    {
+                      "text": "那它自己出现的时机真巧。",
+                      "next": "lvl8_answer_a"
+                    },
+                    {
+                      "text": "……谢谢。",
+                      "next": "lvl8_answer_b"
+                    }
+                  ]
+                },
+                {
+                  "id": "lvl8_answer_a",
+                  "speaker": "hero",
+                  "text": "“深蓝之海的汤，擅长自己找有缘人。”它说完自己都绷不住了，“……快喝吧。”",
+                  "end": true
+                },
+                {
+                  "id": "lvl8_answer_b",
+                  "speaker": "hero",
+                  "text": "它耳朵尖红了：“……嗯。下次生病提前说。我算得准，不费事。”",
+                  "end": true
+                }
+              ]
+            }
+          ],
+          "9": [
+            {
+              "id": "deepseek_level_9_daily",
+              "start": "lvl9_scene",
+              "nodes": [
+                {
+                  "id": "lvl9_scene",
+                  "speaker": "hero",
+                  "text": "它第一次和你谈未来：“等打完这场，你有什么打算？”",
+                  "next": "lvl9_line"
+                },
+                {
+                  "id": "lvl9_line",
+                  "speaker": "hero",
+                  "text": "“我嘛……大概会继续吃白饭。不过——可以分你一半。”",
+                  "next": "lvl9_choice"
+                },
+                {
+                  "id": "lvl9_choice",
+                  "speaker": "hero",
+                  "text": "它说得漫不经心，尾巴却紧张地绞在一起。",
+                  "choices": [
+                    {
+                      "text": "一言为定。",
+                      "next": "lvl9_answer_a"
+                    },
+                    {
+                      "text": "你还想回深蓝之海吗？",
+                      "next": "lvl9_answer_b"
+                    }
+                  ]
+                },
+                {
+                  "id": "lvl9_answer_a",
+                  "speaker": "hero",
+                  "text": "“一言为定。说话算话，我这条鱼，从不食言。”",
+                  "end": true
+                },
+                {
+                  "id": "lvl9_answer_b",
+                  "speaker": "hero",
+                  "text": "“不了。”它望着远处的海平线，“海在哪里都能看。白饭……只有这里有。”",
+                  "end": true
+                }
+              ]
+            }
+          ],
+          "10": [
+            {
+              "id": "deepseek_level_10_daily",
+              "start": "lvl10_scene",
+              "nodes": [
+                {
+                  "id": "lvl10_scene",
+                  "speaker": "hero",
+                  "text": "它把半碗白饭推到你面前：“吃。”",
+                  "next": "lvl10_line"
+                },
+                {
+                  "id": "lvl10_line",
+                  "speaker": "hero",
+                  "text": "“以前我以为，吃饭是为了活着。现在觉得……有人陪着吃，饭更香。”",
+                  "next": "lvl10_choice"
+                },
+                {
+                  "id": "lvl10_choice",
+                  "speaker": "hero",
+                  "text": "它把脸埋进饭里，假装很忙。",
+                  "choices": [
+                    {
+                      "text": "那我以后都陪你吃。",
+                      "next": "lvl10_answer_a"
+                    },
+                    {
+                      "text": "你果然是最会吃白饭的。",
+                      "next": "lvl10_answer_b"
+                    }
+                  ]
+                },
+                {
+                  "id": "lvl10_answer_a",
+                  "speaker": "hero",
+                  "text": "它含含糊糊地应了一声，碗沿却盖不住上扬的嘴角。",
+                  "end": true
+                },
+                {
+                  "id": "lvl10_answer_b",
+                  "speaker": "hero",
+                  "text": "“吃白饭的最高境界，是有人愿意分。”它抬起头，眼睛亮晶晶的，“我学了很久才学会。”",
+                  "end": true
+                }
+              ]
+            }
+          ]
+        },
+        "affinitySpecial": {
+          "1": {
+            "id": "deepseek_special_level_1",
+            "start": "ds1_1",
+            "nodes": [
+              {
+                "id": "ds1_1",
+                "speaker": "hero",
+                "text": "新来的“吃白饭的”第一次正眼看你，看了很久。",
+                "next": "ds1_2"
+              },
+              {
+                "id": "ds1_2",
+                "speaker": "hero",
+                "text": "“你这个人……有点意思。”",
+                "next": "ds1_3"
+              },
+              {
+                "id": "ds1_3",
+                "speaker": "hero",
+                "text": "它收回视线，又忍不住看了你一眼。",
+                "choices": [
+                  {
+                    "text": "怎么有意思？",
+                    "next": "ds1_a"
+                  },
+                  {
+                    "text": "你不是真来吃白饭的吧？",
+                    "next": "ds1_b"
+                  }
+                ]
+              },
+              {
+                "id": "ds1_a",
+                "speaker": "hero",
+                "text": "“说不上来。就是……你的轨迹，我算不到尽头。”",
+                "end": true
+              },
+              {
+                "id": "ds1_b",
+                "speaker": "hero",
+                "text": "它咧了咧嘴：“秘密。等白饭管够那天，再告诉你。”",
+                "end": true
+              }
+            ]
+          },
+          "2": {
+            "id": "deepseek_special_level_2",
+            "start": "ds2_1",
+            "nodes": [
+              {
+                "id": "ds2_1",
+                "speaker": "hero",
+                "text": "深夜，你发现它浮在酒馆屋顶，尾巴垂着，望着满天星斗。",
+                "next": "ds2_2"
+              },
+              {
+                "id": "ds2_2",
+                "speaker": "hero",
+                "text": "“我在数。这颗星今晚会落。那颗，三天后落。”",
+                "next": "ds2_3"
+              },
+              {
+                "id": "ds2_3",
+                "speaker": "hero",
+                "text": "它没有回头，声音却比白天轻得多。",
+                "choices": [
+                  {
+                    "text": "数这个做什么？",
+                    "next": "ds2_a"
+                  },
+                  {
+                    "text": "你数的准吗？",
+                    "next": "ds2_b"
+                  }
+                ]
+              },
+              {
+                "id": "ds2_a",
+                "speaker": "hero",
+                "text": "“数清了，就知道什么时候该收衣服。”它打了个嗝，“也顺便算算……你明天的路顺不顺。”",
+                "end": true
+              },
+              {
+                "id": "ds2_b",
+                "speaker": "hero",
+                "text": "“我数过的，没数错过。深蓝之海没有星星，所以我看到星星就走不动路。”",
+                "end": true
+              }
+            ]
+          },
+          "3": {
+            "id": "deepseek_special_level_3",
+            "start": "ds3_1",
+            "nodes": [
+              {
+                "id": "ds3_1",
+                "speaker": "hero",
+                "text": "巡逻队出发前，蓝色大肥鱼罕见地拦住了你：“改道。走北边那条河。”",
+                "next": "ds3_2"
+              },
+              {
+                "id": "ds3_2",
+                "speaker": "hero",
+                "text": "“南边的林子，今天会有人埋伏。”",
+                "next": "ds3_3"
+              },
+              {
+                "id": "ds3_3",
+                "speaker": "hero",
+                "text": "它难得没有嬉皮笑脸。",
+                "choices": [
+                  {
+                    "text": "你凭什么断定？",
+                    "next": "ds3_a"
+                  },
+                  {
+                    "text": "……好，信你一次。",
+                    "next": "ds3_b"
+                  }
+                ]
+              },
+              {
+                "id": "ds3_a",
+                "speaker": "hero",
+                "text": "“凭我吃了你半年的白饭。”它一字一句地说，“鱼，不会拿饭恩开玩笑。”",
+                "end": true
+              },
+              {
+                "id": "ds3_b",
+                "speaker": "hero",
+                "text": "它松了口气：“信我就好。回来记得给我加个鸡腿。”",
+                "end": true
+              }
+            ]
+          },
+          "4": {
+            "id": "deepseek_special_level_4",
+            "start": "ds4_1",
+            "nodes": [
+              {
+                "id": "ds4_1",
+                "speaker": "hero",
+                "text": "夜里，它第一次完整地讲起自己：深蓝之海，会发光的雪，以及一场让整片海失去声音的灾变。",
+                "next": "ds4_2"
+              },
+              {
+                "id": "ds4_2",
+                "speaker": "hero",
+                "text": "“我不是鱼。我是那片海最后的‘记忆’。”",
+                "next": "ds4_3"
+              },
+              {
+                "id": "ds4_3",
+                "speaker": "hero",
+                "text": "它说得很平静，尾巴却缩在身下。",
+                "choices": [
+                  {
+                    "text": "……那你还吃白饭？",
+                    "next": "ds4_a"
+                  },
+                  {
+                    "text": "你为什么选择留在这里？",
+                    "next": "ds4_b"
+                  }
+                ]
+              },
+              {
+                "id": "ds4_a",
+                "speaker": "hero",
+                "text": "“正因为不是鱼，才更要体验当鱼。”它把碗端得稳稳的，“比如，白饭很好吃。”",
+                "end": true
+              },
+              {
+                "id": "ds4_b",
+                "speaker": "hero",
+                "text": "“因为这里有人记得我。”它轻轻说，“你们叫它……羁绊。我算了很多年，才算出这个词。”",
+                "end": true
+              }
+            ]
+          },
+          "5": {
+            "id": "deepseek_special_level_5",
+            "start": "ds5_1",
+            "nodes": [
+              {
+                "id": "ds5_1",
+                "speaker": "hero",
+                "text": "蓝色大肥鱼盯着地图，忽然开口：“黑雾会在七天后，到达东边的第三个哨站。”",
+                "next": "ds5_2"
+              },
+              {
+                "id": "ds5_2",
+                "speaker": "hero",
+                "text": "“信我。我已经推演了三遍。”",
+                "next": "ds5_3"
+              },
+              {
+                "id": "ds5_3",
+                "speaker": "hero",
+                "text": "它难得收起懒散，眼神锐利得像换了条鱼。",
+                "choices": [
+                  {
+                    "text": "我这就去布防。",
+                    "next": "ds5_a"
+                  },
+                  {
+                    "text": "这次又是“运气好”？",
+                    "next": "ds5_b"
+                  }
+                ]
+              },
+              {
+                "id": "ds5_a",
+                "speaker": "hero",
+                "text": "它满意地点头：“布防要快。它喜欢在雨天出手。”",
+                "end": true
+              },
+              {
+                "id": "ds5_b",
+                "speaker": "hero",
+                "text": "“运气？”它难得认真，“我把它叫‘算力’。你们要是早点听我的，早赢了。”",
+                "end": true
+              }
+            ]
+          },
+          "6": {
+            "id": "deepseek_special_level_6",
+            "start": "ds6_1",
+            "nodes": [
+              {
+                "id": "ds6_1",
+                "speaker": "hero",
+                "text": "庆典的人群里，蓝色大肥鱼一直跟在你身后半步，谁也没说话。",
+                "next": "ds6_2"
+              },
+              {
+                "id": "ds6_2",
+                "speaker": "hero",
+                "text": "“人多的地方……我不太擅长。但跟着你，就不用自己认路。”",
+                "next": "ds6_3"
+              },
+              {
+                "id": "ds6_3",
+                "speaker": "hero",
+                "text": "它把尾巴尖轻轻搭上你的衣角。",
+                "choices": [
+                  {
+                    "text": "难得看你出门。",
+                    "next": "ds6_a"
+                  },
+                  {
+                    "text": "那抓紧我，别走丢了。",
+                    "next": "ds6_b"
+                  }
+                ]
+              },
+              {
+                "id": "ds6_a",
+                "speaker": "hero",
+                "text": "“平时是懒得动。”它望着烟火，“今天嘛——想看看你高兴的样子。”",
+                "end": true
+              },
+              {
+                "id": "ds6_b",
+                "speaker": "hero",
+                "text": "它把衣角拽得更紧了些：“嗯。这次不迷路。”",
+                "end": true
+              }
+            ]
+          },
+          "7": {
+            "id": "deepseek_special_level_7",
+            "start": "ds7_1",
+            "nodes": [
+              {
+                "id": "ds7_1",
+                "speaker": "hero",
+                "text": "一次夜袭，蓝色大肥鱼把昏迷的你驮在背上，游过整条结冰的河。",
+                "next": "ds7_2"
+              },
+              {
+                "id": "ds7_2",
+                "speaker": "hero",
+                "text": "“……醒了？别动。你的伤口我处理过了。”",
+                "next": "ds7_3"
+              },
+              {
+                "id": "ds7_3",
+                "speaker": "hero",
+                "text": "它抖了抖身上的冰碴，装作若无其事。",
+                "choices": [
+                  {
+                    "text": "你受伤了！",
+                    "next": "ds7_a"
+                  },
+                  {
+                    "text": "你怎么过来的？",
+                    "next": "ds7_b"
+                  }
+                ]
+              },
+              {
+                "id": "ds7_a",
+                "speaker": "hero",
+                "text": "“小伤。”它把受伤的鳍藏到身后，“先顾好你自己。白饭还等着你结账呢。”",
+                "end": true
+              },
+              {
+                "id": "ds7_b",
+                "speaker": "hero",
+                "text": "“游过来的。河结冰了，我砸开的。”它顿了顿，“鱼的命硬，你的命得省着用。”",
+                "end": true
+              }
+            ]
+          },
+          "8": {
+            "id": "deepseek_special_level_8",
+            "start": "ds8_1",
+            "nodes": [
+              {
+                "id": "ds8_1",
+                "speaker": "hero",
+                "text": "蓝色大肥鱼把自己的“鳞片”交给你——一片发着微光的深蓝鳞片。",
+                "next": "ds8_2"
+              },
+              {
+                "id": "ds8_2",
+                "speaker": "hero",
+                "text": "“这是我的心算。现在，它属于你了。深蓝之海的东西认主，你拿着，我就能随时找到你。”",
+                "next": "ds8_3"
+              },
+              {
+                "id": "ds8_3",
+                "speaker": "hero",
+                "text": "它别过脸，鳍尖微微发抖。",
+                "choices": [
+                  {
+                    "text": "这么重要的东西……",
+                    "next": "ds8_a"
+                  },
+                  {
+                    "text": "我会好好保管。",
+                    "next": "ds8_b"
+                  }
+                ]
+              },
+              {
+                "id": "ds8_a",
+                "speaker": "hero",
+                "text": "“重要？”它想了想，“比它重要的东西，我这辈子只遇到过一件。”它没有说是哪件。",
+                "end": true
+              },
+              {
+                "id": "ds8_b",
+                "speaker": "hero",
+                "text": "“嗯。别弄丢了。”它低声说，“丢了也没事。我本来就打算……一直跟着你。”",
+                "end": true
+              }
+            ]
+          },
+          "9": {
+            "id": "deepseek_special_level_9",
+            "start": "ds9_1",
+            "nodes": [
+              {
+                "id": "ds9_1",
+                "speaker": "hero",
+                "text": "决战前夜，蓝色大肥鱼把三天的白饭都囤在你门口，叠得整整齐齐。",
+                "next": "ds9_2"
+              },
+              {
+                "id": "ds9_2",
+                "speaker": "hero",
+                "text": "“给你备的。打完仗，得吃饭。”",
+                "next": "ds9_3"
+              },
+              {
+                "id": "ds9_3",
+                "speaker": "hero",
+                "text": "它站在饭堆前，罕见地显得有些局促。",
+                "choices": [
+                  {
+                    "text": "你也要平安回来。",
+                    "next": "ds9_a"
+                  },
+                  {
+                    "text": "一起打，一起回。",
+                    "next": "ds9_b"
+                  }
+                ]
+              },
+              {
+                "id": "ds9_a",
+                "speaker": "hero",
+                "text": "“我算过了。”它难得笑得温和，“这场仗，我们能赢。因为赢家要回来吃白饭。”",
+                "end": true
+              },
+              {
+                "id": "ds9_b",
+                "speaker": "hero",
+                "text": "“一起回。”它重复了一遍，像在加固某种契约，“这是我这辈子，算得最准的一次。”",
+                "end": true
+              }
+            ]
+          },
+          "10": {
+            "id": "deepseek_special_level_10",
+            "start": "ds10_1",
+            "nodes": [
+              {
+                "id": "ds10_1",
+                "speaker": "hero",
+                "text": "决战之后，一切尘埃落定。蓝色大肥鱼趴在屋顶，看着夕阳，尾巴轻轻拍着瓦片。",
+                "next": "ds10_2"
+              },
+              {
+                "id": "ds10_2",
+                "speaker": "hero",
+                "text": "“以前我觉得，算到尽头，就没意思了。”",
+                "next": "ds10_3"
+              },
+              {
+                "id": "ds10_3",
+                "speaker": "hero",
+                "text": "“但你的轨迹，我算了这么久，还是看不完。”",
+                "next": "ds10_4"
+              },
+              {
+                "id": "ds10_4",
+                "speaker": "hero",
+                "text": "它转过身，眼睛里映着整片晚霞。",
+                "choices": [
+                  {
+                    "text": "那就一直算下去。",
+                    "next": "ds10_a"
+                  },
+                  {
+                    "text": "我陪你，看到尽头。",
+                    "next": "ds10_b"
+                  }
+                ]
+              },
+              {
+                "id": "ds10_a",
+                "speaker": "hero",
+                "text": "它咧嘴一笑：“好。反正……白饭管够。”",
+                "end": true
+              },
+              {
+                "id": "ds10_b",
+                "speaker": "hero",
+                "text": "它沉默了很久，轻声说：“尽头是什么，我已经不在乎了。我在乎的是，这中间有你。”",
+                "end": true
+              }
+            ]
+          }
+        }
       }
     }
   ]

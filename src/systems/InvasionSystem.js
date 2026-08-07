@@ -148,7 +148,17 @@ export class InvasionSystem {
     const averagePlayerStrength = strengths.length
       ? strengths.reduce((sum, value) => sum + value, 0) / strengths.length
       : 1;
-    const targetStrength = Math.min(5000, Math.max(1, Math.round(averagePlayerStrength * 1.5)));
+    // 波次强度不再随玩家战力无限增长:基础值 = 时代保底 × waveBaseMultiplier(默认 1.5),
+    // 玩家军团平均强度只在基础值 × [wavePowerMinRatio, wavePowerMaxRatio] 内浮动(默认 0.8–1.2),
+    // 与城邦派兵同一套"练兵不惩罚、不练兵有保底"的逻辑。
+    const eraOrder = this._eraSystem?.getCurrentEra?.()?.order || 0;
+    const waveFloors = Array.isArray(this._invasionConfig?.wavePowerFloors) ? this._invasionConfig.wavePowerFloors : [200, 400, 800, 1500, 2500];
+    const waveBasePower = Math.max(1, Number(waveFloors[eraOrder]) || 200);
+    const waveBase = waveBasePower * this._cfgNumber('waveBaseMultiplier', 1.5);
+    const rawTarget = Math.max(1, Math.round(averagePlayerStrength * 1.5));
+    const targetStrength = Math.min(5000,
+      Math.max(Math.round(waveBase * this._cfgNumber('wavePowerMinRatio', 0.8)),
+        Math.min(Math.round(waveBase * this._cfgNumber('wavePowerMaxRatio', 1.2)), rawTarget)));
     const types = [
       { id: 'ancient_ruin_berserker', hp: 260, attack: 70, attackRange: 1, speed: 2, cp: 1 },
       { id: 'ancient_ruin_archer', hp: 170, attack: 48, attackRange: 3, speed: 3, cp: 1 },
@@ -174,7 +184,7 @@ export class InvasionSystem {
           if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue;
           const x = preferredX + dx, y = preferredY + dy;
           if (x < 0 || y < 0 || x >= map.gridWidth || y >= map.gridHeight) continue;
-          if (x <= headquarters.gridX || ['S', 'W'].includes(map.grid?.[y]?.[x]) || occupied.has(`${x},${y}`)) continue;
+          if (x <= headquarters.gridX || ['S', 'W', 'M', 'B', 'R'].includes(map.grid?.[y]?.[x]) || occupied.has(`${x},${y}`)) continue;
           occupied.add(`${x},${y}`);
           spawnCells.push({ x, y });
         }

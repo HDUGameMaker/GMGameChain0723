@@ -77,15 +77,19 @@ test('army composition moves trained units out of reserves without command point
   assert.equal(army.getAvailableUnits().spears, 2);
 });
 
-test('army unit capacity starts at 5, gains research bonuses, and never exceeds 10', () => {
+test('army unit capacity starts at 5, gains research and defense building bonuses, capped at 15', () => {
   const { army } = createScenario();
   assert.equal(army.getArmyUnitCapacity(), 5);
   const created = army.createArmy('容量测试').army;
   army.addReserveUnit('spears', 1);
   assert.equal(army.addUnit(created.id, 'spears', 5).ok, true);
   assert.equal(army.addUnit(created.id, 'archers', 1).reason, 'army_unit_capacity_full');
+  // 防御建筑(城堡等)提供每支军团单位上限加成
+  configRegistry._configs.buildings.find(b => b.id === 'castle').uniqueFunction.armyUnitCapacityBonus = 1;
+  assert.equal(army.getArmyUnitCapacity(), 6);
+  // 科技加成与封顶
   army._tech = { getEffects: () => ({ armyUnitCapacityBonus: 20 }) };
-  assert.equal(army.getArmyUnitCapacity(), 10);
+  assert.equal(army.getArmyUnitCapacity(), 15);
 });
 
 test('healers restore their attack value after an engagement', () => {
@@ -104,7 +108,8 @@ test('healers restore half their healing amount every tick', () => {
   army.addUnit(group.id, 'healer', 1);
   army.applyDamage(group.id, 3);
   eventBus.emit('tick', {});
-  assert.equal(army.getArmyStats(group.id).hp, 2.5);
+  // 治疗兵每 tick 回 1.5(healingAfterBattle/2),大地图回血再回 2% maxHp(4×2%=0.08→兜底1)→ hp 4-0.5=3.5
+  assert.equal(army.getArmyStats(group.id).hp, 3.5);
 });
 
 test('army attack range is the unit-count weighted average rounded down', () => {

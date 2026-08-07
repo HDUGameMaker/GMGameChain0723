@@ -1,7 +1,7 @@
 export function evaluateTrainingEligibility({
   unit, canAfford, soldierCount, soldierCap, isUnlocked, hasNavalFacility,
   currentEraOrder = null, unitEraOrder = null, activeBuildingIds = null,
-  selectedCivilizationId = null, availablePopulation = null
+  selectedCivilizationId = null, legacyCivilizationIds = null, availablePopulation = null
 }) {
   const failures = [];
   const reject = (code, message) => failures.push({ code, message });
@@ -18,8 +18,12 @@ export function evaluateTrainingEligibility({
   if (Array.isArray(activeBuildingIds) && unit?.trainingBuildingId && !activeBuildingIds.includes(unit.trainingBuildingId)) {
     reject('training_building_required', `需要启用训练建筑：${unit.trainingBuildingId}`);
   }
-  if (unit?.civilizationId && selectedCivilizationId !== unit.civilizationId) {
-    reject('civilization_mismatch', '该特色兵种属于其他文明');
+  if (unit?.civilizationId) {
+    // 归属文明 = 当前时代所选 + 历代已选(与建筑面板的文明可见性规则一致)
+    const owned = new Set([...(legacyCivilizationIds || []), selectedCivilizationId].filter(Boolean));
+    if (!owned.has(unit.civilizationId)) {
+      reject('civilization_mismatch', '该特色兵种属于其他文明');
+    }
   }
   if (availablePopulation !== null && availablePopulation < (unit?.populationRequired || 1)) {
     reject('insufficient_population', `空闲人口不足（需要 ${unit?.populationRequired || 1}）`);

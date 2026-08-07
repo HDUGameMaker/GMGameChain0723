@@ -713,7 +713,11 @@
     "reviveDelayDays": 3,
     "landDefenseDomain": "land",
     "waveIntervalDays": 7,
-    "warningDays": 1
+    "warningDays": 1,
+    "wavePowerFloors": [200, 400, 800, 1500, 2500],
+    "waveBaseMultiplier": 1.5,
+    "wavePowerMinRatio": 0.8,
+    "wavePowerMaxRatio": 1.2
   },
   "global": {
     "humanHp": 2,

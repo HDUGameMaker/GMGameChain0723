@@ -2,6 +2,7 @@
  * Building-scoped military training panel.
  * Eligibility and training mutations belong to ArmySystem; this module only renders and delegates.
  */
+import { formatCostHtml } from './cost-format.js';
 
 function game() { return window.__game; }
 function armySystem() { return game()?.systems?.army; }
@@ -106,11 +107,8 @@ function renderUnitCard(unit, context, body, pm, rerender) {
   const costs = unit.cost || [];
   if (costs.length > 0) {
     const costRow = document.createElement('div');
-    costRow.style.cssText = 'font-size:12px;color:#a0a0ba;margin-bottom:10px;';
-    costRow.textContent = `消耗：${costs.map(cost => {
-      const resource = (game()?.configRegistry?.get('resources') || []).find(item => item.id === cost.resourceId);
-      return `${resource?.name || cost.resourceId}×${cost.amount}`;
-    }).join(' + ')}`;
+    costRow.style.cssText = 'font-size:12px;margin-bottom:10px;';
+    costRow.innerHTML = `消耗：${formatCostHtml(costs, { resourceSystem: game()?.systems?.resource, configRegistry: game()?.configRegistry })}`;
     card.appendChild(costRow);
   }
 

@@ -25,6 +25,12 @@ export class PathfindingSystem {
     this._hostileBuildingProvider = null; // (x, y) => boolean,由主程序注入(城邦敌对建筑)
     this._version = 0;
     this._pathCache = new Map(); // "sx,sy->tx,ty" -> { cells, version }
+    // 通行性预计算网格(仅建筑变化时重建),BFS 每格 O(1) 判定,不再逐格扫描建筑列表
+    this._blockedGrid = null; // Uint8Array:不可通行建筑占地格
+    this._bridgeGrid = null;  // Uint8Array:桥梁(passable)格
+    // 精确失效记录:每次新建普通建筑追加 {version, cells},供路径判断"是否真的被挡路"
+    this._blockedSets = [];
+    this._fullInvalidateVersion = 0; // 全量失效(桥梁/拆除/换图)后的版本,之前算的路径一律重算
   }
 
   setMap(map) {
@@ -35,6 +41,7 @@ export class PathfindingSystem {
   setContext({ buildingSystem, configRegistry }) {
     this._buildingSystem = buildingSystem || null;
     this._configRegistry = configRegistry || null;
+    this._rebuildPassability(); // setMap 可能先于 setContext,注入建筑系统后重建通行网格
   }
 
   /** 敌对建筑判定提供者(城邦系统);未注入则忽略敌对建筑 */
@@ -49,28 +56,49 @@ export class PathfindingSystem {
   _groundAt(x, y) { return this._map?.grid?.[y]?.[x] || null; }
 
   _hasBridgeAt(x, y) {
-    if (!this._buildingSystem) return false;
-    return (this._buildingSystem.buildings || []).some(building => {
-      const config = this._configRegistry?.getBuilding?.(building.buildingId);
-      return config?.passable === true && building.gridX === x && building.gridY === y;
-    });
+    const grid = this._bridgeGrid;
+    const width = this._map?.gridWidth || 0;
+    return Boolean(grid && width > 0 && grid[y * width + x]);
   }
 
   _isWaterCell(x, y) {
-    return ['S', 'W'].includes(this._groundAt(x, y)) && !this._hasBridgeAt(x, y);
+    // S/W 为水、M/B/R 为山脉石头:陆军与已上船部队一律不可通行(桥除外)
+    return ['S', 'W', 'M', 'B', 'R'].includes(this._groundAt(x, y)) && !this._hasBridgeAt(x, y);
   }
 
   _isBuildingBlocked(x, y) {
     if (this._hostileBuildingProvider?.(x, y)) return true;
-    if (!this._buildingSystem) return false;
-    return (this._buildingSystem.buildings || []).some(building => {
+    const grid = this._blockedGrid;
+    const width = this._map?.gridWidth || 0;
+    return Boolean(grid && width > 0 && grid[y * width + x]);
+  }
+
+  /** 重建通行性网格:遍历一次建筑表标记占地格(桥为 passable 格)。仅建筑变化时调用。 */
+  _rebuildPassability() {
+    const map = this._map;
+    const width = map?.gridWidth || 0;
+    const height = map?.gridHeight || 0;
+    this._blockedGrid = width > 0 && height > 0 ? new Uint8Array(width * height) : null;
+    this._bridgeGrid = width > 0 && height > 0 ? new Uint8Array(width * height) : null;
+    if (!width || !height || !this._buildingSystem) return;
+    for (const building of this._buildingSystem.buildings || []) {
       const config = this._configRegistry?.getBuilding?.(building.buildingId);
-      if (config?.passable === true) return false;
-      const width = Math.max(1, Math.floor(Number(config?.footprint?.width) || 1));
-      const height = Math.max(1, Math.floor(Number(config?.footprint?.height) || 1));
-      return x >= building.gridX && x < building.gridX + width
-        && y >= building.gridY && y < building.gridY + height;
-    });
+      if (config?.passable === true) {
+        if (building.gridX >= 0 && building.gridX < width && building.gridY >= 0 && building.gridY < height) {
+          this._bridgeGrid[building.gridY * width + building.gridX] = 1;
+        }
+        continue;
+      }
+      const w = Math.max(1, Math.floor(Number(config?.footprint?.width) || 1));
+      const h = Math.max(1, Math.floor(Number(config?.footprint?.height) || 1));
+      for (let y = building.gridY; y < building.gridY + h; y++) {
+        if (y < 0 || y >= height) continue;
+        for (let x = building.gridX; x < building.gridX + w; x++) {
+          if (x < 0 || x >= width) continue;
+          this._blockedGrid[y * width + x] = 1;
+        }
+      }
+    }
   }
 
   _isPassableLand(x, y) {
@@ -155,7 +183,11 @@ export class PathfindingSystem {
 
   /* ===== 缓存失效 ===== */
 
-  /** 新建普通建筑:仅重算路径经过其占地格的缓存 */
+  /**
+   * 新建普通建筑:仅重算路径经过其占地格的缓存。
+   * 同时记录本次阻塞格集,使未受影响的外部路径(如城邦袭击格)不必重跑 BFS,
+   * 只把版本号同步到位即可——避免兵多时一次建房触发全图所有路径同时重算。
+   */
   invalidateBlockingCells(cells) {
     if (!cells || cells.length === 0) return;
     this._version++;
@@ -165,12 +197,34 @@ export class PathfindingSystem {
         this._pathCache.delete(cacheKey);
       }
     }
+    this._blockedSets.push({ version: this._version, cells: blocked });
+    this._rebuildPassability();
   }
 
   /** 桥梁建成 / 建筑拆除:打开新路线,重算全部缓存 */
   invalidateAll() {
     this._version++;
+    this._fullInvalidateVersion = this._version;
+    this._blockedSets = [];
     this._pathCache.clear();
+    this._rebuildPassability();
+  }
+
+  /**
+   * 路径是否受某次新建建筑影响需要重算。
+   * @param {Array<{x,y}>} path 已缓存路径
+   * @param {number} pathVersion 该路径计算时的版本
+   * @returns {boolean} true = 需重算;false = 未受影响,可保留(调用方同步版本号)
+   */
+  isPathAffectedByInvalidations(path, pathVersion) {
+    if (!Array.isArray(path) || path.length === 0) return true;
+    if (pathVersion === this._version) return false;
+    if (pathVersion < this._fullInvalidateVersion) return true; // 全量失效(桥梁/拆除/换图)
+    for (const record of this._blockedSets) {
+      if (record.version <= pathVersion) continue;
+      if (path.some(cell => record.cells.has(`${cell.x},${cell.y}`))) return true;
+    }
+    return false;
   }
 
   /* ===== 事件接线 ===== */

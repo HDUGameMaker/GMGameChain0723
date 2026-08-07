@@ -4,6 +4,7 @@
  */
 import { configRegistry } from '../../core/ConfigRegistry.js';
 import { eventBus } from '../../core/EventBus.js';
+import { formatCostHtml } from './cost-format.js';
 import { BUILDING_CATEGORIES } from '../../domain/BuildingPresentation.js';
 import { getBuildingPrimaryFunctionRows } from '../../domain/BuildingPresentation.js';
 import { getBuildingResourceNodeRequirement } from '../../domain/ResourceNodePresentation.js';
@@ -199,11 +200,7 @@ export function renderBuildingSelectPanel(data, body, pm) {
     const infoEl = document.createElement('div');
     infoEl.style.cssText = 'flex:1;min-width:0;';
 
-    const costText = (b.buildCost || [])
-      .map(c => {
-        const rCfg = configRegistry.getResource(c.resourceId);
-        return `${rCfg ? rCfg.name : c.resourceId}×${c.amount}`;
-      }).join('  ');
+    const costText = formatCostHtml(b.buildCost || [], { resourceSystem, configRegistry });
 
     const tags = [];
     const civilizationIds = getBuildingCivilizationIds(b);
@@ -227,7 +224,7 @@ export function renderBuildingSelectPanel(data, body, pm) {
       <div style="font-size:12px;color:#888;margin-bottom:4px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${b.description || ''}</div>
       ${civilizationNames.length ? `<div style="font-size:11px;color:#d8b86f;font-weight:700;margin:5px 0;">🏛️ 文明限定：${civilizationNames.join('、')}</div>` : ''}
       ${nodeRequirement ? `<div style="font-size:12px;color:${nodeRequirement.color};font-weight:700;margin:5px 0;">📍 ${nodeRequirement.text}</div>` : ''}
-      <div style="font-size:12px;color:${canAfford ? '#4ecb71' : '#ff6b6b'};font-weight:500;">${costText || '免费'}</div>
+      <div style="font-size:12px;font-weight:500;">${costText || '免费'}</div>
       ${lockReasons.length ? `<div style="font-size:11px;color:#e79a9a;margin-top:5px;">🔒 ${lockReasons.join('；')}</div>` : ''}
       ${tags.length > 0 ? `<div style="font-size:11px;color:#a0a0ba;margin-top:3px;display:flex;gap:8px;">${tags.map(t => `<span>${t}</span>`).join('')}</div>` : ''}
     `;

@@ -19,6 +19,17 @@ function _isUnitInReachedEra(unit) {
   return !unitEra || !currentEra || unitEra.order <= currentEra.order;
 }
 
+/** 文明限定兵种仅展示玩家拥有的(当前时代所选 + 历代已选),其余隐藏 */
+function _isUnitOwnedCivilization(unit) {
+  if (!unit.civilizationId) return true;
+  const eraSystem = _eraSystem();
+  const owned = new Set([
+    ...(eraSystem?.getLegacyCivilizationIds?.() || []),
+    eraSystem?.getSelectedCivilization?.()?.id
+  ].filter(Boolean));
+  return owned.has(unit.civilizationId);
+}
+
 function _branchConfigs() {
   const configured = _combatConfig().unitBranches || [];
   if (configured.length > 0) return configured;
@@ -74,7 +85,7 @@ export function renderUnitResearchPanel(data, body, pm) {
   const resourceSys = _resource();
   const researched = techSystem.getUnitResearch();
   const units = _units()
-    .filter(u => u.branch && _isUnitInReachedEra(u))
+    .filter(u => u.branch && _isUnitInReachedEra(u) && _isUnitOwnedCivilization(u))
     .sort((a, b) => {
       const bo = _branchOrder(a.branch) - _branchOrder(b.branch);
       if (bo !== 0) return bo;

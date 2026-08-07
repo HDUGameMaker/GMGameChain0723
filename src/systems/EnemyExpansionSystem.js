@@ -26,7 +26,6 @@ export class EnemyExpansionSystem {
     this._buildingSystem = null;
     this._armySystem = null;
     this._totalCleared = 0;   // 累计清敌数（gameover 统计用）
-    this._battleLog = null;
     // 帧级移动/攻击侧表(内存,不持久化):"x,y" -> { moveProgress, moveVector, attackCooldown }
     this._cellMotion = new Map();
 
@@ -39,7 +38,6 @@ export class EnemyExpansionSystem {
   setHeroSystem(hs) { this._heroSystem = hs; }
   setLuxurySystem(ls) { this._luxurySystem = ls; }
   setPathfindingSystem(ps) { this._pathfindingSystem = ps || null; }
-  setBattleLogSystem(bl) { this._battleLog = bl || null; }
 
   init() {
     this._config = configRegistry.get('enemyExpansion') || {};
@@ -187,10 +185,15 @@ export class EnemyExpansionSystem {
   /** 路径失效检查 + 重算(原 _advanceCityStateRaids 内联逻辑);返回是否重算 */
   _ensureCellPath(cell, x, y) {
     const path = cell.movePath;
+    const version = this._pathfindingSystem?.getVersion?.() ?? 0;
     const stale = !Array.isArray(path) || path.length === 0
-      || cell.movePathVersion !== (this._pathfindingSystem?.getVersion?.() ?? 0)
+      || (cell.movePathVersion !== version && this._pathfindingSystem?.isPathAffectedByInvalidations?.(path, cell.movePathVersion) !== false)
       || (path.length > 1 && Math.abs(path[0].x - x) + Math.abs(path[0].y - y) !== 1);
-    if (!stale) return false;
+    if (!stale) {
+      // 版本变化但路径未被新建筑挡路:仅同步版本号,保留路径,避免全图 BFS 重跑
+      if (cell.movePathVersion !== version) cell.movePathVersion = version;
+      return false;
+    }
     const found = this._pathfindingSystem?.findPath?.(x, y, cell.raidTargetX, cell.raidTargetY) || [];
     cell.movePath = found;
     cell.movePathVersion = this._pathfindingSystem?.getVersion?.() ?? 0;
@@ -230,20 +233,6 @@ export class EnemyExpansionSystem {
     const result = this._buildingSystem.damageBuilding(currentIndex, damage);
     const profile = this._enemyProfile(cell) || {};
     const buildingConfig = configRegistry.getBuilding(this._buildingSystem.buildings[currentIndex]?.buildingId);
-    this._battleLog?.record({
-      attacker: { name: profile.name || '敌方部队', type: 'enemy_cell', summary: `强度 ${Math.round(stats.maxHp)}` },
-      defender: { name: buildingConfig?.name || '建筑', type: 'city_state', summary: buildingConfig?.category || 'building' },
-      initiator: 'enemy',
-      auto: true,
-      distance: targetBuilding.distance,
-      firstStrike: 'attacker',
-      turns: [{ side: 'attacker', damage, hpAfter: null }],
-      result: result?.destroyed ? 'victory' : 'draw',
-      casualties: null,
-      rewards: [],
-      luxuryDrop: null,
-      hpRemaining: null
-    });
     return true;
   }
 
@@ -497,34 +486,6 @@ export class EnemyExpansionSystem {
       if (luxury) { luxuryName = luxury.name || luxury.id; eventBus.emit('combatBroadcast', { message: `战利品：获得 ${luxury.name || luxury.id} ×1` }); }
     }
     const healed = this._armySystem.getArmy?.(armyId) ? (this._armySystem.healArmyAfterBattle?.(armyId)?.healed || 0) : 0;
-    // 战报:attacker = 主动发起方(敌军自动攻击 → 敌格子;玩家手动/自动开火 → 军团)
-    const armyAfter = this._armySystem.getArmy?.(armyId);
-    const enemySide = { name: profile.name || '敌方部队', type: 'enemy_cell', summary: `强度 ${Math.round(enemyStats.maxHp)}` };
-    const playerSide = { name: army.name || '军团', type: 'player_army', summary: `${army.unitIds?.length || 0} 队` };
-    const sideOf = side => enemyInitiated
-      ? (side === 'enemy' ? 'attacker' : 'defender')
-      : (side === 'player' ? 'attacker' : 'defender');
-    this._battleLog?.record({
-      attacker: enemyInitiated ? enemySide : playerSide,
-      defender: enemyInitiated ? playerSide : enemySide,
-      initiator: enemyInitiated ? 'enemy' : 'player',
-      auto: enemyInitiated ? true : auto,
-      distance,
-      firstStrike: turns[0] ? sideOf(turns[0]) : null,
-      turns: attacks.map(attack => ({
-        side: sideOf(attack.side),
-        damage: attack.damage,
-        hpAfter: attack.side === 'player' ? Math.max(0, cell.hp) : (armyAfter?.hp ?? 0),
-        bonusStrike: attack.bonusStrike === true
-      })),
-      result: enemyDefeated
-        ? (enemyInitiated ? 'defeat' : 'victory')
-        : (!armyAfter ? (enemyInitiated ? 'victory' : 'defeat') : 'draw'),
-      casualties: null,
-      rewards: [],
-      luxuryDrop: luxuryName,
-      hpRemaining: armyAfter?.hp ?? null
-    });
     this._updateStore();
     eventBus.emit('enemyExpansionChanged');
     eventBus.emit('combatBroadcast', { message: enemyDefeated ? `⚔️ ${army.name || '军团'}击败${profile.name || '敌军'}` : `⚔️ ${army.name || '军团'}与${profile.name || '敌军'}交锋` });

@@ -20,11 +20,9 @@ export class RuinSystem {
     this.ruins = [];
     this._army = null;
     this._seed = 0;
-    this._battleLog = null;
   }
 
   setSystems({ army } = {}) { this._army = army || null; }
-  setBattleLogSystem(bl) { this._battleLog = bl || null; }
 
   initNew(options = {}) {
     this._seed = Number(options.seed) || ((Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0);
@@ -171,21 +169,6 @@ export class RuinSystem {
       if (guard.hp > 0 && this._army.getArmy?.(armyId) && guard.speed - army.speed >= 2 && distanceToGuard <= guard.attackRange) guardAttack();
     }
     const healed = this._army.healArmyAfterBattle?.(armyId)?.healed || 0;
-    const armyAfter = this._army?.getArmy?.(armyId);
-    this._battleLog?.record({
-      attacker: { name: army.name, type: 'player_army', summary: `${army.unitIds?.length || 0} 队` },
-      defender: { name: guard.name || '遗迹守卫', type: 'ruin_guard', summary: '' },
-      initiator: 'player',
-      auto,
-      distance: distanceToGuard,
-      firstStrike: army.speed >= guard.speed ? 'attacker' : 'defender',
-      turns: attacks.map(attack => ({ side: attack.side === 'player' ? 'attacker' : 'defender', damage: attack.damage, hpAfter: Number.isFinite(attack.hp) ? attack.hp : null, bonusStrike: false })),
-      result: guard.hp <= 0 ? 'victory' : (!armyAfter ? 'defeat' : 'draw'),
-      casualties: null,
-      rewards: [],
-      luxuryDrop: null,
-      hpRemaining: armyAfter?.hp ?? null
-    });
     if (guard.hp <= 0) eventBus.emit('ruinGuardDefeated', { guardId, ruinId: guard.ruinId });
     this._notify('battle');
     return { ok: true, attacks, healed, enemyHp: guard.hp };

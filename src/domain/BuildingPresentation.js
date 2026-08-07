@@ -23,7 +23,7 @@ const ERA_NAMES = Object.freeze({
 
 export function formatBuildingEffect(key, value) {
   const names = {
-    administrationMul: '行政效率', amount: '基础产量', armyAssemblyDomains: '可集结军团领域', armyCapacityBonus: '军团容量', armyPowerMul: '军团战力',
+    administrationMul: '行政效率', amount: '基础产量', armyAssemblyDomains: '可集结军团领域', armyCapacityBonus: '军团容量', armyUnitCapacityBonus: '每支军队士兵上限', armyPowerMul: '军团战力',
     blocksEnemyMovement: '阻挡敌军移动', buildSpeedMul: '建造速度', civicPerWorker: '每名工人人文产出', civicPointMul: '人文点数',
     civilizationId: '所属文明', civilizationYieldMul: '文明特色产出', defensePower: '防御力', expeditionAccess: '组织探险',
     foodStorageMul: '食物储存', garrisonCapacity: '驻军容量', garrisonDefenseMul: '驻军防御', garrisonMoraleRecovery: '每日驻军士气恢复', garrisonSupplyRecovery: '每日驻军补给恢复',
