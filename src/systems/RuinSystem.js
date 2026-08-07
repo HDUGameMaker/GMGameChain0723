@@ -20,9 +20,11 @@ export class RuinSystem {
     this.ruins = [];
     this._army = null;
     this._seed = 0;
+    this._battleLog = null;
   }
 
   setSystems({ army } = {}) { this._army = army || null; }
+  setBattleLogSystem(bl) { this._battleLog = bl || null; }
 
   initNew(options = {}) {
     this._seed = Number(options.seed) || ((Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0);
@@ -135,14 +137,19 @@ export class RuinSystem {
   getScienceMultiplier() { return Number((1 + this.ruins.filter(ruin => ruin.activated).reduce((sum, ruin) => sum + ruin.scienceMultiplierBonus, 0)).toFixed(4)); }
   getCultureMultiplier() { return Number((1 + this.ruins.filter(ruin => ruin.activated).reduce((sum, ruin) => sum + ruin.cultureMultiplierBonus, 0)).toFixed(4)); }
 
-  attackGuardWithArmy(guardId, armyId) {
+  attackGuardWithArmy(guardId, armyId, { auto = false, skipCp = false } = {}) {
     const guard = this.getGuard(guardId);
     const army = this._army?.getArmy?.(armyId);
     if (!guard || !army) return { ok: false, reason: 'enemy_unavailable' };
-    const distanceToGuard = Math.abs(army.gridX - guard.gridX) + Math.abs(army.gridY - guard.gridY);
+    // 判定距离用军团连续渲染坐标,移动中进入射程立即生效
+    const armyX = Number.isFinite(army.renderX) ? army.renderX : army.gridX;
+    const armyY = Number.isFinite(army.renderY) ? army.renderY : army.gridY;
+    const distanceToGuard = Math.abs(armyX - guard.gridX) + Math.abs(armyY - guard.gridY);
     if (distanceToGuard > army.attackRange) return { ok: false, reason: 'target_out_of_range' };
-    const cp = this._army.consumeAttackCp?.(armyId);
-    if (cp && !cp.ok) return cp;
+    if (!skipCp) {
+      const cp = this._army.consumeAttackCp?.(armyId);
+      if (cp && !cp.ok) return cp;
+    }
     const attacks = [];
     const playerAttack = () => {
       const damage = Math.min(guard.hp, army.attack);
@@ -164,6 +171,21 @@ export class RuinSystem {
       if (guard.hp > 0 && this._army.getArmy?.(armyId) && guard.speed - army.speed >= 2 && distanceToGuard <= guard.attackRange) guardAttack();
     }
     const healed = this._army.healArmyAfterBattle?.(armyId)?.healed || 0;
+    const armyAfter = this._army?.getArmy?.(armyId);
+    this._battleLog?.record({
+      attacker: { name: army.name, type: 'player_army', summary: `${army.unitIds?.length || 0} 队` },
+      defender: { name: guard.name || '遗迹守卫', type: 'ruin_guard', summary: '' },
+      initiator: 'player',
+      auto,
+      distance: distanceToGuard,
+      firstStrike: army.speed >= guard.speed ? 'attacker' : 'defender',
+      turns: attacks.map(attack => ({ side: attack.side === 'player' ? 'attacker' : 'defender', damage: attack.damage, hpAfter: Number.isFinite(attack.hp) ? attack.hp : null, bonusStrike: false })),
+      result: guard.hp <= 0 ? 'victory' : (!armyAfter ? 'defeat' : 'draw'),
+      casualties: null,
+      rewards: [],
+      luxuryDrop: null,
+      hpRemaining: armyAfter?.hp ?? null
+    });
     if (guard.hp <= 0) eventBus.emit('ruinGuardDefeated', { guardId, ruinId: guard.ruinId });
     this._notify('battle');
     return { ok: true, attacks, healed, enemyHp: guard.hp };

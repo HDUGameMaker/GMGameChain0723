@@ -60,6 +60,7 @@ export class HUD {
     this.btnArmy = document.getElementById('btn-army');
     this.btnUnitResearch = document.getElementById('btn-unit-research');
     this.btnHeroes = document.getElementById('btn-heroes');
+    this.btnBattleLog = document.getElementById('btn-battle-log');
     this.weatherDisplay = document.getElementById('weather-display');
     this.expeditionStatus = document.getElementById('expedition-status');
     this.deferredEventTray = document.getElementById('deferred-event-tray');
@@ -143,6 +144,9 @@ export class HUD {
     });
     this.btnHeroes?.addEventListener('click', () => {
       this.popupManager.open('hero_roster', {});
+    });
+    this.btnBattleLog?.addEventListener('click', () => {
+      this.popupManager.open('battle_log', { battleLog: this.systems?.battleLog });
     });
     this.btnBuild.addEventListener('click', () => {
       this.systems.territory?.exitCastingMode();

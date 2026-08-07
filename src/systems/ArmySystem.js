@@ -10,6 +10,7 @@ import { getArmyCombatPower } from '../utils/FormationUtils.js';
 import { calculateCombatStrength } from '../domain/CombatStrength.js';
 import { previewStrategicBattle, resolveStrategicBattle } from './CombatResolver.js';
 import { evaluateTrainingEligibility } from './TrainingRules.js';
+import { getTickInterval } from '../utils/gameTime.js';
 
 export class ArmySystem {
   constructor() {
@@ -28,11 +29,17 @@ export class ArmySystem {
     this._tech = null;
     this._movementSpeedMultiplier = 1;
     this._cityStateSystem = null;
-    eventBus.on('tick', () => { this.restoreArmyCp(); this._tickHeroSkillCooldowns(); this._healArmiesPerTick(); this._applyBlackMistDamage(); this._advanceMovement(); });
+    this._battleLog = null;
+    // 帧级移动的渲染插值侧表(内存字段,不持久化):armyId -> { moveVector:{dx,dy}, autoFireCooldown }
+    this._armyMotion = new Map();
+    this._lastMovementNotifyAt = 0;
+    this._movementDirty = false;
+    // 移动已帧级化(update 驱动);tick 只保留慢节奏结算
+    eventBus.on('tick', () => { this.restoreArmyCp(); this._tickHeroSkillCooldowns(); this._healArmiesPerTick(); this._applyBlackMistDamage(); });
     eventBus.on('dayStart', () => this._resupplyGarrisons());
   }
 
-  setSystems({ building, hero, culture, era, resource, population, tech, enemyExpansion, ruins, luxury, combat } = {}) {
+  setSystems({ building, hero, culture, era, resource, population, tech, enemyExpansion, ruins, luxury, combat, diplomacy, battleLog } = {}) {
     this._building = building || null;
     this._hero = hero || null;
     this._culture = culture || null;
@@ -44,6 +51,8 @@ export class ArmySystem {
     this._ruinSystem = ruins || null;
     this._luxury = luxury || null;
     this._combat = combat || null;
+    this._diplomacy = diplomacy || null;
+    this._battleLog = battleLog || null;
   }
 
   initNew() {
@@ -53,6 +62,9 @@ export class ArmySystem {
     this._battleHistory = [];
     this._nextBattleId = 1;
     this._resolvedBattleIds = new Set();
+    this._armyMotion.clear();
+    this._lastMovementNotifyAt = 0;
+    this._movementDirty = false;
     this._notify('init');
   }
 
@@ -114,6 +126,8 @@ export class ArmySystem {
       heroId: null,
       gridX: openTile.x,
       gridY: openTile.y,
+      renderX: openTile.x,
+      renderY: openTile.y,
       supply: 1,
       embarked: false,
       garrisonBuildingIndex: null,
@@ -154,7 +168,7 @@ export class ArmySystem {
     const army = {
       id: `army_${this._nextId++}`, ownerId: 'player', name: '赫斯提亚测试军团',
       unitIds: ['primitive_healer'], formationId: null, tacticId: null, heroId: 'Hestia',
-      gridX: openTile.x, gridY: openTile.y, supply: 1, embarked: false,
+      gridX: openTile.x, gridY: openTile.y, renderX: openTile.x, renderY: openTile.y, supply: 1, embarked: false,
       garrisonBuildingIndex: null, movePath: [], order: { type: 'hold' },
       revision: 0, hpDamage: 0, movementProgress: 0, currentCp: 1,
       cheatStats: { hp: 50, maxHp: 50, attack: 20, attackRange: 1, speed: 6, cp: 1, healingAfterBattle: 10 }
@@ -307,6 +321,8 @@ export class ArmySystem {
       heroId: null,
       gridX: deploymentTile.x,
       gridY: deploymentTile.y,
+      renderX: deploymentTile.x,
+      renderY: deploymentTile.y,
       supply: 1,
       embarked: false,
       garrisonBuildingIndex: null,
@@ -511,7 +527,7 @@ export class ArmySystem {
     const healed = this._applyHeroActiveAttackLifesteal(armyId, totalDamageDealt);
     this.consumeAttackCp(armyId);
     const cooldown = Math.max(1, Math.floor(Number(this._hero?.getHero?.('Hestia')?.activeSkill?.cooldownTicks) || 12));
-    army.gridX = endX; army.gridY = endY; army.heroSkillCooldown = cooldown; army.movePath = [];
+    army.gridX = endX; army.gridY = endY; army.renderX = endX; army.renderY = endY; army.heroSkillCooldown = cooldown; army.movePath = []; this._armyMotion.delete(army.id);
     this._touch(army); this._notify('hero_active_skill');
     eventBus.emit('heroActiveSkillUsed', { heroId: 'Hestia', armyId, skillId: 'hestia_moonlight', direction, damage, hitIds, healed, endX, endY });
     return { ok: true, damage, hitIds, healed, endX, endY, cooldown };
@@ -626,7 +642,8 @@ export class ArmySystem {
     if (!army.unitIds.length && !army.heroId) return { ok: false, reason: 'empty_army' };
     if (this.getArmyCp(armyId) < 1) return { ok: false, reason: 'insufficient_cp', currentCp: 0, maxCp: this.getArmyCpMax(armyId) };
     if (!Number.isFinite(targetX) || !Number.isFinite(targetY)) return { ok: false, reason: 'invalid_target' };
-    const distance = Math.abs(army.gridX - targetX) + Math.abs(army.gridY - targetY);
+    // 判定用连续渲染坐标:移动中进入射程立即生效,与视觉一致
+    const distance = Math.abs(this._renderX(army) - targetX) + Math.abs(this._renderY(army) - targetY);
     const attackRange = this.getArmyAttackRange(armyId);
     return distance <= attackRange
       ? { ok: true, distance, attackRange }
@@ -859,6 +876,7 @@ export class ArmySystem {
     if (army.unitIds.length > capacity) return { ok: false, reason: 'transport_capacity_full' };
     army.embarked = true;
     army.movePath = [];
+    this._armyMotion.delete(army.id);
     this._notify('embark');
     return { ok: true };
   }
@@ -871,8 +889,11 @@ export class ArmySystem {
     if (!this._groundAt(targetX, targetY) || this._isWater(targetX, targetY)) return { ok: false, reason: 'invalid_landing' };
     army.gridX = targetX;
     army.gridY = targetY;
+    army.renderX = targetX;
+    army.renderY = targetY;
     army.embarked = false;
     army.movePath = [];
+    this._armyMotion.delete(army.id);
     this._notify('disembark');
     return { ok: true };
   }
@@ -940,6 +961,8 @@ export class ArmySystem {
     if (!path.length && (army.gridX !== targetX || army.gridY !== targetY)) return { ok: false, reason: 'no_path' };
     army.movePath = path;
     army.order = path.length ? { type: 'move', target: { x: targetX, y: targetY } } : { type: 'hold' };
+    // 不重置 renderX/renderY:途中重命令时军团从当前位置平滑转向新目标(零跳变),
+    // 由 update 逐轴逼近新路径首点(方向一致则无缝衔接,方向不同则短暂斜切过渡)
     this._touch(army);
     this._notify('move_order');
     return { ok: true, path: structuredClone(path) };
@@ -960,40 +983,162 @@ export class ArmySystem {
     if (!destination) return { ok: false, reason: 'teleport_destination_blocked' };
     army.gridX = destination.x;
     army.gridY = destination.y;
+    army.renderX = destination.x;
+    army.renderY = destination.y;
     army.movePath = [];
     army.order = { type: 'hold' };
     army.movementProgress = 0;
+    this._armyMotion.delete(army.id);
     this._touch(army);
     this._notify('teleport');
     eventBus.emit('armyTeleported', { armyId, gridX: army.gridX, gridY: army.gridY });
     return { ok: true, gridX: army.gridX, gridY: army.gridY };
   }
 
-  _advanceMovement() {
+  /**
+   * 帧级移动推进(由 main.update 每帧调用,替代原 tick 驱动的 _advanceMovement)。
+   * speed 语义保持"格/tick",换算为 格/秒 = speed ÷ TICK_INTERVAL,再乘倍速。
+   * renderX/renderY(浮点格)沿路径逐轴逼近下一个路径点,到达才跨格并同步 gridX/gridY;
+   * 渲染直接读 render 坐标 → 位置永远在路径连线上,重命令零跳变(平滑转向)。
+   * notify 节流 ≥200ms 防每帧全量重建。
+   */
+  update(delta, timeScale = 1) {
+    if (!Number.isFinite(delta) || delta <= 0) return;
+    const tickInterval = getTickInterval();
     let changed = false;
+    let forceFlush = false;
     for (const army of this._armies) {
       if (army.garrisonBuildingIndex != null || !army.movePath?.length) continue;
-      const speed = (this.getArmyStats(army.id).speed || 1) * this._movementSpeedMultiplier * (this._luxury?.getBonuses?.().armySpeedMul || 1);
-      army.movementProgress = (Number(army.movementProgress) || 0) + speed;
-      let steps = Math.floor(army.movementProgress);
-      if (steps <= 0) continue;
-      army.movementProgress -= steps;
-      while (steps-- > 0 && army.movePath.length) {
-        const next = army.movePath[0];
-        if (this._isArmyTileOccupied(next.x, next.y, army.id)) {
-          army.movementProgress = 0;
-          break;
+      const speedPerSec = ((this.getArmyStats(army.id).speed || 1) * this._movementSpeedMultiplier * (this._luxury?.getBonuses?.().armySpeedMul || 1)) / tickInterval;
+      let step = speedPerSec * delta * timeScale;
+      if (step <= 1e-9) continue;
+      let moved = false;
+      let gridChanged = false;
+      while (step > 1e-9 && army.movePath.length) {
+        const target = army.movePath[0];
+        const dx = target.x - army.renderX;
+        const dy = target.y - army.renderY;
+        const dist = Math.abs(dx) + Math.abs(dy);
+        if (dist <= 1e-6) {
+          // 到达路径点:占用检查(寻路时已验证,运行时其他单位可能占据)
+          if (this._isArmyTileOccupied(target.x, target.y, army.id)) {
+            army.renderX = army.gridX;
+            army.renderY = army.gridY;
+            forceFlush = true;
+            break;
+          }
+          army.gridX = target.x;
+          army.gridY = target.y;
+          army.movePath.shift();
+          moved = true;
+          gridChanged = true;
+          continue;
         }
-        army.movePath.shift();
-        army.gridX = next.x;
-        army.gridY = next.y;
+        const used = Math.min(step, dist);
+        // 逐轴逼近:先 x 后 y,轨迹始终在"当前点 → 路径点"的曼哈顿连线上
+        const moveX = Math.min(Math.abs(dx), used);
+        army.renderX += Math.sign(dx) * moveX;
+        const moveY = Math.min(Math.abs(dy), used - moveX);
+        army.renderY += Math.sign(dy) * moveY;
+        step -= used;
+        moved = true;
       }
-      if (!army.movePath.length) army.order = { type: 'hold' };
-      this._touch(army);
-      changed = true;
-      eventBus.emit('armyMoved', { armyId: army.id, gridX: army.gridX, gridY: army.gridY, remaining: army.movePath.length });
+      if (!moved) continue;
+      if (!army.movePath.length) {
+        army.order = { type: 'hold' };
+        forceFlush = true;
+      }
+      // 格间位置由渲染 ticker 每帧读 render 坐标,无需 notify;
+      // 只在跨格/到达/被占时 touch + 通知(防每帧全量重建与 revision 风暴)
+      if (gridChanged || forceFlush) {
+        this._touch(army);
+        changed = true;
+        eventBus.emit('armyMoved', { armyId: army.id, gridX: army.gridX, gridY: army.gridY, remaining: army.movePath.length });
+      }
     }
-    if (changed) this._notify('movement');
+    if (changed) this._flushMovementNotify(forceFlush);
+    this._updateAutoFire(delta, timeScale, tickInterval);
+  }
+
+  /**
+   * 玩家军团自动开火:射程内存在敌对目标时自动攻击(最近优先,平局先清残血)。
+   * 每军团独立 10 秒冷却 + CP 门;手动点击攻击(弹预览暂停)天然优先。
+   */
+  _updateAutoFire(delta, timeScale, tickInterval) {
+    for (const army of this._armies) {
+      if (army.ownerId !== 'player' || !army.unitIds?.length || army.garrisonBuildingIndex != null) continue;
+      const motion = this._armyMotion.get(army.id) || (this._armyMotion.set(army.id, {}), this._armyMotion.get(army.id));
+      motion.autoFireCooldown = Math.max(0, (motion.autoFireCooldown || 0) - delta * timeScale);
+      if (motion.autoFireCooldown > 0) continue;
+      if (this.getArmyCp(army.id) < 1) continue;
+      const target = this._findAutoFireTarget(army);
+      if (!target) continue;
+      const result = this._dispatchAutoFire(army, target);
+      if (result?.ok) {
+        motion.autoFireCooldown = tickInterval;
+        eventBus.emit('combatBroadcast', { message: `⚔️ ${army.name}自动开火:${target.name}` });
+      }
+    }
+  }
+
+  /** 射程内敌对目标:敌军格子 / 塔防野怪 / 敌方军团 / 城邦驻军 / 遗迹守卫(距离按连续渲染坐标) */
+  _findAutoFireTarget(army) {
+    const attackRange = this.getArmyAttackRange(army.id);
+    if (attackRange <= 0) return null;
+    const ax = this._renderX(army), ay = this._renderY(army);
+    const candidates = [];
+    const add = (type, name, x, y, hp, attack, ref) => {
+      const distance = Math.abs(x - ax) + Math.abs(y - ay);
+      if (distance <= attackRange) {
+        candidates.push({ type, name: String(name || '目标'), x, y, hp: Math.max(0, Number(hp) || 999), attack: Math.max(0, Number(attack) || 0), distance, ref });
+      }
+    };
+    for (const cell of this._enemyExpansion?.getAllCells?.() || []) {
+      add('expansion', cell.name || '敌军', cell.x, cell.y, cell.hp ?? cell.maxHp ?? 999, cell.attack, cell);
+    }
+    for (const enemy of this._combat?.getAllEnemies?.() || []) {
+      const distance = this._combat.getEnemyDistanceFrom?.(ax, ay, enemy);
+      if (Number.isFinite(distance) && distance <= attackRange) {
+        candidates.push({ type: 'combat', name: enemy.name || '野怪', x: enemy.gridX, y: enemy.gridY, hp: Math.max(0, Number(enemy.hp) || 999), attack: Math.max(0, Number(enemy.attack) || 0), distance, ref: enemy.id });
+      }
+    }
+    for (const other of this._armies) {
+      if (other.id === army.id || other.ownerId === 'player') continue;
+      add('army', other.name || '敌军军团', other.gridX, other.gridY, (other.maxHp || 1) - (other.hpDamage || 0), 0, other.id);
+    }
+    for (const garrison of this._diplomacy?.getGarrisonArmies?.() || []) {
+      add('garrison', garrison.name || '城邦驻军', garrison.x ?? garrison.gridX, garrison.y ?? garrison.gridY, garrison.hp ?? garrison.maxHp ?? 999, garrison.attack, garrison.id);
+    }
+    for (const guard of this._ruinSystem?.getGuards?.() || []) {
+      add('ruin_guard', guard.name || '遗迹守卫', guard.gridX, guard.gridY, guard.hp ?? guard.maxHp ?? 999, guard.attack, guard.id);
+    }
+    candidates.sort((left, right) => left.distance - right.distance || left.hp - right.hp || right.attack - left.attack);
+    return candidates[0] || null;
+  }
+
+  /** 自动开火分派(与 ArmyInteractionSystem 相同的五类目标,各入口内部已扣 CP) */
+  _dispatchAutoFire(army, target) {
+    switch (target.type) {
+      case 'expansion': return this._enemyExpansion?.clearEnemyCellWithArmy(target.x, target.y, army.id, { auto: true, skipCp: true }) || null;
+      case 'combat': return this._combat?.attackEnemyWithArmy(target.ref, army.id, { auto: true, skipCp: true }) || null;
+      case 'army': return this.resolveEngagement(army.id, target.ref, {}, { auto: true, skipCp: true });
+      case 'garrison': return this._diplomacy?.attackGarrison(target.ref, army.id, { auto: true, skipCp: true }) || null;
+      case 'ruin_guard': return this._ruinSystem?.attackGuardWithArmy(target.ref, army.id, { auto: true, skipCp: true }) || null;
+      default: return null;
+    }
+  }
+
+  /** 移动通知节流:全量 clone + 渲染重建只按需执行,堵停/到达时强制立即 */
+  _flushMovementNotify(force) {
+    if (!force && performance.now() - this._lastMovementNotifyAt < 200) {
+      this._movementDirty = true;
+      return;
+    }
+    this._lastMovementNotifyAt = performance.now();
+    if (force || this._movementDirty) {
+      this._movementDirty = false;
+      this._notify('movement');
+    }
   }
 
   garrisonArmy(armyId, buildingIndex) {
@@ -1009,7 +1154,10 @@ export class ArmySystem {
     army.garrisonBuildingIndex = buildingIndex;
     army.gridX = building.gridX;
     army.gridY = building.gridY;
+    army.renderX = building.gridX;
+    army.renderY = building.gridY;
     army.movePath = [];
+    this._armyMotion.delete(army.id);
     this._notify('garrison');
     return { ok: true };
   }
@@ -1032,9 +1180,12 @@ export class ArmySystem {
     if (!exit) return { ok: false, reason: 'no_ungarrison_tile' };
     army.gridX = exit.x;
     army.gridY = exit.y;
+    army.renderX = exit.x;
+    army.renderY = exit.y;
     army.garrisonBuildingIndex = null;
     army.movePath = [];
     army.order = { type: 'hold' };
+    this._armyMotion.delete(army.id);
     this._touch(army);
     this._notify('ungarrison');
     return { ok: true, army: this._decorateArmy(army), direction: exit.direction };
@@ -1142,6 +1293,20 @@ export class ArmySystem {
     const record = { id: prepared.battleId, attackerId: attacker.id, defenderId: defender.id, ...result };
     this._battleHistory.push(record);
     this._battleHistory = this._battleHistory.slice(-20);
+    this._battleLog?.record({
+      attacker: { name: attacker.name, type: 'player_army', summary: this._unitSummary(attacker) },
+      defender: { name: defender.name, type: 'army', summary: this._unitSummary(defender) },
+      initiator: 'player',
+      auto: false,
+      distance: Number.isFinite(prepared.context?.distance) ? prepared.context.distance : null,
+      firstStrike: null,
+      turns: [],
+      result: result.winner === 'attacker' ? 'victory' : result.winner === 'defender' ? 'defeat' : 'draw',
+      casualties: result.casualties,
+      rewards: [],
+      luxuryDrop: null,
+      hpRemaining: null
+    });
     this._resolvedBattleIds.add(prepared.battleId);
     this._nextBattleId += 1;
     this._notify('battle');
@@ -1150,7 +1315,7 @@ export class ArmySystem {
     return { ok: true, ...structuredClone(record) };
   }
 
-  resolveEngagement(attackerId, defenderId, context = {}) {
+  resolveEngagement(attackerId, defenderId, context = {}, options = {}) {
     const attacker = this._findArmy(attackerId);
     const defender = this._findArmy(defenderId);
     if (!attacker || !defender) return { ok: false, reason: 'unknown_army' };
@@ -1166,7 +1331,7 @@ export class ArmySystem {
     const attacks = [];
     for (const turn of order) {
       if (!this._findArmy(turn.id)?.unitIds.length || !this._findArmy(turn.targetId)?.unitIds.length) continue;
-      if (!this.consumeAttackCp(turn.id).ok) continue;
+      if (!options.skipCp && !this.consumeAttackCp(turn.id).ok) continue;
       const targetHpBefore = this.getArmyStats(turn.targetId).hp;
       const damage = this.applyDamage(turn.targetId, turn.stats.attack);
       attacks.push({ attackerId: turn.id, defenderId: turn.targetId, damage: turn.stats.attack, destroyed: damage.destroyed });
@@ -1189,6 +1354,28 @@ export class ArmySystem {
       attacker: this.healArmyAfterBattle(attackerId).healed,
       defender: this.healArmyAfterBattle(defenderId).healed
     };
+    // 战报(attacker = 玩家军团视角)
+    const attackerAfter = this._findArmy(attackerId);
+    const defenderAfter = this._findArmy(defenderId);
+    this._battleLog?.record({
+      attacker: { name: attacker.name, type: 'player_army', summary: this._unitSummary(attacker) },
+      defender: { name: defender.name, type: 'army', summary: this._unitSummary(defender) },
+      initiator: 'player',
+      auto: options.auto === true,
+      distance,
+      firstStrike: order[0]?.id === attackerId ? 'attacker' : 'defender',
+      turns: attacks.map(attack => ({
+        side: attack.attackerId === attackerId ? 'attacker' : 'defender',
+        damage: attack.damage,
+        hpAfter: attack.destroyed ? 0 : null,
+        bonusStrike: attack.bonusStrike === true
+      })),
+      result: !attackerAfter ? 'defeat' : (!defenderAfter ? 'victory' : 'draw'),
+      casualties: null,
+      rewards: [],
+      luxuryDrop: null,
+      hpRemaining: attackerAfter?.hp ?? null
+    });
     eventBus.emit('combatBroadcast', { message: `⚔️ ${attacker.name}向${defender.name}发动攻击${defenderCanAttack ? '，双方完成交锋' : '，敌军射程不足无法反击'}` });
     return { ok: true, attackerId, defenderId, distance, attacks, healing };
   }
@@ -1228,6 +1415,21 @@ export class ArmySystem {
 
   _findArmy(armyId) { return this._armies.find(army => army.id === armyId) || null; }
 
+  /** 连续渲染坐标(旧存档无 renderX 时回落格点),所有距离/射程判定用 */
+  _renderX(army) { return Number.isFinite(army?.renderX) ? army.renderX : (army?.gridX ?? 0); }
+  _renderY(army) { return Number.isFinite(army?.renderY) ? army.renderY : (army?.gridY ?? 0); }
+
+  /** 军团兵种构成摘要,如"长矛兵×3、弓箭手×2" */
+  _unitSummary(army) {
+    const units = configRegistry.get('enemies')?.units || [];
+    const counts = {};
+    for (const id of army?.unitIds || []) counts[id] = (counts[id] || 0) + 1;
+    const text = Object.entries(counts)
+      .map(([id, count]) => `${units.find(unit => unit.id === id)?.name || id}×${count}`)
+      .join('、');
+    return text || (army?.heroId ? '英雄部队' : '空');
+  }
+
   _decorateArmy(army) {
     const hero = this._heroProfile(army);
     return {
@@ -1251,6 +1453,18 @@ export class ArmySystem {
 
   getArmies() { return this._armies.map(army => this._decorateArmy(army)); }
 
+  /** 渲染用轻量位置快照(每帧调用,避免 getArmies 的全量 clone):id -> 连续渲染坐标(格) */
+  getArmyPositions() {
+    const out = {};
+    for (const army of this._armies) {
+      out[army.id] = {
+        renderX: Number.isFinite(army.renderX) ? army.renderX : army.gridX,
+        renderY: Number.isFinite(army.renderY) ? army.renderY : army.gridY
+      };
+    }
+    return out;
+  }
+
   getState() {
     return {
       nextId: this._nextId,
@@ -1273,6 +1487,8 @@ export class ArmySystem {
       heroId: army.heroId || null,
       gridX: Math.floor(Number(army.gridX) || 0),
       gridY: Math.floor(Number(army.gridY) || 0),
+      renderX: Number.isFinite(Number(army.renderX)) ? Number(army.renderX) : Math.floor(Number(army.gridX) || 0),
+      renderY: Number.isFinite(Number(army.renderY)) ? Number(army.renderY) : Math.floor(Number(army.gridY) || 0),
       supply: Math.max(0, Math.min(1.25, Number(army.supply) || 1)),
       embarked: army.embarked === true,
       garrisonBuildingIndex: Number.isInteger(army.garrisonBuildingIndex) ? army.garrisonBuildingIndex : null,
@@ -1290,6 +1506,9 @@ export class ArmySystem {
     this._battleHistory = Array.isArray(state?.battleHistory) ? structuredClone(state.battleHistory).slice(-20) : [];
     this._nextBattleId = Math.max(1, Math.floor(Number(state?.nextBattleId) || this._battleHistory.length + 1));
     this._resolvedBattleIds = new Set(this._battleHistory.map(record => record.id));
+    this._armyMotion.clear();
+    this._lastMovementNotifyAt = 0;
+    this._movementDirty = false;
     this._notify('restore');
   }
 

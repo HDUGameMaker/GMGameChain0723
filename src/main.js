@@ -36,6 +36,7 @@ import { EconomyOrderSystem } from './systems/EconomyOrderSystem.js';
 import { CommerceSystem } from './systems/CommerceSystem.js';
 import { CommercialBuildingSystem } from './systems/CommercialBuildingSystem.js';
 import { ArmySystem } from './systems/ArmySystem.js';
+import { BattleLogSystem } from './systems/BattleLogSystem.js';
 import { ArmyInteractionSystem } from './systems/ArmyInteractionSystem.js';
 import { WildSiteSystem } from './systems/WildSiteSystem.js';
 import { RuinSystem } from './systems/RuinSystem.js';
@@ -157,6 +158,7 @@ class Game {
     this.systems.commerce = new CommerceSystem();
     this.systems.commercialBuildings = new CommercialBuildingSystem();
     this.systems.army = new ArmySystem();
+    this.systems.battleLog = new BattleLogSystem();
     this.systems.wildSites = new WildSiteSystem();
     this.systems.ruins = new RuinSystem();
     this.systems.blackMist = new BlackMistSystem();
@@ -289,6 +291,8 @@ class Game {
       enemyExpansion: this.systems.enemyExpansion,
       ruins: this.systems.ruins
       , combat: this.systems.combat
+      , diplomacy: this.systems.diplomacy
+      , battleLog: this.systems.battleLog
     });
     this.systems.building.setArmySystem(this.systems.army);
     this.systems.invasion.setArmySystem(this.systems.army);
@@ -302,8 +306,10 @@ class Game {
     this.systems.enemyExpansion.setArmySystem(this.systems.army);
     this.systems.wildSites.setSystems({ resource: this.systems.resource, era: this.systems.era, army: this.systems.army, luxury: this.systems.luxury });
     this.systems.enemyExpansion.setLuxurySystem(this.systems.luxury);
-    this.systems.enemyExpansion.setBattlePreviewHandler(data => this.popupManager.previewBattle(data));
-    this.systems.diplomacy.setBattlePreviewHandler(data => this.popupManager.previewBattle(data));
+    this.systems.enemyExpansion.setBattleLogSystem(this.systems.battleLog);
+    this.systems.diplomacy.setBattleLogSystem(this.systems.battleLog);
+    this.systems.combat.setBattleLogSystem(this.systems.battleLog);
+    this.systems.ruins.setBattleLogSystem(this.systems.battleLog);
     this.systems.building.setLuxurySystem(this.systems.luxury);
     this.systems.population.setLuxurySystem(this.systems.luxury);
     this.systems.diplomacy.setSystems({ luxury: this.systems.luxury });
@@ -708,6 +714,7 @@ class Game {
     this.systems.economyOrders.initNew();
     this.systems.commerce.initNew();
     this.systems.army.initNew();
+    this.systems.battleLog.initNew();
     this.systems.wildSites.initNew();
     this.systems.ruins.initNew();
     this.systems.blackMist.initNew();
@@ -806,6 +813,7 @@ class Game {
       this.systems.quest.enable();
     }
     this.systems.army.restoreState(saveData.armyState);
+    if (saveData.battleLog) this.systems.battleLog.restoreState(saveData.battleLog);
     if (saveData.wildSites) this.systems.wildSites.restoreState(saveData.wildSites);
     else this.systems.wildSites.initNew();
     if (saveData.ruins) this.systems.ruins.restoreState(saveData.ruins);
@@ -828,8 +836,14 @@ class Game {
 
   update(delta) {
     if (this._gameOver) return;
-    // 时间系统更新（内部处理速度倍率）
+    // 时间系统更新（内部处理速度倍率，可能触发 tick 慢节奏结算）
     this.systems.time.update(delta);
+    // 战略层移动/战斗帧级推进（顺序 = 现有 tick 顺序：军团先动 → 敌人后动）；用户暂停时全部冻结
+    if (!this.systems.time.userPaused) {
+      this.systems.army.update(delta, this.systems.time.speed);
+      this.systems.enemyExpansion.update(delta, this.systems.time.speed);
+      this.systems.diplomacy.update(delta, this.systems.time.speed);
+    }
     // 建造进度按各自开始时间推进，避免同一 tick 内新建对象共享全局进度
     this.systems.building.updateConstructionProgress();
   }
@@ -889,6 +903,7 @@ class Game {
       audio: this.systems.audio.getAllStates(),
       camera: this.mapRenderer ? this.mapRenderer.getCameraState() : null,
       armyState,
+      battleLog: this.systems.battleLog.getState(),
       wildSites: this.systems.wildSites.getState(),
       ruins: this.systems.ruins.getState(),
       blackMist: this.systems.blackMist.getState(),

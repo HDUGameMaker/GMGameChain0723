@@ -423,6 +423,7 @@ export class PopupManager {
       'trade': '城邦贸易',
       'commerce': '城邦贸易',
       'world_factions': '世界势力与野外目标',
+      'battle_log': '战报',
       'save_recovery': '存档恢复',
       'tutorial_prompt': '新手教程',
       'quest_panel': '任务',
@@ -552,6 +553,9 @@ export class PopupManager {
     });
     import('./panels/world-factions-panel.js').then(m => {
       this.register('world_factions', m.renderWorldFactionsPanel);
+    });
+    import('./panels/battle-log-panel.js').then(m => {
+      this.register('battle_log', m.renderBattleLogPanel);
     });
   }
 }

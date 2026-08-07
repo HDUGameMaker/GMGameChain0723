@@ -63,6 +63,11 @@ export class MapRenderer {
     this.worldContainer.addChild(this.heroSkillAimLayer);
     this.actorLayer = new PIXI.Container();
     this.worldContainer.addChild(this.actorLayer);
+    // 战略 token 容器缓存:重绘时复用容器,每帧只摆 position,实现帧级平滑移动
+    this._tokenContainers = new Map();
+    this._tokenTickerBound = false;
+    // 敌军格子 token 缓存("x,y" -> { container, graphics, text, gridX, gridY })
+    this._enemyCellTokens = new Map();
     this.worldContainer.addChild(this.ghostLayer);
     this.worldContainer.addChild(this.lightOverlay);
 
@@ -620,12 +625,19 @@ export class MapRenderer {
   }
 
   _drawStrategicTokens() {
-    this.actorLayer.removeChildren().forEach(child => child.destroy({ children: true }));
+    if (!this._tokenTickerBound) {
+      this._tokenTickerBound = true;
+      this.app.ticker.add(() => this._updateTokenPositions());
+    }
     const ts = this.tileSize;
     const armies = this._armySystem?.getArmies?.() || [];
     const selectedArmy = this._armySystem?.getArmy?.(this.selectedArmyId)
       || armies.find(army => army.id === this.selectedArmyId);
     const selection = createArmySelectionModel(selectedArmy);
+    // 只销毁非缓存子节点;缓存 token 容器摘下后按模型顺序重新 addChild
+    this.actorLayer.removeChildren().forEach(child => {
+      if (!child._tokenKey) child.destroy({ children: true });
+    });
     for (const army of armies) {
       const routeModel = createArmySelectionModel(army);
       if (routeModel?.route.length) this.actorLayer.addChild(this._createArmyRouteUnderlay(routeModel, army.id === this.selectedArmyId));
@@ -634,35 +646,90 @@ export class MapRenderer {
       this.actorLayer.addChild(this._createAttackRangeUnderlay(this.selectedEnemyTarget.gridX, this.selectedEnemyTarget.gridY, this.selectedEnemyTarget.attackRange, 0xe05252));
     }
     if (selection) this.actorLayer.addChild(this._createArmySelectionUnderlay(selection));
+    const kept = new Set();
     for (const token of this._getStrategicTokenModels()) {
-      const x = token.gridX * ts;
-      const y = token.gridY * ts;
-      const container = new PIXI.Container();
-      const bg = new PIXI.Graphics();
-      bg.roundRect(x + 4, y + 4, ts - 8, ts - 8, 8);
-      bg.fill({ color: token.color, alpha: 0.9 });
-      bg.roundRect(x + 4, y + 4, ts - 8, ts - 8, 8);
-      bg.stroke({ color: 0xf4e1b8, alpha: 0.9, width: 2 });
-      container.addChild(bg);
-      this._addStrategicTokenArt(container, token, x, y, ts);
-      const label = new PIXI.Text({ text: token.label, style: { fontSize: Math.max(8, ts * 0.13), fill: 0xffffff, align: 'center', dropShadow: { color: 0x000000, alpha: 0.9, blur: 2, distance: 1 } } });
-      label.anchor.set(0.5);
-      label.x = x + ts / 2;
-      label.y = y + ts - 8;
-      container.addChild(label);
+      const key = (token.kind === 'wild_site' ? 'site:' : 'army:') + token.id;
+      kept.add(key);
+      let container = this._tokenContainers.get(key);
+      if (!container) {
+        container = this._createTokenContainer(token, ts);
+        container._tokenKey = key;
+        this._tokenContainers.set(key, container);
+        // 创建瞬间按渲染坐标落位,避免首帧闪到 (0,0)(wildSite 无位置快照,回退格点)
+        const pos = this._armySystem?.getArmyPositions?.()?.[token.id];
+        if (pos) {
+          container.position.set(pos.renderX * ts, pos.renderY * ts);
+        } else {
+          container.position.set(token.gridX * ts, token.gridY * ts);
+        }
+      }
+      this._updateTokenContainer(container, token, ts);
       this.actorLayer.addChild(container);
+    }
+    for (const [key, container] of this._tokenContainers) {
+      if (kept.has(key)) continue;
+      this._tokenContainers.delete(key);
+      container.destroy({ children: true });
     }
     if (selection) this.actorLayer.addChild(this._createArmySelectionOverlay(selection));
   }
 
-  _addStrategicTokenArt(container, token, x, y, size) {
+  /** 创建 token 容器:子节点一律使用容器局部坐标,position 承载格像素坐标(便于每帧插值) */
+  _createTokenContainer(token, ts) {
+    const container = new PIXI.Container();
+    const bg = new PIXI.Graphics();
+    bg.roundRect(4, 4, ts - 8, ts - 8, 8);
+    bg.fill({ color: token.color, alpha: 0.9 });
+    bg.roundRect(4, 4, ts - 8, ts - 8, 8);
+    bg.stroke({ color: 0xf4e1b8, alpha: 0.9, width: 2 });
+    container.addChild(bg);
+    this._addStrategicTokenArt(container, token, ts);
+    const label = new PIXI.Text({ text: token.label, style: { fontSize: Math.max(8, ts * 0.13), fill: 0xffffff, align: 'center', dropShadow: { color: 0x000000, alpha: 0.9, blur: 2, distance: 1 } } });
+    label.anchor.set(0.5);
+    label.x = ts / 2;
+    label.y = ts - 8;
+    container.addChild(label);
+    return container;
+  }
+
+  /** 重绘时刷新缓存容器的标签(位置只由 ticker 插值,重绘不干预,避免跳变) */
+  _updateTokenContainer(container, token, ts) {
+    const label = container.getChildAt(container.children.length - 1);
+    if (label && label.text !== token.label) label.text = token.label;
+  }
+
+  /** 每帧:军团 token 直接读取连续渲染坐标(renderX/renderY),天然平滑且严格沿路径 */
+  _updateTokenPositions() {
+    const ts = this.tileSize;
+    if (this._tokenContainers.size) {
+      const positions = this._armySystem?.getArmyPositions?.() || {};
+      for (const [key, container] of this._tokenContainers) {
+        if (!key.startsWith('army:')) continue;
+        const pos = positions[key.slice(5)];
+        if (!pos) continue;
+        container.position.set(pos.renderX * ts, pos.renderY * ts);
+      }
+    }
+    if (this._enemyCellTokens.size) {
+      const motions = this._enemyExpansion?.getCellMotion?.() || {};
+      for (const [key, token] of this._enemyCellTokens) {
+        const motion = motions[key];
+        if (!motion) continue;
+        const mv = motion.moveVector || { dx: 0, dy: 0 };
+        const p = motion.progress || 0;
+        token.container.position.set((token.gridX + mv.dx * p) * ts, (token.gridY + mv.dy * p) * ts);
+      }
+    }
+  }
+
+  _addStrategicTokenArt(container, token, size) {
     const fallback = new PIXI.Text({
       text: token.fallbackIcon || token.icon || '!',
       style: { fontSize: Math.max(18, size * 0.38), fill: 0xffffff, fontWeight: 'bold' }
     });
     fallback.anchor.set(0.5);
-    fallback.x = x + size / 2;
-    fallback.y = y + size / 2 - 5;
+    fallback.x = size / 2;
+    fallback.y = size / 2 - 5;
     fallback.visible = !token.art;
     container.addChild(fallback);
 
@@ -676,8 +743,8 @@ export class MapRenderer {
         if (container.destroyed) return;
         const sprite = new PIXI.Sprite(texture);
         sprite.anchor.set(0.5);
-        sprite.x = x + size / 2;
-        sprite.y = y + size / 2 - 5;
+        sprite.x = size / 2;
+        sprite.y = size / 2 - 5;
         sprite.width = size * 0.66;
         sprite.height = size * 0.66;
         container.addChildAt(sprite, Math.min(1, container.children.length));
@@ -2357,7 +2424,9 @@ export class MapRenderer {
     const ts = this.tileSize;
     if (this._enemyExpansionContainer) {
       this._enemyExpansionContainer.parent?.removeChild(this._enemyExpansionContainer);
-      this._enemyExpansionContainer.destroy({ children: true });
+      // 缓存 token 容器在 _enemyCellTokens 中复用:先摘出全部子节点再销毁空容器,避免销毁缓存对象
+      this._enemyExpansionContainer.removeChildren();
+      this._enemyExpansionContainer.destroy();
     }
     this._enemyExpansionContainer = new PIXI.Container();
     this.intelLayer.addChild(this._enemyExpansionContainer);
@@ -2368,28 +2437,60 @@ export class MapRenderer {
       overscanTiles: 3
     });
 
+    const kept = new Set();
     for (const cell of this._enemyExpansion.getAllCells()) {
       if (cell.x < bounds.startCol || cell.x > bounds.endCol || cell.y < bounds.startRow || cell.y > bounds.endRow) continue;
-      const x = cell.x * ts, y = cell.y * ts;
-      const isUnknown = (this._fogOfWar?.getTileState(cell.x, cell.y) || 'visible') === 'unexplored';
-      const aboutToExpand = cell.countdown <= 1;
-      const g = new PIXI.Graphics();
-      g.rect(x + 2, y + 2, ts - 4, ts - 4);
-      g.fill({ color: aboutToExpand ? 0xdd2222 : 0x993333, alpha: 0.8 });
-      g.rect(x + 2, y + 2, ts - 4, ts - 4);
-      g.stroke({ color: aboutToExpand ? 0xff4444 : 0xff8888, alpha: 0.9, width: aboutToExpand ? 3 : 2 });
-      this._enemyExpansionContainer.addChild(g);
-
-      const txt = new PIXI.Text({
-        text: isUnknown ? '⚠' : (formatEnemyTokenStats(cell) + '\n⏱' + cell.countdown),
-        style: { fontSize: Math.max(8, ts * 0.12), fill: 0xffffff, align: 'center', lineHeight: Math.max(11, ts * 0.14), fontWeight: 'bold', dropShadow: { color: 0x000000, alpha: 0.95, blur: 2, distance: 1 } }
-      });
-      txt.anchor.set(0.5);
-      txt.x = x + ts / 2;
-      txt.y = y + ts / 2;
-      this._enemyExpansionContainer.addChild(txt);
-      g.alpha = isUnknown ? 0.62 : 1;
+      const key = `${cell.x},${cell.y}`;
+      kept.add(key);
+      let token = this._enemyCellTokens.get(key);
+      if (!token) {
+        const container = new PIXI.Container();
+        const g = new PIXI.Graphics();
+        g.rect(2, 2, ts - 4, ts - 4);
+        g.fill({ color: 0x993333, alpha: 0.8 });
+        g.rect(2, 2, ts - 4, ts - 4);
+        g.stroke({ color: 0xff8888, alpha: 0.9, width: 2 });
+        container.addChild(g);
+        const txt = new PIXI.Text({
+          text: '⚠',
+          style: { fontSize: Math.max(8, ts * 0.12), fill: 0xffffff, align: 'center', lineHeight: Math.max(11, ts * 0.14), fontWeight: 'bold', dropShadow: { color: 0x000000, alpha: 0.95, blur: 2, distance: 1 } }
+        });
+        txt.anchor.set(0.5);
+        txt.x = ts / 2;
+        txt.y = ts / 2;
+        container.addChild(txt);
+        token = { container, graphics: g, text: txt, gridX: cell.x, gridY: cell.y };
+        this._enemyCellTokens.set(key, token);
+        // 创建瞬间按插值公式落位,避免首帧闪到 (0,0)
+        const motion = this._enemyExpansion?.getCellMotion?.()?.[key];
+        const mv = motion?.moveVector || { dx: 0, dy: 0 };
+        const p = motion?.progress || 0;
+        container.position.set((cell.x + mv.dx * p) * ts, (cell.y + mv.dy * p) * ts);
+      }
+      this._updateEnemyCellToken(token, cell, ts);
+      this._enemyExpansionContainer.addChild(token.container);
     }
+    for (const [key, token] of this._enemyCellTokens) {
+      if (kept.has(key)) continue;
+      this._enemyCellTokens.delete(key);
+      token.container.destroy({ children: true });
+    }
+  }
+
+  /** 刷新敌军格子 token 的颜色/文本(位置只由 ticker 插值,重绘不干预,避免跳变) */
+  _updateEnemyCellToken(token, cell, ts) {
+    const isUnknown = (this._fogOfWar?.getTileState(cell.x, cell.y) || 'visible') === 'unexplored';
+    const aboutToExpand = cell.countdown <= 1;
+    token.gridX = cell.x;
+    token.gridY = cell.y;
+    token.graphics.clear();
+    token.graphics.rect(2, 2, ts - 4, ts - 4);
+    token.graphics.fill({ color: aboutToExpand ? 0xdd2222 : 0x993333, alpha: 0.8 });
+    token.graphics.rect(2, 2, ts - 4, ts - 4);
+    token.graphics.stroke({ color: aboutToExpand ? 0xff4444 : 0xff8888, alpha: 0.9, width: aboutToExpand ? 3 : 2 });
+    token.graphics.alpha = isUnknown ? 0.62 : 1;
+    const text = isUnknown ? '⚠' : (formatEnemyTokenStats(cell) + '\n⏱' + cell.countdown);
+    if (token.text.text !== text) token.text.text = text;
   }
 
   _scheduleStrategicLayerRedraw() {

@@ -3,6 +3,7 @@ import { eventBus } from '../core/EventBus.js';
 import { store } from '../core/Store.js';
 import { createCityStateDevelopment } from '../domain/CityStateGeneration.js';
 import { makePowerScaleBuff, applyEnemyBuffs } from '../domain/EnemyBuffs.js';
+import { getTickInterval } from '../utils/gameTime.js';
 
 const BASIC_ACTIONS = new Set(['talk', 'gift', 'aid']);
 const TREATY_ACTIONS = new Set(['ceasefire', 'trade', 'open_borders', 'non_aggression', 'joint_patrol', 'alliance']);
@@ -24,10 +25,11 @@ export class DiplomacySystem {
     this._enemyExpansionSystem = null;
     this._factionRelations = {};
     this._lastProcessedDay = 0;
-    this._pendingGarrisonBattles = new Set();
+    this._battleLog = null;
+    // 帧级驻军推进侧表(内存,不持久化):armyId -> { moveProgress, attackCooldown }
+    this._garrisonMotion = new Map();
     eventBus.on('dayStart', ({ day } = {}) => this.advanceDay(day || 1));
     eventBus.on('eraAdvanced', () => this._syncEraDevelopment());
-    eventBus.on('tick', () => this._advanceGarrisons());
   }
 
   setSystems(systems = {}) {
@@ -41,7 +43,11 @@ export class DiplomacySystem {
     if (systems.enemyExpansion) this._enemyExpansionSystem = systems.enemyExpansion;
   }
 
-  setBattlePreviewHandler(handler) { this._battlePreviewHandler = typeof handler === 'function' ? handler : null; }
+  setBattleLogSystem(bl) { this._battleLog = bl || null; }
+
+  /** 军团连续渲染坐标(旧存档无 renderX 时回落格点),距离判定用 */
+  _armyX(army) { return Number.isFinite(army?.renderX) ? army.renderX : (army?.gridX ?? 0); }
+  _armyY(army) { return Number.isFinite(army?.renderY) ? army.renderY : (army?.gridY ?? 0); }
 
   get _config() {
     const integration = configRegistry.get('eaIntegration') || {};
@@ -147,6 +153,7 @@ export class DiplomacySystem {
     this._states = {};
     this._factionRelations = {};
     this._lastProcessedDay = 0;
+    this._garrisonMotion.clear();
     for (const outpost of this.getAllOutposts()) this._states[outpost.id] = this._makeInitialState(outpost);
     this._syncEraDevelopment(false);
     this._syncLuxuryResourceNodes();
@@ -350,18 +357,20 @@ export class DiplomacySystem {
     return Object.entries(this._states).flatMap(([outpostId, state]) => !state.active || state.status === 'defeated' ? [] : (state.armies || []).map(army => ({ ...army, id: army.id, enemyId: army.id, outpostId, gridX: army.x, gridY: army.y, source: 'city_state_garrison' })));
   }
 
-  attackGarrison(garrisonId, playerArmyId) {
+  attackGarrison(garrisonId, playerArmyId, { auto = false, skipCp = false } = {}) {
     const playerStats = this._armySystem?.getArmyStats?.(playerArmyId);
     if (!playerStats) return { ok: false, reason: 'army_unavailable' };
-    const cp = this._armySystem?.consumeAttackCp?.(playerArmyId);
-    if (cp && !cp.ok) return cp;
+    if (!skipCp) {
+      const cp = this._armySystem?.consumeAttackCp?.(playerArmyId);
+      if (cp && !cp.ok) return cp;
+    }
     for (const state of Object.values(this._states)) {
       const index = (state.armies || []).findIndex(army => army.id === garrisonId);
       if (index < 0) continue;
       const army = state.armies[index];
       const enemyStats = this._garrisonStats(army);
       const playerArmy = this._armySystem?.getArmy?.(playerArmyId);
-      const distance = playerArmy ? Math.abs(playerArmy.gridX - army.x) + Math.abs(playerArmy.gridY - army.y) : 1;
+      const distance = playerArmy ? Math.abs(this._armyX(playerArmy) - army.x) + Math.abs(this._armyY(playerArmy) - army.y) : 1;
       const enemyCanAttack = distance <= enemyStats.attackRange;
       const enemyFirst = enemyCanAttack && enemyStats.speed > playerStats.speed;
       if (enemyFirst) this._armySystem?.applyDamage?.(playerArmyId, enemyStats.attack);
@@ -381,6 +390,21 @@ export class DiplomacySystem {
       }
       if (army.hp <= 0) state.armies.splice(index, 1);
       const healed = this._armySystem?.getArmy?.(playerArmyId) ? (this._armySystem?.healArmyAfterBattle?.(playerArmyId)?.healed || 0) : 0;
+      const playerAfter = this._armySystem?.getArmy?.(playerArmyId);
+      this._battleLog?.record({
+        attacker: { name: playerArmy?.name || '军团', type: 'player_army', summary: `${playerArmy?.unitIds?.length || 0} 队` },
+        defender: { name: army.name || '城邦驻军', type: 'garrison', summary: '' },
+        initiator: 'player',
+        auto,
+        distance,
+        firstStrike: enemyFirst ? 'defender' : 'attacker',
+        turns: [],
+        result: army.hp <= 0 ? 'victory' : (!playerAfter ? 'defeat' : 'draw'),
+        casualties: null,
+        rewards: [],
+        luxuryDrop: null,
+        hpRemaining: playerAfter?.hp ?? null
+      });
       this._notify();
       return { ok: true, enemyDefeated: army.hp <= 0, enemyHp: army.hp, healed };
     }
@@ -414,7 +438,13 @@ export class DiplomacySystem {
     };
   }
 
-  _advanceGarrisons() {
+  /**
+   * 帧级驻军推进(由 main.update 每帧调用,替代原 tick 驱动的 _advanceGarrisons):
+   * 每个驻军独立 10 秒攻击冷却 + 1 格/10 秒移动;进入射程直接结算(不再弹预览确认框)。
+   */
+  update(delta, timeScale = 1) {
+    if (!Number.isFinite(delta) || delta <= 0) return;
+    const tickInterval = getTickInterval();
     const players = (this._armySystem?.getArmies?.() || []).filter(army => (!army.ownerId || army.ownerId === 'player') && army.unitIds?.length);
     const occupied = new Set([
       ...players.map(army => `${army.gridX},${army.gridY}`),
@@ -428,47 +458,81 @@ export class DiplomacySystem {
         if (!Number.isFinite(army.x) || !Number.isFinite(army.y)) continue;
         const stats = this._garrisonStats(army);
         Object.assign(army, stats, { hp: Math.max(1, Number(army.hp) || stats.maxHp) });
-        const target = players.map(player => ({ player, distance: Math.abs(player.gridX - army.x) + Math.abs(player.gridY - army.y) }))
+        const motion = this._garrisonMotion.get(army.id) || (this._garrisonMotion.set(army.id, {}), this._garrisonMotion.get(army.id));
+        motion.attackCooldown = Math.max(0, (motion.attackCooldown || 0) - delta * timeScale);
+        const target = players.map(player => ({ player, distance: Math.abs(this._armyX(player) - army.x) + Math.abs(this._armyY(player) - army.y) }))
           .filter(entry => entry.distance <= 8).sort((a, b) => a.distance - b.distance)[0];
         const destination = target ? { x: target.player.gridX, y: target.player.gridY } : { x: army.homeX, y: army.homeY };
         if (!Number.isFinite(destination.x) || !Number.isFinite(destination.y)) continue;
         if (target && target.distance <= stats.attackRange) {
-          const key = `${army.id}:${target.player.id}`;
-          if (this._pendingGarrisonBattles.has(key)) continue;
-          const playerStats = this._armySystem?.getArmyStats?.(target.player.id) || {};
-          const resolveBattle = () => {
-            const playerFirst = playerStats.speed > stats.speed && target.distance <= (playerStats.attackRange || 0);
-            if (playerFirst) army.hp = Math.max(0, army.hp - (playerStats.attack || 0));
-            if (army.hp > 0) this._armySystem?.applyDamage?.(target.player.id, stats.attack);
-            if (!playerFirst && this._armySystem?.getArmy?.(target.player.id) && target.distance <= (playerStats.attackRange || 0)) army.hp = Math.max(0, army.hp - (playerStats.attack || 0));
-            if (army.hp <= 0) state.armies = state.armies.filter(item => item.id !== army.id);
-            this._notify();
-            return { ok: true, enemyDefeated: army.hp <= 0, enemyHp: army.hp };
-          };
-          if (!this._battlePreviewHandler) resolveBattle();
-          else {
-            this._pendingGarrisonBattles.add(key);
-            Promise.resolve(this._battlePreviewHandler({ enemy: { ...army, ...stats }, player: { ...target.player, ...playerStats, portrait: target.player.heroPortrait || target.player.heroIcon || target.player.icon }, distance: target.distance, resolveBattle }))
-              .finally(() => this._pendingGarrisonBattles.delete(key));
-            return true;
+          if (motion.attackCooldown <= 0) {
+            const result = this._resolveGarrisonBattle(army, state, target, stats);
+            if (result?.ok) motion.attackCooldown = tickInterval;
+            changed = true;
           }
-          changed = true;
-          continue;
+          continue; // 攻击周期内不移动(与原每 tick 一次攻击的节奏一致)
         }
         if (army.x === destination.x && army.y === destination.y) continue;
-        const dx = Math.sign(destination.x - army.x), dy = Math.sign(destination.y - army.y);
-        const next = Math.abs(destination.x - army.x) >= Math.abs(destination.y - army.y)
-          ? { x: army.x + dx, y: army.y } : { x: army.x, y: army.y + dy };
-        if (occupied.has(`${next.x},${next.y}`)) continue;
-        occupied.delete(`${army.x},${army.y}`);
-        army.x = next.x;
-        army.y = next.y;
-        occupied.add(`${army.x},${army.y}`);
-        changed = true;
+        motion.moveProgress = (motion.moveProgress || 0) + delta * timeScale / tickInterval;
+        let steps = Math.floor(motion.moveProgress);
+        if (steps <= 0) continue;
+        motion.moveProgress -= steps;
+        let moved = false;
+        while (steps-- > 0) {
+          const dx = Math.sign(destination.x - army.x), dy = Math.sign(destination.y - army.y);
+          const next = Math.abs(destination.x - army.x) >= Math.abs(destination.y - army.y)
+            ? { x: army.x + dx, y: army.y } : { x: army.x, y: army.y + dy };
+          if (occupied.has(`${next.x},${next.y}`)) { motion.moveProgress = 0; break; }
+          occupied.delete(`${army.x},${army.y}`);
+          army.x = next.x;
+          army.y = next.y;
+          occupied.add(`${army.x},${army.y}`);
+          moved = true;
+        }
+        if (moved) changed = true;
       }
     }
     if (changed) this._notify();
     return changed;
+  }
+
+  /** 驻军自动攻击结算(原 _advanceGarrisons 内联 resolveBattle,同步直结 + 战报) */
+  _resolveGarrisonBattle(army, state, target, stats) {
+    const playerStats = this._armySystem?.getArmyStats?.(target.player.id) || {};
+    const playerFirst = playerStats.speed > stats.speed && target.distance <= (playerStats.attackRange || 0);
+    const attacks = [];
+    if (playerFirst) {
+      army.hp = Math.max(0, army.hp - (playerStats.attack || 0));
+      attacks.push({ side: 'defender', damage: playerStats.attack || 0, hpAfter: army.hp });
+    }
+    if (army.hp > 0) {
+      this._armySystem?.applyDamage?.(target.player.id, stats.attack);
+      attacks.push({ side: 'attacker', damage: stats.attack, hpAfter: null });
+    }
+    if (!playerFirst && this._armySystem?.getArmy?.(target.player.id) && target.distance <= (playerStats.attackRange || 0)) {
+      army.hp = Math.max(0, army.hp - (playerStats.attack || 0));
+      attacks.push({ side: 'defender', damage: playerStats.attack || 0, hpAfter: army.hp });
+    }
+    const enemyDefeated = army.hp <= 0;
+    if (enemyDefeated) state.armies = state.armies.filter(item => item.id !== army.id);
+    const playerAlive = !!this._armySystem?.getArmy?.(target.player.id);
+    const playerAfter = playerAlive ? this._armySystem.getArmy(target.player.id) : null;
+    this._battleLog?.record({
+      attacker: { name: army.name || '城邦驻军', type: 'garrison', summary: '' },
+      defender: { name: target.player.name || '军团', type: 'player_army', summary: `${target.player.unitIds?.length || 0} 队` },
+      initiator: 'enemy',
+      auto: true,
+      distance: target.distance,
+      firstStrike: playerFirst ? 'defender' : 'attacker',
+      turns: attacks.map(attack => ({ side: attack.side, damage: attack.damage, hpAfter: attack.hpAfter ?? null, bonusStrike: false })),
+      result: enemyDefeated ? 'defeat' : (!playerAlive ? 'victory' : 'draw'),
+      casualties: null,
+      rewards: [],
+      luxuryDrop: null,
+      hpRemaining: playerAfter?.hp ?? null
+    });
+    this._notify();
+    return { ok: true, enemyDefeated, enemyHp: army.hp };
   }
 
   _launchRaids(day, force = false) {
@@ -840,6 +904,7 @@ export class DiplomacySystem {
       };
     }
     this._factionRelations = {};
+    this._garrisonMotion.clear();
     this._syncEraDevelopment(false);
     this._syncLuxuryResourceNodes();
     this._notify();
