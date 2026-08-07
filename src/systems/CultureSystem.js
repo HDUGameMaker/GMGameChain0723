@@ -283,22 +283,6 @@ export class CultureSystem {
     return true;
   }
 
-  /** 总指挥点上限加成 */
-  getCommandPointsBonus() {
-    var e = this.getEffects();
-    var total = e.commandPointsBonus || 0;
-    /* 兼容旧格式：直接从政策数据的 cp_bonus 字段读取 */
-    for (const id of this._activatedPolicies) {
-      var c = this.get(id);
-      if (c && c.cp_bonus) total += c.cp_bonus;
-    }
-    if (this._government) {
-      var g = this.get(this._government);
-      if (g && g.cp_bonus) total += g.cp_bonus;
-    }
-    return total;
-  }
-
   _onDayStart(data) {
     // 冷却到期无需额外处理，激活时读取 _policyCooldownUntilDay 判断
   }
@@ -355,7 +339,6 @@ export class CultureSystem {
       researchSpeedMul: 1,
       satisfactionBonus: 0,
       diplomacyMul: 1,
-      commandPointsBonus: 0,
       expeditionQueueBonus: 0
     };
     const apply = (cfg) => {
@@ -380,7 +363,6 @@ export class CultureSystem {
       }
       if (ee.buildCostMul) mergeModifierValue(e, 'buildCostMul', ee.buildCostMul);
       if (ee.researchSpeedMul) mergeModifierValue(e, 'researchSpeedMul', ee.researchSpeedMul);
-      if (ee.commandPointsBonus) mergeModifierValue(e, 'commandPointsBonus', ee.commandPointsBonus, 'add');
       if (ee.expeditionQueueBonus) mergeModifierValue(e, 'expeditionQueueBonus', ee.expeditionQueueBonus, 'add');
       if (pe.growthMul) mergeModifierValue(e, 'growthMul', pe.growthMul);
       if (pe.foodConsumeMul) mergeModifierValue(e, 'foodConsumeMul', pe.foodConsumeMul);
@@ -400,7 +382,6 @@ export class CultureSystem {
     for (const d of this._getDoctrineConfigs()) {
       const level = d.repeatable ? Math.max(0, doctrineLevels[d.id] || 0) : (researchedDoctrines.includes(d.id) ? 1 : 0);
       if (level <= 0) continue;
-      if (d.commandPointsBonus) mergeModifierValue(e, 'commandPointsBonus', d.commandPointsBonus * level, 'add');
       if (d.growthSpeedBonus) mergeModifierValue(e, 'growthMul', d.growthSpeedBonus * level, 'add');
       if (d.expeditionQueueBonus) mergeModifierValue(e, 'expeditionQueueBonus', d.expeditionQueueBonus * level, 'add');
       if (d.foodConsumeMul) mergeModifierValue(e, 'foodConsumeMul', Math.pow(d.foodConsumeMul, level));

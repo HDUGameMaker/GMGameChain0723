@@ -69,6 +69,14 @@ export function renderBuildingSelectPanel(data, body, pm) {
     return (bNew - aNew) || String(a.name).localeCompare(String(b.name), 'zh-CN');
   });
 
+  // 分类筛选：默认「全部」= 分组展示全部；选中分类则只显示该类建筑
+  const selectedCategory = data?.category || 'all';
+  const availableCategories = [...new Set(buildable.map(b => b.category || 'administration'))]
+    .sort((a, b) => categoryOrder.indexOf(a) - categoryOrder.indexOf(b));
+  const filtered = selectedCategory === 'all'
+    ? buildable
+    : buildable.filter(b => (b.category || 'administration') === selectedCategory);
+
   if (buildable.length === 0) {
     body.innerHTML = '<p style="color:#888;text-align:center;padding:24px;font-size:14px;">暂无可用建筑<br><span style="font-size:12px;">建造更多前置建筑以解锁</span></p>';
     return;
@@ -79,6 +87,23 @@ export function renderBuildingSelectPanel(data, body, pm) {
   hint.style.cssText = 'font-size:12px;color:#888;margin-bottom:12px;text-align:center;';
   hint.textContent = '选择建筑后点击地图放置';
   body.appendChild(hint);
+
+  // 分类筛选栏
+  const categoryTabs = document.createElement('div');
+  categoryTabs.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;';
+  const renderCategory = (catId, label) => {
+    const tab = document.createElement('button');
+    tab.textContent = label;
+    tab.dataset.testid = `build-cat-${catId}`;
+    tab.style.cssText = `white-space:nowrap;padding:5px 10px;border:1px solid ${selectedCategory === catId ? '#a8874d' : '#444'};border-radius:6px;background:${selectedCategory === catId ? '#514021' : '#272a31'};color:${selectedCategory === catId ? '#f0d9a8' : '#aaa'};cursor:pointer;font-size:12px;`;
+    tab.addEventListener('click', () => renderBuildingSelectPanel({ ...data, category: catId }, body, pm));
+    categoryTabs.appendChild(tab);
+  };
+  renderCategory('all', '全部');
+  for (const catId of availableCategories) {
+    renderCategory(catId, BUILDING_CATEGORIES[catId] || catId);
+  }
+  body.appendChild(categoryTabs);
 
   // 拓土与其建筑上限升级界面已移除。
   const territory = null;
@@ -107,7 +132,7 @@ export function renderBuildingSelectPanel(data, body, pm) {
   list.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
 
   let currentCategory = null;
-  for (const b of buildable) {
+  for (const b of filtered) {
     const categoryId = b.category || 'administration';
     if (categoryId !== currentCategory) {
       currentCategory = categoryId;

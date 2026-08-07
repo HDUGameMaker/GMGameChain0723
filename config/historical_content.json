@@ -3075,8 +3075,7 @@
       },
       "maxCount": null,
       "initialBuilding": false,
-      "maxWorkers": 4,
-      "jobType": "military",
+      "maxWorkers": 0,
       "buildCost": [
         {
           "resourceId": "wood",
@@ -3127,8 +3126,7 @@
       },
       "maxCount": null,
       "initialBuilding": false,
-      "maxWorkers": 4,
-      "jobType": "military",
+      "maxWorkers": 0,
       "buildCost": [
         {
           "resourceId": "wood",
@@ -3152,8 +3150,7 @@
         "trainsBranches": [
           "ranged",
           "archer"
-        ],
-        "rangedTrainingMul": 1.15
+        ]
       },
       "icon": "assets/historical-icons/buildings/archery_range.svg",
       "imageDetail": "assets/buildings/historical-details/archery_range.png",
@@ -3179,8 +3176,7 @@
       },
       "maxCount": null,
       "initialBuilding": false,
-      "maxWorkers": 5,
-      "jobType": "military",
+      "maxWorkers": 0,
       "buildCost": [
         {
           "resourceId": "wood",
@@ -3203,8 +3199,7 @@
       "uniqueFunction": {
         "trainsBranches": [
           "cavalry"
-        ],
-        "cavalryTrainingMul": 1.15
+        ]
       },
       "icon": "assets/historical-icons/buildings/stable.svg",
       "imageDetail": "assets/buildings/historical-details/stable.png",
@@ -3230,8 +3225,7 @@
       },
       "maxCount": 1,
       "initialBuilding": false,
-      "maxWorkers": 5,
-      "jobType": "military",
+      "maxWorkers": 0,
       "buildCost": [
         {
           "resourceId": "wood",
@@ -3256,7 +3250,6 @@
           "special",
           "air"
         ],
-        "commandPointsBonus": 5,
         "armyCapacityBonus": 1
       },
       "icon": "assets/historical-icons/buildings/war_academy.svg",
@@ -4668,8 +4661,7 @@
       },
       "maxCount": 1,
       "initialBuilding": false,
-      "maxWorkers": 4,
-      "jobType": "trainer",
+      "maxWorkers": 0,
       "buildCost": [
         {
           "resourceId": "hardwood_beam",
@@ -5119,8 +5111,7 @@
       },
       "maxCount": 1,
       "initialBuilding": false,
-      "maxWorkers": 4,
-      "jobType": "trainer",
+      "maxWorkers": 0,
       "buildCost": [
         {
           "resourceId": "hardwood_beam",
@@ -5269,8 +5260,7 @@
       },
       "maxCount": 1,
       "initialBuilding": false,
-      "maxWorkers": 4,
-      "jobType": "trainer",
+      "maxWorkers": 0,
       "buildCost": [
         {
           "resourceId": "ship_timber",

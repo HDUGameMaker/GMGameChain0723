@@ -120,6 +120,12 @@ export class PopupManager {
    * 压入子面板
    */
   push(type, data) {
+    // 栈为空（如主界面按钮直接调 push）时退化为 open：push 只渲染不显示，
+    // 空栈直接压栈会导致弹窗内容渲染但 overlay 不可见
+    if (this._stack.length === 0) {
+      this.open(type, data);
+      return;
+    }
     this._stack.push({ type, data });
     this._render();
   }

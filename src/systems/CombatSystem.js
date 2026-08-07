@@ -21,7 +21,6 @@ export class CombatSystem {
     this._populationSystem = null;
     this._resourceSystem = null;
     this._cultureSystem = null;
-    this._alchemySystem = null;
     this._mapConfig = null;
     this._editMode = null;
     this._armySystem = null;
@@ -41,7 +40,6 @@ export class CombatSystem {
   setPopulationSystem(ps) { this._populationSystem = ps; }
   setResourceSystem(rs) { this._resourceSystem = rs; }
   setCultureSystem(cs) { this._cultureSystem = cs; }
-  setAlchemySystem(as) { this._alchemySystem = as; }
   setHeroSystem(hs) { this._heroSystem = hs; }
   setArmySystem(system) { this._armySystem = system || null; }
   setLuxurySystem(system) { this._luxurySystem = system || null; }
@@ -182,24 +180,19 @@ export class CombatSystem {
     const unitConfig = this._getUnitConfig(type);
     if (!unitConfig) return false;
 
-    // 人文政策 + 炼金药效：单位属性乘性修饰
+    // 人文政策：单位属性乘性修饰
     const eff = this._cultureSystem ? this._cultureSystem.getEffects() : null;
-    const aEff = this._alchemySystem ? this._alchemySystem.getEffects() : {};
-    const aCombat = aEff.combat || {};
     const isRanged = (unitConfig.attackRange || 1) > 1;
     const cultureDmgMul = isRanged
       ? (eff?.rangedDamageMul || eff?.archerDamageMul || 1)
       : (eff?.meleeDamageMul || eff?.warriorDamageMul || 1);
-    const alchemyDmgMul = isRanged
-      ? (aCombat.rangedDamageMul || aCombat.archerDamageMul || 1)
-      : (aCombat.meleeDamageMul || aCombat.warriorDamageMul || 1);
     const heroBonuses = this._heroSystem?.getBonuses?.() || {};
     const domainMul = unitConfig.domain === 'naval' ? (heroBonuses.navalPowerMul || 1) : 1;
     const siegeMul = unitConfig.roleTags?.includes('siege') ? (heroBonuses.siegePowerMul || 1) : 1;
-    const dmgMul = cultureDmgMul * alchemyDmgMul * (heroBonuses.combatPowerMul || 1) * domainMul * siegeMul;
+    const dmgMul = cultureDmgMul * (heroBonuses.combatPowerMul || 1) * domainMul * siegeMul;
     // HP 乘性：unitHpMul 为生命加成（正面），unitDamageTakenMul 不应进 HP（它是"受到伤害放大"负面效果，
     // 应在敌人攻击单位时应用，见 _onTick 敌人攻击单位处）
-    const hpMul = (eff?.unitHpMul || 1) * (aCombat.unitHpMul || 1) * (heroBonuses.unitHpMul || 1);
+    const hpMul = (eff?.unitHpMul || 1) * (heroBonuses.unitHpMul || 1);
 
     // 在建筑附近找空地
     for (let dx = -1; dx <= 1; dx++) {
@@ -585,12 +578,9 @@ export class CombatSystem {
 
       if (nearestUnit && nearDist <= 1) {
         // 攻击友方单位
-        // unitDamageTakenMul（炼金负面效果）：放大单位受到的伤害
-        const aEffCombat = this._alchemySystem ? (this._alchemySystem.getEffects().combat || {}) : {};
-        const takenMul = aEffCombat.unitDamageTakenMul || 1;
         const unitConfig = this._getUnitConfig(nearestUnit.type);
         const counterMul = nearestUnit.source === 'tamed' ? 1 : getMatchupMultiplier(cfg, unitConfig);
-        nearestUnit.hp -= Math.max(1, Math.round((cfg.attack || 1) * takenMul * counterMul));
+        nearestUnit.hp -= Math.max(1, Math.round((cfg.attack || 1) * counterMul));
         const unitLabel = nearestUnit.source === 'tamed' ? (nearestUnit.tamedInfo?.name || '驯化单位') : (unitConfig?.name || nearestUnit.type || '战斗单位');
         this._broadcast(`💥 ${cfg.name} 攻击${unitLabel}！`);
         if (nearestUnit.hp <= 0) {

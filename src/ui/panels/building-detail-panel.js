@@ -336,7 +336,8 @@ export function renderBuildingDetailPanel(data, body, pm) {
     }
 
     container.appendChild(workerSection);
-  } else {
+  } else if (!(config.uniqueFunction?.trainsBranches?.length > 0 || config.category === 'military')) {
+    // 军事建筑（兵营/靶场等训练设施）不消耗工人，不显示人口配置
     const staffingSection = section('人口配置', '👷');
     const staffing = document.createElement('div');
     staffing.style.cssText = 'font-size:12px;color:#b8c7e0;text-align:center;';

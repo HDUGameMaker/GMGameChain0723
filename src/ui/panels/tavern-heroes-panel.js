@@ -5,7 +5,7 @@ const ROLE_NAMES = { commander: '统帅', diplomat: '外交家', engineer: '工�
 const ASSIGNMENTS = { governor: '城市治理', army: '军团', expedition: '探险队', diplomacy: '外交使团', research: '研究机构' };
 
 function bonusText(bonuses = {}) {
-  const names = { combatPowerMul: '军团战力', commandPointsBonus: '指挥点', researchSpeedMul: '研究速度', productionMul: '生产', unitHpMul: '部队生命', navalPowerMul: '海军战力', expeditionYieldMul: '探险收益', diplomacyRelationBonus: '外交关系', healingRateBonus: '恢复', growthMul: '人口增长', buildCostMul: '建造成本', siegePowerMul: '攻城战力', armySpeedMul: '机动' };
+  const names = { combatPowerMul: '军团战力', researchSpeedMul: '研究速度', productionMul: '生产', unitHpMul: '部队生命', navalPowerMul: '海军战力', expeditionYieldMul: '探险收益', diplomacyRelationBonus: '外交关系', healingRateBonus: '恢复', growthMul: '人口增长', buildCostMul: '建造成本', siegePowerMul: '攻城战力', armySpeedMul: '机动' };
   return Object.entries(bonuses).map(([key, value]) => {
     const valueText = key.endsWith('Mul') ? `${value >= 1 ? '+' : ''}${Math.round((value - 1) * 100)}%` : `+${value}`;
     return `${names[key] || key}${valueText}`;

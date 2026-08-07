@@ -14,17 +14,14 @@ import { getStrategicFogStyle } from './FogPresentation.js';
 import { createArmySelectionModel, createBuildingHoverDetails, createMapTokenModels, formatEnemyTokenStats, getMountainRockSpriteModel, getMountainRubbleSpriteModels, getResourceNodeArtPath, getResourceNodeGroundStyle, getTerrainFillColor, getTerrainPropDepth, getTopDownShoreEdges, getVisibleTileBounds, MOUNTAIN_ROCK_TEXTURES, MOUNTAIN_RUBBLE_TEXTURES } from './MapPresentation.js';
 
 export class MapRenderer {
-  constructor(app, buildingSystem, torchSystem, roadSystem, combatSystem, territorySystem) {
+  constructor(app, buildingSystem, torchSystem, combatSystem, territorySystem) {
     this.app = app;
     this.buildingSystem = buildingSystem;
     this._torchSystem = torchSystem || null;
-    this._roadSystem = roadSystem || null;
     this._combatSystem = combatSystem || null;
     this._territorySystem = territorySystem || null;
     this.selectedArmyId = null;
     this.selectedEnemyTarget = null;
-    this._spellSystem = null; // 炼金法术系统
-    this._spellHover = null;  // 施法模式下的悬停格子（AoE 预览）
     this.mapConfig = configRegistry.get('map');
     this.tileSize = this.mapConfig.tileSize;
 
@@ -62,8 +59,6 @@ export class MapRenderer {
     this.gameView.addChild(this.worldContainer);
     this.worldContainer.addChild(this.resourceNodeLayer);
     this.worldContainer.addChild(this.buildingLayer);
-    this.roadLayer = new PIXI.Container();
-    this.worldContainer.addChild(this.roadLayer);
     this.heroSkillAimLayer = new PIXI.Container();
     this.worldContainer.addChild(this.heroSkillAimLayer);
     this.actorLayer = new PIXI.Container();
@@ -112,7 +107,6 @@ export class MapRenderer {
 
     // 地图上建造进度条的 PIXI 填充对象引用
     this._mapBuildFills = [];
-    this._roadBuildFills = [];
     this._unregisterMapBars = null;
 
     // 地图上合成进度条的 PIXI 填充对象引用
@@ -146,7 +140,6 @@ export class MapRenderer {
       () => 1,
       () => {
         this._updateMapBuildBars();
-        this._updateRoadBuildBars();
       }
     );
 
@@ -169,7 +162,6 @@ export class MapRenderer {
   }
 
   setEnemyExpansion(ees) { this._enemyExpansion = ees || null; }
-  setSpellSystem(ss) { this._spellSystem = ss || null; }
   setDiplomacySystem(ds) { this._diplomacySystem = ds || null; }
   setArmySystem(system) { this._armySystem = system || null; }
   setWildSiteSystem(system) { this._wildSiteSystem = system || null; }
@@ -205,8 +197,6 @@ export class MapRenderer {
     this._drawEnemies();
     this._drawTerritory();
     this._drawEnemyExpansion();
-    this._drawSpellZones();
-    this._drawRoads();
     this._drawResourceNodes();
     this._drawStrategicTokens();
     this._createFogCanvas();
@@ -334,78 +324,6 @@ export class MapRenderer {
       entranceContainer.addChild(labelText);
 
       this.worldContainer.addChild(entranceContainer);
-    }
-  }
-
-  // ===== 地图事件标记渲染 =====
-
-  // ===== 道路渲染 =====
-
-  _drawRoads() {
-    this.roadLayer.removeChildren();
-    this._roadBuildFills = [];
-    if (!this._roadSystem) return;
-    const ts = this.tileSize;
-    const roads = this._roadSystem.getAllStates();
-    if (!roads || roads.length === 0) return;
-    const roadConfig = this._roadSystem.getDefaultRoadConfig();
-    const baseColor = roadConfig ? parseInt(roadConfig.color.replace('#', ''), 16) : 0x8B7355;
-
-    for (const r of roads) {
-      const x = r.gridX * ts;
-      const y = r.gridY * ts;
-      const constructing = r.buildProgress !== null;
-
-      const g = new PIXI.Graphics();
-      g.rect(x + 4, y + 4, ts - 8, ts - 8);
-      g.fill({ color: constructing ? 0x666666 : baseColor, alpha: constructing ? 0.4 : 0.8 });
-      this.roadLayer.addChild(g);
-
-      // 建造进度条
-      if (constructing) {
-        const barW = ts - 12;
-        const barH = 6;
-        const barX = x + 6;
-        const barY = y + ts / 2 - 5;
-
-        const bg = new PIXI.Graphics();
-        bg.rect(barX, barY, barW, barH);
-        bg.fill({ color: 0x333333, alpha: 0.6 });
-        this.roadLayer.addChild(bg);
-
-        const fill = new PIXI.Graphics();
-        fill.rect(barX, barY, 0, barH);
-        fill.fill({ color: 0xffaa00, alpha: 0.9 });
-        this.roadLayer.addChild(fill);
-
-        const total = r.buildTime || 1;
-        const cur = r.buildProgress ?? 0;
-        const ratio = this._getConstructionRatio(r, total);
-        fill.clear();
-        fill.rect(barX, barY, barW * ratio, barH);
-        fill.fill({ color: 0xffaa00, alpha: 0.9 });
-
-        const displayCur = this._getConstructionDisplayProgress(r, total);
-        const progressText = new PIXI.Text({
-          text: `${displayCur}/${total}`,
-          style: { fontSize: 9, fill: 0xffffff }
-        });
-        progressText.anchor.set(0.5);
-        progressText.x = x + ts / 2;
-        progressText.y = barY + barH + 6;
-        this.roadLayer.addChild(progressText);
-
-        this._roadBuildFills.push({
-          fill,
-          label: progressText,
-          gridX: r.gridX,
-          gridY: r.gridY,
-          barX,
-          barY,
-          barWidth: barW,
-          barHeight: barH
-        });
-      }
     }
   }
 
@@ -1292,12 +1210,6 @@ export class MapRenderer {
         rects.push({ gx: b.gridX - 1, gy: b.gridY - 1, gw: bw + 2, gh: bh + 2 });
       }
     }
-    if (this._roadSystem) {
-      for (const road of this._roadSystem.roads) {
-        if (road.buildProgress !== null) continue;
-        rects.push({ gx: road.gridX - 1, gy: road.gridY - 1, gw: 3, gh: 3 });
-      }
-    }
     return rects;
   }
 
@@ -1498,7 +1410,6 @@ export class MapRenderer {
    * 切换挪动模式（放置建筑时禁止）
    */
   toggleMoveMode() {
-    if (this._roadSystem && this._roadSystem.isEditMode()) return;
     if (this.buildingSystem.placingState === 'PLACING') return;
     if (this._moveMode) {
       this.exitMoveMode();
@@ -2052,19 +1963,6 @@ export class MapRenderer {
         return;
       }
 
-      // 道路编辑模式
-      if (this._roadSystem && this._roadSystem.isEditMode() && gridPos) {
-        const existing = this._roadSystem.getRoadAt(gridPos.col, gridPos.row);
-        if (existing && existing.buildProgress === null) {
-          this._roadSystem.removeRoad(gridPos.col, gridPos.row);
-        } else if (!existing) {
-          this._roadSystem.buildRoad(gridPos.col, gridPos.row);
-        }
-        this._drawRoads();
-        this._updateFogTexture();
-        return;
-      }
-
       // 搬迁模式：点击放置建筑
       if (this._relocateIndex !== null && gridPos) {
         const moved = this.buildingSystem.moveBuilding(this._relocateIndex, gridPos.col, gridPos.row);
@@ -2141,12 +2039,6 @@ export class MapRenderer {
         this._updateMapHover(e);
         return;
       }
-      // 道路编辑模式
-      if (this._roadSystem && this._roadSystem.isEditMode()) {
-        this._updateRoadGhost(e.clientX, e.clientY);
-        return;
-      }
-
       // 单位拖动
       if (this._dragUnitIndex !== null) {
         const dx = e.clientX - this.dragStartX;
@@ -2195,12 +2087,6 @@ export class MapRenderer {
         this._updateDeployGhost(e.clientX, e.clientY);
       }
 
-      // 法术施法模式下更新悬停 AoE 预览
-      if (this._spellSystem && this._spellSystem.isCastingMode()) {
-        const sp = this._clientToGrid(e.clientX, e.clientY);
-        this._spellHover = sp ? { x: sp.col, y: sp.row } : null;
-        this._drawSpellZones();
-      }
       this._updateMapHover(e);
     });
 
@@ -2297,10 +2183,6 @@ export class MapRenderer {
     window.addEventListener('keydown', (e) => {
       if (this._handleCameraKeyDown(e)) return;
 
-      if (e.key === 'Escape' && this._roadSystem && this._roadSystem.isEditMode()) {
-        this._roadSystem.exitEditMode();
-        this._clearRoadGhost();
-      }
       if (e.key === 'Escape' && this.buildingSystem.placingState === 'PLACING') {
         this.buildingSystem.exitPlacingMode();
         this._clearGhost();
@@ -2315,10 +2197,6 @@ export class MapRenderer {
       if (e.key === 'Escape' && this._territorySystem && this._territorySystem.isCastingMode()) {
         this._territorySystem.exitCastingMode();
         this._drawTerritory();
-      }
-      if (e.key === 'Escape' && this._spellSystem && this._spellSystem.isCastingMode()) {
-        this._spellSystem.exitCastingMode();
-        this._drawSpellZones();
       }
       if (e.key === 'Escape') this.clearArmySelection();
       // Esc 退出搬迁模式
@@ -2474,79 +2352,6 @@ export class MapRenderer {
     }
   }
 
-  _drawSpellZones() {
-    if (!this._spellSystem) return;
-    const ts = this.tileSize;
-    if (this._spellZoneContainer) {
-      this.worldContainer.removeChild(this._spellZoneContainer);
-      this._spellZoneContainer.destroy({ children: true });
-    }
-    this._spellZoneContainer = new PIXI.Container();
-    this.worldContainer.addChild(this._spellZoneContainer);
-
-    // 活跃法术区域：buff 青色 / debuff 红色
-    for (const zone of this._spellSystem.getActiveZones()) {
-      const isBuff = zone.type === 'buff';
-      const color = isBuff ? 0x33e0ff : 0xff5555;
-      const r = zone.radius || 0;
-      // 全域法术（radius 0）：画一个淡色全屏提示框
-      if (r <= 0) {
-        const g = new PIXI.Graphics();
-        g.rect(0, 0, this.mapConfig.gridWidth * ts, this.mapConfig.gridHeight * ts);
-        g.fill({ color, alpha: 0.06 });
-        this._spellZoneContainer.addChild(g);
-        continue;
-      }
-      // 区域法术：覆盖 radius 范围内所有格子
-      for (let dy = -r; dy <= r; dy++) {
-        for (let dx = -r; dx <= r; dx++) {
-          const cx = zone.cx + dx, cy = zone.cy + dy;
-          if (cx < 0 || cy < 0 || cx >= this.mapConfig.gridWidth || cy >= this.mapConfig.gridHeight) continue;
-          const g = new PIXI.Graphics();
-          g.rect(cx * ts, cy * ts, ts, ts);
-          g.fill({ color, alpha: 0.18 });
-          g.rect(cx * ts + 2, cy * ts + 2, ts - 4, ts - 4);
-          g.stroke({ color, alpha: 0.5, width: 1.5 });
-          this._spellZoneContainer.addChild(g);
-        }
-      }
-      // 中心标记
-      const mark = new PIXI.Text({ text: isBuff ? '✦' : '☠', style: { fontSize: 16, fill: color } });
-      mark.anchor.set(0.5);
-      mark.x = zone.cx * ts + ts / 2;
-      mark.y = zone.cy * ts + ts / 2;
-      this._spellZoneContainer.addChild(mark);
-    }
-
-    // 施法模式：在悬停格周围画 AoE 预览
-    if (this._spellSystem.isCastingMode() && this._spellHover) {
-      const active = this._spellSystem.getActiveSpell();
-      const radius = active?.def?.areaRadius || 0;
-      const isBuff = active?.def?.type === 'buff';
-      const color = isBuff ? 0x33e0ff : 0xff5555;
-      const hx = this._spellHover.x, hy = this._spellHover.y;
-      if (radius > 0) {
-        for (let dy = -radius; dy <= radius; dy++) {
-          for (let dx = -radius; dx <= radius; dx++) {
-            const cx = hx + dx, cy = hy + dy;
-            if (cx < 0 || cy < 0 || cx >= this.mapConfig.gridWidth || cy >= this.mapConfig.gridHeight) continue;
-            const g = new PIXI.Graphics();
-            g.rect(cx * ts, cy * ts, ts, ts);
-            g.fill({ color, alpha: 0.10 });
-            g.stroke({ color, alpha: 0.6, width: 2 });
-            this._spellZoneContainer.addChild(g);
-          }
-        }
-      } else {
-        // 全域法术：高亮整图边框
-        const g = new PIXI.Graphics();
-        g.rect(0, 0, this.mapConfig.gridWidth * ts, this.mapConfig.gridHeight * ts);
-        g.stroke({ color, alpha: 0.6, width: 3 });
-        this._spellZoneContainer.addChild(g);
-      }
-    }
-  }
-
   _drawEnemyExpansion() {
     if (!this._enemyExpansion) return;
     const ts = this.tileSize;
@@ -2668,13 +2473,6 @@ export class MapRenderer {
     // 占有术施法模式
     if (this._territorySystem && this._territorySystem.isCastingMode()) {
       this._territorySystem.castPossession(gridPos.col, gridPos.row);
-      return;
-    }
-
-    // 炼金法术施法模式
-    if (this._spellSystem && this._spellSystem.isCastingMode()) {
-      this._spellSystem.castAt(gridPos.col, gridPos.row);
-      this._drawSpellZones();
       return;
     }
 
@@ -2978,35 +2776,6 @@ export class MapRenderer {
       this._ghostExtras = [];
     }
     this._clearAdjacencyHints();
-  }
-
-  _updateRoadGhost(clientX, clientY) {
-    const gridPos = this._clientToGrid(clientX, clientY);
-    this._clearRoadGhost();
-    if (!gridPos) return;
-    let valid = false;
-    if (this._roadSystem) {
-      const check = this._roadSystem.canBuildRoad(gridPos.col, gridPos.row);
-      valid = check.valid;
-    }
-    const x = gridPos.col * this.tileSize;
-    const y = gridPos.row * this.tileSize;
-    const ts = this.tileSize;
-    const g = new PIXI.Graphics();
-    g.rect(x, y, ts, ts);
-    g.fill({ color: valid ? 0x44ff44 : 0xff4444, alpha: 0.25 });
-    g.rect(x, y, ts, ts);
-    g.stroke({ color: valid ? 0x44ff44 : 0xff4444, alpha: 0.9, width: 2 });
-    this.ghostLayer.addChild(g);
-    this._roadGhost = g;
-  }
-
-  _clearRoadGhost() {
-    if (this._roadGhost) {
-      this.ghostLayer.removeChild(this._roadGhost);
-      this._roadGhost.destroy();
-      this._roadGhost = null;
-    }
   }
 
   // ===== 建筑拖动虚影 =====
@@ -3798,21 +3567,6 @@ export class MapRenderer {
     }
   }
 
-  _updateRoadBuildBars() {
-    for (const ref of this._roadBuildFills) {
-      const road = this._roadSystem.getRoadAt(ref.gridX, ref.gridY);
-      if (!road || road.buildProgress === null) continue;
-      const bt = road.buildTime || 1;
-      const smooth = this._getConstructionRatio(road, bt);
-      ref.fill.clear();
-      ref.fill.rect(ref.barX, ref.barY, ref.barWidth * smooth, ref.barHeight);
-      ref.fill.fill({ color: 0xffaa00, alpha: 0.9 });
-      if (ref.label) {
-        ref.label.text = `${this._getConstructionDisplayProgress(road, bt)}/${bt}`;
-      }
-    }
-  }
-
   /**
    * 由 ProgressManager 每帧回调，重绘所有合成中的地图进度条（琥珀色）
    */
@@ -4129,24 +3883,11 @@ export class MapRenderer {
       }
       this._drawStrategicTokens();
     });
-    eventBus.on('spellZonesChanged', () => this._drawSpellZones());
-    eventBus.on('spellCastingModeChanged', ({ enabled } = {}) => {
-      if (enabled) this.clearArmySelection();
-      this._drawSpellZones();
-    });
-
     // 光照状态变化：重绘迷雾
     eventBus.on('torchStateChanged', () => {
       this._updateFogTexture();
     });
 
-    // 道路状态变化：重绘道路和迷雾
-    eventBus.on('roadBuilt', () => { this._drawRoads(); this._updateFogTexture(); });
-    eventBus.on('roadRemoved', () => { this._drawRoads(); this._updateFogTexture(); });
-    eventBus.on('roadEditModeChanged', ({ enabled }) => {
-      if (enabled) this.clearArmySelection();
-      if (!enabled) this._clearRoadGhost();
-    });
     eventBus.on('combatPlaceModeChanged', ({ enabled } = {}) => {
       if (enabled) this.clearArmySelection();
     });

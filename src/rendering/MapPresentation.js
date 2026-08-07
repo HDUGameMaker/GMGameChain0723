@@ -202,7 +202,7 @@ export function createMapTokenModels({ armies = [], wildSites = [], unitConfigs 
     const representative = (army.unitIds || [])
       .map(unitId => unitsById.get(unitId))
       .filter(Boolean)
-      .sort((left, right) => (right.commandPoints || 1) - (left.commandPoints || 1))[0];
+      .sort((left, right) => (right.combatPower || 1) - (left.combatPower || 1))[0];
     const unitCount = army.unitCount ?? army.unitIds?.length ?? 0;
     return {
       id: army.id,

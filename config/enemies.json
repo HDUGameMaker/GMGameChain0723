@@ -108,7 +108,6 @@
       "attack": 60,
       "attackRange": 1,
       "populationRequired": 1,
-      "commandPoints": 2,
       "weight": 5,
       "researchCost": 0,
       "prerequisiteTechs": [],
@@ -155,7 +154,6 @@
       "attack": 85,
       "attackRange": 1,
       "populationRequired": 1,
-      "commandPoints": 3,
       "weight": 10,
       "researchCost": 40,
       "unlockCost": [
@@ -231,7 +229,6 @@
       "attack": 30,
       "attackRange": 4,
       "populationRequired": 1,
-      "commandPoints": 5,
       "weight": 25,
       "researchCost": 90,
       "unlockCost": [
@@ -310,7 +307,6 @@
       "attack": 20,
       "attackRange": 5,
       "populationRequired": 1,
-      "commandPoints": 7,
       "weight": 55,
       "researchCost": 180,
       "unlockCost": [
@@ -389,7 +385,6 @@
       "attack": 145,
       "attackRange": 1,
       "populationRequired": 1,
-      "commandPoints": 4,
       "weight": 18,
       "researchCost": 55,
       "unlockCost": [
@@ -461,7 +456,6 @@
       "attack": 145,
       "attackRange": 1,
       "populationRequired": 1,
-      "commandPoints": 6,
       "weight": 35,
       "researchCost": 110,
       "unlockCost": [
@@ -540,7 +534,6 @@
       "attack": 210,
       "attackRange": 1,
       "populationRequired": 2,
-      "commandPoints": 12,
       "weight": 110,
       "researchCost": 420,
       "unlockCost": [

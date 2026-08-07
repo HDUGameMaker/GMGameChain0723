@@ -24,7 +24,6 @@ export class EnemyExpansionSystem {
     this._territorySystem = null;
     this._buildingSystem = null;
     this._armySystem = null;
-    this._spellSystem = null; // 炼金法术系统（减益：强度削减 / 倒计时冻结）
     this._totalCleared = 0;   // 累计清敌数（gameover 统计用）
     this._pendingBattles = new Set();
 
@@ -35,7 +34,6 @@ export class EnemyExpansionSystem {
   setTerritorySystem(ts) { this._territorySystem = ts; }
   setBuildingSystem(bs) { this._buildingSystem = bs; }
   setArmySystem(as) { this._armySystem = as; }
-  setSpellSystem(ss) { this._spellSystem = ss; }
   setHeroSystem(hs) { this._heroSystem = hs; }
   setLuxurySystem(ls) { this._luxurySystem = ls; }
   setPathfindingSystem(ps) { this._pathfindingSystem = ps || null; }

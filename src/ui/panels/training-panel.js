@@ -70,10 +70,13 @@ function renderUnitCard(unit, context, body, pm, rerender) {
   const primaryStat = isHealer
     ? `战后恢复 ${unit.healingAfterBattle || unit.attack || 0} · 每时段恢复 ${(unit.healingAfterBattle || unit.attack || 0) / 2}`
     : `攻击 ${unit.attack || 0}`;
+  const powerBadge = unit.combatPower
+    ? `<span style="margin-left:8px;font-size:12px;font-weight:700;color:#d3b56f;background:rgba(211,181,111,.12);border:1px solid rgba(211,181,111,.35);border-radius:6px;padding:1px 7px;vertical-align:2px;">⚔️ ${unit.combatPower}</span>`
+    : '';
   top.innerHTML = `<div style="position:relative;flex:0 0 112px;width:112px;height:112px;overflow:hidden;border-radius:11px;background:rgba(13,17,24,.92);border:1px solid rgba(214,176,103,.28)">
     <img data-testid="unit-card-art" data-fallback-src="${unit.icon || ''}" src="${unit.cardArt || unit.icon || ''}" alt="${unit.name} 招募立绘" loading="lazy" style="width:100%;height:100%;object-fit:contain">
     ${unit.icon ? `<img src="${unit.icon}" alt="" style="position:absolute;right:6px;bottom:6px;width:28px;height:28px;object-fit:contain;border-radius:6px;background:rgba(8,12,18,.88);padding:3px">` : ''}
-  </div><div style="min-width:0"><span style="display:block;font-size:16px;font-weight:700;color:#ececf0;margin-bottom:6px;">${isUnitUnlocked(unit) ? '' : '🔒 '}${unit.name}</span>
+  </div><div style="min-width:0"><span style="display:block;font-size:16px;font-weight:700;color:#ececf0;margin-bottom:6px;">${isUnitUnlocked(unit) ? '' : '🔒 '}${unit.name}${powerBadge}</span>
   <span style="display:block;font-size:12px;color:#808098;line-height:1.7;">陆军<br><span style="color:#d3b56f">生产时代：${requiredEra?.name || unit.eraId || '无时代限制'}</span><br>${primaryStat} · 生命 ${unit.hp || 0} · 射程 ${unit.attackRange || 1} · CP ${unit.cp || 1} · 速度 ${unit.speed || 1}</span></div>`;
   card.appendChild(top);
   const cardArt = top.querySelector?.('[data-testid="unit-card-art"]');
@@ -166,15 +169,18 @@ export function renderTrainingPanel(data, body, pm) {
   const visibleEras = eras.filter(era => !currentEra || era.order <= currentEra.order);
   const requestedEra = visibleEras.find(era => era.id === data?.eraId);
   const selectedEraId = requestedEra?.id || currentEra?.id;
+  const sortMode = data?.sortMode === 'branch' ? 'branch' : 'power';
+  const byPower = (left, right) => (right.combatPower || 0) - (left.combatPower || 0);
   const units = (armySystem()?.getTrainableUnitsAt?.(context.buildingIndex) || [])
     .filter(unit => {
       const unitEra = getEra(unit);
       return (!unitEra || unitEra.order <= (currentEra?.order ?? 0))
         && (!unit.eraId || unit.eraId === selectedEraId);
     })
-    .sort((left, right) => (BRANCH_ORDER.indexOf(left.branch) - BRANCH_ORDER.indexOf(right.branch))
-      || (left.combatPower || 0) - (right.combatPower || 0));
-  const rerender = () => renderTrainingPanel(data, body, pm);
+    .sort(sortMode === 'branch'
+      ? (left, right) => (BRANCH_ORDER.indexOf(left.branch) - BRANCH_ORDER.indexOf(right.branch)) || byPower(left, right)
+      : byPower);
+  const rerender = (extra = {}) => renderTrainingPanel({ ...data, ...extra }, body, pm);
 
   const header = document.createElement('div');
   header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;';
@@ -197,6 +203,23 @@ export function renderTrainingPanel(data, body, pm) {
   }
   body.appendChild(tabs);
 
+  // 排序切换：按战力（默认，不分组） / 按兵种分组（组内按战力降序）
+  const sortBar = document.createElement('div');
+  sortBar.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:10px;';
+  const sortLabel = document.createElement('span');
+  sortLabel.textContent = '排序：';
+  sortLabel.style.cssText = 'font-size:12px;color:#888;';
+  sortBar.appendChild(sortLabel);
+  for (const [mode, label] of [['power', '⚔️ 按战力'], ['branch', '📂 按兵种分组']]) {
+    const btn = document.createElement('button');
+    btn.textContent = label;
+    btn.dataset.testid = `sort-${mode}`;
+    btn.style.cssText = `white-space:nowrap;padding:5px 10px;border:1px solid ${sortMode === mode ? '#a8874d' : '#444'};border-radius:6px;background:${sortMode === mode ? '#514021' : '#272a31'};color:${sortMode === mode ? '#f0d9a8' : '#aaa'};cursor:pointer;font-size:12px;`;
+    btn.addEventListener('click', () => rerender({ sortMode: mode }));
+    sortBar.appendChild(btn);
+  }
+  body.appendChild(sortBar);
+
   const soldier = soldierStats();
   const summary = document.createElement('div');
   summary.style.cssText = 'margin-bottom:14px;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:13px;';
@@ -213,7 +236,7 @@ export function renderTrainingPanel(data, body, pm) {
 
   let branch = null;
   for (const unit of units) {
-    if ((unit.branch || 'other') !== branch) {
+    if (sortMode === 'branch' && (unit.branch || 'other') !== branch) {
       branch = unit.branch || 'other';
       const title = document.createElement('div');
       title.textContent = BRANCH_NAMES[branch] || branch;

@@ -4,11 +4,21 @@
     "name": "秩序",
     "tier": 0,
     "researchTime": 8,
-    "pos": { "x": 1 },
+    "pos": {
+      "x": 1
+    },
     "prerequisites": [],
-    "cost": [{ "resourceId": "inspiration", "amount": 5 }],
-    "unlocks": { "buildings": [], "units": [], "formations": [] },
-    "commandPointsBonus": 5,
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 5
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": []
+    },
     "growthSpeedBonus": 0,
     "description": "指挥点上限 +5，并开放军事传统"
   },
@@ -17,11 +27,23 @@
     "name": "配给制度",
     "tier": 1,
     "researchTime": 12,
-    "pos": { "x": 0 },
-    "prerequisites": ["order"],
-    "cost": [{ "resourceId": "inspiration", "amount": 15 }],
-    "unlocks": { "buildings": [], "units": [], "formations": [] },
-    "commandPointsBonus": 0,
+    "pos": {
+      "x": 0
+    },
+    "prerequisites": [
+      "order"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 15
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": []
+    },
     "growthSpeedBonus": 0,
     "foodConsumeMul": 0.9,
     "description": "每人口粮食消耗 -10%"
@@ -31,13 +53,28 @@
     "name": "劳作记录",
     "tier": 1,
     "researchTime": 12,
-    "pos": { "x": 1 },
-    "prerequisites": ["order"],
-    "cost": [{ "resourceId": "inspiration", "amount": 15 }],
-    "unlocks": { "buildings": [], "units": [], "formations": [] },
-    "commandPointsBonus": 0,
+    "pos": {
+      "x": 1
+    },
+    "prerequisites": [
+      "order"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 15
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": []
+    },
     "growthSpeedBonus": 0,
-    "resourceProductionMul": { "wood": 1.15, "stone": 1.1 },
+    "resourceProductionMul": {
+      "wood": 1.15,
+      "stone": 1.1
+    },
     "description": "木材产出 +15%，石料产出 +10%"
   },
   {
@@ -45,11 +82,23 @@
     "name": "民兵操典",
     "tier": 1,
     "researchTime": 12,
-    "pos": { "x": 2 },
-    "prerequisites": ["order"],
-    "cost": [{ "resourceId": "inspiration", "amount": 20 }],
-    "unlocks": { "buildings": [], "units": [], "formations": [] },
-    "commandPointsBonus": 0,
+    "pos": {
+      "x": 2
+    },
+    "prerequisites": [
+      "order"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 20
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": []
+    },
     "growthSpeedBonus": 0,
     "meleeDamageMul": 1.08,
     "rangedDamageMul": 1.08,
@@ -61,11 +110,26 @@
     "name": "补给站",
     "tier": 2,
     "researchTime": 16,
-    "pos": { "x": 1 },
-    "prerequisites": ["rationing", "work_records"],
-    "cost": [{ "resourceId": "inspiration", "amount": 35 }],
-    "unlocks": { "buildings": ["supply_post"], "units": [], "formations": [] },
-    "commandPointsBonus": 0,
+    "pos": {
+      "x": 1
+    },
+    "prerequisites": [
+      "rationing",
+      "work_records"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 35
+      }
+    ],
+    "unlocks": {
+      "buildings": [
+        "supply_post"
+      ],
+      "units": [],
+      "formations": []
+    },
     "growthSpeedBonus": 0,
     "description": "解锁补给站，为邻近生产建筑提供相邻加成"
   },
@@ -74,11 +138,23 @@
     "name": "编组劳动",
     "tier": 2,
     "researchTime": 20,
-    "pos": { "x": 0 },
-    "prerequisites": ["work_records"],
-    "cost": [{ "resourceId": "inspiration", "amount": 40 }],
-    "unlocks": { "buildings": [], "units": [], "formations": [] },
-    "commandPointsBonus": 0,
+    "pos": {
+      "x": 0
+    },
+    "prerequisites": [
+      "work_records"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 40
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": []
+    },
     "growthSpeedBonus": 0,
     "productionMul": 1.06,
     "description": "全部建筑产出 +6%"
@@ -88,11 +164,23 @@
     "name": "常备警戒",
     "tier": 2,
     "researchTime": 20,
-    "pos": { "x": 2 },
-    "prerequisites": ["guard_drills"],
-    "cost": [{ "resourceId": "inspiration", "amount": 45 }],
-    "unlocks": { "buildings": [], "units": [], "formations": [] },
-    "commandPointsBonus": 5,
+    "pos": {
+      "x": 2
+    },
+    "prerequisites": [
+      "guard_drills"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 45
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": []
+    },
     "growthSpeedBonus": 0,
     "meleeDamageMul": 1.05,
     "rangedDamageMul": 1.05,
@@ -103,13 +191,25 @@
     "name": "指挥演练",
     "tier": 3,
     "researchTime": 0,
-    "pos": { "x": 2 },
-    "prerequisites": ["standing_watch"],
-    "cost": [{ "resourceId": "inspiration", "amount": 60 }],
+    "pos": {
+      "x": 2
+    },
+    "prerequisites": [
+      "standing_watch"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 60
+      }
+    ],
     "costGrowth": 25,
     "repeatable": true,
-    "unlocks": { "buildings": [], "units": [], "formations": [] },
-    "commandPointsBonus": 2,
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": []
+    },
     "growthSpeedBonus": 0,
     "description": "可无限重复研究，每级指挥点上限 +2，灵感费用逐级增加"
   },
@@ -118,11 +218,21 @@
     "name": "适应",
     "tier": 1,
     "researchTime": 12,
-    "pos": { "x": 4 },
+    "pos": {
+      "x": 4
+    },
     "prerequisites": [],
-    "cost": [{ "resourceId": "inspiration", "amount": 5 }],
-    "unlocks": { "buildings": [], "units": [], "formations": [] },
-    "commandPointsBonus": 0,
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 5
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": []
+    },
     "growthSpeedBonus": 0.5,
     "description": "人口增长速度 +1~2"
   },
@@ -131,11 +241,25 @@
     "name": "酒馆",
     "tier": 2,
     "researchTime": 12,
-    "pos": { "x": 4 },
-    "prerequisites": ["adaptation"],
-    "cost": [{ "resourceId": "inspiration", "amount": 10 }],
-    "unlocks": { "buildings": ["pub"], "units": [], "formations": [] },
-    "commandPointsBonus": 0,
+    "pos": {
+      "x": 4
+    },
+    "prerequisites": [
+      "adaptation"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 10
+      }
+    ],
+    "unlocks": {
+      "buildings": [
+        "pub"
+      ],
+      "units": [],
+      "formations": []
+    },
     "growthSpeedBonus": 0,
     "description": "建造酒馆增加灵感"
   },
@@ -144,11 +268,23 @@
     "name": "拓荒队列",
     "tier": 2,
     "researchTime": 12,
-    "pos": { "x": 5 },
-    "prerequisites": ["adaptation"],
-    "cost": [{ "resourceId": "inspiration", "amount": 20 }],
-    "unlocks": { "buildings": [], "units": [], "formations": [] },
-    "commandPointsBonus": 0,
+    "pos": {
+      "x": 5
+    },
+    "prerequisites": [
+      "adaptation"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 20
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": []
+    },
     "growthSpeedBonus": 0,
     "expeditionQueueBonus": 1,
     "description": "探索队列上限 +1"
@@ -158,11 +294,23 @@
     "name": "安居",
     "tier": 3,
     "researchTime": 12,
-    "pos": { "x": 4 },
-    "prerequisites": ["wine"],
-    "cost": [{ "resourceId": "inspiration", "amount": 40 }],
-    "unlocks": { "buildings": [], "units": [], "formations": [] },
-    "commandPointsBonus": 0,
+    "pos": {
+      "x": 4
+    },
+    "prerequisites": [
+      "wine"
+    ],
+    "cost": [
+      {
+        "resourceId": "inspiration",
+        "amount": 40
+      }
+    ],
+    "unlocks": {
+      "buildings": [],
+      "units": [],
+      "formations": []
+    },
     "growthSpeedBonus": 1,
     "description": "人口增长速度 +2~4"
   }

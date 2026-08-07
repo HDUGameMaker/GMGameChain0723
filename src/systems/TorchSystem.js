@@ -10,7 +10,6 @@ export class TorchSystem {
   constructor() {
     this._resourceSystem = null;
     this._buildingSystem = null;
-    this._roadSystem = null;
     this._mapConfig = null;
     this._lastLightVersion = -1;
     this._cachedVisible = null;
@@ -24,7 +23,6 @@ export class TorchSystem {
 
   setResourceSystem(rs) { this._resourceSystem = rs; }
   setBuildingSystem(bs) { this._buildingSystem = bs; }
-  setRoadSystem(rs) { this._roadSystem = rs; }
 
   init() {
     this._mapConfig = configRegistry.get('map');
@@ -75,14 +73,6 @@ export class TorchSystem {
         const w = cfg.footprint.width;
         const h = cfg.footprint.height;
         this._markLight(b.gridX - 1, b.gridY - 1, w + 2, h + 2, visible, gw, gh);
-      }
-    }
-
-    // 道路提供3×3光照
-    if (this._roadSystem) {
-      for (const road of this._roadSystem.roads) {
-        if (road.buildProgress !== null) continue;
-        this._markLight(road.gridX - 1, road.gridY - 1, 3, 3, visible, gw, gh);
       }
     }
 

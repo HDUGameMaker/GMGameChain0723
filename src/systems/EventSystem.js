@@ -32,7 +32,6 @@ export class EventSystem {
     this._buildingSystem = null;
     this._timeSystem = null;
     this._gameLoop = null;
-    this._alchemySystem = null;
     this._diplomacySystem = null;
 
     // === 全局概率参数 ===
@@ -61,13 +60,12 @@ export class EventSystem {
     eventBus.on('popupClosed', () => this._onPopupClosed());
   }
 
-  setSystems({ resource, item, building, time, gameLoop, alchemy, diplomacy, luxury, era }) {
+  setSystems({ resource, item, building, time, gameLoop, diplomacy, luxury, era }) {
     this._resourceSystem = resource;
     this._itemSystem = item;
     this._buildingSystem = building;
     this._timeSystem = time;
     this._gameLoop = gameLoop;
-    this._alchemySystem = alchemy || null;
     this._diplomacySystem = diplomacy || null;
     this._luxurySystem = luxury || null;
     this._eraSystem = era || null;
@@ -118,12 +116,6 @@ export class EventSystem {
     this.registerEffect('obtain_item', (params) => {
       if (this._itemSystem) {
         this._itemSystem.obtain(params.itemId);
-      }
-    });
-
-    this.registerEffect('add_material', (params) => {
-      if (this._alchemySystem) {
-        this._alchemySystem.addMaterial(params.materialId, params.amount || 1);
       }
     });
 

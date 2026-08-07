@@ -22,7 +22,6 @@
       "requiredBuildings": []
     },
     "probability": 1,
-    "effects": [],
     "options": [
       {
         "text": "热情接待他",
@@ -71,7 +70,6 @@
       "requiredBuildings": []
     },
     "probability": 1,
-    "effects": [],
     "options": [
       {
         "text": "期待他的归来",
@@ -105,11 +103,9 @@
       "requiredBuildings": []
     },
     "probability": 1,
-    "effects": [],
     "options": [
       {
-        "text": "继续手头的工作",
-        "effects": []
+        "text": "继续手头的工作"
       }
     ]
   },
@@ -133,7 +129,6 @@
       "requiredBuildings": []
     },
     "probability": 1,
-    "effects": [],
     "options": [
       {
         "text": "收下铁矿（+20）",
@@ -156,14 +151,7 @@
         ]
       },
       {
-        "text": "收下他从矿洞带回的暗影蕈（+2）",
-        "effects": [
-          {
-            "type": "add_material",
-            "materialId": "shadow_mycena",
-            "amount": 2
-          }
-        ]
+        "text": "收下他从矿洞带回的暗影蕈（+2）"
       }
     ]
   },
@@ -192,7 +180,6 @@
       "requiredBuildings": []
     },
     "probability": 1,
-    "effects": [],
     "options": [
       {
         "text": "用100铁锭交换炼钢术",
@@ -244,11 +231,9 @@
       "requiredBuildings": []
     },
     "probability": 1,
-    "effects": [],
     "options": [
       {
-        "text": "研究炼钢图纸",
-        "effects": []
+        "text": "研究炼钢图纸"
       }
     ]
   },
@@ -272,11 +257,9 @@
       "requiredBuildings": []
     },
     "probability": 1,
-    "effects": [],
     "options": [
       {
-        "text": "继续手头的工作",
-        "effects": []
+        "text": "继续手头的工作"
       }
     ]
   },
@@ -306,7 +289,6 @@
       "requiredBuildings": []
     },
     "probability": 1,
-    "effects": [],
     "options": [
       {
         "text": "消耗5个机械零件制造扫描器",
@@ -327,8 +309,7 @@
         ]
       },
       {
-        "text": "暂缓调查",
-        "effects": []
+        "text": "暂缓调查"
       }
     ]
   },
@@ -352,11 +333,9 @@
       "requiredBuildings": []
     },
     "probability": 1,
-    "effects": [],
     "options": [
       {
-        "text": "组织探险队",
-        "effects": []
+        "text": "组织探险队"
       }
     ]
   },
@@ -380,7 +359,6 @@
       "requiredBuildings": []
     },
     "probability": 1,
-    "effects": [],
     "options": []
   },
   {
@@ -406,37 +384,15 @@
       "requiredBuildings": []
     },
     "probability": 0.6,
-    "effects": [],
     "options": [
       {
-        "text": "集中采集血棘（+3）",
-        "effects": [
-          {
-            "type": "add_material",
-            "materialId": "blood_thorn",
-            "amount": 3
-          }
-        ]
+        "text": "集中采集血棘（+3）"
       },
       {
-        "text": "集中采集雷蓟（+3）",
-        "effects": [
-          {
-            "type": "add_material",
-            "materialId": "thunder_thistle",
-            "amount": 3
-          }
-        ]
+        "text": "集中采集雷蓟（+3）"
       },
       {
-        "text": "冒险深入，搜寻暗影蕈（+1）",
-        "effects": [
-          {
-            "type": "add_material",
-            "materialId": "shadow_mycena",
-            "amount": 1
-          }
-        ]
+        "text": "冒险深入，搜寻暗影蕈（+1）"
       }
     ]
   }

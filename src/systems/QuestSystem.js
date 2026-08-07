@@ -18,7 +18,6 @@ export class QuestSystem {
     this._activeIndex = -1;
     this._completed = new Set();
     this._buildingSystem = null;
-    this._roadSystem = null;
     this._enabled = false;
     this._strategicChapters = [];
     this._strategicChapterIndex = 0;
@@ -30,9 +29,6 @@ export class QuestSystem {
     this._consequenceHistory = [];
     this._snapshot = {}; // 任务激活时的基线数据
 
-    eventBus.on('roadBuilt', ({ constructing }) => {
-      if (!constructing) this._onAction('build_road');
-    });
     eventBus.on('buildingComplete', payload => this._onAction('build_building', payload));
     eventBus.on('workerChanged', payload => this._onAction('assign_worker', payload));
     eventBus.on('workersAutoFilled', () => this._onAction('fill_workers'));
@@ -40,7 +36,6 @@ export class QuestSystem {
     eventBus.on('unitTrained', payload => this._onAction('train_units', payload));
     eventBus.on('armyDeployed', payload => this._onAction('assemble_army', payload));
     eventBus.on('buildingMoved', () => this._onAction('move_building'));
-    eventBus.on('roadRemoved', () => this._onAction('remove_road'));
     eventBus.on('expeditionComplete', () => this._onAction('complete_expedition'));
     eventBus.on('moveModeChanged', () => this._onAction('toggle_mode'));
     eventBus.on('fullscreenToggled', () => this._onAction('toggle_fullscreen'));
@@ -53,7 +48,6 @@ export class QuestSystem {
   }
 
   setBuildingSystem(bs) { this._buildingSystem = bs; }
-  setRoadSystem(rs) { this._roadSystem = rs; }
 
   init() {
     const questsData = configRegistry.get('quests');
@@ -165,7 +159,6 @@ export class QuestSystem {
   /** 记录任务激活时的基线 */
   _takeSnapshot() {
     this._snapshot = {
-      roadCount: this._countCompletedRoads(),
       buildingCounts: this._countBuildingsById(),
       expeditionCount: store.getState('questExpeditionCount') || 0,
       moveCount: 0, removeRoadCount: 0,
@@ -187,15 +180,6 @@ export class QuestSystem {
       }
     }
     return counts;
-  }
-
-  _countCompletedRoads() {
-    if (!this._roadSystem) return 0;
-    let c = 0;
-    for (const r of this._roadSystem.getAllStates()) {
-      if (r.buildProgress === null) c++;
-    }
-    return c;
   }
 
   _listBuiltBuildingIds() {
@@ -308,8 +292,6 @@ export class QuestSystem {
       case 'fill_workers': return { current: s.fillWorkerCount || 0, target: q.target.count || 1 };
       case 'train_units': return { current: s.trainedUnits?.[q.target.unitId] || 0, target: q.target.count || 1 };
       case 'assemble_army': return { current: s.assembledArmies || 0, target: q.target.count || 1 };
-      case 'build_road':
-        return { current: this._countCompletedRoads() - s.roadCount, target: q.target.count };
       case 'build_building': {
         const cur = this._countBuildingsById();
         let c = 0;
@@ -334,15 +316,12 @@ export class QuestSystem {
         const sub = q.target;
         let cur = 0, tgt = 0;
         if (sub.move_building) { cur += Math.min(s.moveCount, 1); tgt += 1; }
-        if (sub.remove_road) { cur += Math.min(s.removeRoadCount, 1); tgt += 1; }
         if (sub.toggle_fullscreen) { cur += Math.min(s.fullscreenCount, 1); tgt += 1; }
         if (sub.click_population) { cur += Math.min(s.popClickCount, 1); tgt += 1; }
         return { current: cur, target: tgt };
       }
       case 'move_building':
         return { current: s.moveCount, target: q.target.count };
-      case 'remove_road':
-        return { current: s.removeRoadCount, target: q.target.count };
       case 'toggle_mode':
         return { current: s.modeToggleCount, target: q.target.count };
       case 'toggle_pause':
@@ -366,7 +345,6 @@ export class QuestSystem {
     if (!this._enabled || this._activeIndex < 0) return;
     // 更新快照计数（总是更新，无论是否当前任务类型）
     if (type === 'move_building') this._snapshot.moveCount++;
-    else if (type === 'remove_road') this._snapshot.removeRoadCount++;
     else if (type === 'toggle_mode') this._snapshot.modeToggleCount++;
     else if (type === 'toggle_fullscreen') this._snapshot.fullscreenCount++;
     else if (type === 'toggle_pause') this._snapshot.pauseCount++;

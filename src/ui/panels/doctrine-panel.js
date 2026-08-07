@@ -130,7 +130,6 @@ export function renderDoctrinePanel(data, body, pm) {
 
     /* 效果预览文本 */
     var fx = [];
-    if (d.commandPointsBonus) fx.push('CP+' + d.commandPointsBonus + (d.repeatable ? '/级' : ''));
     if (d.growthSpeedBonus) fx.push('人口+' + Math.round(d.growthSpeedBonus * 100) + '%');
     if (d.foodConsumeMul) fx.push('粮耗×' + d.foodConsumeMul);
     if (d.productionMul) fx.push('产出×' + d.productionMul);

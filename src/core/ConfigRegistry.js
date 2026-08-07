@@ -461,67 +461,6 @@ class ConfigRegistry {
   }
 
   /**
-   * 获取完整炼金配置
-   * @returns {object}
-   */
-  getAlchemy() { return this._configs['alchemy'] || {}; }
-
-  /**
-   * 根据ID获取炼金材料配置
-   * @param {string} id
-   * @returns {object|null}
-   */
-  getAlchemyMaterial(id) {
-    const alchemy = this.getAlchemy();
-    return (alchemy.materials || []).find(m => m.id === id) || null;
-  }
-
-  /**
-   * 根据ID获取炼金配方
-   * @param {string} id
-   * @returns {object|null}
-   */
-  getAlchemyRecipe(id) {
-    const alchemy = this.getAlchemy();
-    return (alchemy.recipes || []).find(r => r.id === id) || null;
-  }
-
-  /**
-   * 根据ID获取药剂效果配置
-   * @param {string} id
-   * @returns {object|null}
-   */
-  getAlchemyEffect(id) {
-    const alchemy = this.getAlchemy();
-    return (alchemy.effects || []).find(e => e.id === id) || null;
-  }
-
-  /**
-   * 获取炼金法术成长树节点列表
-   * @returns {Array}
-   */
-  getSpellTree() {
-    return this.getAlchemy().spellTree || [];
-  }
-
-  /**
-   * 获取所有法术定义
-   * @returns {Array}
-   */
-  getSpellDefs() {
-    return this.getAlchemy().spellDefs || [];
-  }
-
-  /**
-   * 根据ID获取法术定义
-   * @param {string} id
-   * @returns {object|null}
-   */
-  getSpellDef(id) {
-    return this.getSpellDefs().find(s => s.id === id) || null;
-  }
-
-  /**
    * 获取建筑科技树节点列表
    * @returns {Array}
    */

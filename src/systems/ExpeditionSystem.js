@@ -15,19 +15,17 @@ export class ExpeditionSystem {
     this._itemSystem = null;
     this._buildingSystem = null;
     this._populationSystem = null;
-    this._alchemySystem = null;
     this._cultureSystem = null;
     this._timeSystem = null;
 
     eventBus.on('tick', (data) => this.onTick(data));
   }
 
-  setSystems({ resource, item, building, population, alchemy, culture, time, hero }) {
+  setSystems({ resource, item, building, population, culture, time, hero }) {
     this._resourceSystem = resource;
     this._itemSystem = item;
     this._buildingSystem = building;
     this._populationSystem = population;
-    this._alchemySystem = alchemy || null;
     this._cultureSystem = culture || null;
     this._timeSystem = time || null;
     this._heroSystem = hero || null;
@@ -383,11 +381,6 @@ export class ExpeditionSystem {
     }
 
     const materialYielded = { ...(exp.materialPool || {}) };
-    if (this._alchemySystem) {
-      for (const [materialId, amount] of Object.entries(materialYielded)) {
-        this._alchemySystem.addMaterial(materialId, amount);
-      }
-    }
 
     return {
       expeditionId: exp.id,

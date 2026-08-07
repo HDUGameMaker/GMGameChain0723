@@ -14,7 +14,6 @@ export class BuildingSystem {
     this.buildings = []; // 运行时建筑实例列表
     this.placingState = 'IDLE'; // IDLE | SELECTING | PLACING
     this.placingBuildingId = null;
-    this._roadSystem = null;
     this._resourceSystem = null;
     this._populationSystem = null;
     this._resourceNodeSystem = null;
@@ -23,7 +22,6 @@ export class BuildingSystem {
     this._mapConfig = null;
     this._newlyUnlocked = new Set(); // 本轮新解锁的建筑ID
     this._adjacencyConfig = []; // 相邻加成配置
-    this._spellSystem = null; // 炼金法术系统（区域效率乘法）
 
     // 订阅 tick 事件处理建造和生产
     eventBus.on('workTick', (data) => this._onWorkTick(data));
@@ -49,12 +47,9 @@ export class BuildingSystem {
   setPopulationSystem(ps) { this._populationSystem = ps; }
   setItemSystem(is) { this._itemSystem = is; }
   setTorchSystem(ts) { this._torchSystem = ts; }
-  setRoadSystem(rs) { this._roadSystem = rs; }
   setTechSystem(ts) { this._techSystem = ts; }
   setWeatherSystem(ws) { this._weatherSystem = ws; }
   setCultureSystem(cs) { this._cultureSystem = cs; }
-  setAlchemySystem(as) { this._alchemySystem = as; }
-  setSpellSystem(ss) { this._spellSystem = ss; }
   setTerritorySystem(ts) { this._territorySystem = ts; }
   setHeroSystem(hs) { this._heroSystem = hs; }
   setLuxurySystem(ls) { this._luxurySystem = ls; }
@@ -99,9 +94,6 @@ export class BuildingSystem {
   // ===== 放置模式 =====
 
   enterPlacingMode(buildingId) {
-    if (this._roadSystem?.isEditMode?.()) {
-      this._roadSystem.exitEditMode();
-    }
     this.placingState = 'PLACING';
     this.placingBuildingId = buildingId;
     store.setState({ placingState: 'PLACING', placingBuildingId: buildingId });
@@ -186,14 +178,6 @@ export class BuildingSystem {
       if (!node) return { valid: false, reason: `必须覆盖空闲的${nodeType.name}` };
     }
 
-    if (this._roadSystem) {
-      for (const road of this._roadSystem.roads) {
-        if (isAreaOverlap(gridX, gridY, w, h, road.gridX, road.gridY, 1, 1)) {
-          return { valid: false, reason: '道路上不能修建建筑' };
-        }
-      }
-    }
-
     // 重叠检查（已有建筑）
     for (const b of this.buildings) {
       const bConfig = configRegistry.getBuilding(b.buildingId);
@@ -220,13 +204,6 @@ export class BuildingSystem {
       }
     }
 
-    // 道路依赖建筑：必须邻接道路
-    if (config.roadRequired && this._roadSystem) {
-      if (!this._satisfiesRoadDependency(gridX, gridY, w, h, buildingId)) {
-        return { valid: false, reason: buildingId === 'work_shed' ? '工棚需要紧邻道路、工棚或仓库' : '该建筑需要紧邻道路（道路依赖）' };
-      }
-    }
-
     const adjacentCheck = this._checkAdjacentRequirements(config, gridX, gridY, w, h);
     if (!adjacentCheck.valid) return adjacentCheck;
 
@@ -244,7 +221,7 @@ export class BuildingSystem {
     if (!check.valid) return false;
 
     // 消耗资源（应用人文政策建造成本倍率）
-    const buildCostMul = (this._cultureSystem ? (this._cultureSystem.getEffects().buildCostMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).buildCostMul || 1) : 1) * (this._heroSystem?.getBonuses?.().buildCostMul || 1) * (this._luxurySystem?.getBonuses?.().buildCostMul || 1);
+    const buildCostMul = (this._cultureSystem ? (this._cultureSystem.getEffects().buildCostMul || 1) : 1) * (this._heroSystem?.getBonuses?.().buildCostMul || 1) * (this._luxurySystem?.getBonuses?.().buildCostMul || 1);
     if (config.buildCost && config.buildCost.length > 0) {
       const scaledCost = config.buildCost.map(c => ({ ...c, amount: Math.max(1, Math.round(c.amount * buildCostMul)) }));
       if (!this._resourceSystem.consumeAll(scaledCost)) return false;
@@ -349,7 +326,7 @@ export class BuildingSystem {
     const targetConfig = configRegistry.getBuilding(check.targetId);
 
     // 消耗资源（升级也应用人文政策建造成本倍率）
-    const buildCostMul = (this._cultureSystem ? (this._cultureSystem.getEffects().buildCostMul || 1) : 1) * (this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).buildCostMul || 1) : 1) * (this._heroSystem?.getBonuses?.().buildCostMul || 1) * (this._luxurySystem?.getBonuses?.().buildCostMul || 1);
+    const buildCostMul = (this._cultureSystem ? (this._cultureSystem.getEffects().buildCostMul || 1) : 1) * (this._heroSystem?.getBonuses?.().buildCostMul || 1) * (this._luxurySystem?.getBonuses?.().buildCostMul || 1);
     const scaledUpgradeCost = check.cost.map(c => ({ ...c, amount: Math.max(1, Math.round(c.amount * buildCostMul)) }));
     this._resourceSystem.consumeAll(scaledUpgradeCost);
 
@@ -904,14 +881,6 @@ export class BuildingSystem {
       if (!node) return { valid: false, reason: `必须覆盖空闲的${nodeType.name}` };
     }
 
-    if (this._roadSystem) {
-      for (const road of this._roadSystem.roads) {
-        if (isAreaOverlap(newGridX, newGridY, w, h, road.gridX, road.gridY, 1, 1)) {
-          return { valid: false, reason: '道路上不能修建建筑' };
-        }
-      }
-    }
-
     // 重叠检查（排除自身）
     for (let i = 0; i < this.buildings.length; i++) {
       if (i === buildingIndex) continue;
@@ -929,13 +898,6 @@ export class BuildingSystem {
       if (removedIds.has(marker.id)) continue;
       if (isAreaOverlap(newGridX, newGridY, w, h, marker.gridX, marker.gridY, 1, 1)) {
         return { valid: false, reason: '与事件标记重叠' };
-      }
-    }
-
-    // 道路依赖建筑：必须邻接道路
-    if (config.roadRequired && this._roadSystem) {
-      if (!this._satisfiesRoadDependency(newGridX, newGridY, w, h, building.buildingId, buildingIndex)) {
-        return { valid: false, reason: building.buildingId === 'work_shed' ? '工棚需要紧邻道路、工棚或仓库' : '该建筑需要紧邻道路（道路依赖）' };
       }
     }
 
@@ -983,12 +945,6 @@ export class BuildingSystem {
     if (!building) return { valid: true };
     const config = configRegistry.getBuilding(building.buildingId);
     if (!config) return { valid: true };
-    // 道路依赖建筑检查
-    if (config.roadRequired && this._roadSystem) {
-      if (!this._satisfiesRoadDependency(building.gridX, building.gridY, config.footprint.width, config.footprint.height, building.buildingId, buildingIndex)) {
-        return { valid: false, reason: building.buildingId === 'work_shed' ? '需要紧邻道路、工棚或仓库' : '需要紧邻道路' };
-      }
-    }
     const adjacentCheck = this._checkAdjacentRequirements(
       config,
       building.gridX,
@@ -999,12 +955,6 @@ export class BuildingSystem {
     );
     if (!adjacentCheck.valid) return adjacentCheck;
     return { valid: true };
-  }
-
-  _satisfiesRoadDependency(gridX, gridY, w, h, buildingId, ignoreIndex = -1) {
-    if (this._roadSystem?.hasAdjacentRoad(gridX, gridY, w, h)) return true;
-    if (buildingId !== 'work_shed') return false;
-    return this._hasAdjacentWorkShedAnchor(gridX, gridY, w, h, ignoreIndex);
   }
 
   _hasAdjacentWorkShedAnchor(gridX, gridY, w, h, ignoreIndex = -1) {
@@ -1360,16 +1310,6 @@ export class BuildingSystem {
       }
     }
 
-    if (prod.alchemyYields && this._alchemySystem) {
-      for (const drop of prod.alchemyYields) {
-        if (Math.random() > (drop.chance || 0)) continue;
-        const min = drop.min || 1;
-        const max = drop.max || min;
-        const amount = min + Math.floor(Math.random() * (max - min + 1));
-        if (amount <= 0) continue;
-        this._alchemySystem.addMaterial(drop.materialId, amount);
-      }
-    }
   }
 
   _processSynthesis(building) {
@@ -1697,9 +1637,6 @@ export class BuildingSystem {
     const techMul = techEffects?.productionMul || 1;
     const scopedTechMul = resourceId ? (techEffects?.resourceProductionMul?.[resourceId] || 1) : 1;
     const scopedCultureMul = resourceId ? (cultureEffects?.resourceProductionMul?.[resourceId] || 1) : 1;
-    const alchemyMul = this._alchemySystem ? ((this._alchemySystem.getEffects().building || {}).productionMul || 1) : 1;
-    // 炼金法术：区域内生产建筑效率乘法（按建筑所在区域连乘），叠入产出链
-    const spellMul = 1;
     const heroMul = this._heroSystem?.getBonuses?.().productionMul || 1;
     const luxuryEffects = this._luxurySystem?.getBonuses?.() || {};
     const luxuryMul = resourceId ? (luxuryEffects[`${resourceId}ProductionMul`] || 1) : 1;
@@ -1713,7 +1650,7 @@ export class BuildingSystem {
       }
     }
     const activeBuildingResourceMul = 1 + activeBuildingResourceBonus;
-    return globalCultureMul * techMul * scopedTechMul * scopedCultureMul * alchemyMul * spellMul * heroMul * luxuryMul * activeBuildingResourceMul;
+    return globalCultureMul * techMul * scopedTechMul * scopedCultureMul * heroMul * luxuryMul * activeBuildingResourceMul;
   }
 
   getProductionMultiplier(resourceId = null) {
@@ -1763,11 +1700,6 @@ export class BuildingSystem {
     const type = req?.type || (req?.buildingId ? 'building' : '');
     const maxDistance = Math.max(1, Number.isFinite(req?.maxDistance) ? req.maxDistance : 1);
 
-    if (type === 'road') {
-      const valid = this._hasRoadWithinDistance(gridX, gridY, width, height, maxDistance);
-      return { valid, label: `道路（${maxDistance}格内）` };
-    }
-
     if (type === 'building') {
       const buildingId = req?.buildingId || '';
       const matched = this._hasBuildingWithinDistance(
@@ -1796,19 +1728,6 @@ export class BuildingSystem {
     }
 
     return { valid: true, label: '' };
-  }
-
-  _hasRoadWithinDistance(gridX, gridY, width, height, maxDistance) {
-    if (!this._roadSystem) return false;
-    if (maxDistance <= 1 && typeof this._roadSystem.hasAdjacentRoad === 'function') {
-      return this._roadSystem.hasAdjacentRoad(gridX, gridY, width, height);
-    }
-    for (const road of this._roadSystem.roads || []) {
-      if (road.buildProgress !== null && road.buildProgress !== undefined) continue;
-      const dist = this._chebyshevDistance(gridX, gridY, width, height, road.gridX, road.gridY, 1, 1);
-      if (dist <= maxDistance) return true;
-    }
-    return false;
   }
 
   _hasBuildingWithinDistance(gridX, gridY, width, height, predicate, maxDistance, excludeIndex = -1) {

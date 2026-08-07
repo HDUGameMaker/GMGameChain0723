@@ -81,10 +81,6 @@ export class PopulationSystem {
     this._cultureSystem = cultureSystem;
   }
 
-  setAlchemySystem(alchemySystem) {
-    this._alchemySystem = alchemySystem;
-  }
-
   setLuxurySystem(luxurySystem) { this._luxurySystem = luxurySystem; }
 
   initNew() {
@@ -103,8 +99,7 @@ export class PopulationSystem {
   getHousingCapacity() {
     if (!this._buildingSystem) return 0;
     // 人文政策最大人口加成
-    const aEffPop = this._alchemySystem ? (this._alchemySystem.getEffects().population || {}) : {};
-    const popBonus = (this._cultureSystem ? (this._cultureSystem.getEffects().maxPopBonus || 0) : 0) + (aEffPop.maxPopBonus || 0);
+    const popBonus = this._cultureSystem ? (this._cultureSystem.getEffects().maxPopBonus || 0) : 0;
     const luxuryMul = this._luxurySystem?.getBonuses?.().housingCapacityMul || 1;
     return Math.floor((this._buildingSystem.getTotalHousingCapacity() + popBonus) * luxuryMul);
   }
@@ -204,17 +199,15 @@ export class PopulationSystem {
   }
 
   /**
-   * 获取人口增长倍率。人文与炼金按加算规则叠加：
+   * 获取人口增长倍率。人文政策与奢侈品按加算/乘算规则叠加：
    * 基础 100% + 各来源相对 100% 的增量。
    */
   getGrowthMultiplier() {
-    const aEffPop = this._alchemySystem ? (this._alchemySystem.getEffects().population || {}) : {};
     let growthMul = 1;
     if (this._cultureSystem) {
       const cEff = this._cultureSystem.getEffects();
       growthMul += (cEff.growthMul || 1) - 1;
     }
-    if (aEffPop.growthMul) growthMul += aEffPop.growthMul - 1;
     growthMul *= this._luxurySystem?.getBonuses?.().growthMul || 1;
     return Math.max(0, growthMul);
   }
@@ -239,8 +232,7 @@ export class PopulationSystem {
   }
 
   getFoodConsumptionAmount(population = this.current) {
-    const aEffPop = this._alchemySystem ? (this._alchemySystem.getEffects().population || {}) : {};
-    const foodConsumeMul = (this._cultureSystem ? (this._cultureSystem.getEffects().foodConsumeMul || 1) : 1) * (aEffPop.foodConsumeMul || 1) * (this._luxurySystem?.getBonuses?.().foodConsumeMul || 1);
+    const foodConsumeMul = (this._cultureSystem ? (this._cultureSystem.getEffects().foodConsumeMul || 1) : 1) * (this._luxurySystem?.getBonuses?.().foodConsumeMul || 1);
     return Math.ceil(Math.max(0, population || 0) * this.foodPerPerson * foodConsumeMul);
   }
 

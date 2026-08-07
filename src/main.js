@@ -550,7 +550,7 @@ class Game {
     }
 
     // 6. 初始化渲染器（先构造，再异步预加载纹理后绘制）
-    this.mapRenderer = new MapRenderer(this.app, this.systems.building, this.systems.torch, null, this.systems.combat, this.systems.territory);
+    this.mapRenderer = new MapRenderer(this.app, this.systems.building, this.systems.torch, this.systems.combat, this.systems.territory);
     this.mapRenderer.setEnemyExpansion(this.systems.enemyExpansion);
     this.mapRenderer.setDiplomacySystem(this.systems.diplomacy);
     this.mapRenderer.setArmySystem(this.systems.army);

@@ -330,7 +330,7 @@ export function renderArmyPanel(data, body, pm) {
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:14px 16px;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.06);';
     const representative = (army.unitIds || []).map(id => unitMap[id]).filter(Boolean)
-      .sort((left, right) => (right.commandPoints || 1) - (left.commandPoints || 1))[0];
+      .sort((left, right) => (right.combatPower || 1) - (left.combatPower || 1))[0];
     const armyArt = army.heroIcon || army.heroPortrait || representative?.cardArt || representative?.icon;
     const armyFallback = army.heroIcon ? (army.heroPortrait || representative?.icon) : representative?.icon;
     if (armyArt) row.appendChild(_createArtImage(armyArt, armyFallback, {
