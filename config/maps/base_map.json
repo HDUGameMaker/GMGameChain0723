@@ -17165,6 +17165,13 @@
     ],
     "riverCount": 0,
     "lakeCount": 12,
-    "description": "固定参考式大陆、内海、海峡与岛链布局。"
+    "description": "固定参考式大陆、内海、海峡与岛链布局(已按玩家居中裁剪)。"
+  },
+  "playerCenteredCrop": {
+    "left": 229,
+    "top": 84,
+    "width": 155,
+    "height": 192,
+    "description": "玩家左侧主河(西岸x=229)以西全删;高度以玩家行y=180为中心减半。"
   }
 }

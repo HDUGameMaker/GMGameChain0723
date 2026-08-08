@@ -96,21 +96,34 @@ class ConfigRegistry {
     if (!map?.grid?.length || map._playerCenteredHalfArea) return map;
     const oldHeight = map.grid.length;
     const oldWidth = map.gridWidth || map.grid[0]?.length || 0;
-    const scale = Math.SQRT1_2;
-    const width = Math.max(32, Math.floor(oldWidth * scale));
-    const height = Math.max(32, Math.floor(oldHeight * scale));
     const spawn = map.initialBuildings?.[0] || { gridX: Math.floor(oldWidth / 2), gridY: Math.floor(oldHeight / 2) };
-    const left = Math.max(0, Math.min(oldWidth - width, Math.floor(spawn.gridX - width / 2)));
-    const top = Math.max(0, Math.min(oldHeight - height, Math.floor(spawn.gridY - height / 2)));
+    // 优先使用地图数据里显式声明的裁剪窗口(playerCenteredCrop,如 grand_map_v2 的
+    // "玩家左侧主河以西全删 + 高度以玩家行为中心减半");没有声明的地图回退旧的 √½ 比例裁剪。
+    const configured = map.playerCenteredCrop;
+    const width = Number.isFinite(configured?.width) ? Math.max(32, Math.floor(configured.width))
+      : Math.max(32, Math.floor(oldWidth * Math.SQRT1_2));
+    const height = Number.isFinite(configured?.height) ? Math.max(32, Math.floor(configured.height))
+      : Math.max(32, Math.floor(oldHeight * Math.SQRT1_2));
+    const left = Number.isFinite(configured?.left)
+      ? Math.max(0, Math.min(oldWidth - width, Math.floor(configured.left)))
+      : Math.max(0, Math.min(oldWidth - width, Math.floor(spawn.gridX - width / 2)));
+    const top = Number.isFinite(configured?.top)
+      ? Math.max(0, Math.min(oldHeight - height, Math.floor(configured.top)))
+      : Math.max(0, Math.min(oldHeight - height, Math.floor(spawn.gridY - height / 2)));
     const translate = item => ({ ...item, gridX: item.gridX - left, gridY: item.gridY - top });
     const inside = item => item.gridX >= left && item.gridX < left + width && item.gridY >= top && item.gridY < top + height;
-    const manifest = Object.fromEntries(Object.entries(map.spawnManifest || {}).map(([key, items]) => [key,
-      Array.isArray(items) ? items.filter(inside).map(translate) : items]));
+    const manifest = Object.fromEntries(Object.entries(map.spawnManifest || {}).map(([key, items]) => {
+      if (Array.isArray(items)) return [key, items.filter(inside).map(translate)];
+      // 单对象条目(如 playerSpawn)也平移,避免出生点引用停留在裁剪区外。
+      if (items && Number.isFinite(items.gridX) && Number.isFinite(items.gridY)) return [key, inside(items) ? translate(items) : items];
+      return [key, items];
+    }));
     return {
       ...map, _playerCenteredHalfArea: true, gridWidth: width, gridHeight: height,
       grid: map.grid.slice(top, top + height).map(row => Array.isArray(row) ? row.slice(left, left + width) : row.slice(left, left + width)),
       initialBuildings: (map.initialBuildings || []).filter(inside).map(translate),
       spawnManifest: manifest,
+      expeditionEntrances: (map.expeditionEntrances || []).filter(inside).map(translate),
       initialCamera: map.initialCamera ? { ...map.initialCamera, gridX: map.initialCamera.gridX - left, gridY: map.initialCamera.gridY - top } : map.initialCamera,
       viewportCenter: map.viewportCenter ? { ...map.viewportCenter, defaultGridX: spawn.gridX - left, defaultGridY: spawn.gridY - top } : map.viewportCenter
     };

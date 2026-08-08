@@ -558,19 +558,12 @@ export class DiplomacySystem {
       if (!dispatchedArmy) continue;
       const level = Math.max(1, Number(state.level) || 1);
       const stats = this._garrisonStats(dispatchedArmy);
-      // 派兵强度 = 时代保底 × 等级系数 × (玩家战力/时代保底)^exponent,下限为时代保底 × 等级系数 × minRatio。
-      // 收益递减(exponent 默认 0.7):战力≈保底时与线性一致(练兵立刻见效,不重蹈 1.2 上限挠痒覆辙);
-      // 战力远超保底时增长放缓——练兵 2 倍战力袭击只涨 1.62 倍,避免后期数值无限膨胀。
-      const multiplier = (Number(settings.raidPowerBase) || 0.6) + level * (Number(settings.raidPowerPerLevel) || 0.2);
-      const floors = settings.powerBaseFloor || [200, 400, 800, 1500, 2500];
-      const eraOrder = this._eraSystem?.getCurrentEra?.()?.order || 0;
-      const basePower = Number(floors[eraOrder]) || 200;
-      const base = basePower * multiplier;
-      const minRatio = Number(settings.raidPowerMinRatio) ?? 0.8;
-      const playerPower = this._playerPowerBase();
-      const ratio = Math.max(1, playerPower / basePower); // _playerPowerBase 恒 ≥ 保底,比值下限 1
-      const exponent = Number(settings.raidPowerDiminishExponent) || 0.7;
-      const raidTarget = Math.max(base * minRatio, Math.round(base * Math.pow(ratio, exponent)));
+      // 袭击强度 = 玩家战力 × 50%~80%(raidRatio = 等级系数 clamp 到 [0.5, 0.8]):
+      // 低等级城邦 50%,4 级及以上封顶 80%。始终跟随玩家实际战力,
+      // 练不练兵都有存在感,不会出现"玩家变强、袭击反而挠痒"的脱锚。
+      const multiplier = (Number(settings.raidPowerBase) || 0.4) + level * (Number(settings.raidPowerPerLevel) || 0.1);
+      const raidRatio = Math.max(0.5, Math.min(0.8, multiplier));
+      const raidTarget = Math.max(1, Math.round(this._playerPowerBase() * raidRatio));
       const unit = units.find(item => item.id === dispatchedArmy.unitIds?.[0]) || {};
       const baseMaxHp = Math.max(1, Number(unit.maxHp ?? unit.hp) || 1);
       const baseAttack = Math.max(0, Number(unit.attack) || 0);
@@ -602,7 +595,7 @@ export class DiplomacySystem {
       }
       state.raidsLaunched = (state.raidsLaunched || 0) + (spawned ? 1 : 0);
       state.lastRaid = { day, armyId: dispatchedArmy.id, targetX: playerSpawn.gridX, targetY: playerSpawn.gridY };
-      if (spawned) state.armies = state.armies.filter(army => army.id !== dispatchedArmy.id);
+      // 派兵不消耗驻军:城邦可反复派兵,避免守军耗尽后整片城邦永久沉默。
       state.lastRaid.spawned = spawned;
       eventBus.emit('cityStateRaidLaunched', { outpostId: outpost.id, ...state.lastRaid, aggression: state.aggression, forced: force });
       eventBus.emit('combatBroadcast', { message: spawned ? `⚠️ ${outpost.name}派出军队向玩家领地进军。` : `⚠️ ${outpost.name}派军失败：出生位置无效。` });
@@ -642,13 +635,16 @@ export class DiplomacySystem {
     if (state.controlledCells.length >= maxCells) return false;
     const occupied = new Set(Object.values(this._states).flatMap(item => item.controlledCells || []).map(cell => `${cell.x},${cell.y}`));
     const directions = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+    const map = configRegistry.get('map') || {};
+    const mapWidth = map.gridWidth || 0;
+    const mapHeight = map.gridHeight || 0;
     for (const cell of state.controlledCells) {
       for (const [dx, dy] of directions) {
         const target = { x: cell.x + dx, y: cell.y + dy };
-        if (target.x < 0 || target.y < 0 || target.x >= 200 || target.y >= 200) continue;
+        if (target.x < 0 || target.y < 0 || target.x >= mapWidth || target.y >= mapHeight) continue;
         if (Math.abs(target.x - outpost.gridX) + Math.abs(target.y - outpost.gridY) > 5) continue;
         if (occupied.has(`${target.x},${target.y}`)) continue;
-        if (['S', 'W', 'M', 'B', 'R'].includes(configRegistry.get('map')?.grid?.[target.y]?.[target.x])) continue;
+        if (['S', 'W', 'M', 'B', 'R'].includes(map.grid?.[target.y]?.[target.x])) continue;
         state.controlledCells.push(target);
         state.lastExpansionDay = day;
         return true;

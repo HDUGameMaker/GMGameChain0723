@@ -4,10 +4,12 @@ import { configRegistry } from '../../src/core/ConfigRegistry.js';
 import { eventBus } from '../../src/core/EventBus.js';
 import { EnemyExpansionSystem } from '../../src/systems/EnemyExpansionSystem.js';
 import { DiplomacySystem } from '../../src/systems/DiplomacySystem.js';
+import { getTickInterval } from '../../src/utils/gameTime.js';
 
 test('city-state raids create real enemy cells and move toward the player every tick', () => {
   eventBus.clear();
   configRegistry._configs = {
+    global: { TICK_INTERVAL: 10 },
     enemyExpansion: { countdownStart: 3 },
     enemies: { enemies: [{ id: 'raider', name: '城邦袭击军', strategicOnly: true, maxHp: 20, attack: 4, speed: 1, attackRange: 1 }] },
     map: { gridWidth: 8, gridHeight: 4, grid: Array.from({ length: 4 }, () => Array(8).fill('G')) }
@@ -15,9 +17,24 @@ test('city-state raids create real enemy cells and move toward the player every 
   const enemies = new EnemyExpansionSystem();
   enemies.init();
   enemies.initNew();
+  // 8.7 起袭击军由帧级 update(delta) 推进,不再响应 tick;直线上移的寻路 stub 保证一次 update = 1 格。
+  enemies._pathfindingSystem = {
+    getVersion: () => 0,
+    isPathAffectedByInvalidations: () => false,
+    findPath: (x, y, targetX, targetY) => {
+      const path = [];
+      let cx = x, cy = y;
+      while (cx !== targetX || cy !== targetY) {
+        if (cx !== targetX) cx += Math.sign(targetX - cx);
+        else cy += Math.sign(targetY - cy);
+        path.push({ x: cx, y: cy });
+      }
+      return path;
+    }
+  };
   assert.equal(enemies.spawnCityStateRaid({ outpostId: 'city', gridX: 6, gridY: 1, targetX: 1, targetY: 1, strength: 30 }), true);
   assert.equal(enemies.getAllCells()[0].x, 6);
-  eventBus.emit('tick', {});
+  enemies.update(getTickInterval(), 1);
   assert.equal(enemies.getAllCells()[0].x, 5);
   assert.equal(enemies.getAllCells()[0].raidOutpostId, 'city');
 });

@@ -13,11 +13,8 @@
   "settings": {
    "garrisonPowerBase": 0.5,
    "garrisonPowerPerLevel": 0.15,
-   "raidPowerBase": 0.6,
-   "raidPowerPerLevel": 0.2,
-   "raidPowerMinRatio": 0.8,
-   "raidPowerMaxRatio": 1.2,
-   "raidPowerDiminishExponent": 0.7,
+   "raidPowerBase": 0.4,
+   "raidPowerPerLevel": 0.1,
    "powerBaseFloor": [
     200,
     400,

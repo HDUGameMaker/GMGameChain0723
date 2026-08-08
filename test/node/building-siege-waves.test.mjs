@@ -6,6 +6,7 @@ import { eventBus } from '../../src/core/EventBus.js';
 import { BuildingSystem } from '../../src/systems/BuildingSystem.js';
 import { EnemyExpansionSystem } from '../../src/systems/EnemyExpansionSystem.js';
 import { InvasionSystem } from '../../src/systems/InvasionSystem.js';
+import { getTickInterval } from '../../src/utils/gameTime.js';
 import { getDevelopmentSummary } from '../../src/domain/DevelopmentSummary.js';
 import { calculateCombatStrength } from '../../src/domain/CombatStrength.js';
 
@@ -36,10 +37,11 @@ test('buildings have scaled hp, take damage, receive nearby repairs and headquar
   eventBus.clear();
 });
 
-test('enemy attacks on buildings use battle preview and buildings never retaliate', async () => {
+test('enemy attacks on buildings resolve directly and buildings never retaliate', () => {
   eventBus.clear();
   const enemyProfile = { id: 'raider', name: '遗迹袭击者', maxHp: 100, attack: 40, attackRange: 2, speed: 2, cp: 1, strategicOnly: true };
   configRegistry._configs = {
+    global: { TICK_INTERVAL: 10 },
     buildings: baseBuildings,
     enemies: { enemies: [enemyProfile] },
     historicalContent: { eras: [], luxuries: [] },
@@ -53,13 +55,11 @@ test('enemy attacks on buildings use battle preview and buildings never retaliat
   enemies.setArmySystem({ getArmies: () => [] });
   enemies.init();
   enemies.spawnCityStateRaid({ gridX: 4, gridY: 2, targetX: 2, targetY: 2, strength: 100, enemyId: 'raider' });
-  let preview = null;
-  enemies.setBattlePreviewHandler(data => { preview = data; return data.resolveBattle(); });
-  assert.equal(enemies._attackArmiesInRange(), true);
-  await Promise.resolve();
-  assert.equal(preview.player.isBuilding, true);
-  assert.equal(preview.player.attack, 0);
-  assert.equal(buildings.getBuildingHp(0), 260);
+  // 8.8 起敌人袭击不再弹预览,由帧级 update 直接结算;建筑不还手(hp 只减不增)。
+  const before = buildings.getBuildingHp(0);
+  enemies.update(getTickInterval(), 1);
+  assert.ok(buildings.getBuildingHp(0) < before, '敌人袭击直接扣减建筑血量');
+  assert.equal(enemies.getAllCells().length, 1, '建筑不还手,袭击军仍存活');
   eventBus.clear();
 });
 
